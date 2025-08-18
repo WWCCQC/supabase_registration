@@ -16,118 +16,163 @@ function parseDateRange(params: URLSearchParams) {
   const sod = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0);
   const eod = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59);
 
-  let start: Date | null = null, end: Date | null = null;
-  if (mode === "today") { start = sod(now); end = eod(now); }
-  else if (mode === "7d") { const s = new Date(now); s.setDate(s.getDate() - 6); start = sod(s); end = eod(now); }
-  else if (mode === "month") { const s = new Date(now.getFullYear(), now.getMonth(), 1); const e = new Date(now.getFullYear(), now.getMonth()+1, 0); start = sod(s); end = eod(e); }
-  else if (mode === "custom" && from && to) { start = sod(new Date(from)); end = eod(new Date(to)); }
+  let start: Date | null = null,
+    end: Date | null = null;
+  if (mode === "today") {
+    start = sod(now);
+    end = eod(now);
+  } else if (mode === "7d") {
+    const s = new Date(now);
+    s.setDate(s.getDate() - 6);
+    start = sod(s);
+    end = eod(now);
+  } else if (mode === "month") {
+    const s = new Date(now.getFullYear(), now.getMonth(), 1);
+    const e = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    start = sod(s);
+    end = eod(e);
+  } else if (mode === "custom" && from && to) {
+    start = sod(new Date(from));
+    end = eod(new Date(to));
+  }
 
   if (start && end) return { gte: start.toISOString(), lte: end.toISOString() };
   return null;
 }
 
-function applyFilters(
-  query: ReturnType<ReturnType<typeof supabaseAdmin>["from"]>,
-  params: URLSearchParams
-) {
+// NOTE: use `any` here to avoid TS type mismatch across different
+// supabase-js/postgrest versions on Vercel. The runtime behavior is unchanged.
+function applyFilters(query: any, params: URLSearchParams) {
   const get = (k: string) => sanitize(params.get(k));
   const filters: Record<string, string> = {
-    provider: get("provider"), area: get("area"), rsm: get("rsm"), ctm: get("ctm"),
-    depot_code: get("depot_code"), work_type: get("work_type"), workgroup_status: get("workgroup_status"),
-    gender: get("gender"), degree: get("degree"),
+    provider: get("provider"),
+    area: get("area"),
+    rsm: get("rsm"),
+    ctm: get("ctm"),
+    depot_code: get("depot_code"),
+    work_type: get("work_type"),
+    workgroup_status: get("workgroup_status"),
+    gender: get("gender"),
+    degree: get("degree"),
   };
-  // use .filter(<col>, 'ilike', <pattern>) to satisfy TS on Vercel
-  for (const [k, v] of Object.entries(filters)) {
-    if (v) query = query.filter(k, 'ilike', `%${v}%` as any);
-  }
 
-  const fNat = get("f_national_id"); const fTech = get("f_tech_id");
-  const fRsm = get("f_rsm");         const fDepot = get("f_depot_code");
-  if (fNat)   query = query.filter("national_id", 'ilike', `%${fNat}%`);
-  if (fTech)  query = query.filter("tech_id", 'ilike', `%${fTech}%`);
-  if (fRsm)   query = query.filter("rsm", 'ilike', `%${fRsm}%`);
-  if (fDepot) query = query.filter("depot_code", 'ilike', `%${fDepot}%`);
+  for (const [k, v] of Object.entries(filters)) if (v) query = query.ilike(k, `%${v}%`);
+
+  const fNat = get("f_national_id");
+  const fTech = get("f_tech_id");
+  const fRsm = get("f_rsm");
+  const fDepot = get("f_depot_code");
+  if (fNat) query = query.ilike("national_id", `%${fNat}%`);
+  if (fTech) query = query.ilike("tech_id", `%${fTech}%`);
+  if (fRsm) query = query.ilike("rsm", `%${fRsm}%`);
+  if (fDepot) query = query.ilike("depot_code", `%${fDepot}%`);
 
   const q = get("q");
   if (q) {
     const cols = [
-      "national_id","tech_id","full_name","gender","degree","phone","email",
-      "workgroup_status","work_type","provider","area","rsm","ctm",
-      "depot_code","depot_name","province"
+      "national_id",
+      "tech_id",
+      "full_name",
+      "gender",
+      "degree",
+      "phone",
+      "email",
+      "workgroup_status",
+      "work_type",
+      "provider",
+      "area",
+      "rsm",
+      "ctm",
+      "depot_code",
+      "depot_name",
+      "province",
     ];
     const pat = `%${q}%`;
-    query = query.or(cols.map(c => `${c}.ilike.${pat}`).join(","));
+    query = query.or(cols.map((c) => `${c}.ilike.${pat}`).join(","));
   }
   return query;
 }
 
-async function applyDateFilterSafe(
-  baseQuery: ReturnType<ReturnType<typeof supabaseAdmin>["from"]>,
-  params: URLSearchParams
-) {
+async function applyDateFilterSafe(query: any, params: URLSearchParams) {
   const range = parseDateRange(params);
-  if (!range) return baseQuery;
+  if (!range) return query;
 
-  const candidates = ["__imported_at", "created_at"] as const;
+  const candidates = ["__imported_at", "created_at"];
   for (const col of candidates) {
     try {
-      const t = baseQuery.gte(col as any, range.gte).lte(col as any, range.lte).limit(0);
-      const { error } = await t;
-      if (!error) return baseQuery.gte(col as any, range.gte).lte(col as any, range.lte);
+      // probe with a head-only select; if column exists, use it
+      const test = await query
+        .select("national_id", { head: true, count: "exact" })
+        .gte(col, range.gte)
+        .lte(col, range.lte);
+      if (!test.error) return query.gte(col, range.gte).lte(col, range.lte);
     } catch {}
   }
-  return baseQuery;
+  return query;
 }
 
 export async function GET(req: Request) {
   try {
-    const url = new URL(req.url);
-    const params = url.searchParams;
+    const params = new URL(req.url).searchParams;
     const supabase = supabaseAdmin();
 
     // TOTAL
-    let qTotal = supabase.from("technicians").select("*", { count: "exact", head: true });
+    let qTotal: any = supabase.from("technicians").select("*", { count: "exact", head: true });
     qTotal = applyFilters(qTotal, params);
     qTotal = await applyDateFilterSafe(qTotal, params);
     const { count: total = 0, error: eTotal } = await qTotal;
     if (eTotal) throw eTotal;
 
-    // BY WORK_TYPE (robust: ILIKE %key%)
+    // BY WORK_TYPE
     const by_work_type: { key: string; count: number; percent: number }[] = [];
-    let qWT = supabase.from("technicians").select("work_type").not("work_type", "is", null).limit(5000);
-    qWT = applyFilters(qWT, params); qWT = await applyDateFilterSafe(qWT, params);
-    const { data: listWT = [], error: eWT } = await qWT; if (eWT) throw eWT;
-    for (const raw of Array.from(new Set(listWT.map(r => (r as any).work_type).filter(Boolean)))) {
-      const key = String(raw).trim();
-      let q = supabase
+    let qWT: any = supabase
+      .from("technicians")
+      .select("work_type")
+      .not("work_type", "is", null)
+      .limit(5000);
+    qWT = applyFilters(qWT, params);
+    qWT = await applyDateFilterSafe(qWT, params);
+    const { data: listWT = [], error: eWT } = await qWT;
+    if (eWT) throw eWT;
+    const uniqWT = Array.from(new Set(listWT.map((r: any) => r.work_type).filter(Boolean)));
+    for (const key of uniqWT) {
+      let q: any = supabase
         .from("technicians")
         .select("*", { count: "exact", head: true })
-        .filter("work_type", 'ilike', `%${key}%`);
-      q = applyFilters(q, params); q = await applyDateFilterSafe(q, params);
+        .ilike("work_type", `%${key}%`);
+      q = applyFilters(q, params);
+      q = await applyDateFilterSafe(q, params);
       const { count = 0 } = await q;
-      by_work_type.push({ key, count, percent: total ? +(100 * count / total).toFixed(2) : 0 });
+      by_work_type.push({ key, count, percent: total ? +(100 * (count / total)).toFixed(2) : 0 });
     }
 
-    // BY PROVIDER (robust: ILIKE %key%)
+    // BY PROVIDER
     const by_provider: { key: string; count: number; percent: number }[] = [];
-    let qPv = supabase.from("technicians").select("provider").not("provider", "is", null).limit(5000);
-    qPv = applyFilters(qPv, params); qPv = await applyDateFilterSafe(qPv, params);
-    const { data: listPv = [], error: ePv } = await qPv; if (ePv) throw ePv;
-    for (const raw of Array.from(new Set(listPv.map(r => (r as any).provider).filter(Boolean)))) {
-      const key = String(raw).trim();
-      let q = supabase
+    let qPv: any = supabase
+      .from("technicians")
+      .select("provider")
+      .not("provider", "is", null)
+      .limit(5000);
+    qPv = applyFilters(qPv, params);
+    qPv = await applyDateFilterSafe(qPv, params);
+    const { data: listPv = [], error: ePv } = await qPv;
+    if (ePv) throw ePv;
+    const uniqPv = Array.from(new Set(listPv.map((r: any) => r.provider).filter(Boolean)));
+    for (const key of uniqPv) {
+      let q: any = supabase
         .from("technicians")
         .select("*", { count: "exact", head: true })
-        .filter("provider", 'ilike', `%${key}%`);
-      q = applyFilters(q, params); q = await applyDateFilterSafe(q, params);
+        .ilike("provider", `%${key}%`);
+      q = applyFilters(q, params);
+      q = await applyDateFilterSafe(q, params);
       const { count = 0 } = await q;
-      by_provider.push({ key, count, percent: total ? +(100 * count / total).toFixed(2) : 0 });
+      by_provider.push({ key, count, percent: total ? +(100 * (count / total)).toFixed(2) : 0 });
     }
 
     return NextResponse.json({
       total,
-      by_work_type: by_work_type.sort((a,b)=>b.count-a.count),
-      by_provider: by_provider.sort((a,b)=>b.count-a.count),
+      by_work_type: by_work_type.sort((a, b) => b.count - a.count),
+      by_provider: by_provider.sort((a, b) => b.count - a.count),
     });
   } catch (e: any) {
     return NextResponse.json({ error: e?.message ?? "Unknown error" }, { status: 500 });
