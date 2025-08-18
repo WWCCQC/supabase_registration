@@ -26,25 +26,35 @@ function parseDateRange(params: URLSearchParams) {
   return null;
 }
 
-function applyFilters(query: ReturnType<ReturnType<typeof supabaseAdmin>["from"]>, params: URLSearchParams) {
+function applyFilters(
+  query: ReturnType<ReturnType<typeof supabaseAdmin>["from"]>,
+  params: URLSearchParams
+) {
   const get = (k: string) => sanitize(params.get(k));
   const filters: Record<string, string> = {
     provider: get("provider"), area: get("area"), rsm: get("rsm"), ctm: get("ctm"),
     depot_code: get("depot_code"), work_type: get("work_type"), workgroup_status: get("workgroup_status"),
     gender: get("gender"), degree: get("degree"),
   };
-  for (const [k, v] of Object.entries(filters)) if (v) query = query.ilike(k, `%${v}%`);
+  // use .filter(<col>, 'ilike', <pattern>) to satisfy TS on Vercel
+  for (const [k, v] of Object.entries(filters)) {
+    if (v) query = query.filter(k, 'ilike', `%${v}%` as any);
+  }
 
   const fNat = get("f_national_id"); const fTech = get("f_tech_id");
   const fRsm = get("f_rsm");         const fDepot = get("f_depot_code");
-  if (fNat)   query = query.ilike("national_id", `%${fNat}%`);
-  if (fTech)  query = query.ilike("tech_id", `%${fTech}%`);
-  if (fRsm)   query = query.ilike("rsm", `%${fRsm}%`);
-  if (fDepot) query = query.ilike("depot_code", `%${fDepot}%`);
+  if (fNat)   query = query.filter("national_id", 'ilike', `%${fNat}%`);
+  if (fTech)  query = query.filter("tech_id", 'ilike', `%${fTech}%`);
+  if (fRsm)   query = query.filter("rsm", 'ilike', `%${fRsm}%`);
+  if (fDepot) query = query.filter("depot_code", 'ilike', `%${fDepot}%`);
 
   const q = get("q");
   if (q) {
-    const cols = ["national_id","tech_id","full_name","gender","degree","phone","email","workgroup_status","work_type","provider","area","rsm","ctm","depot_code","depot_name","province"];
+    const cols = [
+      "national_id","tech_id","full_name","gender","degree","phone","email",
+      "workgroup_status","work_type","provider","area","rsm","ctm",
+      "depot_code","depot_name","province"
+    ];
     const pat = `%${q}%`;
     query = query.or(cols.map(c => `${c}.ilike.${pat}`).join(","));
   }
@@ -58,7 +68,7 @@ async function applyDateFilterSafe(
   const range = parseDateRange(params);
   if (!range) return baseQuery;
 
-  const candidates = ["__imported_at", "created_at"];
+  const candidates = ["__imported_at", "created_at"] as const;
   for (const col of candidates) {
     try {
       const t = baseQuery.gte(col as any, range.gte).lte(col as any, range.lte).limit(0);
@@ -89,7 +99,10 @@ export async function GET(req: Request) {
     const { data: listWT = [], error: eWT } = await qWT; if (eWT) throw eWT;
     for (const raw of Array.from(new Set(listWT.map(r => (r as any).work_type).filter(Boolean)))) {
       const key = String(raw).trim();
-      let q = supabase.from("technicians").select("*", { count: "exact", head: true }).ilike("work_type", `%${key}%`);
+      let q = supabase
+        .from("technicians")
+        .select("*", { count: "exact", head: true })
+        .filter("work_type", 'ilike', `%${key}%`);
       q = applyFilters(q, params); q = await applyDateFilterSafe(q, params);
       const { count = 0 } = await q;
       by_work_type.push({ key, count, percent: total ? +(100 * count / total).toFixed(2) : 0 });
@@ -102,7 +115,10 @@ export async function GET(req: Request) {
     const { data: listPv = [], error: ePv } = await qPv; if (ePv) throw ePv;
     for (const raw of Array.from(new Set(listPv.map(r => (r as any).provider).filter(Boolean)))) {
       const key = String(raw).trim();
-      let q = supabase.from("technicians").select("*", { count: "exact", head: true }).ilike("provider", `%${key}%`);
+      let q = supabase
+        .from("technicians")
+        .select("*", { count: "exact", head: true })
+        .filter("provider", 'ilike', `%${key}%`);
       q = applyFilters(q, params); q = await applyDateFilterSafe(q, params);
       const { count = 0 } = await q;
       by_provider.push({ key, count, percent: total ? +(100 * count / total).toFixed(2) : 0 });
