@@ -78,6 +78,10 @@ export default function TechBrowser() {
   const d_depot_code = useDebounced(depot_code);
   const d_q = useDebounced(q);
 
+  /* rsm options for select */
+  const [rsmOptions, setRsmOptions] = React.useState<string[]>([]);
+  const [rsmLoading, setRsmLoading] = React.useState(false);
+
   /* sort */
   const [sort, setSort] =
     React.useState<(typeof COLS)[number]>("national_id");
@@ -157,6 +161,41 @@ export default function TechBrowser() {
       console.error(e);
     } finally {
       setKpiLoading(false);
+    }
+  }
+
+  /** ดึงรายการ RSM สำหรับ select (มี fallback จากข้อมูลช่างหน้าแรก) */
+  async function fetchRsmOptions() {
+    setRsmLoading(true);
+    try {
+      // 1) พยายามดึงจาก API โดยตรง
+      const res = await fetch(`/api/rsm`, { cache: "no-store" });
+      if (res.ok) {
+        const json = await res.json();
+        const list: string[] = Array.isArray(json?.rsmList)
+          ? json.rsmList
+          : Array.isArray(json) ? json : [];
+        const uniq = Array.from(new Set(list.filter(Boolean))).sort(
+          (a, b) => a.localeCompare(b, "th")
+        );
+        setRsmOptions(uniq);
+        return;
+      }
+      // 2) ถ้า API ไม่พร้อม → fallback ไปอ่านจาก technicians หน้าแรก
+      const params = new URLSearchParams({ page: "1", pageSize: "200" });
+      const res2 = await fetch(`/api/technicians?${params.toString()}`, {
+        cache: "no-store",
+      });
+      const json2 = await res2.json();
+      const uniq2 = Array.from(
+        new Set<string>((json2?.rows || []).map((x: Row) => String(x?.rsm || "").trim()).filter(Boolean))
+      ).sort((a, b) => a.localeCompare(b, "th"));
+      setRsmOptions(uniq2);
+    } catch (e) {
+      console.error(e);
+      setRsmOptions((prev) => prev); // คงค่าเดิมไว้ถ้าพัง
+    } finally {
+      setRsmLoading(false);
     }
   }
 
@@ -249,6 +288,11 @@ export default function TechBrowser() {
   React.useEffect(() => {
     fetchKpis();
   }, [d_national_id, d_tech_id, d_rsm, d_depot_code, d_q]);
+
+  /* ดึงรายการ RSM ตอน mount */
+  React.useEffect(() => {
+    fetchRsmOptions();
+  }, []);
 
   const start = (page - 1) * 50 + 1;
   const end = Math.min(total, page * 50);
@@ -425,11 +469,23 @@ export default function TechBrowser() {
           value={tech_id}
           onChange={(e) => setTechId(e.target.value)}
         />
-        <input
-          placeholder="rsm"
+
+        {/* RSM → select */}
+        <select
           value={rsm}
           onChange={(e) => setRsm(e.target.value)}
-        />
+          disabled={rsmLoading}
+          title="เลือก RSM"
+          style={{ height: 28 }}
+        >
+          <option value="">{rsmLoading ? "กำลังโหลด..." : "— RSM ทั้งหมด —"}</option>
+          {rsmOptions.map((opt) => (
+            <option key={opt} value={opt}>
+              {opt}
+            </option>
+          ))}
+        </select>
+
         <input
           placeholder="depot_code"
           value={depot_code}
