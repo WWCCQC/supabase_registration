@@ -619,7 +619,7 @@ export default function TechBrowser() {
         </div>
       )}
 
-      {/* Detail Popup — FULL WIDTH */}
+      {/* Detail Popup — PORTFOLIO (FULL WIDTH) */}
       {detailOpen && (
         <div
           onClick={() => setDetailOpen(false)}
@@ -648,12 +648,12 @@ export default function TechBrowser() {
               minWidth: 520,
             }}
           >
+            {/* Header sticky */}
             <div style={{ position: "sticky", top: 0, background: "#fff", paddingBottom: 12, marginBottom: 12, zIndex: 1 }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <div>
                   <h3 style={{ margin: 0, fontSize: 20, fontWeight: 600, color: "#1f2937" }}>
-                    ข้อมูลช่าง:{" "}
-                    {detailRow?.full_name || detailRow?.tech_id || detailRow?.national_id || "-"}
+                    ข้อมูลช่าง: {detailRow?.full_name || detailRow?.tech_id || detailRow?.national_id || "-"}
                   </h3>
                   <p style={{ margin: "4px 0 0 0", fontSize: 14, color: "#6b7280" }}>
                     {detailLoading
@@ -675,66 +675,102 @@ export default function TechBrowser() {
               )}
             </div>
 
-            {/* ฟิลด์ทั้งหมด — responsive full-width grid */}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 16 }}>
-              {(detailRow ? Object.entries(detailRow) : []).map(([key, value]) => {
-                const hasValue = value !== null && value !== undefined && value !== "";
-                const label = friendlyLabel(key);
+            {/* ====== Portfolio layout ====== */}
+            {detailRow && (
+              <div style={{ display: "grid", gridTemplateColumns: "320px 1fr", gap: 16 }}>
+                {/* LEFT — photo sticky */}
+                <div style={{ position: "sticky", top: 64, alignSelf: "start" }}>
+                  <PhotoCard row={detailRow} />
+                </div>
 
-                return (
-                  <div
-                    key={key}
-                    style={{
-                      padding: 12,
-                      background: hasValue ? "#f9fafb" : "#f3f4f6",
-                      borderRadius: 8,
-                      border: "1px solid #e5e7eb",
-                      opacity: hasValue ? 1 : 0.7,
-                    }}
-                  >
-                    <div
-                      style={{
-                        fontSize: 12,
-                        color: hasValue ? "#6b7280" : "#9ca3af",
-                        marginBottom: 4,
-                        fontWeight: 500,
-                        textTransform: "uppercase",
-                      }}
-                    >
-                      {label}
-                    </div>
-                    <div
-                      style={{
-                        fontSize: 14,
-                        color: hasValue ? "#1f2937" : "#6b7280",
-                        wordBreak: "break-word",
-                        fontStyle: hasValue ? "normal" : "italic",
-                      }}
-                    >
-                      {key === "doc_tech_card_url" || key === "tech_card_url" ? (
-                        value ? (
-                          <img
-                            src={proxyImg(String(value), false)}
-                            alt="tech card"
-                            style={{ maxWidth: "100%", height: "auto", borderRadius: 6, border: "1px solid #e5e7eb" }}
-                          />
-                        ) : (
-                          "ไม่มีรูป"
-                        )
-                      ) : key === "created_at" ||
-                        key === "updated_at" ||
-                        key === "__imported_at" ? (
-                        value ? new Date(String(value)).toLocaleString("th-TH") : "ไม่ระบุ"
-                      ) : hasValue ? (
-                        String(value)
-                      ) : (
-                        "ไม่มีข้อมูล"
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+                {/* RIGHT — summary + sections */}
+                <div>
+                  {/* Identity row beside photo */}
+                  <SummaryRow row={detailRow} />
+
+                  {/* Sections */}
+                  <Section title="Section 1: ข้อมูลพื้นฐาน (Basic Information)">
+                    <Field row={detailRow} label="เพศ" keys={["gender"]} />
+                    <Field row={detailRow} label="อายุ" keys={["age"]} />
+                    <Field row={detailRow} label="ระดับการศึกษา" keys={["degree"]} />
+                    <Field row={detailRow} label="สถานะกลุ่มงาน" keys={["workgroup_status","status"]} />
+                    <Field row={detailRow} label="ประเภทงาน/ทีม" keys={["work_type","team_type"]} />
+                    <Field row={detailRow} label="บริษัท" keys={["provider"]} />
+                  </Section>
+
+                  <Section title="Section 2: พื้นที่รับงาน (Area Service)">
+                    <Field row={detailRow} label="พื้นที่" keys={["area"]} />
+                    <Field row={detailRow} label="จังหวัด" keys={["province","ctm_province"]} />
+                    <Field row={detailRow} label="RSM" keys={["rsm"]} />
+                    <Field row={detailRow} label="CTM" keys={["ctm"]} />
+                    <Field row={detailRow} label="รหัสคลัง" keys={["depot_code"]} />
+                    <Field row={detailRow} label="ชื่อคลัง" keys={["depot_name"]} />
+                  </Section>
+
+                  <Section title="Section 3: ข้อมูลบริการ (Services)">
+                    {[
+                      ["SVC Install", ["svc_install","service_install"]],
+                      ["SVC Repair", ["svc_repair","service_repair"]],
+                      ["SVC OJT", ["svc_ojt"]],
+                      ["SVC Safety", ["svc_safety"]],
+                      ["SVC Softskill", ["svc_softskill"]],
+                      ["SVC 5P", ["svc_5p"]],
+                      ["SVC Nonstandard", ["svc_nonstandard"]],
+                      ["SVC Corporate", ["svc_corporate"]],
+                      ["SVC Solar", ["svc_solar"]],
+                      ["SVC FTTR", ["svc_fttr"]],
+                      ["SVC 2G", ["svc_2g"]],
+                      ["SVC CCTV", ["svc_cctv"]],
+                      ["SVC CYOD", ["svc_cyod"]],
+                      ["SVC Dongle", ["svc_dongle"]],
+                      ["SVC IOT", ["svc_iot"]],
+                      ["SVC Gigatex", ["svc_gigatex"]],
+                      ["SVC Wifi", ["svc_wifi"]],
+                      ["SVC Smarthome", ["svc_smarthome"]],
+                      ["SVC CATV Settop Box", ["svc_catv_settop"]],
+                      ["SVC True ID", ["svc_true_id"]],
+                      ["SVC True Inno", ["svc_true_inno"]],
+                      ["SVC L3", ["svc_l3"]],
+                    ].map(([label, keys]) => (
+                      <Field key={String(label)} row={detailRow} label={String(label)} keys={keys as string[]} />
+                    ))}
+                  </Section>
+
+                  <Section title="Section 4: ข้อมูลอำนาจและความปลอดภัย (Authority & Safety)">
+                    <Field row={detailRow} label="Power Authority" keys={["power_authority"]} />
+                    <Field row={detailRow} label="Power Card Start Date" keys={["power_card_start_date"]} isDate />
+                    <Field row={detailRow} label="Power Card Expire Date" keys={["power_card_expire_date","card_expire_date"]} isDate />
+                    <Field row={detailRow} label="SSO Number" keys={["sso_number"]} />
+                    <Field row={detailRow} label="Safety Officer Executive" keys={["safety_officer_executive"]} />
+                    <Field row={detailRow} label="Safety Officer Supervisor" keys={["safety_officer_supervisor"]} />
+                    <Field row={detailRow} label="Safety Officer Technical" keys={["safety_officer_technical"]} />
+                  </Section>
+
+                  <Section title="Section 5: ข้อมูลรถยนต์ (Vehicle Information)">
+                    <Field row={detailRow} label="Car Brand Code" keys={["car_brand_code"]} />
+                    <Field row={detailRow} label="Car Model" keys={["car_model"]} />
+                    <Field row={detailRow} label="Car Color" keys={["car_color"]} />
+                    <Field row={detailRow} label="Car License Plate" keys={["car_license_plate"]} />
+                    <Field row={detailRow} label="Car Reg Province" keys={["car_reg_province"]} />
+                    <Field row={detailRow} label="Car Type" keys={["car_type"]} />
+                    <Field row={detailRow} label="Equip Carryboy" keys={["equip_carryboy"]} />
+                  </Section>
+
+                  <Section title="Section 6: ข้อมูลเอกสาร (Documents)">
+                    <DocField row={detailRow} label="Doc Tech Card URL" keys={["doc_tech_card_url","tech_card_url"]} />
+                    <DocField row={detailRow} label="Doc ID Card URL" keys={["doc_id_card_url"]} />
+                    <DocField row={detailRow} label="Doc Driver License URL" keys={["doc_driver_license_url"]} />
+                    <DocField row={detailRow} label="Doc Education Certificate URL" keys={["doc_education_certificate_url"]} />
+                    <DocField row={detailRow} label="Doc Criminal Record URL" keys={["doc_criminal_record_url"]} />
+                    <DocField row={detailRow} label="Doc Medical Certificate URL" keys={["doc_medical_certificate_url"]} />
+                    <DocField row={detailRow} label="Doc Power Authority Card URL" keys={["doc_power_authority_card_url"]} />
+                    <DocField row={detailRow} label="Doc Safety Officer Executive URL" keys={["doc_safety_officer_executive_url"]} />
+                    <DocField row={detailRow} label="Doc Safety Officer Supervisor URL" keys={["doc_safety_officer_supervisor_url"]} />
+                    <DocField row={detailRow} label="Doc Safety Officer Technical URL" keys={["doc_safety_officer_technical_url"]} />
+                  </Section>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -742,65 +778,194 @@ export default function TechBrowser() {
   );
 }
 
-/* ---------- Label helper for popup ---------- */
+/* ---------- Reusable UI for the modal ---------- */
+function SummaryRow({ row }: { row: Row }) {
+  return (
+    <div style={{
+      display: "grid",
+      gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+      gap: 12,
+      marginBottom: 16,
+    }}>
+      <SummaryChip label="TECH ID">{pick(row, ["tech_id"]) || "—"}</SummaryChip>
+      <SummaryChip label="FULL NAME">{pick(row, ["full_name","tech_first_name","tech_last_name"]) || "—"}</SummaryChip>
+      <SummaryChip label="GENDER">{pick(row, ["gender"]) || "—"}</SummaryChip>
+      <SummaryChip label="PHONE">{pick(row, ["phone","tel"]) || "—"}</SummaryChip>
+      <SummaryChip label="EMAIL">{pick(row, ["email"]) || "—"}</SummaryChip>
+    </div>
+  );
+}
+
+function SummaryChip({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div style={{
+      padding: "12px 14px",
+      background: "#f9fafb",
+      border: "1px solid #e5e7eb",
+      borderRadius: 10
+    }}>
+      <div style={{ fontSize: 11, color: "#6b7280", letterSpacing: .4, textTransform: "uppercase", marginBottom: 4 }}>{label}</div>
+      <div style={{ fontSize: 15, fontWeight: 600, color: "#111827" }}>{children}</div>
+    </div>
+  );
+}
+
+function PhotoCard({ row }: { row: Row }) {
+  const url = pick(row, ["doc_tech_card_url", "tech_card_url"]);
+  return (
+    <div style={{
+      border: "1px solid #e5e7eb",
+      borderRadius: 12,
+      padding: 12,
+      background: "#fff",
+      boxShadow: "0 1px 2px rgba(0,0,0,.04)",
+      width: 300
+    }}>
+      <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 8 }}>รูปบัตรช่าง</div>
+      {url ? (
+        <img
+          src={proxyImg(String(url), false)}
+          alt="tech card"
+          style={{ width: "100%", height: "auto", borderRadius: 8, border: "1px solid #e5e7eb" }}
+        />
+      ) : (
+        <div style={{
+          height: 200,
+          borderRadius: 8,
+          border: "1px dashed #e5e7eb",
+          color: "#9ca3af",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center"
+        }}>ไม่มีรูป</div>
+      )}
+    </div>
+  );
+}
+
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div style={{ marginBottom: 22 }}>
+      <div style={{
+        fontWeight: 700,
+        fontSize: 14,
+        marginBottom: 10,
+        background: "#eef2ff",
+        color: "#1e40af",
+        padding: "6px 10px",
+        borderRadius: 8,
+        display: "inline-block"
+      }}>
+        {title}
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 12 }}>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function Field({
+  row,
+  label,
+  keys,
+  isDate = false,
+}: {
+  row: Row;
+  label: string;
+  keys: string[];
+  isDate?: boolean;
+}) {
+  let v = pick(row, keys);
+  if (isDate && v) {
+    try { v = new Date(String(v)).toLocaleString("th-TH"); } catch {}
+  }
+  const hasValue = v !== undefined && v !== null && String(v).trim() !== "";
+  return (
+    <div style={{
+      padding: 12,
+      background: hasValue ? "#f9fafb" : "#f3f4f6",
+      borderRadius: 8,
+      border: "1px solid #e5e7eb",
+      opacity: hasValue ? 1 : 0.7
+    }}>
+      <div style={{ fontSize: 12, color: hasValue ? "#6b7280" : "#9ca3af", marginBottom: 4, fontWeight: 500 }}>
+        {label}
+      </div>
+      <div style={{ fontSize: 14, color: hasValue ? "#111827" : "#6b7280" }}>
+        {hasValue ? String(v) : "—"}
+      </div>
+    </div>
+  );
+}
+
+function DocField({ row, label, keys }: { row: Row; label: string; keys: string[] }) {
+  const v = pick(row, keys);
+  const has = v !== undefined && v !== null && String(v).trim() !== "";
+  return (
+    <div style={{
+      padding: 12,
+      background: has ? "#f9fafb" : "#f3f4f6",
+      borderRadius: 8,
+      border: "1px solid #e5e7eb",
+      opacity: has ? 1 : 0.7
+    }}>
+      <div style={{ fontSize: 12, color: has ? "#6b7280" : "#9ca3af", marginBottom: 4, fontWeight: 500 }}>
+        {label}
+      </div>
+      <div style={{ fontSize: 14 }}>
+        {has ? (
+          <a href={proxyImg(String(v), false)} target="_blank" rel="noreferrer" style={{ color: "#2563eb", textDecoration: "underline" }}>
+            เปิดไฟล์
+          </a>
+        ) : "—"}
+      </div>
+    </div>
+  );
+}
+
+/* pick first non-empty value by candidate keys */
+function pick(row: Row, keys: string[]) {
+  for (const k of keys) {
+    const v = row?.[k];
+    if (v !== undefined && v !== null && String(v).trim() !== "") return v;
+  }
+  return "";
+}
+
+/* ---------- Label helper (used in old generic view if needed) ---------- */
 function friendlyLabel(key: string) {
   switch (key) {
-    case "national_id":
-      return "เลขบัตรประชาชน";
-    case "tech_id":
-      return "รหัสช่าง";
-    case "full_name":
-      return "ชื่อ-นามสกุล";
-    case "tech_first_name":
-      return "ชื่อ";
-    case "tech_last_name":
-      return "นามสกุล";
-    case "gender":
-      return "เพศ";
-    case "age":
-      return "อายุ";
-    case "degree":
-      return "ระดับการศึกษา";
+    case "national_id": return "เลขบัตรประชาชน";
+    case "tech_id": return "รหัสช่าง";
+    case "full_name": return "ชื่อ-นามสกุล";
+    case "tech_first_name": return "ชื่อ";
+    case "tech_last_name": return "นามสกุล";
+    case "gender": return "เพศ";
+    case "age": return "อายุ";
+    case "degree": return "ระดับการศึกษา";
     case "phone":
-    case "tel":
-      return "เบอร์โทรศัพท์";
-    case "email":
-      return "อีเมล";
+    case "tel": return "เบอร์โทรศัพท์";
+    case "email": return "อีเมล";
     case "workgroup_status":
-    case "status":
-      return "สถานะกลุ่มงาน";
+    case "status": return "สถานะกลุ่มงาน";
     case "work_type":
-    case "team_type":
-      return "ประเภทงาน/ทีม";
-    case "provider":
-      return "บริษัท";
-    case "area":
-      return "พื้นที่";
-    case "rsm":
-      return "RSM";
-    case "ctm":
-      return "CTM";
-    case "depot_code":
-      return "รหัสคลัง";
-    case "depot_name":
-      return "ชื่อคลัง";
-    case "province":
-      return "จังหวัด";
-    case "ctm_province":
-      return "จังหวัด (CTM)";
+    case "team_type": return "ประเภทงาน/ทีม";
+    case "provider": return "บริษัท";
+    case "area": return "พื้นที่";
+    case "rsm": return "RSM";
+    case "ctm": return "CTM";
+    case "depot_code": return "รหัสคลัง";
+    case "depot_name": return "ชื่อคลัง";
+    case "province": return "จังหวัด";
+    case "ctm_province": return "จังหวัด (CTM)";
     case "doc_tech_card_url":
-    case "tech_card_url":
-      return "รูปบัตรช่าง";
-    case "created_at":
-      return "วันที่สร้าง";
-    case "updated_at":
-      return "วันที่อัปเดต";
-    case "__imported_at":
-      return "วันที่นำเข้า";
-    case "id":
-      return "ID";
-    case "uuid":
-      return "UUID";
+    case "tech_card_url": return "รูปบัตรช่าง";
+    case "created_at": return "วันที่สร้าง";
+    case "updated_at": return "วันที่อัปเดต";
+    case "__imported_at": return "วันที่นำเข้า";
+    case "id": return "ID";
+    case "uuid": return "UUID";
     default:
       return key.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
   }
