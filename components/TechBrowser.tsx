@@ -685,7 +685,7 @@ export default function TechBrowser() {
 
                 {/* RIGHT — summary + sections */}
                 <div>
-                  {/* Identity row beside photo */}
+                  {/* Identity row beside photo (UPDATED order/fields) */}
                   <SummaryRow row={detailRow} />
 
                   {/* Sections */}
@@ -779,6 +779,7 @@ export default function TechBrowser() {
 }
 
 /* ---------- Reusable UI for the modal ---------- */
+/** UPDATED: เปลี่ยนลำดับ/ฟิลด์เป็น tech_id, full_name, card_expire_date, phone, email */
 function SummaryRow({ row }: { row: Row }) {
   return (
     <div style={{
@@ -789,7 +790,7 @@ function SummaryRow({ row }: { row: Row }) {
     }}>
       <SummaryChip label="TECH ID">{pick(row, ["tech_id"]) || "—"}</SummaryChip>
       <SummaryChip label="FULL NAME">{pick(row, ["full_name","tech_first_name","tech_last_name"]) || "—"}</SummaryChip>
-      <SummaryChip label="GENDER">{pick(row, ["gender"]) || "—"}</SummaryChip>
+      <SummaryChip label="CARD EXPIRE DATE">{pick(row, ["card_expire_date"]) || "—"}</SummaryChip>
       <SummaryChip label="PHONE">{pick(row, ["phone","tel"]) || "—"}</SummaryChip>
       <SummaryChip label="EMAIL">{pick(row, ["email"]) || "—"}</SummaryChip>
     </div>
