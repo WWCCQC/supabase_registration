@@ -76,7 +76,7 @@ export default function TechBrowser() {
   /* preview image */
   const [preview, setPreview] = React.useState<string | null>(null);
 
-  /* detail popup */
+  /* detail popup (full-width modal) */
   const [detailOpen, setDetailOpen] = React.useState(false);
   const [detailLoading, setDetailLoading] = React.useState(false);
   const [detailRow, setDetailRow] = React.useState<Row | null>(null);
@@ -338,7 +338,7 @@ export default function TechBrowser() {
             );
           })}
 
-          {/* Provider: WW-Provider, True Tech, เถ้าแก่เทค */}
+          {/* Provider */}
           {["WW-Provider", "True Tech", "เถ้าแก่เทค"].map((name, index) => {
             const f = (kpi?.by_provider || []).find(
               (x) =>
@@ -619,19 +619,19 @@ export default function TechBrowser() {
         </div>
       )}
 
-      {/* Detail Popup */}
+      {/* Detail Popup — FULL WIDTH */}
       {detailOpen && (
         <div
           onClick={() => setDetailOpen(false)}
           style={{
             position: "fixed",
             inset: 0,
-            background: "rgba(0,0,0,.75)",
+            background: "rgba(0,0,0,.65)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             zIndex: 60,
-            padding: 20,
+            padding: 12,
           }}
         >
           <div
@@ -640,41 +640,43 @@ export default function TechBrowser() {
               background: "#fff",
               borderRadius: 12,
               padding: 24,
-              maxWidth: "90vw",
-              maxHeight: "90vh",
+              width: "96vw",
+              maxWidth: "1600px",
+              height: "90vh",
               overflow: "auto",
               boxShadow: "0 20px 40px rgba(0,0,0,.3)",
               minWidth: 520,
             }}
           >
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-              <div>
-                <h3 style={{ margin: 0, fontSize: 20, fontWeight: 600, color: "#1f2937" }}>
-                  ข้อมูลช่าง:{" "}
-                  {detailRow?.full_name || detailRow?.tech_id || detailRow?.national_id || "-"}
-                </h3>
-                <p style={{ margin: "4px 0 0 0", fontSize: 14, color: "#6b7280" }}>
-                  {detailLoading
-                    ? "กำลังโหลดรายละเอียด..."
-                    : detailError
-                    ? "เกิดข้อผิดพลาด"
-                    : `แสดงข้อมูลทั้งหมด ${Object.keys(detailRow || {}).length} ฟิลด์จาก Supabase`}
-                </p>
+            <div style={{ position: "sticky", top: 0, background: "#fff", paddingBottom: 12, marginBottom: 12, zIndex: 1 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: 20, fontWeight: 600, color: "#1f2937" }}>
+                    ข้อมูลช่าง:{" "}
+                    {detailRow?.full_name || detailRow?.tech_id || detailRow?.national_id || "-"}
+                  </h3>
+                  <p style={{ margin: "4px 0 0 0", fontSize: 14, color: "#6b7280" }}>
+                    {detailLoading
+                      ? "กำลังโหลดรายละเอียด..."
+                      : detailError
+                      ? "เกิดข้อผิดพลาด"
+                      : `แสดงข้อมูลทั้งหมด ${Object.keys(detailRow || {}).length} ฟิลด์จาก Supabase`}
+                  </p>
+                </div>
+                <button
+                  onClick={() => setDetailOpen(false)}
+                  style={{ background: "transparent", border: "none", fontSize: 24, cursor: "pointer", color: "#6b7280" }}
+                >
+                  ×
+                </button>
               </div>
-              <button
-                onClick={() => setDetailOpen(false)}
-                style={{ background: "transparent", border: "none", fontSize: 24, cursor: "pointer", color: "#6b7280" }}
-              >
-                ×
-              </button>
+              {detailError && (
+                <div style={{ color: "#b91c1c", marginTop: 8 }}>Error: {detailError}</div>
+              )}
             </div>
 
-            {detailError && (
-              <div style={{ color: "#b91c1c", marginBottom: 12 }}>Error: {detailError}</div>
-            )}
-
-            {/* รายการฟิลด์ทั้งหมด */}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 16 }}>
+            {/* ฟิลด์ทั้งหมด — responsive full-width grid */}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 16 }}>
               {(detailRow ? Object.entries(detailRow) : []).map(([key, value]) => {
                 const hasValue = value !== null && value !== undefined && value !== "";
                 const label = friendlyLabel(key);
