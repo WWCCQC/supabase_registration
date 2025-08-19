@@ -24,7 +24,7 @@ function proxyImg(u: string, thumb = false) {
   return `/api/img?${thumb ? "thumb=1&" : ""}u=${encodeURIComponent(u)}`;
 }
 
-/** คอลัมน์ที่ “ตาราง” ต้องแสดง (ตามที่ระบุไว้) */
+/** คอลัมน์ที่ “ตาราง” ต้องแสดง (ซ่อน ctm โดยเอาออก) */
 const COLS = [
   "national_id",
   "tech_id",
@@ -35,11 +35,26 @@ const COLS = [
   "provider",
   "area",
   "rsm",
-  "ctm",
   "depot_code",
   "depot_name",
   "province",
 ] as const;
+
+/** ความกว้างต่อคอลัมน์ (px) */
+const WIDTHS: Partial<Record<(typeof COLS)[number], number>> = {
+  national_id: 140,
+  tech_id: 120,
+  full_name: 220,
+  doc_tech_card_url: 90,
+  workgroup_status: 160,
+  work_type: 130,
+  provider: 140,
+  area: 140,
+  rsm: 120,
+  depot_code: 120,
+  depot_name: 200,
+  province: 160,
+};
 
 /* ---------- Component ---------- */
 export default function TechBrowser() {
@@ -290,14 +305,8 @@ export default function TechBrowser() {
             const pct = f?.percent ?? 0;
 
             const colors = [
-              {
-                bg: "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)",
-                text: "white",
-              },
-              {
-                bg: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
-                text: "white",
-              },
+              { bg: "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)", text: "white" },
+              { bg: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)", text: "white" },
             ];
 
             return (
@@ -316,17 +325,13 @@ export default function TechBrowser() {
                 }}
                 title={`คลิกเพื่อกรองตาม ${name}`}
               >
-                <div
-                  style={{ ...cardTitle, color: "rgba(255,255,255,0.8)" }}
-                >
+                <div style={{ ...cardTitle, color: "rgba(255,255,255,0.8)" }}>
                   {name}
                 </div>
                 <div style={{ ...cardNumber, color: "white" }}>
                   {kpiLoading ? "" : count}
                 </div>
-                <div
-                  style={{ ...cardSub, color: "rgba(255,255,255,0.8)" }}
-                >
+                <div style={{ ...cardSub, color: "rgba(255,255,255,0.8)" }}>
                   {kpiLoading ? "" : `${pct}%`}
                 </div>
               </div>
@@ -343,14 +348,8 @@ export default function TechBrowser() {
             const pct = f?.percent ?? 0;
 
             const colors = [
-              {
-                bg: "linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)",
-                text: "white",
-              },
-              {
-                bg: "linear-gradient(135deg, #fa709a 0%, #fee140 100%)",
-                text: "white",
-              },
+              { bg: "linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)", text: "white" },
+              { bg: "linear-gradient(135deg, #fa709a 0%, #fee140 100%)", text: "white" },
               { bg: "linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)", text: "#333" },
             ];
 
@@ -482,6 +481,8 @@ export default function TechBrowser() {
                     background: "#f7f7f7",
                     cursor: "pointer",
                     userSelect: "none",
+                    width: WIDTHS[h],
+                    minWidth: WIDTHS[h],
                   }}
                 >
                   {h}
@@ -500,6 +501,8 @@ export default function TechBrowser() {
                       border: "1px solid #eee",
                       padding: "6px 8px",
                       whiteSpace: "nowrap",
+                      width: WIDTHS[c],
+                      minWidth: WIDTHS[c],
                     }}
                   >
                     {c === "doc_tech_card_url" ? (
@@ -675,31 +678,31 @@ export default function TechBrowser() {
               <div style={{ display: "grid", gridTemplateColumns: "320px 1fr", gap: 16 }}>
                 {/* LEFT — photo sticky */}
                 <div style={{ position: "sticky", top: 64, alignSelf: "start" }}>
-                  <PhotoCard row={detailRow} />
+                  <PhotoCard row={detailRow!} />
                 </div>
 
                 {/* RIGHT — summary + sections */}
                 <div>
                   {/* Identity row beside photo (UPDATED order/fields) */}
-                  <SummaryRow row={detailRow} />
+                  <SummaryRow row={detailRow!} />
 
                   {/* Sections */}
                   <Section title="Section 1: ข้อมูลพื้นฐาน (Basic Information)">
-                    <Field row={detailRow} label="เพศ" keys={["gender"]} />
-                    <Field row={detailRow} label="อายุ" keys={["age"]} />
-                    <Field row={detailRow} label="ระดับการศึกษา" keys={["degree"]} />
-                    <Field row={detailRow} label="สถานะกลุ่มงาน" keys={["workgroup_status","status"]} />
-                    <Field row={detailRow} label="ประเภทงาน/ทีม" keys={["work_type","team_type"]} />
-                    <Field row={detailRow} label="บริษัท" keys={["provider"]} />
+                    <Field row={detailRow!} label="เพศ" keys={["gender"]} />
+                    <Field row={detailRow!} label="อายุ" keys={["age"]} />
+                    <Field row={detailRow!} label="ระดับการศึกษา" keys={["degree"]} />
+                    <Field row={detailRow!} label="สถานะกลุ่มงาน" keys={["workgroup_status","status"]} />
+                    <Field row={detailRow!} label="ประเภทงาน/ทีม" keys={["work_type","team_type"]} />
+                    <Field row={detailRow!} label="บริษัท" keys={["provider"]} />
                   </Section>
 
                   <Section title="Section 2: พื้นที่รับงาน (Area Service)">
-                    <Field row={detailRow} label="พื้นที่" keys={["area"]} />
-                    <Field row={detailRow} label="จังหวัด" keys={["province","ctm_province"]} />
-                    <Field row={detailRow} label="RSM" keys={["rsm"]} />
-                    <Field row={detailRow} label="CTM" keys={["ctm"]} />
-                    <Field row={detailRow} label="รหัสคลัง" keys={["depot_code"]} />
-                    <Field row={detailRow} label="ชื่อคลัง" keys={["depot_name"]} />
+                    <Field row={detailRow!} label="พื้นที่" keys={["area"]} />
+                    <Field row={detailRow!} label="จังหวัด" keys={["province","ctm_province"]} />
+                    <Field row={detailRow!} label="RSM" keys={["rsm"]} />
+                    <Field row={detailRow!} label="CTM" keys={["ctm"]} />
+                    <Field row={detailRow!} label="รหัสคลัง" keys={["depot_code"]} />
+                    <Field row={detailRow!} label="ชื่อคลัง" keys={["depot_name"]} />
                   </Section>
 
                   <Section title="Section 3: ข้อมูลบริการ (Services)">
@@ -727,41 +730,41 @@ export default function TechBrowser() {
                       ["SVC True Inno", ["svc_true_inno"]],
                       ["SVC L3", ["svc_l3"]],
                     ].map(([label, keys]) => (
-                      <Field key={String(label)} row={detailRow} label={String(label)} keys={keys as string[]} />
+                      <Field key={String(label)} row={detailRow!} label={String(label)} keys={keys as string[]} />
                     ))}
                   </Section>
 
                   <Section title="Section 4: ข้อมูลอำนาจและความปลอดภัย (Authority & Safety)">
-                    <Field row={detailRow} label="Power Authority" keys={["power_authority"]} />
-                    <Field row={detailRow} label="Power Card Start Date" keys={["power_card_start_date"]} isDate />
-                    <Field row={detailRow} label="Power Card Expire Date" keys={["power_card_expire_date","card_expire_date"]} isDate />
-                    <Field row={detailRow} label="SSO Number" keys={["sso_number"]} />
-                    <Field row={detailRow} label="Safety Officer Executive" keys={["safety_officer_executive"]} />
-                    <Field row={detailRow} label="Safety Officer Supervisor" keys={["safety_officer_supervisor"]} />
-                    <Field row={detailRow} label="Safety Officer Technical" keys={["safety_officer_technical"]} />
+                    <Field row={detailRow!} label="Power Authority" keys={["power_authority"]} />
+                    <Field row={detailRow!} label="Power Card Start Date" keys={["power_card_start_date"]} isDate />
+                    <Field row={detailRow!} label="Power Card Expire Date" keys={["power_card_expire_date","card_expire_date"]} isDate />
+                    <Field row={detailRow!} label="SSO Number" keys={["sso_number"]} />
+                    <Field row={detailRow!} label="Safety Officer Executive" keys={["safety_officer_executive"]} />
+                    <Field row={detailRow!} label="Safety Officer Supervisor" keys={["safety_officer_supervisor"]} />
+                    <Field row={detailRow!} label="Safety Officer Technical" keys={["safety_officer_technical"]} />
                   </Section>
 
                   <Section title="Section 5: ข้อมูลรถยนต์ (Vehicle Information)">
-                    <Field row={detailRow} label="Car Brand Code" keys={["car_brand_code"]} />
-                    <Field row={detailRow} label="Car Model" keys={["car_model"]} />
-                    <Field row={detailRow} label="Car Color" keys={["car_color"]} />
-                    <Field row={detailRow} label="Car License Plate" keys={["car_license_plate"]} />
-                    <Field row={detailRow} label="Car Reg Province" keys={["car_reg_province"]} />
-                    <Field row={detailRow} label="Car Type" keys={["car_type"]} />
-                    <Field row={detailRow} label="Equip Carryboy" keys={["equip_carryboy"]} />
+                    <Field row={detailRow!} label="Car Brand Code" keys={["car_brand_code"]} />
+                    <Field row={detailRow!} label="Car Model" keys={["car_model"]} />
+                    <Field row={detailRow!} label="Car Color" keys={["car_color"]} />
+                    <Field row={detailRow!} label="Car License Plate" keys={["car_license_plate"]} />
+                    <Field row={detailRow!} label="Car Reg Province" keys={["car_reg_province"]} />
+                    <Field row={detailRow!} label="Car Type" keys={["car_type"]} />
+                    <Field row={detailRow!} label="Equip Carryboy" keys={["equip_carryboy"]} />
                   </Section>
 
                   <Section title="Section 6: ข้อมูลเอกสาร (Documents)">
-                    <DocField row={detailRow} label="Doc Tech Card URL" keys={["doc_tech_card_url","tech_card_url"]} />
-                    <DocField row={detailRow} label="Doc ID Card URL" keys={["doc_id_card_url"]} />
-                    <DocField row={detailRow} label="Doc Driver License URL" keys={["doc_driver_license_url"]} />
-                    <DocField row={detailRow} label="Doc Education Certificate URL" keys={["doc_education_certificate_url"]} />
-                    <DocField row={detailRow} label="Doc Criminal Record URL" keys={["doc_criminal_record_url"]} />
-                    <DocField row={detailRow} label="Doc Medical Certificate URL" keys={["doc_medical_certificate_url"]} />
-                    <DocField row={detailRow} label="Doc Power Authority Card URL" keys={["doc_power_authority_card_url"]} />
-                    <DocField row={detailRow} label="Doc Safety Officer Executive URL" keys={["doc_safety_officer_executive_url"]} />
-                    <DocField row={detailRow} label="Doc Safety Officer Supervisor URL" keys={["doc_safety_officer_supervisor_url"]} />
-                    <DocField row={detailRow} label="Doc Safety Officer Technical URL" keys={["doc_safety_officer_technical_url"]} />
+                    <DocField row={detailRow!} label="Doc Tech Card URL" keys={["doc_tech_card_url","tech_card_url"]} />
+                    <DocField row={detailRow!} label="Doc ID Card URL" keys={["doc_id_card_url"]} />
+                    <DocField row={detailRow!} label="Doc Driver License URL" keys={["doc_driver_license_url"]} />
+                    <DocField row={detailRow!} label="Doc Education Certificate URL" keys={["doc_education_certificate_url"]} />
+                    <DocField row={detailRow!} label="Doc Criminal Record URL" keys={["doc_criminal_record_url"]} />
+                    <DocField row={detailRow!} label="Doc Medical Certificate URL" keys={["doc_medical_certificate_url"]} />
+                    <DocField row={detailRow!} label="Doc Power Authority Card URL" keys={["doc_power_authority_card_url"]} />
+                    <DocField row={detailRow!} label="Doc Safety Officer Executive URL" keys={["doc_safety_officer_executive_url"]} />
+                    <DocField row={detailRow!} label="Doc Safety Officer Supervisor URL" keys={["doc_safety_officer_supervisor_url"]} />
+                    <DocField row={detailRow!} label="Doc Safety Officer Technical URL" keys={["doc_safety_officer_technical_url"]} />
                   </Section>
                 </div>
               </div>
@@ -774,7 +777,6 @@ export default function TechBrowser() {
 }
 
 /* ---------- Reusable UI for the modal ---------- */
-/** UPDATED: เปลี่ยนลำดับ/ฟิลด์เป็น tech_id, full_name, card_expire_date, phone, email */
 function SummaryRow({ row }: { row: Row }) {
   return (
     <div style={{
