@@ -1,5 +1,6 @@
 "use client";
 import React from "react";
+import { getFieldLabel } from "../../lib/fieldLabels";
 
 type KpiResp = {
   total: number;
@@ -174,22 +175,22 @@ export default function DashboardPage() {
         </div>
 
         <div style={{ display: "grid", gridTemplateColumns: "repeat(6, minmax(0,1fr))", gap: 8 }}>
-          <input placeholder="provider" value={provider} onChange={e => setProvider(e.target.value)} />
-          <input placeholder="area" value={area} onChange={e => setArea(e.target.value)} />
-          <input placeholder="rsm" value={rsm} onChange={e => setRsm(e.target.value)} />
-          <input placeholder="ctm" value={ctm} onChange={e => setCtm(e.target.value)} />
-          <input placeholder="depot_code" value={depotCode} onChange={e => setDepotCode(e.target.value)} />
-          <input placeholder="work_type" value={workType} onChange={e => setWorkType(e.target.value)} />
-          <input placeholder="workgroup_status" value={workgroupStatus} onChange={e => setWorkgroupStatus(e.target.value)} />
-          <input placeholder="gender" value={gender} onChange={e => setGender(e.target.value)} />
-          <input placeholder="degree" value={degree} onChange={e => setDegree(e.target.value)} />
+          <input placeholder={getFieldLabel("provider")} value={provider} onChange={e => setProvider(e.target.value)} />
+          <input placeholder={getFieldLabel("area")} value={area} onChange={e => setArea(e.target.value)} />
+          <input placeholder={getFieldLabel("rsm")} value={rsm} onChange={e => setRsm(e.target.value)} />
+          <input placeholder={getFieldLabel("ctm")} value={ctm} onChange={e => setCtm(e.target.value)} />
+          <input placeholder={getFieldLabel("depot_code")} value={depotCode} onChange={e => setDepotCode(e.target.value)} />
+          <input placeholder={getFieldLabel("work_type")} value={workType} onChange={e => setWorkType(e.target.value)} />
+          <input placeholder={getFieldLabel("workgroup_status")} value={workgroupStatus} onChange={e => setWorkgroupStatus(e.target.value)} />
+          <input placeholder={getFieldLabel("gender")} value={gender} onChange={e => setGender(e.target.value)} />
+          <input placeholder={getFieldLabel("degree")} value={degree} onChange={e => setDegree(e.target.value)} />
         </div>
 
         <div style={{ display: "grid", gridTemplateColumns: "repeat(5, minmax(0,1fr))", gap: 8 }}>
-          <input placeholder="national_id (exact/partial)" value={fNationalId} onChange={e => setFNationalId(e.target.value)} />
-          <input placeholder="tech_id (exact/partial)" value={fTechId} onChange={e => setFTechId(e.target.value)} />
-          <input placeholder="rsm (exact/partial)" value={fRsm} onChange={e => setFRsm(e.target.value)} />
-          <input placeholder="depot_code (exact/partial)" value={fDepotExact} onChange={e => setFDepotExact(e.target.value)} />
+          <input placeholder={`${getFieldLabel("national_id")} (exact/partial)`} value={fNationalId} onChange={e => setFNationalId(e.target.value)} />
+          <input placeholder={`${getFieldLabel("tech_id")} (exact/partial)`} value={fTechId} onChange={e => setFTechId(e.target.value)} />
+          <input placeholder={`${getFieldLabel("rsm")} (exact/partial)`} value={fRsm} onChange={e => setFRsm(e.target.value)} />
+          <input placeholder={`${getFieldLabel("depot_code")} (exact/partial)`} value={fDepotExact} onChange={e => setFDepotExact(e.target.value)} />
           <input placeholder="ค้นหาทุกคอลัมน์ (free text)" value={q} onChange={e => setQ(e.target.value)} />
         </div>
       </div>
@@ -197,7 +198,7 @@ export default function DashboardPage() {
       {/* KPI Cards */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(180px,1fr))", gap: 12 }}>
         <div style={cardStyle}>
-          <div style={cardTitle}>Technicians ทั้งหมด</div>
+          <div style={cardTitle}>ช่างทั้งหมด</div>
           <div style={cardNumber}>{loading ? "" : total}</div>
         </div>
       </div>
