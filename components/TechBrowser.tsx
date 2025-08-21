@@ -1,5 +1,6 @@
 "use client";
 import React from "react";
+import { getFieldLabel, SECTION_LABELS, KPI_LABELS } from "../lib/fieldLabels";
 
 /* ---------- Types ---------- */
 type Row = { [key: string]: any };
@@ -541,7 +542,7 @@ export default function TechBrowser() {
                     minWidth: WIDTHS[h],
                   }}
                 >
-                  {h}
+                  {getFieldLabel(h)}
                   {sort === h ? (dir === "asc" ? " ▲" : " ▼") : ""}
                 </th>
               ))}
@@ -743,84 +744,84 @@ export default function TechBrowser() {
                   <SummaryRow row={detailRow!} />
 
                   {/* Sections */}
-                  <Section title="Section 1: ข้อมูลพื้นฐาน (Basic Information)">
-                    <Field row={detailRow!} label="เพศ" keys={["gender"]} />
-                    <Field row={detailRow!} label="อายุ" keys={["age"]} />
-                    <Field row={detailRow!} label="ระดับการศึกษา" keys={["degree"]} />
-                    <Field row={detailRow!} label="สถานะกลุ่มงาน" keys={["workgroup_status","status"]} />
-                    <Field row={detailRow!} label="ประเภทงาน/ทีม" keys={["work_type","team_type"]} />
-                    <Field row={detailRow!} label="บริษัท" keys={["provider"]} />
+                  <Section title={`Section 1: ${SECTION_LABELS.basic_info}`}>
+                    <Field row={detailRow!} label={getFieldLabel("gender")} keys={["gender"]} />
+                    <Field row={detailRow!} label={getFieldLabel("age")} keys={["age"]} />
+                    <Field row={detailRow!} label={getFieldLabel("degree")} keys={["degree"]} />
+                    <Field row={detailRow!} label={getFieldLabel("workgroup_status")} keys={["workgroup_status","status"]} />
+                    <Field row={detailRow!} label={getFieldLabel("work_type")} keys={["work_type","team_type"]} />
+                    <Field row={detailRow!} label={getFieldLabel("provider")} keys={["provider"]} />
                   </Section>
 
-                  <Section title="Section 2: พื้นที่รับงาน (Area Service)">
-                    <Field row={detailRow!} label="พื้นที่" keys={["area"]} />
-                    <Field row={detailRow!} label="จังหวัด" keys={["province","ctm_province"]} />
-                    <Field row={detailRow!} label="RSM" keys={["rsm"]} />
-                    <Field row={detailRow!} label="CTM" keys={["ctm"]} />
-                    <Field row={detailRow!} label="รหัสคลัง" keys={["depot_code"]} />
-                    <Field row={detailRow!} label="ชื่อคลัง" keys={["depot_name"]} />
+                  <Section title={`Section 2: ${SECTION_LABELS.area_service}`}>
+                    <Field row={detailRow!} label={getFieldLabel("area")} keys={["area"]} />
+                    <Field row={detailRow!} label={getFieldLabel("province")} keys={["province","ctm_province"]} />
+                    <Field row={detailRow!} label={getFieldLabel("rsm")} keys={["rsm"]} />
+                    <Field row={detailRow!} label={getFieldLabel("ctm")} keys={["ctm"]} />
+                    <Field row={detailRow!} label={getFieldLabel("depot_code")} keys={["depot_code"]} />
+                    <Field row={detailRow!} label={getFieldLabel("depot_name")} keys={["depot_name"]} />
                   </Section>
 
-                  <Section title="Section 3: ข้อมูลบริการ (Services)">
+                  <Section title={`Section 3: ${SECTION_LABELS.services}`}>
                     {[
-                      ["SVC Install", ["svc_install","service_install"]],
-                      ["SVC Repair", ["svc_repair","service_repair"]],
-                      ["SVC OJT", ["svc_ojt"]],
-                      ["SVC Safety", ["svc_safety"]],
-                      ["SVC Softskill", ["svc_softskill"]],
-                      ["SVC 5P", ["svc_5p"]],
-                      ["SVC Nonstandard", ["svc_nonstandard"]],
-                      ["SVC Corporate", ["svc_corporate"]],
-                      ["SVC Solar", ["svc_solar"]],
-                      ["SVC FTTR", ["svc_fttr"]],
-                      ["SVC 2G", ["svc_2g"]],
-                      ["SVC CCTV", ["svc_cctv"]],
-                      ["SVC CYOD", ["svc_cyod"]],
-                      ["SVC Dongle", ["svc_dongle"]],
-                      ["SVC IOT", ["svc_iot"]],
-                      ["SVC Gigatex", ["svc_gigatex"]],
-                      ["SVC Wifi", ["svc_wifi"]],
-                      ["SVC Smarthome", ["svc_smarthome"]],
-                      ["SVC CATV Settop Box", ["svc_catv_settop"]],
-                      ["SVC True ID", ["svc_true_id"]],
-                      ["SVC True Inno", ["svc_true_inno"]],
-                      ["SVC L3", ["svc_l3"]],
+                      [getFieldLabel("svc_install"), ["svc_install","service_install"]],
+                      [getFieldLabel("svc_repair"), ["svc_repair","service_repair"]],
+                      [getFieldLabel("svc_ojt"), ["svc_ojt"]],
+                      [getFieldLabel("svc_safety"), ["svc_safety"]],
+                      [getFieldLabel("svc_softskill"), ["svc_softskill"]],
+                      [getFieldLabel("svc_5p"), ["svc_5p"]],
+                      [getFieldLabel("svc_nonstandard"), ["svc_nonstandard"]],
+                      [getFieldLabel("svc_corporate"), ["svc_corporate"]],
+                      [getFieldLabel("svc_solar"), ["svc_solar"]],
+                      [getFieldLabel("svc_fttr"), ["svc_fttr"]],
+                      [getFieldLabel("svc_2g"), ["svc_2g"]],
+                      [getFieldLabel("svc_cctv"), ["svc_cctv"]],
+                      [getFieldLabel("svc_cyod"), ["svc_cyod"]],
+                      [getFieldLabel("svc_dongle"), ["svc_dongle"]],
+                      [getFieldLabel("svc_iot"), ["svc_iot"]],
+                      [getFieldLabel("svc_gigatex"), ["svc_gigatex"]],
+                      [getFieldLabel("svc_wifi"), ["svc_wifi"]],
+                      [getFieldLabel("svc_smarthome"), ["svc_smarthome"]],
+                      [getFieldLabel("svc_catv_settop"), ["svc_catv_settop"]],
+                      [getFieldLabel("svc_true_id"), ["svc_true_id"]],
+                      [getFieldLabel("svc_true_inno"), ["svc_true_inno"]],
+                      [getFieldLabel("svc_l3"), ["svc_l3"]],
                     ].map(([label, keys]) => (
                       <Field key={String(label)} row={detailRow!} label={String(label)} keys={keys as string[]} />
                     ))}
                   </Section>
 
-                  <Section title="Section 4: ข้อมูลอำนาจและความปลอดภัย (Authority & Safety)">
-                    <Field row={detailRow!} label="Power Authority" keys={["power_authority"]} />
-                    <Field row={detailRow!} label="Power Card Start Date" keys={["power_card_start_date"]} isDate />
-                    <Field row={detailRow!} label="Power Card Expire Date" keys={["power_card_expire_date"]} isDate />
-                    <Field row={detailRow!} label="SSO Number" keys={["sso_number"]} />
-                    <Field row={detailRow!} label="Safety Officer Executive" keys={["safety_officer_executive"]} />
-                    <Field row={detailRow!} label="Safety Officer Supervisor" keys={["safety_officer_supervisor"]} />
-                    <Field row={detailRow!} label="Safety Officer Technical" keys={["safety_officer_technical"]} />
+                  <Section title={`Section 4: ${SECTION_LABELS.authority_safety}`}>
+                    <Field row={detailRow!} label={getFieldLabel("power_authority")} keys={["power_authority"]} />
+                    <Field row={detailRow!} label={getFieldLabel("power_card_start_date")} keys={["power_card_start_date"]} isDate />
+                    <Field row={detailRow!} label={getFieldLabel("power_card_expire_date")} keys={["power_card_expire_date"]} isDate />
+                    <Field row={detailRow!} label={getFieldLabel("sso_number")} keys={["sso_number"]} />
+                    <Field row={detailRow!} label={getFieldLabel("safety_officer_executive")} keys={["safety_officer_executive"]} />
+                    <Field row={detailRow!} label={getFieldLabel("safety_officer_supervisor")} keys={["safety_officer_supervisor"]} />
+                    <Field row={detailRow!} label={getFieldLabel("safety_officer_technical")} keys={["safety_officer_technical"]} />
                   </Section>
 
-                  <Section title="Section 5: ข้อมูลรถยนต์ (Vehicle Information)">
-                    <Field row={detailRow!} label="Car Brand Code" keys={["car_brand_code"]} />
-                    <Field row={detailRow!} label="Car Model" keys={["car_model"]} />
-                    <Field row={detailRow!} label="Car Color" keys={["car_color"]} />
-                    <Field row={detailRow!} label="Car License Plate" keys={["car_license_plate"]} />
-                    <Field row={detailRow!} label="Car Reg Province" keys={["car_reg_province"]} />
-                    <Field row={detailRow!} label="Car Type" keys={["car_type"]} />
-                    <Field row={detailRow!} label="Equip Carryboy" keys={["equip_carryboy"]} />
+                  <Section title={`Section 5: ${SECTION_LABELS.vehicle_info}`}>
+                    <Field row={detailRow!} label={getFieldLabel("car_brand_code")} keys={["car_brand_code"]} />
+                    <Field row={detailRow!} label={getFieldLabel("car_model")} keys={["car_model"]} />
+                    <Field row={detailRow!} label={getFieldLabel("car_color")} keys={["car_color"]} />
+                    <Field row={detailRow!} label={getFieldLabel("car_license_plate")} keys={["car_license_plate"]} />
+                    <Field row={detailRow!} label={getFieldLabel("car_reg_province")} keys={["car_reg_province"]} />
+                    <Field row={detailRow!} label={getFieldLabel("car_type")} keys={["car_type"]} />
+                    <Field row={detailRow!} label={getFieldLabel("equip_carryboy")} keys={["equip_carryboy"]} />
                   </Section>
 
-                  <Section title="Section 6: ข้อมูลเอกสาร (Documents)">
-                    <DocField row={detailRow!} label="Doc Tech Card URL" keys={["doc_tech_card_url","tech_card_url"]} />
-                    <DocField row={detailRow!} label="Doc ID Card URL" keys={["doc_id_card_url"]} />
-                    <DocField row={detailRow!} label="Doc Driver License URL" keys={["doc_driver_license_url"]} />
-                    <DocField row={detailRow!} label="Doc Education Certificate URL" keys={["doc_education_certificate_url"]} />
-                    <DocField row={detailRow!} label="Doc Criminal Record URL" keys={["doc_criminal_record_url"]} />
-                    <DocField row={detailRow!} label="Doc Medical Certificate URL" keys={["doc_medical_certificate_url"]} />
-                    <DocField row={detailRow!} label="Doc Power Authority Card URL" keys={["doc_power_authority_card_url"]} />
-                    <DocField row={detailRow!} label="Doc Safety Officer Executive URL" keys={["doc_safety_officer_executive_url"]} />
-                    <DocField row={detailRow!} label="Doc Safety Officer Supervisor URL" keys={["doc_safety_officer_supervisor_url"]} />
-                    <DocField row={detailRow!} label="Doc Safety Officer Technical URL" keys={["doc_safety_officer_technical_url"]} />
+                  <Section title={`Section 6: ${SECTION_LABELS.documents}`}>
+                    <DocField row={detailRow!} label={getFieldLabel("doc_tech_card_url")} keys={["doc_tech_card_url","tech_card_url"]} />
+                    <DocField row={detailRow!} label={getFieldLabel("doc_id_card_url")} keys={["doc_id_card_url"]} />
+                    <DocField row={detailRow!} label={getFieldLabel("doc_driver_license_url")} keys={["doc_driver_license_url"]} />
+                    <DocField row={detailRow!} label={getFieldLabel("doc_education_certificate_url")} keys={["doc_education_certificate_url"]} />
+                    <DocField row={detailRow!} label={getFieldLabel("doc_criminal_record_url")} keys={["doc_criminal_record_url"]} />
+                    <DocField row={detailRow!} label={getFieldLabel("doc_medical_certificate_url")} keys={["doc_medical_certificate_url"]} />
+                    <DocField row={detailRow!} label={getFieldLabel("doc_power_authority_card_url")} keys={["doc_power_authority_card_url"]} />
+                    <DocField row={detailRow!} label={getFieldLabel("doc_safety_officer_executive_url")} keys={["doc_safety_officer_executive_url"]} />
+                    <DocField row={detailRow!} label={getFieldLabel("doc_safety_officer_supervisor_url")} keys={["doc_safety_officer_supervisor_url"]} />
+                    <DocField row={detailRow!} label={getFieldLabel("doc_safety_officer_technical_url")} keys={["doc_safety_officer_technical_url"]} />
                   </Section>
                 </div>
               </div>
@@ -841,11 +842,11 @@ function SummaryRow({ row }: { row: Row }) {
       gap: 12,
       marginBottom: 16,
     }}>
-      <SummaryChip label="TECH ID">{pick(row, ["tech_id"]) || "—"}</SummaryChip>
-      <SummaryChip label="FULL NAME">{pick(row, ["full_name","tech_first_name","tech_last_name"]) || "—"}</SummaryChip>
-      <SummaryChip label="CARD EXPIRE DATE">{pick(row, ["card_expire_date"]) || "—"}</SummaryChip>
-      <SummaryChip label="PHONE">{pick(row, ["phone","tel"]) || "—"}</SummaryChip>
-      <SummaryChip label="EMAIL">{pick(row, ["email"]) || "—"}</SummaryChip>
+      <SummaryChip label={getFieldLabel("tech_id")}>{pick(row, ["tech_id"]) || "—"}</SummaryChip>
+      <SummaryChip label={getFieldLabel("full_name")}>{pick(row, ["full_name","tech_first_name","tech_last_name"]) || "—"}</SummaryChip>
+      <SummaryChip label={getFieldLabel("card_expire_date")}>{pick(row, ["card_expire_date"]) || "—"}</SummaryChip>
+      <SummaryChip label={getFieldLabel("phone")}>{pick(row, ["phone","tel"]) || "—"}</SummaryChip>
+      <SummaryChip label={getFieldLabel("email")}>{pick(row, ["email"]) || "—"}</SummaryChip>
     </div>
   );
 }
@@ -875,7 +876,7 @@ function PhotoCard({ row }: { row: Row }) {
       boxShadow: "0 1px 2px rgba(0,0,0,.04)",
       width: 300
     }}>
-      <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 8 }}>รูปบัตรช่าง</div>
+      <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 8 }}>{getFieldLabel("doc_tech_card_url")}</div>
       {url ? (
         <img
           src={proxyImg(String(url), false)}
@@ -985,43 +986,7 @@ function pick(row: Row, keys: string[]) {
   return "";
 }
 
-/* ---------- Label helper (used in old generic view if needed) ---------- */
-function friendlyLabel(key: string) {
-  switch (key) {
-    case "national_id": return "เลขบัตรประชาชน";
-    case "tech_id": return "รหัสช่าง";
-    case "full_name": return "ชื่อ-นามสกุล";
-    case "tech_first_name": return "ชื่อ";
-    case "tech_last_name": return "นามสกุล";
-    case "gender": return "เพศ";
-    case "age": return "อายุ";
-    case "degree": return "ระดับการศึกษา";
-    case "phone":
-    case "tel": return "เบอร์โทรศัพท์";
-    case "email": return "อีเมล";
-    case "workgroup_status":
-    case "status": return "สถานะกลุ่มงาน";
-    case "work_type":
-    case "team_type": return "ประเภทงาน/ทีม";
-    case "provider": return "บริษัท";
-    case "area": return "พื้นที่";
-    case "rsm": return "RSM";
-    case "ctm": return "CTM";
-    case "depot_code": return "รหัสคลัง";
-    case "depot_name": return "ชื่อคลัง";
-    case "province": return "จังหวัด";
-    case "ctm_province": return "จังหวัด (CTM)";
-    case "doc_tech_card_url":
-    case "tech_card_url": return "รูปบัตรช่าง";
-    case "created_at": return "วันที่สร้าง";
-    case "updated_at": return "วันที่อัปเดต";
-    case "__imported_at": return "วันที่นำเข้า";
-    case "id": return "ID";
-    case "uuid": return "UUID";
-    default:
-      return key.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
-  }
-}
+
 
 /* ---------- styles ---------- */
 const cardStyle: React.CSSProperties = {
