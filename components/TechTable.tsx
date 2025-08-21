@@ -253,7 +253,7 @@ export default function TechTable({ rows }: { rows: Row[] }) {
                         textTransform: "uppercase",
                       }}
                     >
-                      {labelTH(key)}
+                      {getFieldLabel(key)}
                     </div>
 
                     <div
