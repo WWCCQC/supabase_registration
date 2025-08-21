@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 import React from "react";
 
 type KpiResp = {
@@ -9,17 +9,20 @@ type KpiResp = {
 
 function useDebounced<T>(value: T, delay = 400) {
   const [v, setV] = React.useState(value);
-  React.useEffect(() => { const id = setTimeout(() => setV(value), delay); return () => clearTimeout(id); }, [value, delay]);
+  React.useEffect(() => {
+    const id = setTimeout(() => setV(value), delay);
+    return () => clearTimeout(id);
+  }, [value, delay]);
   return v;
 }
 
 export default function DashboardPage() {
-  // date filters
+  // ----- date filters
   const [dateMode, setDateMode] = React.useState<"" | "today" | "7d" | "month" | "custom">("");
   const [dateFrom, setDateFrom] = React.useState("");
   const [dateTo, setDateTo] = React.useState("");
 
-  // main filters
+  // ----- main filters
   const [provider, setProvider] = React.useState("");
   const [area, setArea] = React.useState("");
   const [rsm, setRsm] = React.useState("");
@@ -30,7 +33,7 @@ export default function DashboardPage() {
   const [gender, setGender] = React.useState("");
   const [degree, setDegree] = React.useState("");
 
-  // quick search
+  // ----- quick search
   const [fNationalId, setFNationalId] = React.useState("");
   const [fTechId, setFTechId] = React.useState("");
   const [fRsm, setFRsm] = React.useState("");
@@ -38,8 +41,11 @@ export default function DashboardPage() {
 
   const [q, setQ] = React.useState("");
 
+  // ----- debounced bundle (ลดการยิง API ถี่ๆ)
   const d = {
-    dateMode, dateFrom, dateTo,
+    dateMode,
+    dateFrom,
+    dateTo,
     provider: useDebounced(provider),
     area: useDebounced(area),
     rsm: useDebounced(rsm),
@@ -58,6 +64,9 @@ export default function DashboardPage() {
 
   const [loading, setLoading] = React.useState(false);
   const [kpi, setKpi] = React.useState<KpiResp | null>(null);
+
+  // สำหรับยกเลิก request เก่า ป้องกัน race condition
+  const abortRef = React.useRef<AbortController | null>(null);
 
   function buildParams() {
     const p = new URLSearchParams();
@@ -85,19 +94,36 @@ export default function DashboardPage() {
         p.set("date_to", dateTo);
       }
     }
+
+    // ป้องกัน proxy cache (เสริมจาก cache: 'no-store')
+    p.set("_ts", String(Date.now()));
     return p;
   }
 
   async function fetchKpis() {
+    // ยกเลิก request เดิมถ้ายังค้าง
+    if (abortRef.current) abortRef.current.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+
     setLoading(true);
     try {
-      const res = await fetch(`/api/kpis?${buildParams().toString()}`, { cache: "no-store" });
+      const url = `/api/kpis?${buildParams().toString()}`;
+      const res = await fetch(url, {
+        cache: "no-store",                 // กัน cache ฝั่ง browser
+        signal: controller.signal,         // รองรับยกเลิก
+        headers: {
+          "x-no-cache": String(Date.now()) // กัน intermediary cache
+        }
+      });
       const json = await res.json();
       if (!res.ok) throw new Error(json?.error || "Fetch error");
-      setKpi(json);
-    } catch (e) {
-      console.error(e);
-      alert((e as Error).message);
+      setKpi(json as KpiResp);            // API ต้องคำนวณ count ฝั่ง server (ไม่ใช่ data.length)
+    } catch (e: any) {
+      if (e?.name !== "AbortError") {
+        console.error(e);
+        alert(e?.message ?? "Fetch error");
+      }
     } finally {
       setLoading(false);
     }
@@ -105,12 +131,17 @@ export default function DashboardPage() {
 
   React.useEffect(() => {
     fetchKpis();
-  }, [d.provider, d.area, d.rsm, d.ctm, d.depotCode, d.workType, d.workgroupStatus, d.gender, d.degree,
-      d.fNationalId, d.fTechId, d.fRsm, d.fDepotExact, d.q, dateMode, dateFrom, dateTo]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    d.provider, d.area, d.rsm, d.ctm, d.depotCode, d.workType, d.workgroupStatus,
+    d.gender, d.degree, d.fNationalId, d.fTechId, d.fRsm, d.fDepotExact, d.q,
+    dateMode, dateFrom, dateTo,
+  ]);
 
   function resetFilters() {
-    setProvider(""); setArea(""); setRsm(""); setCtm(""); setDepotCode(""); setWorkType(""); setWorkgroupStatus("");
-    setGender(""); setDegree(""); setFNationalId(""); setFTechId(""); setFRsm(""); setFDepotExact(""); setQ("");
+    setProvider(""); setArea(""); setRsm(""); setCtm(""); setDepotCode("");
+    setWorkType(""); setWorkgroupStatus(""); setGender(""); setDegree("");
+    setFNationalId(""); setFTechId(""); setFRsm(""); setFDepotExact(""); setQ("");
     setDateMode(""); setDateFrom(""); setDateTo("");
   }
 
@@ -123,50 +154,50 @@ export default function DashboardPage() {
       {/* Filters */}
       <div style={{ display: "grid", gap: 8 }}>
         <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-          <label>ชวงเวลา:</label>
-          <select value={dateMode} onChange={e=>setDateMode(e.target.value as any)}>
-            <option value=""> ไมใชชวงเวลา </option>
-            <option value="today">วนน</option>
-            <option value="7d">7 วนลาสด</option>
-            <option value="month">เดอนน</option>
+          <label>ช่วงเวลา:</label>
+          <select value={dateMode} onChange={e => setDateMode(e.target.value as any)}>
+            <option value="">ไม่ใช้ช่วงเวลา</option>
+            <option value="today">วันนี้</option>
+            <option value="7d">7 วันล่าสุด</option>
+            <option value="month">เดือนนี้</option>
             <option value="custom">กำหนดเอง</option>
           </select>
           {dateMode === "custom" && (
             <>
-              <input type="date" value={dateFrom} onChange={e=>setDateFrom(e.target.value)} />
-              <span>ถง</span>
-              <input type="date" value={dateTo} onChange={e=>setDateTo(e.target.value)} />
+              <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} />
+              <span>ถึง</span>
+              <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} />
             </>
           )}
-          <button onClick={fetchKpis} disabled={loading}>รเฟรช</button>
-          <button onClick={resetFilters} disabled={loading}>ลางตวกรอง</button>
+          <button onClick={fetchKpis} disabled={loading}>รีเฟรช</button>
+          <button onClick={resetFilters} disabled={loading}>ล้างตัวกรอง</button>
         </div>
 
         <div style={{ display: "grid", gridTemplateColumns: "repeat(6, minmax(0,1fr))", gap: 8 }}>
-          <input placeholder="provider" value={provider} onChange={e=>setProvider(e.target.value)} />
-          <input placeholder="area" value={area} onChange={e=>setArea(e.target.value)} />
-          <input placeholder="rsm" value={rsm} onChange={e=>setRsm(e.target.value)} />
-          <input placeholder="ctm" value={ctm} onChange={e=>setCtm(e.target.value)} />
-          <input placeholder="depot_code" value={depotCode} onChange={e=>setDepotCode(e.target.value)} />
-          <input placeholder="work_type" value={workType} onChange={e=>setWorkType(e.target.value)} />
-          <input placeholder="workgroup_status" value={workgroupStatus} onChange={e=>setWorkgroupStatus(e.target.value)} />
-          <input placeholder="gender" value={gender} onChange={e=>setGender(e.target.value)} />
-          <input placeholder="degree" value={degree} onChange={e=>setDegree(e.target.value)} />
+          <input placeholder="provider" value={provider} onChange={e => setProvider(e.target.value)} />
+          <input placeholder="area" value={area} onChange={e => setArea(e.target.value)} />
+          <input placeholder="rsm" value={rsm} onChange={e => setRsm(e.target.value)} />
+          <input placeholder="ctm" value={ctm} onChange={e => setCtm(e.target.value)} />
+          <input placeholder="depot_code" value={depotCode} onChange={e => setDepotCode(e.target.value)} />
+          <input placeholder="work_type" value={workType} onChange={e => setWorkType(e.target.value)} />
+          <input placeholder="workgroup_status" value={workgroupStatus} onChange={e => setWorkgroupStatus(e.target.value)} />
+          <input placeholder="gender" value={gender} onChange={e => setGender(e.target.value)} />
+          <input placeholder="degree" value={degree} onChange={e => setDegree(e.target.value)} />
         </div>
 
         <div style={{ display: "grid", gridTemplateColumns: "repeat(5, minmax(0,1fr))", gap: 8 }}>
-          <input placeholder="national_id (exact/partial)" value={fNationalId} onChange={e=>setFNationalId(e.target.value)} />
-          <input placeholder="tech_id (exact/partial)" value={fTechId} onChange={e=>setFTechId(e.target.value)} />
-          <input placeholder="rsm (exact/partial)" value={fRsm} onChange={e=>setFRsm(e.target.value)} />
-          <input placeholder="depot_code (exact/partial)" value={fDepotExact} onChange={e=>setFDepotExact(e.target.value)} />
-          <input placeholder="คนหาทกคอลมน (free text)" value={q} onChange={e=>setQ(e.target.value)} />
+          <input placeholder="national_id (exact/partial)" value={fNationalId} onChange={e => setFNationalId(e.target.value)} />
+          <input placeholder="tech_id (exact/partial)" value={fTechId} onChange={e => setFTechId(e.target.value)} />
+          <input placeholder="rsm (exact/partial)" value={fRsm} onChange={e => setFRsm(e.target.value)} />
+          <input placeholder="depot_code (exact/partial)" value={fDepotExact} onChange={e => setFDepotExact(e.target.value)} />
+          <input placeholder="ค้นหาทุกคอลัมน์ (free text)" value={q} onChange={e => setQ(e.target.value)} />
         </div>
       </div>
 
       {/* KPI Cards */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(180px,1fr))", gap: 12 }}>
         <div style={cardStyle}>
-          <div style={cardTitle}>Technicians ทงหมด</div>
+          <div style={cardTitle}>Technicians ทั้งหมด</div>
           <div style={cardNumber}>{loading ? "" : total}</div>
         </div>
       </div>
@@ -174,28 +205,28 @@ export default function DashboardPage() {
       <section>
         <h3 style={{ margin: "8px 0" }}>Technicians แยกตาม work_type</h3>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(5, minmax(180px,1fr))", gap: 12 }}>
-          {(kpi?.by_work_type ?? []).map(x => (
+          {(kpi?.by_work_type ?? []).map((x) => (
             <div key={x.key} style={cardStyle}>
-              <div style={cardTitle}>{x.key || "(ไมระบ)"}</div>
+              <div style={cardTitle}>{x.key || "(ไม่ระบุ)"}</div>
               <div style={cardNumber}>{x.count}</div>
               <div style={cardSub}>{x.percent}%</div>
             </div>
           ))}
-          {(!kpi || kpi.by_work_type.length === 0) && <div style={{ color:"#666" }}>ไมมขอมล</div>}
+          {(!kpi || kpi.by_work_type.length === 0) && <div style={{ color: "#666" }}>ไม่มีข้อมูล</div>}
         </div>
       </section>
 
       <section>
         <h3 style={{ margin: "8px 0" }}>Technicians แยกตาม provider</h3>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(5, minmax(180px,1fr))", gap: 12 }}>
-          {(kpi?.by_provider ?? []).map(x => (
+          {(kpi?.by_provider ?? []).map((x) => (
             <div key={x.key} style={cardStyle}>
-              <div style={cardTitle}>{x.key || "(ไมระบ)"}</div>
+              <div style={cardTitle}>{x.key || "(ไม่ระบุ)"}</div>
               <div style={cardNumber}>{x.count}</div>
               <div style={cardSub}>{x.percent}%</div>
             </div>
           ))}
-          {(!kpi || kpi.by_provider.length === 0) && <div style={{ color:"#666" }}>ไมมขอมล</div>}
+          {(!kpi || kpi.by_provider.length === 0) && <div style={{ color: "#666" }}>ไม่มีข้อมูล</div>}
         </div>
       </section>
     </div>
@@ -209,6 +240,6 @@ const cardStyle: React.CSSProperties = {
   background: "#fff",
   boxShadow: "0 1px 2px rgba(0,0,0,0.04)",
 };
-const cardTitle: React.CSSProperties  = { fontSize: 12, color: "#6b7280", marginBottom: 4 };
+const cardTitle: React.CSSProperties = { fontSize: 12, color: "#6b7280", marginBottom: 4 };
 const cardNumber: React.CSSProperties = { fontSize: 24, fontWeight: 700 };
-const cardSub: React.CSSProperties    = { fontSize: 12, color: "#6b7280" };
+const cardSub: React.CSSProperties = { fontSize: 12, color: "#6b7280" };
