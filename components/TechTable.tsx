@@ -1,5 +1,6 @@
 "use client";
 import React from "react";
+import { getFieldLabel } from "../lib/fieldLabels";
 
 /** แถวข้อมูลจาก Supabase (ยืดหยุ่น: รับทุกฟิลด์) */
 type Row = Record<string, any>;
@@ -32,43 +33,7 @@ function proxyImg(u: string, thumb = false) {
   return `/api/img?${thumb ? "thumb=1&" : ""}u=${encodeURIComponent(u)}`;
 }
 
-/** ชื่อ label ภาษาไทย (เฉพาะที่อยากสวย ๆ) */
-function labelTH(key: string) {
-  return (
-    {
-      national_id: "เลขบัตรประชาชน",
-      tech_id: "รหัสช่าง",
-      full_name: "ชื่อ-นามสกุล",
-      tech_first_name: "ชื่อ",
-      tech_last_name: "นามสกุล",
-      gender: "เพศ",
-      age: "อายุ",
-      degree: "ระดับการศึกษา",
-      phone: "เบอร์โทรศัพท์",
-      tel: "เบอร์โทรศัพท์",
-      email: "อีเมล",
-      workgroup_status: "สถานะกลุ่มงาน",
-      status: "สถานะ",
-      work_type: "ประเภทงาน",
-      team_type: "ประเภททีม",
-      provider: "บริษัท",
-      area: "พื้นที่",
-      rsm: "RSM",
-      ctm: "CTM",
-      depot_code: "รหัสคลัง",
-      depot_name: "ชื่อคลัง",
-      province: "จังหวัด",
-      ctm_province: "จังหวัด CTM",
-      doc_tech_card_url: "รูปบัตรช่าง",
-      tech_card_url: "รูปบัตรช่าง",
-      created_at: "วันที่สร้าง",
-      updated_at: "วันที่อัปเดต",
-      __imported_at: "วันที่นำเข้า",
-      id: "ID",
-      uuid: "UUID",
-    } as Record<string, string>
-  )[key] || key.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
-}
+
 
 export default function TechTable({ rows }: { rows: Row[] }) {
   const [preview, setPreview] = React.useState<string | null>(null);
@@ -95,7 +60,7 @@ export default function TechTable({ rows }: { rows: Row[] }) {
                     whiteSpace: "nowrap",
                   }}
                 >
-                  {h}
+                  {getFieldLabel(h)}
                 </th>
               ))}
             </tr>
