@@ -793,7 +793,7 @@ export default function TechBrowser() {
                   <Section title="Section 4: ข้อมูลอำนาจและความปลอดภัย (Authority & Safety)">
                     <Field row={detailRow!} label="Power Authority" keys={["power_authority"]} />
                     <Field row={detailRow!} label="Power Card Start Date" keys={["power_card_start_date"]} isDate />
-                    <Field row={detailRow!} label="Power Card Expire Date" keys={["power_card_expire_date","card_expire_date"]} isDate />
+                    <Field row={detailRow!} label="Power Card Expire Date" keys={["power_card_expire_date"]} isDate />
                     <Field row={detailRow!} label="SSO Number" keys={["sso_number"]} />
                     <Field row={detailRow!} label="Safety Officer Executive" keys={["safety_officer_executive"]} />
                     <Field row={detailRow!} label="Safety Officer Supervisor" keys={["safety_officer_supervisor"]} />
@@ -931,9 +931,7 @@ function Field({
   isDate?: boolean;
 }) {
   let v = pick(row, keys);
-  if (isDate && v) {
-    try { v = new Date(String(v)).toLocaleString("th-TH"); } catch {}
-  }
+  // แสดงค่าที่ดึงมาจาก Supabase โดยตรง โดยไม่แปลงรูปแบบ
   const hasValue = v !== undefined && v !== null && String(v).trim() !== "";
   return (
     <div style={{
