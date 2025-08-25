@@ -2,11 +2,22 @@
 import React from "react";
 import { getFieldLabel } from "../../lib/fieldLabels";
 
+// เพิ่ม dynamic import เพื่อป้องกัน static generation
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 type KpiResp = {
   total: number;
   by_work_type: { key: string; count: number; percent: number }[];
   by_provider: { key: string; count: number; percent: number }[];
 };
+
+// ฟังก์ชันสำหรับจัดรูปแบบตัวเลขให้ใส่เครื่องหมาย ","
+function formatNumber(num: number): string {
+  const result = num.toLocaleString('en-US');
+  console.log(`formatNumber(${num}) = ${result}`);
+  return result;
+}
 
 function useDebounced<T>(value: T, delay = 400) {
   const [v, setV] = React.useState(value);
@@ -114,7 +125,10 @@ export default function DashboardPage() {
         cache: "no-store",                 // กัน cache ฝั่ง browser
         signal: controller.signal,         // รองรับยกเลิก
         headers: {
-          "x-no-cache": String(Date.now()) // กัน intermediary cache
+          "x-no-cache": String(Date.now()), // กัน intermediary cache
+          "Cache-Control": "no-cache, no-store, must-revalidate",
+          "Pragma": "no-cache",
+          "Expires": "0"
         }
       });
       const json = await res.json();
@@ -172,6 +186,20 @@ export default function DashboardPage() {
           )}
           <button onClick={fetchKpis} disabled={loading}>รีเฟรช</button>
           <button onClick={resetFilters} disabled={loading}>ล้างตัวกรอง</button>
+          <button 
+            onClick={() => {
+              // Force refresh with new timestamp
+              setQ(prev => prev + ' ' + Date.now());
+              setTimeout(() => setQ(prev => prev.replace(/ \d+$/, '')), 100);
+            }} 
+            disabled={loading}
+            style={{ background: '#f59e0b', color: 'white' }}
+          >
+            Force Refresh
+          </button>
+          <span style={{ fontSize: 12, color: '#666' }}>
+            Last update: {new Date().toLocaleTimeString()}
+          </span>
         </div>
 
         <div style={{ display: "grid", gridTemplateColumns: "repeat(6, minmax(0,1fr))", gap: 8 }}>
@@ -199,7 +227,7 @@ export default function DashboardPage() {
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(180px,1fr))", gap: 12 }}>
         <div style={cardStyle}>
           <div style={cardTitle}>ช่างทั้งหมด</div>
-          <div style={cardNumber}>{loading ? "" : total}</div>
+          <div style={cardNumber}>{loading ? "" : formatNumber(total)}</div>
         </div>
       </div>
 
@@ -209,7 +237,7 @@ export default function DashboardPage() {
           {(kpi?.by_work_type ?? []).map((x) => (
             <div key={x.key} style={cardStyle}>
               <div style={cardTitle}>{x.key || "(ไม่ระบุ)"}</div>
-              <div style={cardNumber}>{x.count}</div>
+              <div style={cardNumber}>{formatNumber(x.count)}</div>
               <div style={cardSub}>{x.percent}%</div>
             </div>
           ))}
@@ -223,7 +251,7 @@ export default function DashboardPage() {
           {(kpi?.by_provider ?? []).map((x) => (
             <div key={x.key} style={cardStyle}>
               <div style={cardTitle}>{x.key || "(ไม่ระบุ)"}</div>
-              <div style={cardNumber}>{x.count}</div>
+              <div style={cardNumber}>{formatNumber(x.count)}</div>
               <div style={cardSub}>{x.percent}%</div>
             </div>
           ))}
