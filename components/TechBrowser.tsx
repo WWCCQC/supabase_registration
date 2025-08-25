@@ -646,9 +646,6 @@ export default function TechBrowser() {
       {/* ===== Stacked Column Chart ===== */}
       <div style={{ marginBottom: 20 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-          <h3 style={{ fontSize: 18, fontWeight: 600, margin: 0 }}>
-            📊 Stacked Column Chart: RSM by Workgroup Status
-          </h3>
           {selectedRsm && (
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <span style={{ 
