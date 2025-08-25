@@ -1,6 +1,18 @@
 "use client";
 import React from "react";
 import { getFieldLabel, SECTION_LABELS, KPI_LABELS } from "../lib/fieldLabels";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  LabelList,
+  Cell,
+} from "recharts";
 
 /* ---------- Types ---------- */
 type Row = { [key: string]: any };
@@ -73,6 +85,9 @@ export default function TechBrowser() {
   const [rsm, setRsm] = React.useState("");
   const [depot_code, setDepotCode] = React.useState("");
   const [q, setQ] = React.useState("");
+  
+  /* Selected RSM from chart */
+  const [selectedRsm, setSelectedRsm] = React.useState<string | null>(null);
 
   const d_national_id = useDebounced(national_id);
   const d_tech_id = useDebounced(tech_id);
@@ -102,6 +117,11 @@ export default function TechBrowser() {
   const [kpi, setKpi] = React.useState<KpiResp | null>(null);
   const [kpiLoading, setKpiLoading] = React.useState(false);
 
+  /* Chart Data */
+  const [chartData, setChartData] = React.useState<any[]>([]);
+  const [chartSummary, setChartSummary] = React.useState<any>(null);
+  const [chartLoading, setChartLoading] = React.useState(false);
+
   /* ----- helpers ----- */
   function buildParams(p = page, size = 50) {
     const params = new URLSearchParams({
@@ -112,7 +132,12 @@ export default function TechBrowser() {
     });
     if (d_national_id) params.set("national_id", d_national_id);
     if (d_tech_id) params.set("tech_id", d_tech_id);
-    if (d_rsm) params.set("rsm", d_rsm);
+    // Use direct rsm value when selected from chart, otherwise use debounced
+    if (selectedRsm) {
+      params.set("rsm", selectedRsm);
+    } else if (d_rsm) {
+      params.set("rsm", d_rsm);
+    }
     if (d_depot_code) params.set("depot_code", d_depot_code);
     if (d_q) params.set("q", d_q);
     return params;
@@ -122,7 +147,15 @@ export default function TechBrowser() {
     const p = new URLSearchParams();
     if (d_national_id) p.set("f_national_id", d_national_id);
     if (d_tech_id) p.set("f_tech_id", d_tech_id);
-    if (d_rsm) p.set("f_rsm", d_rsm);
+    // Use direct rsm value when selected from chart, otherwise use debounced
+    // KPI API uses both 'rsm' and 'f_rsm' parameters
+    if (selectedRsm) {
+      p.set("rsm", selectedRsm);
+      p.set("f_rsm", selectedRsm);
+    } else if (d_rsm) {
+      p.set("rsm", d_rsm);
+      p.set("f_rsm", d_rsm);
+    }
     if (d_depot_code) p.set("f_depot_code", d_depot_code);
     if (d_q) p.set("q", d_q);
     return p;
@@ -132,7 +165,9 @@ export default function TechBrowser() {
     setLoading(true);
     setError(null);
     try {
-      const url = `/api/technicians?${buildParams(p).toString()}`;
+      const params = buildParams(p);
+      const url = `/api/technicians?${params.toString()}`;
+      console.log('🔍 Fetching data with selectedRsm:', selectedRsm);
       console.log('🔍 Fetching data from:', url);
       
       // เพิ่ม timeout และ headers
@@ -183,11 +218,30 @@ export default function TechBrowser() {
     }
   }
 
+  async function fetchChartData() {
+    setChartLoading(true);
+    try {
+      const res = await fetch("/api/chart/rsm-workgroup", { cache: "no-store" });
+      const json = await res.json();
+      
+      if (!res.ok) throw new Error(json?.error || "Failed to fetch chart data");
+      
+      setChartData(json.chartData || []);
+      setChartSummary(json.summary || null);
+    } catch (e: any) {
+      console.error("Chart fetch error:", e);
+    } finally {
+      setChartLoading(false);
+    }
+  }
+
   async function fetchKpis() {
     setKpiLoading(true);
     try {
-      const url = `/api/kpis?${buildFilterParamsOnly().toString()}`;
-      console.log('🔍 Fetching KPIs from:', url);
+      const params = buildFilterParamsOnly();
+      const url = `/api/kpis?${params.toString()}`;
+      console.log('📊 Fetching KPIs with selectedRsm:', selectedRsm);
+      console.log('📊 Fetching KPIs from:', url);
       
       // เพิ่ม timeout และ headers
       const controller = new AbortController();
@@ -279,6 +333,29 @@ export default function TechBrowser() {
     setRsm("");
     setDepotCode("");
     setQ("");
+    setSelectedRsm(null);
+    setPage(1);
+  }
+  
+  // Handle chart bar click
+  function handleChartClick(data: any) {
+    if (data && data.activePayload && data.activePayload[0]) {
+      const clickedRsm = data.activePayload[0].payload.rsm;
+      console.log('📊 Chart clicked:', clickedRsm);
+      
+      // Toggle selection
+      if (selectedRsm === clickedRsm) {
+        console.log('📊 Deselecting RSM');
+        setSelectedRsm(null);
+        // Clear the input field too
+        setRsm("");
+      } else {
+        console.log('📊 Selecting RSM:', clickedRsm);
+        setSelectedRsm(clickedRsm);
+        // Update the input field to show selected RSM
+        setRsm(clickedRsm);
+      }
+    }
   }
 
   function toggleSort(c: (typeof COLS)[number]) {
@@ -370,9 +447,18 @@ export default function TechBrowser() {
     fetchKpis();
   }, [d_national_id, d_tech_id, d_rsm, d_depot_code, d_q]);
 
-  /* ดึงรายการ RSM ตอน mount */
+  // Trigger immediate update when selectedRsm changes
+  React.useEffect(() => {
+    console.log('🎯 Selected RSM changed:', selectedRsm);
+    // Always fetch when selectedRsm changes (including null)
+    fetchData(1);
+    fetchKpis();
+  }, [selectedRsm]);
+
+  /* ดึงรายการ RSM และ Chart data ตอน mount */
   React.useEffect(() => {
     fetchRsmOptions();
+    fetchChartData();
   }, []);
 
   const start = (page - 1) * 50 + 1;
@@ -442,11 +528,24 @@ export default function TechBrowser() {
                   cursor: "pointer",
                   background: colors[index].bg,
                   color: colors[index].text,
-                  border: "none",
+                  border: q === name ? "2px solid #fff" : "none",
+                  transition: "all 0.2s ease",
+                  transform: q === name ? "scale(1.05)" : "scale(1)",
+                  boxShadow: q === name ? "0 8px 16px rgba(0,0,0,0.2)" : "0 1px 2px rgba(0,0,0,0.04)",
                 }}
                 onClick={() => {
-                  clearFilters();
-                  setQ(name);
+                  if (q === name) {
+                    setQ("");
+                  } else {
+                    clearFilters();
+                    setQ(name);
+                  }
+                }}
+                onMouseOver={(e) => {
+                  if (q !== name) e.currentTarget.style.transform = "scale(1.02)";
+                }}
+                onMouseOut={(e) => {
+                  if (q !== name) e.currentTarget.style.transform = "scale(1)";
                 }}
                 title={`คลิกเพื่อกรองตาม ${name}`}
               >
@@ -486,11 +585,24 @@ export default function TechBrowser() {
                   cursor: "pointer",
                   background: colors[index].bg,
                   color: colors[index].text,
-                  border: "none",
+                  border: q === name ? "2px solid #fff" : "none",
+                  transition: "all 0.2s ease",
+                  transform: q === name ? "scale(1.05)" : "scale(1)",
+                  boxShadow: q === name ? "0 8px 16px rgba(0,0,0,0.2)" : "0 1px 2px rgba(0,0,0,0.04)",
                 }}
                 onClick={() => {
-                  clearFilters();
-                  setQ(name);
+                  if (q === name) {
+                    setQ("");
+                  } else {
+                    clearFilters();
+                    setQ(name);
+                  }
+                }}
+                onMouseOver={(e) => {
+                  if (q !== name) e.currentTarget.style.transform = "scale(1.02)";
+                }}
+                onMouseOut={(e) => {
+                  if (q !== name) e.currentTarget.style.transform = "scale(1)";
                 }}
                 title={`คลิกเพื่อกรองตาม ${name}`}
               >
@@ -530,6 +642,218 @@ export default function TechBrowser() {
         </div>
       </div>
       {/* ===== /KPI row ===== */}
+
+      {/* ===== Stacked Column Chart ===== */}
+      <div style={{ marginBottom: 20 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+          <h3 style={{ fontSize: 18, fontWeight: 600, margin: 0 }}>
+            📊 Stacked Column Chart: RSM by Workgroup Status
+          </h3>
+          {selectedRsm && (
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <span style={{ 
+                padding: "6px 12px", 
+                background: "linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%)",
+                color: "white",
+                borderRadius: "20px",
+                fontSize: 13,
+                fontWeight: 500
+              }}>
+                กำลังกรอง: {selectedRsm}
+              </span>
+              <button
+                onClick={() => {
+                  setSelectedRsm(null);
+                  setRsm("");
+                }}
+                style={{
+                  padding: "4px 8px",
+                  background: "#ef4444",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "4px",
+                  cursor: "pointer",
+                  fontSize: 12
+                }}
+              >
+                ✕ ยกเลิก
+              </button>
+            </div>
+          )}
+        </div>
+        
+        <div style={{
+          background: "white",
+          borderRadius: 12,
+          padding: 20,
+          boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+          border: "1px solid #e5e7eb",
+          position: "relative"
+        }}>
+          {/* Hint text */}
+          <div style={{
+            position: "absolute",
+            top: 10,
+            right: 10,
+            fontSize: 11,
+            color: "#9ca3af",
+            fontStyle: "italic"
+          }}>
+            💡 คลิกที่แท่งกราฟเพื่อกรองข้อมูล
+          </div>
+          {chartLoading ? (
+            <div style={{ textAlign: "center", padding: 40 }}>
+              <div style={{ fontSize: 16, color: "#666" }}>กำลังโหลด Chart...</div>
+            </div>
+          ) : chartData.length > 0 ? (
+            <ResponsiveContainer width="100%" height={450}>
+              <BarChart
+                data={chartData}
+                margin={{ top: 60, right: 30, left: 20, bottom: 100 }}
+                onClick={handleChartClick}
+                style={{ cursor: "pointer" }}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                <XAxis 
+                  dataKey="rsm" 
+                  angle={-45}
+                  textAnchor="end"
+                  height={100}
+                  interval={0}
+                  tick={{ fontSize: 11 }}
+                />
+                <YAxis 
+                  label={{ 
+                    value: 'จำนวนช่าง (คน)', 
+                    angle: -90, 
+                    position: 'insideLeft',
+                    style: { fontSize: 12 }
+                  }}
+                  tick={{ fontSize: 11 }}
+                />
+                <Tooltip 
+                  content={({ active, payload, label }: any) => {
+                    if (active && payload && payload.length) {
+                      const total = payload[0].payload.total;
+                      return (
+                        <div style={{
+                          backgroundColor: "white",
+                          padding: "10px",
+                          border: "1px solid #ccc",
+                          borderRadius: "8px",
+                          boxShadow: "0 2px 4px rgba(0,0,0,0.1)"
+                        }}>
+                          <p style={{ fontWeight: "bold", marginBottom: "5px" }}>{label}</p>
+                          {payload.map((entry: any, index: number) => (
+                            <p key={index} style={{ color: entry.color, margin: "3px 0" }}>
+                              {entry.name}: {entry.value} คน
+                            </p>
+                          ))}
+                          <p style={{ fontWeight: "bold", marginTop: "5px", borderTop: "1px solid #eee", paddingTop: "5px" }}>
+                            รวม: {total} คน
+                          </p>
+                        </div>
+                      );
+                    }
+                    return null;
+                  }}
+                />
+                <Legend 
+                  verticalAlign="top"
+                  height={36}
+                  iconType="rect"
+                  wrapperStyle={{ paddingBottom: "10px" }}
+                />
+                <Bar 
+                  dataKey="หัวหน้า" 
+                  stackId="a" 
+                  fill="#8b5cf6"
+                  name="หัวหน้า"
+                >
+                  {chartData.map((entry, index) => (
+                    <Cell 
+                      key={`cell-leader-${index}`} 
+                      fill={selectedRsm === entry.rsm ? "#6d28d9" : "#8b5cf6"}
+                      opacity={selectedRsm && selectedRsm !== entry.rsm ? 0.5 : 1}
+                    />
+                  ))}
+                  <LabelList 
+                    dataKey="หัวหน้า" 
+                    position="center"
+                    fill="white"
+                    fontSize={11}
+                    fontWeight="bold"
+                    formatter={(value: number) => value > 0 ? value : ''}
+                  />
+                </Bar>
+                <Bar 
+                  dataKey="ลูกน้อง" 
+                  stackId="a" 
+                  fill="#ec4899"
+                  name="ลูกน้อง"
+                >
+                  {chartData.map((entry, index) => (
+                    <Cell 
+                      key={`cell-member-${index}`} 
+                      fill={selectedRsm === entry.rsm ? "#be185d" : "#ec4899"}
+                      opacity={selectedRsm && selectedRsm !== entry.rsm ? 0.5 : 1}
+                    />
+                  ))}
+                  <LabelList 
+                    dataKey="ลูกน้อง" 
+                    position="center"
+                    fill="white"
+                    fontSize={11}
+                    fontWeight="bold"
+                    formatter={(value: number) => value > 0 ? value : ''}
+                  />
+                  {/* แสดงจำนวนรวมเหนือยอดกราฟ */}
+                  <LabelList 
+                    dataKey="total" 
+                    position="top"
+                    fill="#111827"
+                    fontSize={12}
+                    fontWeight="bold"
+                    offset={5}
+                  />
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <div style={{ textAlign: "center", padding: 40 }}>
+              <div style={{ fontSize: 16, color: "#999" }}>ไม่มีข้อมูล Chart</div>
+            </div>
+          )}
+        </div>
+        
+        {/* Chart Summary */}
+        {chartSummary && (
+          <div style={{ 
+            display: "grid", 
+            gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))",
+            gap: 8,
+            marginTop: 12
+          }}>
+            <div style={{ textAlign: "center", padding: "8px", background: "#f9fafb", borderRadius: "6px" }}>
+              <div style={{ fontSize: 11, color: "#6b7280" }}>RSM ทั้งหมด</div>
+              <div style={{ fontSize: 16, fontWeight: 600 }}>{chartSummary.totalRsm}</div>
+            </div>
+            <div style={{ textAlign: "center", padding: "8px", background: "#f9fafb", borderRadius: "6px" }}>
+              <div style={{ fontSize: 11, color: "#6b7280" }}>ช่างทั้งหมด</div>
+              <div style={{ fontSize: 16, fontWeight: 600 }}>{chartSummary.totalTechnicians?.toLocaleString()}</div>
+            </div>
+            <div style={{ textAlign: "center", padding: "8px", background: "#f3f4ff", borderRadius: "6px" }}>
+              <div style={{ fontSize: 11, color: "#6b7280" }}>หัวหน้า</div>
+              <div style={{ fontSize: 16, fontWeight: 600, color: "#8b5cf6" }}>{chartSummary.totalLeaders?.toLocaleString()}</div>
+            </div>
+            <div style={{ textAlign: "center", padding: "8px", background: "#fdf4ff", borderRadius: "6px" }}>
+              <div style={{ fontSize: 11, color: "#6b7280" }}>ลูกน้อง</div>
+              <div style={{ fontSize: 16, fontWeight: 600, color: "#ec4899" }}>{chartSummary.totalMembers?.toLocaleString()}</div>
+            </div>
+          </div>
+        )}
+      </div>
+      {/* ===== /Stacked Column Chart ===== */}
 
       {/* Filters */}
       <div
