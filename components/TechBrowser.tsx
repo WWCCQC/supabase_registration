@@ -240,11 +240,13 @@ export default function TechBrowser() {
   async function fetchRsmOptions() {
     setRsmLoading(true);
     try {
-      // 1) พยายามดึงจาก API โดยตรง
-      const res = await fetch(`/api/rsm`, { cache: "no-store" });
+      // 1) พยายามดึงจาก API โดยตรง - ใช้ /api/meta/rsm
+      const res = await fetch(`/api/meta/rsm`, { cache: "no-store" });
       if (res.ok) {
         const json = await res.json();
-        const list: string[] = Array.isArray(json?.rsmList)
+        const list: string[] = Array.isArray(json?.options)
+          ? json.options
+          : Array.isArray(json?.rsmList)
           ? json.rsmList
           : Array.isArray(json) ? json : [];
         const uniq = Array.from(new Set(list.filter(Boolean))).sort(
