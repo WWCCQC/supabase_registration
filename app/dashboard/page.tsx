@@ -4,7 +4,6 @@ import { getFieldLabel } from "../../lib/fieldLabels";
 
 // เพิ่ม dynamic import เพื่อป้องกัน static generation
 export const dynamic = 'force-dynamic';
-export const revalidate = 0;
 
 type KpiResp = {
   total: number;
