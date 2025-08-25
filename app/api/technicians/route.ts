@@ -9,6 +9,11 @@ function sanitizeQ(s?: string | null) {
 
 export async function GET(req: Request) {
   try {
+    // Debug environment variables
+    console.log('🔧 API Environment check:');
+    console.log('NEXT_PUBLIC_SUPABASE_URL:', process.env.NEXT_PUBLIC_SUPABASE_URL ? '✅' : '❌');
+    console.log('SUPABASE_SERVICE_ROLE:', process.env.SUPABASE_SERVICE_ROLE ? '✅' : '❌');
+    
     const url = new URL(req.url);
     const page = Math.max(1, Number(url.searchParams.get("page") ?? "1"));
     const pageSize = Math.min(200, Math.max(1, Number(url.searchParams.get("pageSize") ?? "50")));
