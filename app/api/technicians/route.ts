@@ -40,23 +40,54 @@ export async function GET(req: Request) {
     const ascending = dirParam !== "desc";
 
     const supabase = supabaseAdmin();
-    let query = supabase.from("technicians").select("*", { count: "exact" });
+    
+    // สร้าง base query สำหรับใช้ทั้ง count และ data
+    let baseQuery = supabase.from("technicians").select("*");
 
-    if (f_national_id) query = query.ilike("national_id", `%${f_national_id}%`);
-    if (f_tech_id)     query = query.ilike("tech_id",     `%${f_tech_id}%`);
-    if (f_rsm)         query = query.ilike("rsm",         `%${f_rsm}%`);
-    if (f_depot_code)  query = query.ilike("depot_code",  `%${f_depot_code}%`);
+    if (f_national_id) baseQuery = baseQuery.ilike("national_id", `%${f_national_id}%`);
+    if (f_tech_id)     baseQuery = baseQuery.ilike("tech_id",     `%${f_tech_id}%`);
+    if (f_rsm)         baseQuery = baseQuery.ilike("rsm",         `%${f_rsm}%`);
+    if (f_depot_code)  baseQuery = baseQuery.ilike("depot_code",  `%${f_depot_code}%`);
 
     if (q) {
       const pattern = `%${q}%`;
       const ors = cols.map(c => `${c}.ilike.${pattern}`).join(",");
-      query = query.or(ors);
+      baseQuery = baseQuery.or(ors);
     }
 
-    query = query.order(sort, { ascending, nullsFirst: true }).range(from, to);
+    // Query สำหรับนับจำนวนทั้งหมด (ไม่ใช้ range)
+    const countQuery = baseQuery;
+    const { count, error: countError } = await countQuery.select("*", { count: "exact", head: true });
+    
+    if (countError) {
+      console.error('❌ Count error:', countError);
+      return NextResponse.json({ error: countError.message }, { status: 400 });
+    }
 
-    const { data, error, count } = await query;
-    if (error) return NextResponse.json({ error: error.message }, { status: 400 });
+    // Query สำหรับดึงข้อมูลหน้าปัจจุบัน (ใช้ range)
+    let dataQuery = supabase.from("technicians").select("*");
+    
+    if (f_national_id) dataQuery = dataQuery.ilike("national_id", `%${f_national_id}%`);
+    if (f_tech_id)     dataQuery = dataQuery.ilike("tech_id",     `%${f_tech_id}%`);
+    if (f_rsm)         dataQuery = dataQuery.ilike("rsm",         `%${f_rsm}%`);
+    if (f_depot_code)  dataQuery = dataQuery.ilike("depot_code",  `%${f_depot_code}%`);
+
+    if (q) {
+      const pattern = `%${q}%`;
+      const ors = cols.map(c => `${c}.ilike.${pattern}`).join(",");
+      dataQuery = dataQuery.or(ors);
+    }
+
+    dataQuery = dataQuery.order(sort, { ascending, nullsFirst: true }).range(from, to);
+
+    const { data, error } = await dataQuery;
+    
+    console.log('📊 Query result - count:', count, 'data length:', data?.length);
+    
+    if (error) {
+      console.error('❌ Supabase error:', error);
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    }
 
     const rows = (data ?? []).map((r: any) => ({
       national_id:        r.national_id        ?? null,
