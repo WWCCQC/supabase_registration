@@ -151,6 +151,11 @@ async function collectDistinct(
 
 export async function GET(req: Request) {
   try {
+    // Debug environment variables
+    console.log('🔧 KPI API Environment check:');
+    console.log('NEXT_PUBLIC_SUPABASE_URL:', process.env.NEXT_PUBLIC_SUPABASE_URL ? '✅' : '❌');
+    console.log('SUPABASE_SERVICE_ROLE:', process.env.SUPABASE_SERVICE_ROLE ? '✅' : '❌');
+    
     const url = new URL(req.url);
     const params = url.searchParams;
     const supabase = supabaseAdmin();
