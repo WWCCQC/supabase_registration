@@ -502,7 +502,7 @@ export default function TechBrowser() {
               Technicians ทั้งหมด
             </div>
             <div style={{ ...cardNumber, color: "white" }}>
-              {kpiLoading ? "..." : kpi?.total ?? 0}
+              {kpiLoading ? "..." : (kpi?.total ?? 0).toLocaleString()}
             </div>
           </div>
 
@@ -553,7 +553,7 @@ export default function TechBrowser() {
                   {name}
                 </div>
                 <div style={{ ...cardNumber, color: "white" }}>
-                  {kpiLoading ? "" : count}
+                  {kpiLoading ? "" : count.toLocaleString()}
                 </div>
                 <div style={{ ...cardSub, color: "rgba(255,255,255,0.8)" }}>
                   {kpiLoading ? "" : `${pct}%`}
@@ -623,7 +623,7 @@ export default function TechBrowser() {
                     color: name === "เถ้าแก่เทค" ? "#333" : "white",
                   }}
                 >
-                  {kpiLoading ? "" : count}
+                  {kpiLoading ? "" : count.toLocaleString()}
                 </div>
                 <div
                   style={{
