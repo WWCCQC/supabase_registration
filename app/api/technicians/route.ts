@@ -1,4 +1,4 @@
-﻿export const dynamic = "force-dynamic";
+export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 
@@ -78,7 +78,15 @@ export async function GET(req: Request) {
 
     const total = count ?? 0;
     const totalPages = Math.max(1, Math.ceil(total / pageSize));
-    return NextResponse.json({ rows, page, pageSize, total, totalPages });
+    return NextResponse.json({ rows, page, pageSize, total, totalPages }, {
+      headers: {
+        'cache-control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+        'pragma': 'no-cache',
+        'expires': '0',
+        'surrogate-control': 'no-store',
+        'x-vercel-cache': 'no-cache'
+      }
+    });
   } catch (e: any) {
     return NextResponse.json({ error: e?.message ?? "Unknown error" }, { status: 500 });
   }
