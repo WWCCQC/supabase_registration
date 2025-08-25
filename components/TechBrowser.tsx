@@ -135,21 +135,48 @@ export default function TechBrowser() {
       const url = `/api/technicians?${buildParams(p).toString()}`;
       console.log('🔍 Fetching data from:', url);
       
-      const res = await fetch(url, { cache: "no-store" });
+      // เพิ่ม timeout และ headers
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 seconds timeout
+      
+      const res = await fetch(url, { 
+        cache: "no-store",
+        signal: controller.signal,
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        }
+      });
+      
+      clearTimeout(timeoutId);
+      
       console.log('📡 Response status:', res.status);
       console.log('📡 Response headers:', Object.fromEntries(res.headers.entries()));
       
-      const json = await res.json();
+      const text = await res.text();
+      console.log('📄 Raw response:', text);
+      
+      let json;
+      try {
+        json = JSON.parse(text);
+      } catch {
+        throw new Error('Invalid JSON response: ' + text.substring(0, 100));
+      }
+      
       console.log('📊 Response data:', json);
       
-      if (!res.ok) throw new Error(json?.error || "Failed to fetch");
+      if (!res.ok) throw new Error(json?.error || `HTTP ${res.status}: Failed to fetch`);
       setRows(json.rows || []);
       setTotal(json.total || 0);
       setTotalPages(json.totalPages || 1);
       setPage(json.page || p);
-    } catch (e) {
+    } catch (e: any) {
       console.error('❌ Fetch error:', e);
-      setError((e as Error).message);
+      if (e.name === 'AbortError') {
+        setError('Request timeout - โปรดลองใหม่อีกครั้ง');
+      } else {
+        setError(e.message || 'Unknown error');
+      }
       // ไม่แสดง alert แล้ว ให้แสดงใน UI แทน
     } finally {
       setLoading(false);
@@ -162,16 +189,48 @@ export default function TechBrowser() {
       const url = `/api/kpis?${buildFilterParamsOnly().toString()}`;
       console.log('🔍 Fetching KPIs from:', url);
       
-      const res = await fetch(url, { cache: "no-store" });
+      // เพิ่ม timeout และ headers
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 seconds timeout
+      
+      const res = await fetch(url, { 
+        cache: "no-store",
+        signal: controller.signal,
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        }
+      });
+      
+      clearTimeout(timeoutId);
+      
       console.log('📡 KPI Response status:', res.status);
       
-      const json = await res.json();
+      const text = await res.text();
+      console.log('📄 KPI Raw response:', text);
+      
+      let json;
+      try {
+        json = JSON.parse(text);
+      } catch {
+        throw new Error('Invalid JSON response from KPI API');
+      }
+      
       console.log('📊 KPI Response data:', json);
       
-      if (!res.ok) throw new Error(json?.error || "KPI fetch error");
+      if (!res.ok) throw new Error(json?.error || `HTTP ${res.status}: KPI fetch error`);
       setKpi(json);
-    } catch (e) {
+    } catch (e: any) {
       console.error('❌ KPI fetch error:', e);
+      if (e.name === 'AbortError') {
+        console.error('KPI request timeout');
+      }
+      // Set default KPI values on error
+      setKpi({
+        total: 0,
+        by_work_type: [],
+        by_provider: []
+      });
     } finally {
       setKpiLoading(false);
     }
