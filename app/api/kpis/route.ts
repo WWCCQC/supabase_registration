@@ -206,7 +206,11 @@ export async function GET(req: Request) {
       status: 200,
       headers: {
         'content-type': 'application/json; charset=utf-8',
-        'cache-control': 'no-store, max-age=0',
+        'cache-control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+        'pragma': 'no-cache',
+        'expires': '0',
+        'surrogate-control': 'no-store',
+        'x-vercel-cache': 'no-cache'
       },
     });
   } catch (e: any) {
