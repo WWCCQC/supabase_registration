@@ -41,23 +41,21 @@ export async function GET(req: Request) {
 
     const supabase = supabaseAdmin();
     
-    // สร้าง base query สำหรับใช้ทั้ง count และ data
-    let baseQuery = supabase.from("technicians").select("*");
+    // Query สำหรับนับจำนวนทั้งหมด (ไม่ใช้ range)
+    let countQuery = supabase.from("technicians").select("*", { count: "exact", head: true });
 
-    if (f_national_id) baseQuery = baseQuery.ilike("national_id", `%${f_national_id}%`);
-    if (f_tech_id)     baseQuery = baseQuery.ilike("tech_id",     `%${f_tech_id}%`);
-    if (f_rsm)         baseQuery = baseQuery.ilike("rsm",         `%${f_rsm}%`);
-    if (f_depot_code)  baseQuery = baseQuery.ilike("depot_code",  `%${f_depot_code}%`);
+    if (f_national_id) countQuery = countQuery.ilike("national_id", `%${f_national_id}%`);
+    if (f_tech_id)     countQuery = countQuery.ilike("tech_id",     `%${f_tech_id}%`);
+    if (f_rsm)         countQuery = countQuery.ilike("rsm",         `%${f_rsm}%`);
+    if (f_depot_code)  countQuery = countQuery.ilike("depot_code",  `%${f_depot_code}%`);
 
     if (q) {
       const pattern = `%${q}%`;
       const ors = cols.map(c => `${c}.ilike.${pattern}`).join(",");
-      baseQuery = baseQuery.or(ors);
+      countQuery = countQuery.or(ors);
     }
 
-    // Query สำหรับนับจำนวนทั้งหมด (ไม่ใช้ range)
-    const countQuery = baseQuery;
-    const { count, error: countError } = await countQuery.select("*", { count: "exact", head: true });
+    const { count, error: countError } = await countQuery;
     
     if (countError) {
       console.error('❌ Count error:', countError);
