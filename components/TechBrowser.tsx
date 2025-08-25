@@ -783,7 +783,10 @@ export default function TechBrowser() {
                     fill="white"
                     fontSize={11}
                     fontWeight="bold"
-                    formatter={(value: number) => value > 0 ? value : ''}
+                    formatter={(value: any) => {
+                      const num = Number(value);
+                      return num > 0 ? String(num) : '';
+                    }}
                   />
                 </Bar>
                 <Bar 
@@ -805,7 +808,10 @@ export default function TechBrowser() {
                     fill="white"
                     fontSize={11}
                     fontWeight="bold"
-                    formatter={(value: number) => value > 0 ? value : ''}
+                    formatter={(value: any) => {
+                      const num = Number(value);
+                      return num > 0 ? String(num) : '';
+                    }}
                   />
                   {/* แสดงจำนวนรวมเหนือยอดกราฟ */}
                   <LabelList 
