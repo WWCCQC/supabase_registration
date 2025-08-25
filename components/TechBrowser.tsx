@@ -65,6 +65,7 @@ export default function TechBrowser() {
   const [rows, setRows] = React.useState<Row[]>([]);
   const [total, setTotal] = React.useState(0);
   const [totalPages, setTotalPages] = React.useState(1);
+  const [error, setError] = React.useState<string | null>(null);
 
   /* filters */
   const [national_id, setNationalId] = React.useState("");
@@ -129,20 +130,27 @@ export default function TechBrowser() {
 
   async function fetchData(p = page) {
     setLoading(true);
+    setError(null);
     try {
-      const res = await fetch(
-        `/api/technicians?${buildParams(p).toString()}`,
-        { cache: "no-store" }
-      );
+      const url = `/api/technicians?${buildParams(p).toString()}`;
+      console.log('🔍 Fetching data from:', url);
+      
+      const res = await fetch(url, { cache: "no-store" });
+      console.log('📡 Response status:', res.status);
+      console.log('📡 Response headers:', Object.fromEntries(res.headers.entries()));
+      
       const json = await res.json();
+      console.log('📊 Response data:', json);
+      
       if (!res.ok) throw new Error(json?.error || "Failed to fetch");
       setRows(json.rows || []);
       setTotal(json.total || 0);
       setTotalPages(json.totalPages || 1);
       setPage(json.page || p);
     } catch (e) {
-      console.error(e);
-      alert((e as Error).message);
+      console.error('❌ Fetch error:', e);
+      setError((e as Error).message);
+      // ไม่แสดง alert แล้ว ให้แสดงใน UI แทน
     } finally {
       setLoading(false);
     }
@@ -151,15 +159,19 @@ export default function TechBrowser() {
   async function fetchKpis() {
     setKpiLoading(true);
     try {
-      const res = await fetch(
-        `/api/kpis?${buildFilterParamsOnly().toString()}`,
-        { cache: "no-store" }
-      );
+      const url = `/api/kpis?${buildFilterParamsOnly().toString()}`;
+      console.log('🔍 Fetching KPIs from:', url);
+      
+      const res = await fetch(url, { cache: "no-store" });
+      console.log('📡 KPI Response status:', res.status);
+      
       const json = await res.json();
+      console.log('📊 KPI Response data:', json);
+      
       if (!res.ok) throw new Error(json?.error || "KPI fetch error");
       setKpi(json);
     } catch (e) {
-      console.error(e);
+      console.error('❌ KPI fetch error:', e);
     } finally {
       setKpiLoading(false);
     }
@@ -279,6 +291,13 @@ export default function TechBrowser() {
   }
 
   React.useEffect(() => {
+    // Debug: ตรวจสอบ environment variables
+    console.log('🔧 Environment check:');
+    console.log('🔧 NEXT_PUBLIC_SUPABASE_URL:', process.env.NEXT_PUBLIC_SUPABASE_URL ? '✅ Set' : '❌ Not set');
+    console.log('🔧 NEXT_PUBLIC_SUPABASE_ANON_KEY:', process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? '✅ Set' : '❌ Not set');
+    console.log('🔧 Current URL:', window.location.href);
+    console.log('🔧 User Agent:', navigator.userAgent);
+    
     fetchData(1);
   }, [d_national_id, d_tech_id, d_rsm, d_depot_code, d_q, sort, dir]);
 
@@ -520,6 +539,36 @@ export default function TechBrowser() {
           {loading ? "กำลังโหลด..." : `${start}-${end} จาก ${total} รายการ`}
         </div>
       </div>
+
+      {/* Error Display */}
+      {error && (
+        <div style={{
+          padding: "12px 16px",
+          background: "#fef2f2",
+          border: "1px solid #fecaca",
+          borderRadius: "8px",
+          marginBottom: "12px",
+          color: "#dc2626"
+        }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <span>❌ เกิดข้อผิดพลาด: {error}</span>
+            <button 
+              onClick={() => fetchData(1)}
+              style={{
+                background: "#dc2626",
+                color: "white",
+                border: "none",
+                padding: "4px 8px",
+                borderRadius: "4px",
+                cursor: "pointer",
+                fontSize: "12px"
+              }}
+            >
+              ลองใหม่
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Table */}
       <div style={{ overflowX: "auto" }}>
