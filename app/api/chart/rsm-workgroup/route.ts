@@ -17,8 +17,6 @@ export async function GET() {
       const { data, error } = await supabase
         .from("technicians")
         .select("rsm, workgroup_status")
-        .not("rsm", "is", null)
-        .not("rsm", "eq", "")
         .range(from, from + pageSize - 1);
       
       if (error) {
@@ -40,11 +38,32 @@ export async function GET() {
     // จัดกลุ่มข้อมูลตาม RSM และ workgroup_status
     const groupedData: Record<string, { หัวหน้า: number; ลูกน้อง: number }> = {};
     
+    // ตัวแปรสำหรับนับข้อมูลทั้งหมด
+    let totalRecords = allData.length;
+    let recordsWithRsm = 0;
+    let recordsWithoutRsm = 0;
+    let recordsWithStatus = 0;
+    let recordsWithoutStatus = 0;
+    
     allData.forEach((row: any) => {
       const rsm = String(row.rsm || "").trim();
       const status = String(row.workgroup_status || "").toLowerCase().trim();
       
-      if (!rsm) return;
+      // นับข้อมูลที่มี/ไม่มี RSM
+      if (rsm) {
+        recordsWithRsm++;
+      } else {
+        recordsWithoutRsm++;
+      }
+      
+      // นับข้อมูลที่มี/ไม่มี workgroup_status
+      if (status) {
+        recordsWithStatus++;
+      } else {
+        recordsWithoutStatus++;
+      }
+      
+      if (!rsm) return; // ข้ามข้อมูลที่ไม่มี RSM สำหรับการจัดกลุ่ม
       
       if (!groupedData[rsm]) {
         groupedData[rsm] = { หัวหน้า: 0, ลูกน้อง: 0 };
@@ -75,22 +94,27 @@ export async function GET() {
       .sort((a, b) => b.total - a.total) // เรียงตาม total มากไปน้อย
       .slice(0, 20); // แสดงแค่ top 20 RSM
     
-    // คำนวณ summary จากข้อมูลทั้งหมด ไม่ใช่แค่ top 20
+    // คำนวณ summary จากข้อมูลทั้งหมด
     const allTotals = Object.values(groupedData);
     const totalLeaders = allTotals.reduce((sum, item) => sum + item.หัวหน้า, 0);
     const totalMembers = allTotals.reduce((sum, item) => sum + item.ลูกน้อง, 0);
-    const totalTechnicians = totalLeaders + totalMembers;
+    const totalTechniciansWithRsm = totalLeaders + totalMembers;
     
-    console.log(`📊 Chart Summary: Total RSM: ${Object.keys(groupedData).length}, Total Technicians: ${totalTechnicians}, Leaders: ${totalLeaders}, Members: ${totalMembers}`);
+    console.log(`📊 Chart Summary: Total Records: ${totalRecords}, Records with RSM: ${recordsWithRsm}, Records without RSM: ${recordsWithoutRsm}`);
+    console.log(`📊 Chart Summary: Records with Status: ${recordsWithStatus}, Records without Status: ${recordsWithoutStatus}`);
+    console.log(`📊 Chart Summary: Total RSM: ${Object.keys(groupedData).length}, Total Technicians with RSM: ${totalTechniciansWithRsm}, Leaders: ${totalLeaders}, Members: ${totalMembers}`);
 
     return NextResponse.json(
       { 
         chartData,
         summary: {
-          totalRsm: Object.keys(groupedData).length, // จำนวน RSM ทั้งหมด
-          totalTechnicians: totalTechnicians,        // จำนวนช่างทั้งหมด
-          totalLeaders: totalLeaders,                // จำนวนหัวหน้าทั้งหมด
-          totalMembers: totalMembers                 // จำนวนลูกน้องทั้งหมด
+          totalRsm: Object.keys(groupedData).length,           // จำนวน RSM ทั้งหมด
+          totalTechnicians: totalRecords,                      // จำนวนช่างทั้งหมด (รวมที่ไม่มี RSM)
+          totalTechniciansWithRsm: totalTechniciansWithRsm,    // จำนวนช่างที่มี RSM
+          totalLeaders: totalLeaders,                          // จำนวนหัวหน้าทั้งหมด
+          totalMembers: totalMembers,                          // จำนวนลูกน้องทั้งหมด
+          recordsWithoutRsm: recordsWithoutRsm,                // จำนวนช่างที่ไม่มี RSM
+          recordsWithoutStatus: recordsWithoutStatus           // จำนวนช่างที่ไม่มี workgroup_status
         }
       },
       {
