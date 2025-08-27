@@ -24,6 +24,9 @@ type Summary = {
   totalTechnicians: number;
   totalLeaders: number;
   totalMembers: number;
+  totalTechniciansWithRsm: number;
+  recordsWithoutRsm: number;
+  recordsWithoutStatus: number;
 };
 
 export default function RsmWorkgroupChart() {
@@ -138,7 +141,7 @@ export default function RsmWorkgroupChart() {
             marginBottom: 20
           }}>
             <div style={summaryCardStyle}>
-              <div style={summaryLabelStyle}>จำนวน RSM</div>
+              <div style={summaryLabelStyle}>RSM ทั้งหมด</div>
               <div style={summaryValueStyle}>{summary.totalRsm}</div>
             </div>
             <div style={summaryCardStyle}>
@@ -152,6 +155,33 @@ export default function RsmWorkgroupChart() {
             <div style={{...summaryCardStyle, background: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)"}}>
               <div style={{...summaryLabelStyle, color: "rgba(255,255,255,0.9)"}}>ลูกน้อง</div>
               <div style={{...summaryValueStyle, color: "white"}}>{summary.totalMembers.toLocaleString()}</div>
+            </div>
+          </div>
+        )}
+
+        {/* Additional Info */}
+        {summary && (
+          <div style={{ 
+            display: "grid", 
+            gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+            gap: 12,
+            marginBottom: 20,
+            padding: "16px",
+            background: "#f8fafc",
+            borderRadius: "8px",
+            border: "1px solid #e2e8f0"
+          }}>
+            <div style={{ textAlign: "center" }}>
+              <div style={{ fontSize: 12, color: "#64748b", marginBottom: 4 }}>ช่างที่มี RSM</div>
+              <div style={{ fontSize: 16, fontWeight: 600, color: "#1e293b" }}>{summary.totalTechniciansWithRsm.toLocaleString()}</div>
+            </div>
+            <div style={{ textAlign: "center" }}>
+              <div style={{ fontSize: 12, color: "#64748b", marginBottom: 4 }}>ช่างที่ไม่มี RSM</div>
+              <div style={{ fontSize: 16, fontWeight: 600, color: "#ef4444" }}>{summary.recordsWithoutRsm.toLocaleString()}</div>
+            </div>
+            <div style={{ textAlign: "center" }}>
+              <div style={{ fontSize: 12, color: "#64748b", marginBottom: 4 }}>ช่างที่ไม่มี Status</div>
+              <div style={{ fontSize: 16, fontWeight: 600, color: "#f59e0b" }}>{summary.recordsWithoutStatus.toLocaleString()}</div>
             </div>
           </div>
         )}
