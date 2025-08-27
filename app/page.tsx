@@ -8,5 +8,9 @@ import NextDynamic from "next/dynamic";
 const TechBrowser = NextDynamic(() => import("@/components/TechBrowser"), { ssr: false });
 
 export default function Page() {
-  return <TechBrowser />;
+  return (
+    <div style={{ padding: 24 }}>
+      <TechBrowser />
+    </div>
+  );
 }
