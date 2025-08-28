@@ -470,7 +470,7 @@ export default function TechBrowser() {
 
 
       {/* ===== KPI row ===== */}
-      <div style={{ overflowX: "auto", paddingBottom: 8 }}>
+      <div style={{ paddingBottom: 8 }}>
         <div
           style={{
             display: "grid",
@@ -478,7 +478,9 @@ export default function TechBrowser() {
             gridAutoColumns: "minmax(220px, 1fr)",
             gap: 12,
             alignItems: "stretch",
-            minHeight: 130,
+            minHeight: 65,
+            height: 65,
+            overflow: "hidden",
           }}
         >
           {/* Total */}
@@ -500,7 +502,7 @@ export default function TechBrowser() {
               Technicians ทั้งหมด
             </div>
             <div style={{ ...cardNumber, color: "white" }}>
-              {kpiLoading ? "..." : (kpi?.total ?? 0).toLocaleString()}
+              {kpiLoading ? "..." : `${(kpi?.total ?? 0).toLocaleString()} (100%)`}
             </div>
           </div>
 
@@ -551,10 +553,7 @@ export default function TechBrowser() {
                   {name}
                 </div>
                 <div style={{ ...cardNumber, color: "white" }}>
-                  {kpiLoading ? "" : count.toLocaleString()}
-                </div>
-                <div style={{ ...cardSub, color: "rgba(255,255,255,0.8)" }}>
-                  {kpiLoading ? "" : `${pct}%`}
+                  {kpiLoading ? "" : `${count.toLocaleString()} (${pct}%)`}
                 </div>
               </div>
             );
@@ -607,10 +606,7 @@ export default function TechBrowser() {
                 <div
                   style={{
                     ...cardTitle,
-                    color:
-                      name === "เถ้าแก่เทค"
-                        ? "rgba(0,0,0,0.7)"
-                        : "rgba(255,255,255,0.8)",
+                    color: "rgba(255,255,255,0.8)",
                   }}
                 >
                   {name}
@@ -618,21 +614,10 @@ export default function TechBrowser() {
                 <div
                   style={{
                     ...cardNumber,
-                    color: name === "เถ้าแก่เทค" ? "#333" : "white",
+                    color: "white",
                   }}
                 >
-                  {kpiLoading ? "" : count.toLocaleString()}
-                </div>
-                <div
-                  style={{
-                    ...cardSub,
-                    color:
-                      name === "เถ้าแก่เทค"
-                        ? "rgba(0,0,0,0.7)"
-                        : "rgba(255,255,255,0.8)",
-                  }}
-                >
-                  {kpiLoading ? "" : `${pct}%`}
+                  {kpiLoading ? "" : `${count.toLocaleString()} (${pct}%)`}
                 </div>
               </div>
             );
