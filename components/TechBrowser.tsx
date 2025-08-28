@@ -470,7 +470,12 @@ export default function TechBrowser() {
 
 
       {/* ===== KPI row ===== */}
-      <div style={{ paddingBottom: 8 }}>
+      <div style={{ 
+        background: "#eeeeee",
+        padding: "16px",
+        borderRadius: "8px",
+        marginBottom: "8px"
+      }}>
         <div
           style={{
             display: "grid",
