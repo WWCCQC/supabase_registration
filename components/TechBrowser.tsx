@@ -467,9 +467,7 @@ export default function TechBrowser() {
   /* ---------- Render ---------- */
   return (
     <div style={{ padding: 24 }}>
-      <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 12 }}>
-        Technicians
-      </h2>
+
 
       {/* ===== KPI row ===== */}
       <div style={{ overflowX: "auto", paddingBottom: 8 }}>
