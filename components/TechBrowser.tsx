@@ -763,13 +763,13 @@ export default function TechBrowser() {
                 <Bar 
                   dataKey="หัวหน้า" 
                   stackId="a" 
-                  fill="#8b5cf6"
+                  fill="#2baf2b"
                   name="หัวหน้า"
                 >
                   {chartData.map((entry, index) => (
                     <Cell 
                       key={`cell-leader-${index}`} 
-                      fill={selectedRsm === entry.rsm ? "#6d28d9" : "#8b5cf6"}
+                      fill={selectedRsm === entry.rsm ? "#1b5e20" : "#2baf2b"}
                       opacity={selectedRsm && selectedRsm !== entry.rsm ? 0.5 : 1}
                     />
                   ))}
@@ -788,13 +788,13 @@ export default function TechBrowser() {
                 <Bar 
                   dataKey="ลูกน้อง" 
                   stackId="a" 
-                  fill="#ec4899"
+                  fill="#fbc02d"
                   name="ลูกน้อง"
                 >
                   {chartData.map((entry, index) => (
                     <Cell 
                       key={`cell-member-${index}`} 
-                      fill={selectedRsm === entry.rsm ? "#be185d" : "#ec4899"}
+                      fill={selectedRsm === entry.rsm ? "#f57f17" : "#fbc02d"}
                       opacity={selectedRsm && selectedRsm !== entry.rsm ? 0.5 : 1}
                     />
                   ))}
