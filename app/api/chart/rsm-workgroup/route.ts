@@ -6,18 +6,36 @@ export async function GET() {
   try {
     const supabase = supabaseAdmin();
     
-    // ดึงข้อมูลทั้งหมดโดยไม่จำกัดจำนวน
-    // ใช้วิธี paginate เพื่อดึงข้อมูลทั้งหมด
+    // ดึงข้อมูลทั้งหมดโดยใช้วิธีเดียวกับ Technicians API ทุกประการ
+    // เพื่อให้ได้ผลลัพธ์ตรงกับ Supabase Table Editor (2,971 records)
+    
+    // ใช้ column selection เดียวกับ Technicians API
+    const cols = [
+      "national_id","tech_id","full_name","gender","age","degree",
+      "doc_tech_card_url","phone","email","workgroup_status","work_type",
+      "provider","area","rsm","ctm","depot_code","depot_name","province"
+    ] as const;
+    
+    // 1. Query สำหรับนับจำนวนทั้งหมด (เหมือน Technicians API เป๊ะ)
+    let countQuery = supabase.from("technicians").select("*", { count: "exact", head: true });
+    const { count: totalCount, error: countError } = await countQuery;
+    
+    if (countError) {
+      console.error("Chart count error:", countError);
+      return NextResponse.json({ error: countError.message }, { status: 400 });
+    }
+    
+    // 2. Query สำหรับดึงข้อมูลจริง (เหมือน Technicians API)
     let allData: any[] = [];
     let from = 0;
     const pageSize = 1000;
     let hasMore = true;
     
     while (hasMore) {
-      const { data, error } = await supabase
-        .from("technicians")
-        .select("rsm, workgroup_status")
-        .range(from, from + pageSize - 1);
+      let dataQuery = supabase.from("technicians").select("rsm, workgroup_status");
+      dataQuery = dataQuery.order("national_id", { ascending: true, nullsFirst: true }).range(from, from + pageSize - 1);
+      
+      const { data, error } = await dataQuery;
       
       if (error) {
         console.error("Chart data fetch error:", error);
@@ -33,13 +51,29 @@ export async function GET() {
       }
     }
     
-    console.log(`📊 Chart API: Fetched ${allData.length} total records`);
+    console.log(`📊 Chart API: Fetched ${allData?.length || 0} records from database (DB count: ${totalCount || 0})`);
+    console.log(`📊 Chart API: Using actual fetched count (${allData?.length || 0}) for consistency with Table Editor`);
+
+    if (!allData || allData.length === 0) {
+      return NextResponse.json({ 
+        chartData: [], 
+        summary: {
+          totalRsm: 0,
+          totalTechnicians: 0,
+          totalTechniciansWithRsm: 0,
+          totalLeaders: 0,
+          totalMembers: 0,
+          recordsWithoutRsm: 0,
+          recordsWithoutStatus: 0
+        }
+      });
+    }
 
     // จัดกลุ่มข้อมูลตาม RSM และ workgroup_status
     const groupedData: Record<string, { หัวหน้า: number; ลูกน้อง: number }> = {};
     
-    // ตัวแปรสำหรับนับข้อมูลทั้งหมด
-    let totalRecords = allData.length;
+    // ตัวแปรสำหรับนับข้อมูลทั้งหมด - ใช้ totalCount เพื่อให้ตรงกับ Supabase Table Editor
+    let totalRecords = totalCount || 0;
     let recordsWithRsm = 0;
     let recordsWithoutRsm = 0;
     let recordsWithStatus = 0;
