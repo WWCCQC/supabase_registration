@@ -687,36 +687,7 @@ export default function TechBrowser() {
             💡 คลิกที่แท่งกราฟเพื่อกรองข้อมูล
           </div>
           
-          {/* Chart Summary inside chart container */}
-          {chartSummary && (
-            <div style={{ 
-              display: "grid", 
-              gridTemplateColumns: "repeat(4, 1fr)",
-              gap: 8,
-              marginBottom: 16,
-              padding: "12px",
-              background: "#f8fafc",
-              borderRadius: "8px",
-              border: "1px solid #e2e8f0"
-            }}>
-              <div style={{ textAlign: "center" }}>
-                <div style={{ fontSize: 10, color: "#64748b", marginBottom: 2 }}>RSM ทั้งหมด</div>
-                <div style={{ fontSize: 14, fontWeight: 600, color: "#1e293b" }}>{chartSummary.totalRsm}</div>
-              </div>
-              <div style={{ textAlign: "center" }}>
-                <div style={{ fontSize: 10, color: "#64748b", marginBottom: 2 }}>ช่างทั้งหมด</div>
-                <div style={{ fontSize: 14, fontWeight: 600, color: "#1e293b" }}>{chartSummary.totalTechnicians?.toLocaleString()}</div>
-              </div>
-              <div style={{ textAlign: "center" }}>
-                <div style={{ fontSize: 10, color: "#64748b", marginBottom: 2 }}>หัวหน้า</div>
-                <div style={{ fontSize: 14, fontWeight: 600, color: "#8b5cf6" }}>{chartSummary.totalLeaders?.toLocaleString()}</div>
-              </div>
-              <div style={{ textAlign: "center" }}>
-                <div style={{ fontSize: 10, color: "#64748b", marginBottom: 2 }}>ลูกน้อง</div>
-                <div style={{ fontSize: 14, fontWeight: 600, color: "#ec4899" }}>{chartSummary.totalMembers?.toLocaleString()}</div>
-              </div>
-            </div>
-          )}
+
           {chartLoading ? (
             <div style={{ textAlign: "center", padding: 40 }}>
               <div style={{ fontSize: 16, color: "#666" }}>กำลังโหลด Chart...</div>
@@ -779,6 +750,15 @@ export default function TechBrowser() {
                   height={36}
                   iconType="rect"
                   wrapperStyle={{ paddingBottom: "10px" }}
+                  formatter={(value: string) => {
+                    if (value === "หัวหน้า" && chartSummary?.totalLeaders) {
+                      return `${value} (${chartSummary.totalLeaders.toLocaleString()})`;
+                    }
+                    if (value === "ลูกน้อง" && chartSummary?.totalMembers) {
+                      return `${value} (${chartSummary.totalMembers.toLocaleString()})`;
+                    }
+                    return value;
+                  }}
                 />
                 <Bar 
                   dataKey="หัวหน้า" 
