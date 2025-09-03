@@ -126,7 +126,8 @@ export default function TechBrowser() {
 
   /* KPI */
   const [kpi, setKpi] = React.useState<KpiResp | null>(null);
-  const [kpiLoading, setKpiLoading] = React.useState(false);
+  const [kpiLoading, setKpiLoading] = React.useState(true);
+  const [kpiInitialized, setKpiInitialized] = React.useState(false);
 
   /* Chart Data */
   const [chartData, setChartData] = React.useState<any[]>([]);
@@ -285,6 +286,7 @@ export default function TechBrowser() {
       
       if (!res.ok) throw new Error(json?.error || `HTTP ${res.status}: KPI fetch error`);
       setKpi(json);
+      setKpiInitialized(true);
     } catch (e: any) {
       console.error('❌ KPI fetch error:', e);
       if (e.name === 'AbortError') {
@@ -296,6 +298,7 @@ export default function TechBrowser() {
         by_work_type: [],
         by_provider: []
       });
+      setKpiInitialized(true);
     } finally {
       setKpiLoading(false);
     }
@@ -466,10 +469,11 @@ export default function TechBrowser() {
     fetchKpis();
   }, [selectedRsm]);
 
-  /* ดึงรายการ RSM และ Chart data ตอน mount */
+  /* ดึงรายการ RSM, Chart data และ KPI ตอน mount */
   React.useEffect(() => {
     fetchRsmOptions();
     fetchChartData();
+    fetchKpis(); // เพิ่มการเรียก KPI ทันทีเมื่อ mount
   }, []);
 
   const start = (page - 1) * 50 + 1;
@@ -518,7 +522,7 @@ export default function TechBrowser() {
               Technicians ทั้งหมด
             </div>
             <div style={{ ...cardNumber, color: "white" }}>
-              {kpiLoading ? "..." : `${(kpi?.total ?? 0).toLocaleString()} (100%)`}
+              {!kpiInitialized ? "กำลังโหลด..." : `${(kpi?.total ?? 0).toLocaleString()} (100%)`}
             </div>
           </div>
 
@@ -569,7 +573,7 @@ export default function TechBrowser() {
                   {name}
                 </div>
                 <div style={{ ...cardNumber, color: "white" }}>
-                  {kpiLoading ? "" : `${count.toLocaleString()} (${pct}%)`}
+                  {!kpiInitialized ? "" : `${count.toLocaleString()} (${pct}%)`}
                 </div>
               </div>
             );
@@ -633,7 +637,7 @@ export default function TechBrowser() {
                     color: "white",
                   }}
                 >
-                  {kpiLoading ? "" : `${count.toLocaleString()} (${pct}%)`}
+                  {!kpiInitialized ? "" : `${count.toLocaleString()} (${pct}%)`}
                 </div>
               </div>
             );
