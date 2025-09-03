@@ -6,6 +6,7 @@ import NextDynamic from "next/dynamic";
 
 // โหลด component แบบ client-only (เปลี่ยนชื่อ import เป็น NextDynamic)
 const TechBrowser = NextDynamic(() => import("@/components/TechBrowser"), { ssr: false });
+const LiveClock = NextDynamic(() => import("@/components/LiveClock"), { ssr: false });
 
 export default function Page() {
   return (
@@ -29,25 +30,7 @@ export default function Page() {
         }}>
           Technicians's Profile
         </h1>
-        <div style={{ 
-          fontSize: 16, 
-          color: 'white',
-          fontWeight: 500,
-          padding: '8px 16px',
-          background: 'rgba(255, 255, 255, 0.1)',
-          borderRadius: '8px',
-          border: '1px solid rgba(255, 255, 255, 0.2)'
-        }}>
-          {new Date().toLocaleDateString('en-GB', { 
-            day: '2-digit', 
-            month: '2-digit', 
-            year: 'numeric' 
-          })} {new Date().toLocaleTimeString('th-TH', { 
-            hour: '2-digit', 
-            minute: '2-digit',
-            second: '2-digit'
-          })}
-        </div>
+        <LiveClock />
       </div>
       
       <TechBrowser />
