@@ -1,5 +1,6 @@
 "use client";
 import React from "react";
+import dynamic from "next/dynamic";
 import { getFieldLabel, SECTION_LABELS, KPI_LABELS } from "../lib/fieldLabels";
 import {
   BarChart,
@@ -13,6 +14,16 @@ import {
   LabelList,
   Cell,
 } from "recharts";
+
+// Dynamic import สำหรับ RsmProviderChart
+const RsmProviderChart = dynamic(() => import("./RsmProviderChart"), { 
+  ssr: false,
+  loading: () => (
+    <div style={{ padding: 24, textAlign: "center" }}>
+      <div style={{ fontSize: 16, color: "#666" }}>กำลังโหลด Provider Chart...</div>
+    </div>
+  )
+});
 
 /* ---------- Types ---------- */
 type Row = { [key: string]: any };
@@ -631,7 +642,7 @@ export default function TechBrowser() {
       </div>
       {/* ===== /KPI row ===== */}
 
-      {/* ===== Stacked Column Chart ===== */}
+      {/* ===== Stacked Column Charts ===== */}
       <div style={{ marginBottom: 20 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
           {selectedRsm && (
@@ -668,38 +679,40 @@ export default function TechBrowser() {
         </div>
         
         <div style={{
-          background: "white",
-          borderRadius: 12,
-          padding: 20,
-          boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
-          border: "1px solid #e5e7eb",
-          position: "relative"
+          display: "grid", 
+          gridTemplateColumns: "50% 50%", 
+          gap: "20px"
         }}>
-          {/* Hint text */}
+          {/* RSM Workgroup Chart (กราฟเดิม) */}
           <div style={{
-            position: "absolute",
-            top: 10,
-            right: 10,
-            fontSize: 11,
-            color: "#9ca3af",
-            fontStyle: "italic"
+            background: "white",
+            borderRadius: 12,
+            padding: 20,
+            boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+            border: "1px solid #e5e7eb",
+            position: "relative"
           }}>
-            💡 คลิกที่แท่งกราฟเพื่อกรองข้อมูล
-          </div>
-          
+            <h3 style={{
+              margin: "0 0 20px 0",
+              fontSize: 18,
+              fontWeight: 600,
+              color: "#1f2937"
+            }}>
+              🏢 RSM Workgroup Status
+            </h3>
 
           {chartLoading ? (
             <div style={{ textAlign: "center", padding: 40 }}>
               <div style={{ fontSize: 16, color: "#666" }}>กำลังโหลด Chart...</div>
             </div>
           ) : chartData.length > 0 ? (
-            <ResponsiveContainer width="100%" height={450}>
-              <BarChart
-                data={chartData}
-                margin={{ top: 60, right: 30, left: 20, bottom: 100 }}
-                onClick={handleChartClick}
-                style={{ cursor: "pointer" }}
-              >
+              <ResponsiveContainer width="100%" height={460}>
+                <BarChart
+                  data={chartData}
+                  margin={{ top: 20, right: 30, left: 20, bottom: 100 }}
+                  onClick={handleChartClick}
+                  style={{ cursor: "pointer" }}
+                >
                 <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                 <XAxis 
                   dataKey="rsm" 
@@ -826,11 +839,32 @@ export default function TechBrowser() {
               <div style={{ fontSize: 16, color: "#999" }}>ไม่มีข้อมูล Chart</div>
             </div>
           )}
+          </div>
+          
+          {/* RSM Provider Chart (กราฟใหม่) */}
+          <div style={{
+            background: "white",
+            borderRadius: 12,
+            padding: 20,
+            boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+            border: "1px solid #e5e7eb",
+            position: "relative"
+          }}>
+            <h3 style={{
+              margin: "0 0 20px 0",
+              fontSize: 18,
+              fontWeight: 600,
+              color: "#1f2937"
+            }}>
+              🏪 RSM Provider Distribution
+            </h3>
+            <RsmProviderChart />
+          </div>
         </div>
         
 
       </div>
-      {/* ===== /Stacked Column Chart ===== */}
+      {/* ===== /Stacked Column Charts ===== */}
 
       {/* Filters */}
       <div
