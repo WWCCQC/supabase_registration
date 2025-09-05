@@ -687,7 +687,27 @@ export default function TechBrowser() {
           gridTemplateColumns: "50% 50%", 
           gap: "20px"
         }}>
-          {/* RSM Workgroup Chart (กราฟเดิม) */}
+          {/* RSM Provider Chart (กราฟใหม่) - ย้ายมาเป็นอันแรก */}
+          <div style={{
+            background: "white",
+            borderRadius: 12,
+            padding: 20,
+            boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+            border: "1px solid #e5e7eb",
+            position: "relative"
+          }}>
+            <h3 style={{
+              margin: "0 0 20px 0",
+              fontSize: 18,
+              fontWeight: 600,
+              color: "#1f2937"
+            }}>
+              🏪 RSM Provider Distribution
+            </h3>
+            <RsmProviderChart />
+          </div>
+
+          {/* RSM Workgroup Chart (กราฟเดิม) - ย้ายมาเป็นอันที่สอง */}
           <div style={{
             background: "white",
             borderRadius: 12,
@@ -843,26 +863,6 @@ export default function TechBrowser() {
               <div style={{ fontSize: 16, color: "#999" }}>ไม่มีข้อมูล Chart</div>
             </div>
           )}
-          </div>
-          
-          {/* RSM Provider Chart (กราฟใหม่) */}
-          <div style={{
-            background: "white",
-            borderRadius: 12,
-            padding: 20,
-            boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
-            border: "1px solid #e5e7eb",
-            position: "relative"
-          }}>
-            <h3 style={{
-              margin: "0 0 20px 0",
-              fontSize: 18,
-              fontWeight: 600,
-              color: "#1f2937"
-            }}>
-              🏪 RSM Provider Distribution
-            </h3>
-            <RsmProviderChart />
           </div>
         </div>
         
