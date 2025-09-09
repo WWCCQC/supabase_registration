@@ -57,10 +57,16 @@ export async function GET() {
 
     // จัดกลุ่มข้อมูลตาม RSM และ Provider
     const groupedData: Record<string, { "WW-Provider": number; "True Tech": number; "เถ้าแก่เทค": number; "อื่นๆ": number }> = {};
+    const providerCount: Record<string, number> = {}; // สำหรับ debug
     
     allData.forEach((row: any) => {
       const rsm = String(row.rsm || "").trim();
       const provider = String(row.provider || "").trim();
+      
+      // Count all providers for debugging
+      if (provider) {
+        providerCount[provider] = (providerCount[provider] || 0) + 1;
+      }
       
       if (!rsm) return; // ข้ามข้อมูลที่ไม่มี RSM
       
@@ -68,12 +74,12 @@ export async function GET() {
         groupedData[rsm] = { "WW-Provider": 0, "True Tech": 0, "เถ้าแก่เทค": 0, "อื่นๆ": 0 };
       }
       
-      // จัดประเภท Provider
-      if (provider.toLowerCase().includes("ww") || provider.toLowerCase().includes("provider")) {
+      // จัดประเภท Provider - แก้ไขให้แม่นยำตามข้อมูลจริง
+      if (provider === "WW-Provider") {
         groupedData[rsm]["WW-Provider"]++;
-      } else if (provider.toLowerCase().includes("true tech")) {
+      } else if (provider === "True Tech") {
         groupedData[rsm]["True Tech"]++;
-      } else if (provider.includes("เถ้าแก่เทค") || provider.toLowerCase().includes("tao")) {
+      } else if (provider === "เถ้าแก่เทค") {
         groupedData[rsm]["เถ้าแก่เทค"]++;
       } else if (provider) {
         groupedData[rsm]["อื่นๆ"]++;
@@ -82,6 +88,9 @@ export async function GET() {
         groupedData[rsm]["อื่นๆ"]++;
       }
     });
+    
+    // Debug provider counts
+    console.log("📊 Provider Debug Counts:", providerCount);
 
     // แปลงเป็น array format สำหรับ Recharts
     const chartData = Object.entries(groupedData)
