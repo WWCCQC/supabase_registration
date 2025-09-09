@@ -74,14 +74,15 @@ export async function GET() {
         groupedData[rsm] = { "WW-Provider": 0, "True Tech": 0, "เถ้าแก่เทค": 0, "อื่นๆ": 0 };
       }
       
-      // จัดประเภท Provider - แก้ไขให้แม่นยำตามข้อมูลจริง
-      if (provider === "WW-Provider") {
+      // จัดประเภท Provider - แก้ไขให้แม่นยำตามข้อมูลจริง (trim ก่อน compare)
+      const trimmedProvider = provider.trim();
+      if (trimmedProvider === "WW-Provider") {
         groupedData[rsm]["WW-Provider"]++;
-      } else if (provider === "True Tech") {
+      } else if (trimmedProvider === "True Tech") {
         groupedData[rsm]["True Tech"]++;
-      } else if (provider === "เถ้าแก่เทค") {
+      } else if (trimmedProvider === "เถ้าแก่เทค") {
         groupedData[rsm]["เถ้าแก่เทค"]++;
-      } else if (provider) {
+      } else if (trimmedProvider) {
         groupedData[rsm]["อื่นๆ"]++;
       } else {
         // กรณีไม่มี provider ให้นับเป็น อื่นๆ
