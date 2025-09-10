@@ -48,6 +48,16 @@ function proxyImg(u: string, thumb = false) {
   return `/api/img?${thumb ? "thumb=1&" : ""}u=${encodeURIComponent(u)}`;
 }
 
+/** มาส์กเลขบัตรประชาชน - แสดงแค่ 4 ตัวท้าย */
+function maskNationalId(nationalId: string): string {
+  if (!nationalId) return "";
+  const cleaned = String(nationalId).replace(/[^0-9]/g, ""); // เอาแค่ตัวเลข
+  if (cleaned.length === 13) {
+    return "xxxxxxxxx" + cleaned.slice(-4); // 9 ตัวแรกเป็น x, 4 ตัวท้ายจริง
+  }
+  return nationalId; // ถ้าไม่ใช่ 13 หลักให้แสดงตามเดิม
+}
+
 /** คอลัมน์ที่ “ตาราง” ต้องแสดง (ซ่อน ctm โดยเอาออก) */
 const COLS = [
   "national_id",
@@ -1037,7 +1047,20 @@ export default function TechBrowser() {
                           />
                         );
                       })()
-                    ) : c === "national_id" || c === "tech_id" ? (
+                    ) : c === "national_id" ? (
+                      <span
+                        style={{
+                          color: "#2563eb",
+                          cursor: "pointer",
+                          textDecoration: "underline",
+                          fontWeight: 500,
+                        }}
+                        onClick={() => openDetail(r)}
+                        title="คลิกเพื่อดูข้อมูลทั้งหมด"
+                      >
+                        {maskNationalId(r[c] ?? "")}
+                      </span>
+                    ) : c === "tech_id" ? (
                       <span
                         style={{
                           color: "#2563eb",
