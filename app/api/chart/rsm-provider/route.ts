@@ -105,21 +105,28 @@ export async function GET() {
       }))
       .sort((a, b) => b.total - a.total);
 
-    // Calculate summary from ALL data (not just RSM-filtered data)
-    const allProviderCount: Record<string, number> = {};
-    allData.forEach((row: any) => {
-      const provider = String(row.provider || "").trim();
-      if (provider) {
-        allProviderCount[provider] = (allProviderCount[provider] || 0) + 1;
+    // Calculate summary using authoritative COUNT queries (same as KPI)
+    // This avoids pagination overlaps/duplicates and guarantees accurate totals
+    const countProvider = async (name: string) => {
+      const { count, error } = await supabase
+        .from("technicians")
+        .select("provider", { head: true, count: "exact" })
+        .eq("provider", name);
+      if (error) {
+        console.warn(`Provider count error for ${name}:`, error.message);
+        return 0;
       }
-    });
-    
-    const allTotalWWProvider = allProviderCount["WW-Provider"] || 0;
-    const allTotalTrueTech = allProviderCount["True Tech"] || 0;
-    const allTotalTaoKae = allProviderCount["เถ้าแก่เทค"] || 0;
-    
+      return count || 0;
+    };
+
+    const [allTotalWWProvider, allTotalTrueTech, allTotalTaoKae] = await Promise.all([
+      countProvider("WW-Provider"),
+      countProvider("True Tech"),
+      countProvider("เถ้าแก่เทค"),
+    ]);
+
     console.log(`RSM Provider Chart Summary: Total RSM: ${Object.keys(groupedData).length}`);
-    console.log(`🎯 FIXED All Providers: WW-Provider: ${allTotalWWProvider}, True Tech: ${allTotalTrueTech}, เถ้าแก่เทค: ${allTotalTaoKae} [DEPLOYMENT VERIFICATION: ${new Date().toISOString()}]`);
+    console.log(`✅ Provider totals by COUNT: WW-Provider: ${allTotalWWProvider}, True Tech: ${allTotalTrueTech}, เถ้าแก่เทค: ${allTotalTaoKae}`);
 
     return NextResponse.json(
       { 
