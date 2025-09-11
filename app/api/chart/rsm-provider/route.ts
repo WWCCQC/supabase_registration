@@ -119,7 +119,7 @@ export async function GET() {
     const allTotalTaoKae = allProviderCount["เถ้าแก่เทค"] || 0;
     
     console.log(`RSM Provider Chart Summary: Total RSM: ${Object.keys(groupedData).length}`);
-    console.log(`All Providers: WW-Provider: ${allTotalWWProvider}, True Tech: ${allTotalTrueTech}, เถ้าแก่เทค: ${allTotalTaoKae}`);
+    console.log(`🎯 FIXED All Providers: WW-Provider: ${allTotalWWProvider}, True Tech: ${allTotalTrueTech}, เถ้าแก่เทค: ${allTotalTaoKae} [DEPLOYMENT VERIFICATION: ${new Date().toISOString()}]`);
 
     return NextResponse.json(
       { 
