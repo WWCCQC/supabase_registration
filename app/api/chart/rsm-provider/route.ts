@@ -3,6 +3,8 @@ import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 
 export async function GET() {
+  console.log("🚀 RSM Provider Chart API called at", new Date().toISOString());
+  
   try {
     const supabase = supabaseAdmin();
     
