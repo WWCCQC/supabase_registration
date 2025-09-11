@@ -41,7 +41,7 @@ export async function GET() {
       }
     }
     
-    console.log(`RSM Provider Chart API: Fetched ${allData?.length || 0} records from database (DB count: ${totalCount || 0})`);
+    console.log(`RSM Provider Chart API: Fetched ${allData?.length || 0} records from database (DB count: ${totalCount || 0}) - Updated: ${new Date().toISOString()}`);
 
     if (!allData || allData.length === 0) {
       return NextResponse.json({ 
