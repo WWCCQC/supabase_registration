@@ -103,15 +103,21 @@ export async function GET() {
       }))
       .sort((a, b) => b.total - a.total);
 
-    // Calculate summary
-    const allTotals = Object.values(groupedData);
-    const totalWWProvider = allTotals.reduce((sum, item) => sum + item["WW-Provider"], 0);
-    const totalTrueTech = allTotals.reduce((sum, item) => sum + item["True Tech"], 0);
-    const totalTaoKae = allTotals.reduce((sum, item) => sum + item["เถ้าแก่เทค"], 0);
-    const totalOthers = allTotals.reduce((sum, item) => sum + item["อื่นๆ"], 0);
+    // Calculate summary from ALL data (not just RSM-filtered data)
+    const allProviderCount: Record<string, number> = {};
+    allData.forEach((row: any) => {
+      const provider = String(row.provider || "").trim();
+      if (provider) {
+        allProviderCount[provider] = (allProviderCount[provider] || 0) + 1;
+      }
+    });
+    
+    const allTotalWWProvider = allProviderCount["WW-Provider"] || 0;
+    const allTotalTrueTech = allProviderCount["True Tech"] || 0;
+    const allTotalTaoKae = allProviderCount["เถ้าแก่เทค"] || 0;
     
     console.log(`RSM Provider Chart Summary: Total RSM: ${Object.keys(groupedData).length}`);
-    console.log(`Providers: WW-Provider: ${totalWWProvider}, True Tech: ${totalTrueTech}, เถ้าแก่เทค: ${totalTaoKae}, อื่นๆ: ${totalOthers}`);
+    console.log(`All Providers: WW-Provider: ${allTotalWWProvider}, True Tech: ${allTotalTrueTech}, เถ้าแก่เทค: ${allTotalTaoKae}`);
 
     return NextResponse.json(
       { 
@@ -120,10 +126,10 @@ export async function GET() {
           totalRsm: Object.keys(groupedData).length,
           totalTechnicians: totalCount || 0,
           providers: {
-            "WW-Provider": totalWWProvider,
-            "True Tech": totalTrueTech,
-            "เถ้าแก่เทค": totalTaoKae,
-            "อื่นๆ": totalOthers
+            "WW-Provider": allTotalWWProvider,
+            "True Tech": allTotalTrueTech,
+            "เถ้าแก่เทค": allTotalTaoKae,
+            "อื่นๆ": 0
           }
         }
       },
