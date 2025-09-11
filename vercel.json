@@ -8,7 +8,7 @@
           "value": "no-store, no-cache, must-revalidate, proxy-revalidate"
         },
         {
-          "key": "Pragma",
+          "key": "Pragma", 
           "value": "no-cache"
         },
         {
