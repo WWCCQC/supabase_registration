@@ -25,6 +25,16 @@ const RsmProviderChart = dynamic(() => import("./RsmProviderChart"), {
   )
 });
 
+// Dynamic import สำหรับ CtmProviderChart
+const CtmProviderChart = dynamic(() => import("./CtmProviderChart"), { 
+  ssr: false,
+  loading: () => (
+    <div style={{ padding: 24, textAlign: "center" }}>
+      <div style={{ fontSize: 16, color: "#666" }}>กำลังโหลด CTM Chart...</div>
+    </div>
+  )
+});
+
 /* ---------- Types ---------- */
 type Row = { [key: string]: any };
 
@@ -111,6 +121,9 @@ export default function TechBrowser() {
   
   /* Selected RSM from chart */
   const [selectedRsm, setSelectedRsm] = React.useState<string | null>(null);
+  
+  /* Selected CTM from chart */
+  const [selectedCtm, setSelectedCtm] = React.useState<string | null>(null);
 
   const d_national_id = useDebounced(national_id);
   const d_tech_id = useDebounced(tech_id);
@@ -162,6 +175,10 @@ export default function TechBrowser() {
     } else if (d_rsm) {
       params.set("rsm", d_rsm);
     }
+    // Add CTM filter
+    if (selectedCtm) {
+      params.set("ctm", selectedCtm);
+    }
     if (d_depot_code) params.set("depot_code", d_depot_code);
     if (d_q) params.set("q", d_q);
     return params;
@@ -180,6 +197,11 @@ export default function TechBrowser() {
       p.set("rsm", d_rsm);
       p.set("f_rsm", d_rsm);
     }
+    // Add CTM filter for KPI
+    if (selectedCtm) {
+      p.set("ctm", selectedCtm);
+      p.set("f_ctm", selectedCtm);
+    }
     if (d_depot_code) p.set("f_depot_code", d_depot_code);
     if (d_q) p.set("q", d_q);
     return p;
@@ -192,6 +214,7 @@ export default function TechBrowser() {
       const params = buildParams(p);
       const url = `/api/technicians?${params.toString()}`;
       console.log('🔍 Fetching data with selectedRsm:', selectedRsm);
+      console.log('🔍 Fetching data with selectedCtm:', selectedCtm);
       console.log('🔍 Fetching data from:', url);
       
       // เพิ่ม timeout และ headers
@@ -265,6 +288,7 @@ export default function TechBrowser() {
       const params = buildFilterParamsOnly();
       const url = `/api/kpis?${params.toString()}`;
       console.log('📊 Fetching KPIs with selectedRsm:', selectedRsm);
+      console.log('📊 Fetching KPIs with selectedCtm:', selectedCtm);
       console.log('📊 Fetching KPIs from:', url);
       
       // เพิ่ม timeout และ headers
@@ -360,6 +384,7 @@ export default function TechBrowser() {
     setDepotCode("");
     setQ("");
     setSelectedRsm(null);
+    setSelectedCtm(null);
     setPage(1);
   }
   
@@ -382,6 +407,12 @@ export default function TechBrowser() {
         setRsm(clickedRsm);
       }
     }
+  }
+
+  // Handle CTM chart click
+  function handleCtmClick(ctm: string | null) {
+    console.log('📊 CTM Chart clicked:', ctm);
+    setSelectedCtm(ctm);
   }
 
   function toggleSort(c: (typeof COLS)[number]) {
@@ -480,6 +511,14 @@ export default function TechBrowser() {
     fetchData(1);
     fetchKpis();
   }, [selectedRsm]);
+
+  // Trigger immediate update when selectedCtm changes
+  React.useEffect(() => {
+    console.log('🎯 Selected CTM changed:', selectedCtm);
+    // Always fetch when selectedCtm changes (including null)
+    fetchData(1);
+    fetchKpis();
+  }, [selectedCtm]);
 
   /* ดึงรายการ RSM, Chart data และ KPI ตอน mount */
   React.useEffect(() => {
@@ -661,37 +700,67 @@ export default function TechBrowser() {
       {/* ===== Stacked Column Charts ===== */}
       <div style={{ marginBottom: 20 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-          {selectedRsm && (
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <span style={{ 
-                padding: "6px 12px", 
-                background: "linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%)",
-                color: "white",
-                borderRadius: "20px",
-                fontSize: 13,
-                fontWeight: 500
-              }}>
-                กำลังกรอง: {selectedRsm}
-              </span>
-              <button
-                onClick={() => {
-                  setSelectedRsm(null);
-                  setRsm("");
-                }}
-                style={{
-                  padding: "4px 8px",
-                  background: "#ef4444",
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            {selectedRsm && (
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span style={{ 
+                  padding: "6px 12px", 
+                  background: "linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%)",
                   color: "white",
-                  border: "none",
-                  borderRadius: "4px",
-                  cursor: "pointer",
-                  fontSize: 12
-                }}
-              >
-                ✕ ยกเลิก
-              </button>
-            </div>
-          )}
+                  borderRadius: "20px",
+                  fontSize: 13,
+                  fontWeight: 500
+                }}>
+                  กำลังกรอง RSM: {selectedRsm}
+                </span>
+                <button
+                  onClick={() => {
+                    setSelectedRsm(null);
+                    setRsm("");
+                  }}
+                  style={{
+                    padding: "4px 8px",
+                    background: "#ef4444",
+                    color: "white",
+                    border: "none",
+                    borderRadius: "4px",
+                    cursor: "pointer",
+                    fontSize: 12
+                  }}
+                >
+                  ✕ ยกเลิก
+                </button>
+              </div>
+            )}
+            {selectedCtm && (
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span style={{ 
+                  padding: "6px 12px", 
+                  background: "linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%)",
+                  color: "white",
+                  borderRadius: "20px",
+                  fontSize: 13,
+                  fontWeight: 500
+                }}>
+                  กำลังกรอง CTM: {selectedCtm}
+                </span>
+                <button
+                  onClick={() => setSelectedCtm(null)}
+                  style={{
+                    padding: "4px 8px",
+                    background: "#ef4444",
+                    color: "white",
+                    border: "none",
+                    borderRadius: "4px",
+                    cursor: "pointer",
+                    fontSize: 12
+                  }}
+                >
+                  ✕ ยกเลิก
+                </button>
+              </div>
+            )}
+          </div>
         </div>
         
         <div style={{
@@ -878,6 +947,35 @@ export default function TechBrowser() {
           </div>
         </div>
         
+        {/* บรรทัดใหม่: CTM Provider Distribution Chart */}
+        <div style={{
+          display: "grid", 
+          gridTemplateColumns: "100%", 
+          gap: "20px",
+          marginTop: "20px"
+        }}>
+          <div style={{
+            background: "white",
+            borderRadius: 12,
+            padding: 20,
+            boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+            border: "1px solid #e5e7eb",
+            position: "relative"
+          }}>
+            <h3 style={{
+              margin: "0 0 20px 0",
+              fontSize: 18,
+              fontWeight: 600,
+              color: "#1f2937"
+            }}>
+              🏪 CTM Provider Distribution (เรียงตามจำนวนมาก → น้อย)
+            </h3>
+            <CtmProviderChart 
+              selectedCtm={selectedCtm}
+              onCtmClick={handleCtmClick}
+            />
+          </div>
+        </div>
 
       </div>
       {/* ===== /Stacked Column Charts ===== */}

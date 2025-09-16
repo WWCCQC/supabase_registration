@@ -66,11 +66,13 @@ function applyFilters(query: any, params: URLSearchParams) {
   const fNat = get('f_national_id');
   const fTech = get('f_tech_id');
   const fRsm = get('f_rsm');
+  const fCtm = get('f_ctm');
   const fDepot = get('f_depot_code');
 
   if (fNat) query = (query as any).ilike('national_id', `%${fNat}%`);
   if (fTech) query = (query as any).ilike('tech_id', `%${fTech}%`);
   if (fRsm) query = (query as any).ilike('rsm', `%${fRsm}%`);
+  if (fCtm) query = (query as any).ilike('ctm', `%${fCtm}%`);
   if (fDepot) query = (query as any).ilike('depot_code', `%${fDepot}%`);
 
   const q = sanitize(params.get('q'));

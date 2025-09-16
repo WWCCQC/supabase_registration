@@ -21,6 +21,7 @@ export async function GET(req: Request) {
     const f_national_id = url.searchParams.get("national_id") || "";
     const f_tech_id     = url.searchParams.get("tech_id") || "";
     const f_rsm         = url.searchParams.get("rsm") || "";
+    const f_ctm         = url.searchParams.get("ctm") || "";
     const f_depot_code  = url.searchParams.get("depot_code") || "";
     const q             = sanitizeQ(url.searchParams.get("q"));
 
@@ -47,6 +48,7 @@ export async function GET(req: Request) {
     if (f_national_id) countQuery = countQuery.ilike("national_id", `%${f_national_id}%`);
     if (f_tech_id)     countQuery = countQuery.ilike("tech_id",     `%${f_tech_id}%`);
     if (f_rsm)         countQuery = countQuery.ilike("rsm",         `%${f_rsm}%`);
+    if (f_ctm)         countQuery = countQuery.ilike("ctm",         `%${f_ctm}%`);
     if (f_depot_code)  countQuery = countQuery.ilike("depot_code",  `%${f_depot_code}%`);
 
     if (q) {
@@ -68,6 +70,7 @@ export async function GET(req: Request) {
     if (f_national_id) dataQuery = dataQuery.ilike("national_id", `%${f_national_id}%`);
     if (f_tech_id)     dataQuery = dataQuery.ilike("tech_id",     `%${f_tech_id}%`);
     if (f_rsm)         dataQuery = dataQuery.ilike("rsm",         `%${f_rsm}%`);
+    if (f_ctm)         dataQuery = dataQuery.ilike("ctm",         `%${f_ctm}%`);
     if (f_depot_code)  dataQuery = dataQuery.ilike("depot_code",  `%${f_depot_code}%`);
 
     if (q) {
