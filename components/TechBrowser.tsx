@@ -559,7 +559,7 @@ export default function TechBrowser() {
             style={{
               ...cardStyle,
               cursor: "pointer",
-              background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+              background: "#203864",
               color: "white",
               border: "none",
             }}
@@ -570,7 +570,7 @@ export default function TechBrowser() {
             title="คลิกเพื่อล้างตัวกรองทั้งหมด"
           >
             <div style={{ ...cardTitle, color: "rgba(255,255,255,0.8)" }}>
-              Technicians ทั้งหมด
+              Technicians
             </div>
             <div style={{ ...cardNumber, color: "white" }}>
               {!kpiInitialized ? "กำลังโหลด..." : `${(kpi?.total ?? 0).toLocaleString()} (100%)`}
