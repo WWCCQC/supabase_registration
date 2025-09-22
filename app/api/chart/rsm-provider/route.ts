@@ -56,7 +56,7 @@ export async function GET() {
       });
     }
 
-    // Group data by RSM and Provider
+    // Group data by RSM and Provider using the same logic as KPI API
     const groupedData: Record<string, { "WW-Provider": number; "True Tech": number; "เถ้าแก่เทค": number; "อื่นๆ": number }> = {};
     const providerCount: Record<string, number> = {};
     
@@ -64,8 +64,8 @@ export async function GET() {
       const rsm = String(row.rsm || "").trim();
       const provider = String(row.provider || "").trim();
       
-      // Count all providers for debugging
-      if (provider) {
+      // Count all providers for debugging (exact matching like KPI API)
+      if (provider && provider !== '') {
         providerCount[provider] = (providerCount[provider] || 0) + 1;
       }
       
@@ -75,18 +75,17 @@ export async function GET() {
         groupedData[rsm] = { "WW-Provider": 0, "True Tech": 0, "เถ้าแก่เทค": 0, "อื่นๆ": 0 };
       }
       
-      // Categorize Provider - fixed with trim comparison
-      const trimmedProvider = provider.trim();
-      if (trimmedProvider === "WW-Provider") {
+      // Categorize Provider using exact string comparison like KPI API
+      if (provider === "WW-Provider") {
         groupedData[rsm]["WW-Provider"]++;
-      } else if (trimmedProvider === "True Tech") {
+      } else if (provider === "True Tech") {
         groupedData[rsm]["True Tech"]++;
-      } else if (trimmedProvider === "เถ้าแก่เทค") {
+      } else if (provider === "เถ้าแก่เทค") {
         groupedData[rsm]["เถ้าแก่เทค"]++;
-      } else if (trimmedProvider) {
+      } else if (provider && provider !== '') {
         groupedData[rsm]["อื่นๆ"]++;
       } else {
-        // No provider case
+        // No provider case (null/undefined/empty)
         groupedData[rsm]["อื่นๆ"]++;
       }
     });

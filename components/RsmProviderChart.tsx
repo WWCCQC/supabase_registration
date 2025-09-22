@@ -130,104 +130,129 @@ export default function RsmProviderChart() {
   }
 
   return (
-    <ResponsiveContainer width="100%" height={460}>
-      <BarChart
-        data={chartData}
-        margin={{ top: 20, right: 30, left: 20, bottom: 100 }}
+    <div>
+      {/* Custom Legend */}
+      <div style={{
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        gap: 20,
+        marginBottom: 16,
+        flexWrap: "wrap"
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <div style={{
+            width: 16,
+            height: 16,
+            backgroundColor: "#3b82f6",
+            borderRadius: 2
+          }} />
+          <span style={{ fontSize: 14, fontWeight: 500 }}>
+            WW-Provider ({summary?.providers["WW-Provider"]?.toLocaleString() || "0"})
+          </span>
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <div style={{
+            width: 16,
+            height: 16,
+            backgroundColor: "#10b981",
+            borderRadius: 2
+          }} />
+          <span style={{ fontSize: 14, fontWeight: 500 }}>
+            True Tech ({summary?.providers["True Tech"]?.toLocaleString() || "0"})
+          </span>
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <div style={{
+            width: 16,
+            height: 16,
+            backgroundColor: "#f59e0b",
+            borderRadius: 2
+          }} />
+          <span style={{ fontSize: 14, fontWeight: 500 }}>
+            เถ้าแก่เทค ({summary?.providers["เถ้าแก่เทค"]?.toLocaleString() || "0"})
+          </span>
+        </div>
+      </div>
+
+      <ResponsiveContainer width="100%" height={400}>
+        <BarChart
+          data={chartData}
+          margin={{ top: 20, right: 30, left: 20, bottom: 80 }}
+        >
+          <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+          <XAxis 
+            dataKey="rsm" 
+            angle={-45}
+            textAnchor="end"
+            height={80}
+            interval={0}
+            tick={{ fontSize: 10 }}
+          />
+          <YAxis 
+            label={{ 
+              value: 'จำนวนช่าง (คน)', 
+              angle: -90, 
+              position: 'insideLeft',
+              style: { fontSize: 11 }
+            }}
+            tick={{ fontSize: 10 }}
+            domain={[0, 800]}
+          />
+          <Tooltip content={<CustomTooltip />} />
+          <Bar 
+            dataKey="WW-Provider" 
+            stackId="a" 
+            fill="#3b82f6"
           >
-            <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-            <XAxis 
-              dataKey="rsm" 
-              angle={-45}
-              textAnchor="end"
-              height={80}
-              interval={0}
-              tick={{ fontSize: 10 }}
-            />
-            <YAxis 
-              label={{ 
-                value: 'จำนวนช่าง (คน)', 
-                angle: -90, 
-                position: 'insideLeft',
-                style: { fontSize: 11 }
-              }}
-              tick={{ fontSize: 10 }}
-              domain={[0, 800]}
-            />
-            <Tooltip content={<CustomTooltip />} />
-            <Legend 
-              verticalAlign="top"
-              height={36}
-              iconType="rect"
-              wrapperStyle={{ paddingBottom: "10px" }}
-              formatter={(value: string) => {
-                if (value === "01_WW-Provider" && summary?.providers["WW-Provider"]) {
-                  return `WW-Provider (${summary.providers["WW-Provider"].toLocaleString()})`;
-                }
-                if (value === "02_True Tech" && summary?.providers["True Tech"]) {
-                  return `True Tech (${summary.providers["True Tech"].toLocaleString()})`;
-                }
-                if (value === "03_เถ้าแก่เทค" && summary?.providers["เถ้าแก่เทค"]) {
-                  return `เถ้าแก่เทค (${summary.providers["เถ้าแก่เทค"].toLocaleString()})`;
-                }
-                return value;
-              }}
-            />
-            <Bar 
+            <LabelList 
               dataKey="WW-Provider" 
-              stackId="a" 
-              fill="#3b82f6"
-              name="01_WW-Provider"
-            >
-              <LabelList 
-                dataKey="WW-Provider" 
-                position="inside" 
-                fill="white"
-                fontSize={10}
-                fontWeight="bold"
-                formatter={(value: any) => value > 0 ? value : ""}
-              />
-            </Bar>
-            <Bar 
+              position="inside" 
+              fill="white"
+              fontSize={10}
+              fontWeight="bold"
+              formatter={(value: any) => value > 0 ? value : ""}
+            />
+          </Bar>
+          <Bar 
+            dataKey="True Tech" 
+            stackId="a" 
+            fill="#10b981"
+          >
+            <LabelList 
               dataKey="True Tech" 
-              stackId="a" 
-              fill="#10b981"
-              name="02_True Tech"
-            >
-              <LabelList 
-                dataKey="True Tech" 
-                position="inside" 
-                fill="white"
-                fontSize={10}
-                fontWeight="bold"
-                formatter={(value: any) => value > 0 ? value : ""}
-              />
-            </Bar>
-            <Bar 
+              position="inside" 
+              fill="white"
+              fontSize={10}
+              fontWeight="bold"
+              formatter={(value: any) => value > 0 ? value : ""}
+            />
+          </Bar>
+          <Bar 
+            dataKey="เถ้าแก่เทค" 
+            stackId="a" 
+            fill="#f59e0b"
+          >
+            <LabelList 
               dataKey="เถ้าแก่เทค" 
-              stackId="a" 
-              fill="#f59e0b"
-              name="03_เถ้าแก่เทค"
-            >
-              <LabelList 
-                dataKey="เถ้าแก่เทค" 
-                position="inside" 
-                fill="white"
-                fontSize={10}
-                fontWeight="bold"
-                formatter={(value: any) => value > 0 ? value : ""}
-              />
-              {/* แสดงจำนวนรวมเหนือยอดกราฟ */}
-              <LabelList 
-                dataKey="total" 
-                position="top"
-                fill="#111827"
-                fontSize={12}
-                fontWeight="bold"
-                offset={5}
-              />
-            </Bar>
-          </BarChart>
-        </ResponsiveContainer>
+              position="inside" 
+              fill="white"
+              fontSize={10}
+              fontWeight="bold"
+              formatter={(value: any) => value > 0 ? value : ""}
+            />
+            {/* แสดงจำนวนรวมเหนือยอดกราฟ */}
+            <LabelList 
+              dataKey="total" 
+              position="top"
+              fill="#111827"
+              fontSize={12}
+              fontWeight="bold"
+              offset={5}
+            />
+          </Bar>
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
   );
 }
