@@ -1365,10 +1365,10 @@ export default function TechBrowser() {
                     <Field row={detailRow!} label={getFieldLabel("gender")} keys={["gender"]} />
                     <Field row={detailRow!} label={getFieldLabel("age")} keys={["age"]} />
                     <Field row={detailRow!} label={getFieldLabel("degree")} keys={["degree"]} />
-                    <WorkExperienceField row={detailRow!} />
                     <Field row={detailRow!} label={getFieldLabel("workgroup_status")} keys={["workgroup_status","status"]} />
                     <Field row={detailRow!} label={getFieldLabel("work_type")} keys={["work_type","team_type"]} />
                     <Field row={detailRow!} label={getFieldLabel("provider")} keys={["provider"]} />
+                    <WorkExperienceField row={detailRow!} />
                   </Section>
 
                   <Section title={`Section 2: ${SECTION_LABELS.area_service}`}>
