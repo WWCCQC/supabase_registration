@@ -968,7 +968,7 @@ export default function TechBrowser() {
               fontWeight: 600,
               color: "#1f2937"
             }}>
-              🏪 CTM Provider Distribution (เรียงตามจำนวนมาก → น้อย)
+              🏪 CTM Provider Distribution
             </h3>
             <CtmProviderChart 
               selectedCtm={selectedCtm}
