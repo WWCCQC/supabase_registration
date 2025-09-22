@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseServer } from "@/lib/supabaseServer";
+import { mapCtmToThaiName } from "@/lib/ctmMapping";
 
 type TechnicianData = {
   ctm: string;
@@ -44,13 +45,16 @@ export async function GET(request: NextRequest) {
     const providers = new Set<string>();
 
     (techs as TechnicianData[]).forEach((tech) => {
-      const ctm = String(tech.ctm || "").trim();
+      const originalCtm = String(tech.ctm || "").trim();
       const provider = String(tech.provider || "").trim();
 
       // Skip if CTM is empty, null, or contains only whitespace
-      if (!ctm || ctm === "null" || ctm === "undefined") return;
+      if (!originalCtm || originalCtm === "null" || originalCtm === "undefined") return;
       // Skip if provider is empty, null, or contains only whitespace  
       if (!provider || provider === "null" || provider === "undefined") return;
+
+      // Map CTM code to Thai name
+      const ctm = mapCtmToThaiName(originalCtm);
 
       if (!groupedData[ctm]) {
         groupedData[ctm] = {};
@@ -103,6 +107,10 @@ export async function GET(request: NextRequest) {
     console.log('Grouped CTMs:', Object.keys(groupedData).length);
     console.log('Chart data length:', chartData.length);
     console.log('Top 10 CTMs:', chartData.slice(0, 10).map(item => `${item.ctm}: ${item.total}`));
+    
+    // Debug CTM mapping
+    const sampleMappings = chartData.slice(0, 5).map(item => item.ctm);
+    console.log('🔤 Sample mapped CTM names:', sampleMappings);
     
     return NextResponse.json({
       chartData,
