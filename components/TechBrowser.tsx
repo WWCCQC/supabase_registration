@@ -588,7 +588,7 @@ export default function TechBrowser() {
 
             const colors = [
               { bg: "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)", text: "white" },
-              { bg: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)", text: "white" },
+              { bg: "#D90429", text: "white" },
             ];
 
             return (
