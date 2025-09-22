@@ -615,7 +615,7 @@ export default function TechBrowser() {
             title="คลิกเพื่อล้างตัวกรองทั้งหมด"
           >
             <div style={{ ...cardTitle, color: "rgba(255,255,255,0.8)" }}>
-              Technicians
+              Technicians (จำนวนคน)
             </div>
             <div style={{ ...cardNumber, color: "white" }}>
               {!kpiInitialized ? "กำลังโหลด..." : `${(kpi?.total ?? 0).toLocaleString()} (100%)`}
