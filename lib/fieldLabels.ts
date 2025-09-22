@@ -17,6 +17,8 @@ export const FIELD_LABELS: Record<string, string> = {
   phone: "เบอร์โทรศัพท์",
   tel: "เบอร์โทรศัพท์",
   email: "อีเมล",
+  card_register_date: "วันที่ลงทะเบียน",
+  work_experience: "ประสบการณ์การทำงาน",
   
   // สถานะและประเภทงาน
   workgroup_status: "workgroup_status",

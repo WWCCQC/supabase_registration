@@ -68,6 +68,51 @@ function maskNationalId(nationalId: string): string {
   return nationalId; // ถ้าไม่ใช่ 13 หลักให้แสดงตามเดิม
 }
 
+/** คำนวณ Work Experience จาก card_register_date */
+function calculateWorkExperience(cardRegisterDate: string): string {
+  if (!cardRegisterDate || cardRegisterDate.trim() === "") {
+    return "—";
+  }
+
+  try {
+    const registerDate = new Date(cardRegisterDate);
+    const currentDate = new Date();
+    
+    // ตรวจสอบว่าวันที่ valid หรือไม่
+    if (isNaN(registerDate.getTime()) || registerDate > currentDate) {
+      return "—";
+    }
+
+    // คำนวณช่วงเวลา
+    let years = currentDate.getFullYear() - registerDate.getFullYear();
+    let months = currentDate.getMonth() - registerDate.getMonth();
+    let days = currentDate.getDate() - registerDate.getDate();
+
+    // ปรับปรุงการคำนวณเมื่อมีค่าติดลบ
+    if (days < 0) {
+      months--;
+      const lastMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 0);
+      days += lastMonth.getDate();
+    }
+
+    if (months < 0) {
+      years--;
+      months += 12;
+    }
+
+    // สร้างข้อความแสดงผล
+    const parts = [];
+    if (years > 0) parts.push(`${years} ปี`);
+    if (months > 0) parts.push(`${months} เดือน`);
+    if (days > 0) parts.push(`${days} วัน`);
+
+    return parts.length > 0 ? parts.join(" ") : "น้อยกว่า 1 วัน";
+  } catch (error) {
+    console.error("Error calculating work experience:", error);
+    return "—";
+  }
+}
+
 /** คอลัมน์ที่ “ตาราง” ต้องแสดง (ซ่อน ctm โดยเอาออก) */
 const COLS = [
   "national_id",
@@ -1320,6 +1365,7 @@ export default function TechBrowser() {
                     <Field row={detailRow!} label={getFieldLabel("gender")} keys={["gender"]} />
                     <Field row={detailRow!} label={getFieldLabel("age")} keys={["age"]} />
                     <Field row={detailRow!} label={getFieldLabel("degree")} keys={["degree"]} />
+                    <WorkExperienceField row={detailRow!} />
                     <Field row={detailRow!} label={getFieldLabel("workgroup_status")} keys={["workgroup_status","status"]} />
                     <Field row={detailRow!} label={getFieldLabel("work_type")} keys={["work_type","team_type"]} />
                     <Field row={detailRow!} label={getFieldLabel("provider")} keys={["provider"]} />
@@ -1520,6 +1566,38 @@ function Field({
       <div style={{ fontSize: 14, color: hasValue ? "#111827" : "#6b7280" }}>
         {hasValue ? String(v) : "—"}
       </div>
+    </div>
+  );
+}
+
+function WorkExperienceField({ row }: { row: Row }) {
+  const cardRegisterDate = pick(row, ["card_register_date"]);
+  const workExperience = calculateWorkExperience(cardRegisterDate || "");
+  const hasValue = cardRegisterDate && cardRegisterDate.trim() !== "";
+  
+  return (
+    <div style={{
+      padding: 12,
+      background: hasValue ? "#f9fafb" : "#f3f4f6",
+      borderRadius: 8,
+      border: "1px solid #e5e7eb",
+      opacity: hasValue ? 1 : 0.7
+    }}>
+      <div style={{ fontSize: 12, color: hasValue ? "#6b7280" : "#9ca3af", marginBottom: 4, fontWeight: 500 }}>
+        {getFieldLabel("work_experience")}
+      </div>
+      <div style={{ fontSize: 14, color: hasValue ? "#111827" : "#6b7280", fontWeight: hasValue ? 600 : 400 }}>
+        {workExperience}
+      </div>
+      {hasValue && (
+        <div style={{ fontSize: 11, color: "#9ca3af", marginTop: 4 }}>
+          ลงทะเบียนเมื่อ: {new Date(cardRegisterDate).toLocaleDateString('th-TH', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+          })}
+        </div>
+      )}
     </div>
   );
 }
