@@ -94,42 +94,43 @@ export default function CtmProviderChart({ selectedCtm, onCtmClick }: CtmProvide
   }
 
   return (
-    <div>
-      {/* Custom Legend */}
+    <div style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}>
+      {/* Custom Legend - เพิ่ม font family สำหรับภาษาไทย */}
       <div style={{
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
         gap: '20px',
         paddingBottom: '15px',
-        fontSize: '12px'
+        fontSize: '13px',
+        fontFamily: 'system-ui, -apple-system, "Segoe UI", "Noto Sans Thai", sans-serif'
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
           <div style={{ 
             width: '14px', 
             height: '14px', 
             backgroundColor: '#3b82f6',
             borderRadius: '2px'
           }}></div>
-          <span>WW-Provider ({summary?.providerBreakdown?.find((p: any) => p.provider === "WW-Provider")?.count?.toLocaleString() || "0"})</span>
+          <span style={{ fontWeight: '500' }}>WW-Provider ({summary?.providerBreakdown?.find((p: any) => p.provider === "WW-Provider")?.count?.toLocaleString() || "0"})</span>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
           <div style={{ 
             width: '14px', 
             height: '14px', 
             backgroundColor: '#10b981',
             borderRadius: '2px'
           }}></div>
-          <span>True Tech ({summary?.providerBreakdown?.find((p: any) => p.provider === "True Tech")?.count?.toLocaleString() || "0"})</span>
+          <span style={{ fontWeight: '500' }}>True Tech ({summary?.providerBreakdown?.find((p: any) => p.provider === "True Tech")?.count?.toLocaleString() || "0"})</span>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
           <div style={{ 
             width: '14px', 
             height: '14px', 
             backgroundColor: '#f59e0b',
             borderRadius: '2px'
           }}></div>
-          <span>เถ้าแก่เทค ({summary?.providerBreakdown?.find((p: any) => p.provider === "เถ้าแก่เทค")?.count?.toLocaleString() || "0"})</span>
+          <span style={{ fontWeight: '500' }}>เถ้าแก่เทค ({summary?.providerBreakdown?.find((p: any) => p.provider === "เถ้าแก่เทค")?.count?.toLocaleString() || "0"})</span>
         </div>
       </div>
 
@@ -171,7 +172,8 @@ export default function CtmProviderChart({ selectedCtm, onCtmClick }: CtmProvide
                   border: "1px solid #ccc",
                   borderRadius: "8px",
                   boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
-                  maxWidth: "300px"
+                  maxWidth: "300px",
+                  fontFamily: 'system-ui, -apple-system, "Segoe UI", "Noto Sans Thai", sans-serif'
                 }}>
                   <p style={{ fontWeight: "bold", marginBottom: "8px", fontSize: "14px" }}>
                     CTM: {label}
