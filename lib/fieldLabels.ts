@@ -114,7 +114,7 @@ export const SECTION_LABELS = {
   basic_info: "ข้อมูลพื้นฐาน",
   area_service: "พื้นที่รับงาน",
   services: "ข้อมูลบริการ",
-  authority_safety: "ข้อมูลอำนาจและความปลอดภัย",
+  authority_safety: "ข้อมูลความปลอดภัย",
   vehicle_info: "ข้อมูลรถยนต์",
   documents: "ข้อมูลเอกสาร",
 };
