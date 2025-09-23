@@ -17,17 +17,18 @@ export async function GET() {
       return NextResponse.json({ error: countError.message }, { status: 400 });
     }
     
-    // Fetch all data with pagination
+    // Fetch all data with proper pagination (no nullsFirst issue)
     let allData: any[] = [];
     let from = 0;
     const pageSize = 1000;
     let hasMore = true;
     
     while (hasMore) {
-      let dataQuery = supabase.from("technicians").select("rsm, provider");
-      dataQuery = dataQuery.order("national_id", { ascending: true, nullsFirst: true }).range(from, from + pageSize - 1);
-      
-      const { data, error } = await dataQuery;
+      const { data, error } = await supabase
+        .from("technicians")
+        .select("rsm, provider, workgroup_status")
+        .order("tech_id", { ascending: true })
+        .range(from, from + pageSize - 1);
       
       if (error) {
         console.error("RSM Provider Chart data fetch error:", error);
@@ -42,7 +43,7 @@ export async function GET() {
         hasMore = false;
       }
     }
-    
+
     console.log(`RSM Provider Chart API: Fetched ${allData?.length || 0} records from database (DB count: ${totalCount || 0}) - Updated: ${new Date().toISOString()}`);
 
     if (!allData || allData.length === 0) {
@@ -104,28 +105,16 @@ export async function GET() {
       }))
       .sort((a, b) => b.total - a.total);
 
-    // Calculate summary using authoritative COUNT queries (same as KPI)
-    // This avoids pagination overlaps/duplicates and guarantees accurate totals
-    const countProvider = async (name: string) => {
-      const { count, error } = await supabase
-        .from("technicians")
-        .select("provider", { head: true, count: "exact" })
-        .eq("provider", name);
-      if (error) {
-        console.warn(`Provider count error for ${name}:`, error.message);
-        return 0;
-      }
-      return count || 0;
+    // Calculate summary using the same data we used for chart (avoid inconsistency)
+    const summaryProviders = {
+      "WW-Provider": providerCount["WW-Provider"] || 0,
+      "True Tech": providerCount["True Tech"] || 0,
+      "เถ้าแก่เทค": providerCount["เถ้าแก่เทค"] || 0,
+      "อื่นๆ": 0
     };
 
-    const [allTotalWWProvider, allTotalTrueTech, allTotalTaoKae] = await Promise.all([
-      countProvider("WW-Provider"),
-      countProvider("True Tech"),
-      countProvider("เถ้าแก่เทค"),
-    ]);
-
     console.log(`RSM Provider Chart Summary: Total RSM: ${Object.keys(groupedData).length}`);
-    console.log(`✅ Provider totals by COUNT: WW-Provider: ${allTotalWWProvider}, True Tech: ${allTotalTrueTech}, เถ้าแก่เทค: ${allTotalTaoKae}`);
+    console.log(`✅ Provider totals from actual data: WW-Provider: ${summaryProviders["WW-Provider"]}, True Tech: ${summaryProviders["True Tech"]}, เถ้าแก่เทค: ${summaryProviders["เถ้าแก่เทค"]}`);
 
     return NextResponse.json(
       { 
@@ -133,12 +122,7 @@ export async function GET() {
         summary: {
           totalRsm: Object.keys(groupedData).length,
           totalTechnicians: totalCount || 0,
-          providers: {
-            "WW-Provider": allTotalWWProvider,
-            "True Tech": allTotalTrueTech,
-            "เถ้าแก่เทค": allTotalTaoKae,
-            "อื่นๆ": 0
-          }
+          providers: summaryProviders
         }
       },
       {

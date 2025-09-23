@@ -6,39 +6,30 @@ export async function GET() {
   try {
     const supabase = supabaseAdmin();
     
-    // ดึงข้อมูลทั้งหมดโดยใช้วิธีเดียวกับ Technicians API ทุกประการ
-    // เพื่อให้ได้ผลลัพธ์ตรงกับ Supabase Table Editor (2,971 records)
-    
-    // ใช้ column selection เดียวกับ Technicians API
-    const cols = [
-      "national_id","tech_id","full_name","gender","age","degree",
-      "doc_tech_card_url","phone","email","workgroup_status","work_type",
-      "provider","area","rsm","ctm","depot_code","depot_name","province"
-    ] as const;
-    
-    // 1. Query สำหรับนับจำนวนทั้งหมด (เหมือน Technicians API เป๊ะ)
+    // Get total count first
     let countQuery = supabase.from("technicians").select("*", { count: "exact", head: true });
     const { count: totalCount, error: countError } = await countQuery;
     
     if (countError) {
-      console.error("Chart count error:", countError);
+      console.error("RSM Workgroup Chart count error:", countError);
       return NextResponse.json({ error: countError.message }, { status: 400 });
     }
     
-    // 2. Query สำหรับดึงข้อมูลจริง (เหมือน Technicians API)
+    // Fetch all data with proper pagination (no nullsFirst issue)
     let allData: any[] = [];
     let from = 0;
     const pageSize = 1000;
     let hasMore = true;
     
     while (hasMore) {
-      let dataQuery = supabase.from("technicians").select("rsm, workgroup_status");
-      dataQuery = dataQuery.order("national_id", { ascending: true, nullsFirst: true }).range(from, from + pageSize - 1);
-      
-      const { data, error } = await dataQuery;
+      const { data, error } = await supabase
+        .from("technicians")
+        .select("rsm, provider, workgroup_status")
+        .order("tech_id", { ascending: true })
+        .range(from, from + pageSize - 1);
       
       if (error) {
-        console.error("Chart data fetch error:", error);
+        console.error("RSM Workgroup Chart data fetch error:", error);
         return NextResponse.json({ error: error.message }, { status: 400 });
       }
       
@@ -50,7 +41,7 @@ export async function GET() {
         hasMore = false;
       }
     }
-    
+
     console.log(`📊 Chart API: Fetched ${allData?.length || 0} records from database (DB count: ${totalCount || 0})`);
     console.log(`📊 Chart API: Using actual fetched count (${allData?.length || 0}) for consistency with Table Editor`);
 
@@ -59,12 +50,12 @@ export async function GET() {
         chartData: [], 
         summary: {
           totalRsm: 0,
-          totalTechnicians: 0,
+          totalTechnicians: totalCount || 0,  // ใช้ totalCount แทน 0
           totalTechniciansWithRsm: 0,
           totalLeaders: 0,
           totalMembers: 0,
-          recordsWithoutRsm: 0,
-          recordsWithoutStatus: 0
+          recordsWithoutRsm: totalCount || 0,  // ใช้ totalCount แทน 0
+          recordsWithoutStatus: totalCount || 0  // ใช้ totalCount แทน 0
         }
       });
     }
@@ -143,7 +134,7 @@ export async function GET() {
         chartData,
         summary: {
           totalRsm: Object.keys(groupedData).length,           // จำนวน RSM ทั้งหมด
-          totalTechnicians: totalRecords,                      // จำนวนช่างทั้งหมด (รวมที่ไม่มี RSM)
+          totalTechnicians: totalCount || 0,                   // ใช้ totalCount จาก DB
           totalTechniciansWithRsm: totalTechniciansWithRsm,    // จำนวนช่างที่มี RSM
           totalLeaders: totalLeaders,                          // จำนวนหัวหน้าทั้งหมด
           totalMembers: totalMembers,                          // จำนวนลูกน้องทั้งหมด
