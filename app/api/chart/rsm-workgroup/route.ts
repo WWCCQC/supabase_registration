@@ -42,7 +42,7 @@ export async function GET() {
       }
     }
 
-    console.log(`📊 Chart API: Fetched ${allData?.length || 0} records from database (DB count: ${totalCount || 0})`);
+    console.log(`📊 Chart API: Fetched ${allData?.length || 0} records from database (DB count: ${totalCount || 0}) - Fixed encoding issue`);
     console.log(`📊 Chart API: Using actual fetched count (${allData?.length || 0}) for consistency with Table Editor`);
 
     if (!allData || allData.length === 0) {
@@ -95,15 +95,28 @@ export async function GET() {
       }
       
       // แปลง workgroup_status เป็น หัวหน้า/ลูกน้อง
-      // ตรวจสอบค่าต่างๆ ที่อาจหมายถึงหัวหน้า
-      if (status.includes("หัวหน้า") || 
+      // ตรวจสอบค่าต่างๆ ที่อาจหมายถึงหัวหน้า (รวมจัดการ encoding ผิด)
+      const cleanStatus = status ? status.replace(/[^\u0E00-\u0E7Fa-zA-Z]/g, '') : '';
+      
+      if (status && (
+          status.includes("หัวหน้า") || 
           status.includes("leader") || 
           status === "l" || 
           status === "หน." ||
-          status.includes("head")) {
+          status.includes("head") ||
+          cleanStatus.includes("หัวหน้า") || // จัดการ encoding ผิด
+          status === "หัวหน้า"
+      )) {
         groupedData[rsm].หัวหน้า++;
+      } else if (status && (
+          status.includes("ลูกน้อง") ||
+          status === "ลูกน้อง" ||
+          cleanStatus.includes("ลูกน้อง")
+      )) {
+        // ถ้าเป็นลูกน้องอย่างชัดเจน
+        groupedData[rsm].ลูกน้อง++;
       } else if (status) {
-        // ถ้ามี status แต่ไม่ใช่หัวหน้า = ลูกน้อง
+        // ถ้ามี status อื่นๆ ที่ไม่ใช่หัวหน้า = ลูกน้อง
         groupedData[rsm].ลูกน้อง++;
       }
     });
