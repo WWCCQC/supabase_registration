@@ -1237,7 +1237,7 @@ export default function TechBrowser() {
       </div>
 
       {/* Pagination */}
-      <div style={{ display: "flex", gap: 8, alignItems: "center", marginTop: 12 }}>
+      <div style={{ display: "flex", gap: 8, alignItems: "center", marginTop: 12, flexWrap: "wrap" }}>
         <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page <= 1 || loading}>
           หน้าก่อน
         </button>
@@ -1250,6 +1250,59 @@ export default function TechBrowser() {
         >
           หน้าถัดไป
         </button>
+        
+        {/* Jump to page input */}
+        <div style={{ display: "flex", gap: 4, alignItems: "center", marginLeft: 12 }}>
+          <span style={{ fontSize: 13, color: "#666" }}>ไปหน้า:</span>
+          <input
+            type="number"
+            min="1"
+            max={totalPages}
+            placeholder="หน้า"
+            style={{
+              width: 60,
+              padding: "4px 6px",
+              border: "1px solid #ddd",
+              borderRadius: 4,
+              fontSize: 13,
+              textAlign: "center"
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                const value = parseInt((e.target as HTMLInputElement).value);
+                if (value >= 1 && value <= totalPages) {
+                  setPage(value);
+                  (e.target as HTMLInputElement).value = "";
+                }
+              }
+            }}
+            disabled={loading}
+          />
+          <button
+            onClick={() => {
+              const input = document.querySelector('input[type="number"]') as HTMLInputElement;
+              if (input) {
+                const value = parseInt(input.value);
+                if (value >= 1 && value <= totalPages) {
+                  setPage(value);
+                  input.value = "";
+                }
+              }
+            }}
+            disabled={loading}
+            style={{
+              padding: "4px 8px",
+              fontSize: 12,
+              background: "#007bff",
+              color: "white",
+              border: "none",
+              borderRadius: 4,
+              cursor: loading ? "not-allowed" : "pointer"
+            }}
+          >
+            ไป
+          </button>
+        </div>
       </div>
 
       {/* Lightbox */}
