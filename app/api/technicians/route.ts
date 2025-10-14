@@ -23,6 +23,7 @@ export async function GET(req: Request) {
     const f_rsm         = url.searchParams.get("rsm") || "";
     const f_ctm         = url.searchParams.get("ctm") || "";
     const f_depot_code  = url.searchParams.get("depot_code") || "";
+    const f_training_type = url.searchParams.get("training_type") || "";
     const q             = sanitizeQ(url.searchParams.get("q"));
 
     const from = (page - 1) * pageSize;
@@ -31,7 +32,11 @@ export async function GET(req: Request) {
     const cols = [
       "national_id","tech_id","full_name","gender","age","degree",
       "doc_tech_card_url","phone","email","workgroup_status","work_type",
-      "provider","area","rsm","ctm","depot_code","depot_name","province"
+      "provider","area","rsm","ctm","depot_code","depot_name","province",
+      "svc_install","svc_repair","svc_nonstandard","svc_corporate","svc_solar",
+      "svc_fttr","svc_2g","svc_cctv","svc_cyod","svc_dongle","svc_iot",
+      "svc_gigatex","svc_wifi","svc_smarthome","svc_catv_settop_box",
+      "svc_true_id","svc_true_inno","svc_l3"
     ] as const;
 
     // sort params
@@ -50,6 +55,21 @@ export async function GET(req: Request) {
     if (f_rsm)         countQuery = countQuery.ilike("rsm",         `%${f_rsm}%`);
     if (f_ctm)         countQuery = countQuery.ilike("ctm",         `%${f_ctm}%`);
     if (f_depot_code)  countQuery = countQuery.ilike("depot_code",  `%${f_depot_code}%`);
+    
+    // กรองตามประเภทการอบรม - ค้นหาคอลัมน์ที่มีค่า "Pass"
+    if (f_training_type) {
+      const serviceColumns = [
+        "svc_install","svc_repair","svc_nonstandard","svc_corporate","svc_solar",
+        "svc_fttr","svc_2g","svc_cctv","svc_cyod","svc_dongle","svc_iot",
+        "svc_gigatex","svc_wifi","svc_smarthome","svc_catv_settop_box",
+        "svc_true_id","svc_true_inno","svc_l3"
+      ];
+      
+      // ตรวจสอบว่าค่าที่เลือกอยู่ในรายการที่รองรับ
+      if (serviceColumns.includes(f_training_type)) {
+        countQuery = countQuery.eq(f_training_type, "Pass");
+      }
+    }
 
     if (q) {
       const pattern = `%${q}%`;
@@ -72,6 +92,21 @@ export async function GET(req: Request) {
     if (f_rsm)         dataQuery = dataQuery.ilike("rsm",         `%${f_rsm}%`);
     if (f_ctm)         dataQuery = dataQuery.ilike("ctm",         `%${f_ctm}%`);
     if (f_depot_code)  dataQuery = dataQuery.ilike("depot_code",  `%${f_depot_code}%`);
+    
+    // กรองตามประเภทการอบรม - ค้นหาคอลัมน์ที่มีค่า "Pass"
+    if (f_training_type) {
+      const serviceColumns = [
+        "svc_install","svc_repair","svc_nonstandard","svc_corporate","svc_solar",
+        "svc_fttr","svc_2g","svc_cctv","svc_cyod","svc_dongle","svc_iot",
+        "svc_gigatex","svc_wifi","svc_smarthome","svc_catv_settop_box",
+        "svc_true_id","svc_true_inno","svc_l3"
+      ];
+      
+      // ตรวจสอบว่าค่าที่เลือกอยู่ในรายการที่รองรับ
+      if (serviceColumns.includes(f_training_type)) {
+        dataQuery = dataQuery.eq(f_training_type, "Pass");
+      }
+    }
 
     if (q) {
       const pattern = `%${q}%`;
@@ -111,6 +146,25 @@ export async function GET(req: Request) {
       depot_code:         r.depot_code         ?? null,
       depot_name:         r.depot_name         ?? null,
       province:           r.province           ?? r.ctm_province ?? null,
+      // Service columns
+      svc_install:        r.svc_install        ?? null,
+      svc_repair:         r.svc_repair         ?? null,
+      svc_nonstandard:    r.svc_nonstandard    ?? null,
+      svc_corporate:      r.svc_corporate      ?? null,
+      svc_solar:          r.svc_solar          ?? null,
+      svc_fttr:           r.svc_fttr           ?? null,
+      svc_2g:             r.svc_2g             ?? null,
+      svc_cctv:           r.svc_cctv           ?? null,
+      svc_cyod:           r.svc_cyod           ?? null,
+      svc_dongle:         r.svc_dongle         ?? null,
+      svc_iot:            r.svc_iot            ?? null,
+      svc_gigatex:        r.svc_gigatex        ?? null,
+      svc_wifi:           r.svc_wifi           ?? null,
+      svc_smarthome:      r.svc_smarthome      ?? null,
+      svc_catv_settop_box: r.svc_catv_settop_box ?? null,
+      svc_true_id:        r.svc_true_id        ?? null,
+      svc_true_inno:      r.svc_true_inno      ?? null,
+      svc_l3:             r.svc_l3             ?? null,
     }));
 
     const total = count ?? 0;

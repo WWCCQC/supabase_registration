@@ -17,18 +17,21 @@ type ProviderChartData = {
   "WW-Provider": number;
   "True Tech": number;
   "เถ้าแก่เทค": number;
-  "อื่นๆ": number;
   total: number;
 };
 
 type ProviderSummary = {
   totalRsm: number;
   totalTechnicians: number;
+  providerBreakdown?: Array<{
+    provider: string;
+    count: number;
+    percentage: number;
+  }>;
   providers: {
     "WW-Provider": number;
     "True Tech": number;
     "เถ้าแก่เทค": number;
-    "อื่นๆ": number;
   };
 };
 
@@ -47,7 +50,7 @@ export default function RsmProviderChart() {
       setLoading(true);
       setError(null);
       
-      const res = await fetch("/api/chart/rsm-provider");
+  const res = await fetch("/api/chart/rsm-provider", { cache: 'no-store' });
       const json = await res.json();
       
       if (!res.ok) throw new Error(json?.error || "Failed to fetch provider chart data");
@@ -148,7 +151,7 @@ export default function RsmProviderChart() {
             borderRadius: 2
           }} />
           <span style={{ fontSize: 14, fontWeight: 500 }}>
-            WW-Provider ({summary?.providers["WW-Provider"]?.toLocaleString() || "0"})
+            WW-Provider ({summary?.providerBreakdown?.find((p: any) => p.provider === "WW-Provider")?.count?.toLocaleString() || "0"})
           </span>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
@@ -159,7 +162,7 @@ export default function RsmProviderChart() {
             borderRadius: 2
           }} />
           <span style={{ fontSize: 14, fontWeight: 500 }}>
-            True Tech ({summary?.providers["True Tech"]?.toLocaleString() || "0"})
+            True Tech ({summary?.providerBreakdown?.find((p: any) => p.provider === "True Tech")?.count?.toLocaleString() || "0"})
           </span>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
@@ -170,7 +173,7 @@ export default function RsmProviderChart() {
             borderRadius: 2
           }} />
           <span style={{ fontSize: 14, fontWeight: 500 }}>
-            เถ้าแก่เทค ({summary?.providers["เถ้าแก่เทค"]?.toLocaleString() || "0"})
+            เถ้าแก่เทค ({summary?.providerBreakdown?.find((p: any) => p.provider === "เถ้าแก่เทค")?.count?.toLocaleString() || "0"})
           </span>
         </div>
       </div>

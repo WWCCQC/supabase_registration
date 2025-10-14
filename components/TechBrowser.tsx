@@ -2,6 +2,8 @@
 import React from "react";
 import dynamic from "next/dynamic";
 import { getFieldLabel, SECTION_LABELS, KPI_LABELS } from "../lib/fieldLabels";
+import { useAuth } from "@/lib/useAuth";
+import PivotTableComponent from "./PivotTable";
 import {
   BarChart,
   Bar,
@@ -31,6 +33,16 @@ const CtmProviderChart = dynamic(() => import("./CtmProviderChart"), {
   loading: () => (
     <div style={{ padding: 24, textAlign: "center" }}>
       <div style={{ fontSize: 16, color: "#666" }}>กำลังโหลด CTM Chart...</div>
+    </div>
+  )
+});
+
+// Dynamic import สำหรับ PivotTable
+const PivotTable = dynamic(() => import("./PivotTable"), { 
+  ssr: false,
+  loading: () => (
+    <div style={{ padding: 24, textAlign: "center" }}>
+      <div style={{ fontSize: 16, color: "#666" }}>กำลังโหลด Pivot Table...</div>
     </div>
   )
 });
@@ -149,6 +161,13 @@ const WIDTHS: Partial<Record<(typeof COLS)[number], number>> = {
 
 /* ---------- Component ---------- */
 export default function TechBrowser() {
+  /* Auth check */
+  const { user, isAdmin } = useAuth();
+  
+  /* Performance Timing */
+  const [componentStartTime] = React.useState(() => performance.now());
+  const [initialLoadComplete, setInitialLoadComplete] = React.useState(false);
+
   /* table state */
   const [page, setPage] = React.useState(1);
   const [loading, setLoading] = React.useState(false);
@@ -162,6 +181,7 @@ export default function TechBrowser() {
   const [tech_id, setTechId] = React.useState("");
   const [rsm, setRsm] = React.useState("");
   const [depot_code, setDepotCode] = React.useState("");
+  const [training_type, setTrainingType] = React.useState("");
   const [q, setQ] = React.useState("");
   
   /* Selected RSM from chart */
@@ -174,7 +194,11 @@ export default function TechBrowser() {
   const d_tech_id = useDebounced(tech_id);
   const d_rsm = useDebounced(rsm);
   const d_depot_code = useDebounced(depot_code);
+  const d_training_type = useDebounced(training_type);
   const d_q = useDebounced(q);
+
+  /* debounce timer for KPI */
+  const kpiTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
 
   /* rsm options for select */
   const [rsmOptions, setRsmOptions] = React.useState<string[]>([]);
@@ -198,6 +222,27 @@ export default function TechBrowser() {
   const [kpi, setKpi] = React.useState<KpiResp | null>(null);
   const [kpiLoading, setKpiLoading] = React.useState(true);
   const [kpiInitialized, setKpiInitialized] = React.useState(false);
+  const [kpiFetching, setKpiFetching] = React.useState(false);
+
+  /* depot code count */
+  const [depotCodeCount, setDepotCodeCount] = React.useState<number>(0);
+  const [depotCodeLoading, setDepotCodeLoading] = React.useState(false);
+
+  /* depot codes by provider */
+  const [depotByProvider, setDepotByProvider] = React.useState<{[key: string]: number}>({});
+  const [depotByProviderLoading, setDepotByProviderLoading] = React.useState(false);
+
+  /* pivot table data */
+  const [pivotData, setPivotData] = React.useState<any[]>([]);
+  const [pivotLoading, setPivotLoading] = React.useState(false);
+
+  /* workgroup count data */
+  const [workgroupData, setWorkgroupData] = React.useState<Record<string, Record<string, number>>>({});
+  const [workgroupLoading, setWorkgroupLoading] = React.useState(false);
+
+  /* technician count data */
+  const [technicianData, setTechnicianData] = React.useState<Record<string, Record<string, number>>>({});
+  const [technicianLoading, setTechnicianLoading] = React.useState(false);
 
   /* Chart Data */
   const [chartData, setChartData] = React.useState<any[]>([]);
@@ -205,7 +250,7 @@ export default function TechBrowser() {
   const [chartLoading, setChartLoading] = React.useState(false);
 
   /* ----- helpers ----- */
-  function buildParams(p = page, size = 50) {
+  function buildParams(p = page, size = 10) {
     const params = new URLSearchParams({
       page: String(p),
       pageSize: String(size),
@@ -225,6 +270,7 @@ export default function TechBrowser() {
       params.set("ctm", selectedCtm);
     }
     if (d_depot_code) params.set("depot_code", d_depot_code);
+    if (d_training_type) params.set("training_type", d_training_type);
     if (d_q) params.set("q", d_q);
     return params;
   }
@@ -248,11 +294,13 @@ export default function TechBrowser() {
       p.set("f_ctm", selectedCtm);
     }
     if (d_depot_code) p.set("f_depot_code", d_depot_code);
+    if (d_training_type) p.set("f_training_type", d_training_type);
     if (d_q) p.set("q", d_q);
     return p;
   }
 
   async function fetchData(p = page) {
+    const startTime = performance.now();
     setLoading(true);
     setError(null);
     try {
@@ -297,6 +345,9 @@ export default function TechBrowser() {
       setTotal(json.total || 0);
       setTotalPages(json.totalPages || 1);
       setPage(json.page || p);
+      
+      const endTime = performance.now();
+      console.log(`📊 Data fetch completed in ${(endTime - startTime).toFixed(2)}ms`);
     } catch (e: any) {
       console.error('❌ Fetch error:', e);
       if (e.name === 'AbortError') {
@@ -311,6 +362,7 @@ export default function TechBrowser() {
   }
 
   async function fetchChartData() {
+    const startTime = performance.now();
     setChartLoading(true);
     try {
       const res = await fetch("/api/chart/rsm-workgroup", { cache: "no-store" });
@@ -320,6 +372,9 @@ export default function TechBrowser() {
       
       setChartData(json.chartData || []);
       setChartSummary(json.summary || null);
+      
+      const endTime = performance.now();
+      console.log(`📊 Chart data fetch completed in ${(endTime - startTime).toFixed(2)}ms`);
     } catch (e: any) {
       console.error("Chart fetch error:", e);
     } finally {
@@ -328,17 +383,26 @@ export default function TechBrowser() {
   }
 
   async function fetchKpis() {
+    // ป้องกันการเรียกซ้ำ
+    if (kpiFetching) {
+      console.log('🔄 KPI fetch already in progress, skipping...');
+      return;
+    }
+    
+    const startTime = performance.now();
+    setKpiFetching(true);
     setKpiLoading(true);
     try {
-      const params = buildFilterParamsOnly();
-      const url = `/api/kpis?${params.toString()}`;
-      console.log('📊 Fetching KPIs with selectedRsm:', selectedRsm);
-      console.log('📊 Fetching KPIs with selectedCtm:', selectedCtm);
+      // ❌ DON'T USE FILTERS FOR KPI - KPI cards should show TOTAL data always
+      // const params = buildFilterParamsOnly();
+      // const url = `/api/kpis?${params.toString()}`;
+      const url = `/api/kpis`; // NO FILTERS - always show total data
+      console.log('📊 Fetching KPIs (TOTAL DATA - no filters)');
       console.log('📊 Fetching KPIs from:', url);
       
       // เพิ่ม timeout และ headers
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 seconds timeout
+      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 seconds timeout
       
       const res = await fetch(url, { 
         cache: "no-store",
@@ -366,8 +430,23 @@ export default function TechBrowser() {
       console.log('📊 KPI Response data:', json);
       
       if (!res.ok) throw new Error(json?.error || `HTTP ${res.status}: KPI fetch error`);
-      setKpi(json);
+      
+      // ตรวจสอบว่าข้อมูลมีค่าที่ถูกต้องหรือไม่ (รองรับทั้ง nested และ flat format)
+      const kpiData = json?.data || json; // รองรับทั้ง { data: {...} } และ {...} format
+      console.log('📊 KPI Data extracted:', kpiData);
+      const validKpi = {
+        total: kpiData?.total ?? 0,
+        by_work_type: Array.isArray(kpiData?.by_work_type) ? kpiData.by_work_type : [],
+        by_provider: Array.isArray(kpiData?.by_provider) ? kpiData.by_provider : []
+      };
+      
+      console.log('📊 Setting KPI data:', validKpi);
+      console.log('📊 KPI total specifically:', kpiData?.total, 'vs', validKpi.total);
+      setKpi(validKpi);
       setKpiInitialized(true);
+      
+      const endTime = performance.now();
+      console.log(`📊 KPI fetch completed in ${(endTime - startTime).toFixed(2)}ms`);
     } catch (e: any) {
       console.error('❌ KPI fetch error:', e);
       if (e.name === 'AbortError') {
@@ -382,11 +461,24 @@ export default function TechBrowser() {
       setKpiInitialized(true);
     } finally {
       setKpiLoading(false);
+      setKpiFetching(false);
     }
+  }
+
+  // Debounced version of fetchKpis
+  function debouncedFetchKpis(delay = 300) {
+    if (kpiTimeoutRef.current) {
+      clearTimeout(kpiTimeoutRef.current);
+    }
+    
+    kpiTimeoutRef.current = setTimeout(() => {
+      fetchKpis();
+    }, delay);
   }
 
   /** ดึงรายการ RSM สำหรับ select (มี fallback จากข้อมูลช่างหน้าแรก) */
   async function fetchRsmOptions() {
+    const startTime = performance.now();
     setRsmLoading(true);
     try {
       // 1) พยายามดึงจาก API โดยตรง - ใช้ /api/meta/rsm
@@ -402,6 +494,9 @@ export default function TechBrowser() {
           (a, b) => a.localeCompare(b, "th")
         );
         setRsmOptions(uniq);
+        
+        const endTime = performance.now();
+        console.log(`📊 RSM options fetch completed in ${(endTime - startTime).toFixed(2)}ms`);
         return;
       }
       // 2) ถ้า API ไม่พร้อม → fallback ไปอ่านจาก technicians หน้าแรก
@@ -414,6 +509,9 @@ export default function TechBrowser() {
         new Set<string>((json2?.rows || []).map((x: Row) => String(x?.rsm || "").trim()).filter(Boolean))
       ).sort((a, b) => a.localeCompare(b, "th"));
       setRsmOptions(uniq2);
+      
+      const endTime = performance.now();
+      console.log(`📊 RSM options fetch (fallback) completed in ${(endTime - startTime).toFixed(2)}ms`);
     } catch (e) {
       console.error(e);
       setRsmOptions((prev) => prev); // คงค่าเดิมไว้ถ้าพัง
@@ -427,10 +525,159 @@ export default function TechBrowser() {
     setTechId("");
     setRsm("");
     setDepotCode("");
+    setTrainingType("");
     setQ("");
     setSelectedRsm(null);
     setSelectedCtm(null);
     setPage(1);
+  }
+
+  async function fetchDepotCodeCount() {
+    setDepotCodeLoading(true);
+    try {
+      // ใช้ API ใหม่ที่ดึง depot_code ทั้งหมดโดยตรงจากฐานข้อมูล
+      const res = await fetch('/api/depot-codes', { cache: "no-store" });
+      const json = await res.json();
+      
+      if (json.count !== undefined) {
+        setDepotCodeCount(json.count);
+        console.log(`📊 Depot codes: ${json.count} unique codes from ${json.total_rows} total rows`);
+        console.log(`📊 Sample codes:`, json.sample_codes);
+      } else {
+        console.error('❌ Invalid response from depot-codes API:', json);
+        setDepotCodeCount(0);
+      }
+      
+    } catch (error) {
+      console.error('Error fetching depot code count:', error);
+      setDepotCodeCount(0);
+    } finally {
+      setDepotCodeLoading(false);
+    }
+  }
+
+  async function fetchDepotCodesByProvider() {
+    setDepotByProviderLoading(true);
+    try {
+      // ใช้ชื่อ provider ที่ตรงกับฐานข้อมูลตามที่คุณระบุ
+      const providers = ["WW-Provider", "True Tech", "เถ้าแก่เทค"];
+      const results: {[key: string]: number} = {};
+      
+      // ดึงข้อมูลแต่ละ provider
+      for (const provider of providers) {
+        console.log(`🔍 Fetching data for provider: "${provider}"`);
+        const res = await fetch(`/api/depot-codes-by-provider?provider=${encodeURIComponent(provider)}`, { cache: "no-store" });
+        const json = await res.json();
+        
+        console.log(`📊 Response for ${provider}:`, json);
+        
+        if (json.count !== undefined) {
+          results[provider] = json.count;
+          console.log(`✅ ${provider}: ${json.count} unique depot codes`);
+        } else {
+          results[provider] = 0;
+          console.error(`❌ Invalid response for ${provider}:`, json);
+        }
+      }
+      
+      // ดึงรายการ provider ทั้งหมดเพื่อ debug
+      console.log('🔍 Fetching all providers for debugging...');
+      const allProvidersRes = await fetch('/api/depot-codes-by-provider?list_all=true', { cache: "no-store" });
+      const allProviders = await allProvidersRes.json();
+      console.log('📋 All providers in database:', allProviders);
+      
+      console.log('📊 Final depot by provider results:', results);
+      setDepotByProvider(results);
+      
+    } catch (error) {
+      console.error('Error fetching depot codes by provider:', error);
+      setDepotByProvider({});
+    } finally {
+      setDepotByProviderLoading(false);
+    }
+  }
+
+  async function fetchPivotData() {
+    setPivotLoading(true);
+    try {
+      console.log('📊 Fetching pivot table data...');
+      const res = await fetch('/api/pivot-data', { cache: "no-store" });
+      const json = await res.json();
+      
+      if (json.data && Array.isArray(json.data)) {
+        setPivotData(json.data);
+        console.log(`📊 Pivot data loaded: ${json.data.length} combinations from ${json.total_rows} total rows`);
+      } else {
+        console.error('❌ Invalid pivot data response:', json);
+        setPivotData([]);
+      }
+      
+    } catch (error) {
+      console.error('Error fetching pivot data:', error);
+      setPivotData([]);
+    } finally {
+      setPivotLoading(false);
+    }
+  }
+
+  /* Fetch workgroup count data */
+  async function fetchWorkgroupData() {
+    const startTime = performance.now();
+    setWorkgroupLoading(true);
+    try {
+      const params = buildFilterParamsOnly();
+      const url = `/api/chart/workgroup-count?${params.toString()}`;
+      console.log('👥 Fetching workgroup data from:', url);
+      
+      const res = await fetch(url, { cache: "no-store" });
+      const json = await res.json();
+      
+      if (!res.ok) {
+        throw new Error(json.error || `HTTP ${res.status}: Workgroup fetch error`);
+      }
+      
+      console.log('👥 Workgroup data response:', json);
+      setWorkgroupData(json);
+      
+      const endTime = performance.now();
+      console.log(`👥 Workgroup data loaded in ${(endTime - startTime).toFixed(2)}ms`);
+      
+    } catch (error) {
+      console.error('Error fetching workgroup data:', error);
+      setWorkgroupData({});
+    } finally {
+      setWorkgroupLoading(false);
+    }
+  }
+
+  /* Fetch technician count data */
+  async function fetchTechnicianData() {
+    const startTime = performance.now();
+    setTechnicianLoading(true);
+    try {
+      const params = buildFilterParamsOnly();
+      const url = `/api/chart/technician-count?${params.toString()}`;
+      console.log('👨‍💼 Fetching technician data from:', url);
+      
+      const res = await fetch(url, { cache: "no-store" });
+      const json = await res.json();
+      
+      if (!res.ok) {
+        throw new Error(json.error || `HTTP ${res.status}: Technician fetch error`);
+      }
+      
+      console.log('👨‍💼 Technician data response:', json);
+      setTechnicianData(json);
+      
+      const endTime = performance.now();
+      console.log(`👨‍💼 Technician data loaded in ${(endTime - startTime).toFixed(2)}ms`);
+      
+    } catch (error) {
+      console.error('Error fetching technician data:', error);
+      setTechnicianData({});
+    } finally {
+      setTechnicianLoading(false);
+    }
   }
   
   // Handle chart bar click
@@ -501,9 +748,19 @@ export default function TechBrowser() {
 
   /** เปิด popup แล้วโหลด “ข้อมูลเต็มแถว” จาก /api/technicians/[tech_id] */
   async function openDetail(fullRowCandidate: Row) {
+    // เช็คสิทธิ์ก่อน - เฉพาะ admin เท่านั้นที่ดูรายละเอียดได้
+    if (!isAdmin()) {
+      alert("ไม่มีสิทธิ์ในการดูรายละเอียดช่างแต่ละคน\nสำหรับผู้ดูแลระบบเท่านั้น");
+      return;
+    }
+    
+    console.log('🔍 Opening detail for:', fullRowCandidate);
+    
     const id =
       (fullRowCandidate?.tech_id || "").toString().trim() ||
       (fullRowCandidate?.national_id || "").toString().trim();
+
+    console.log('🔍 Extracted ID:', id);
 
     if (!id) {
       alert("ไม่พบ tech_id / national_id สำหรับดึงรายละเอียด");
@@ -516,14 +773,23 @@ export default function TechBrowser() {
     setDetailRow(null);
 
     try {
-      const res = await fetch(`/api/technicians/${encodeURIComponent(id)}`, {
+      const url = `/api/technicians/${encodeURIComponent(id)}`;
+      console.log('🔍 Fetching URL:', url);
+      
+      const res = await fetch(url, {
         cache: "no-store",
       });
+      
+      console.log('🔍 Response status:', res.status);
+      console.log('🔍 Response ok:', res.ok);
+      
       const json = await res.json();
+      console.log('🔍 Response JSON:', json);
+      
       if (!res.ok) throw new Error(json?.error || "โหลดรายละเอียดไม่สำเร็จ");
       setDetailRow(json.row || json.data || null);
     } catch (e) {
-      console.error(e);
+      console.error('🔍 Error in openDetail:', e);
       setDetailError((e as Error).message);
     } finally {
       setDetailLoading(false);
@@ -539,15 +805,20 @@ export default function TechBrowser() {
     console.log('🔧 User Agent:', navigator.userAgent);
     
     fetchData(1);
-  }, [d_national_id, d_tech_id, d_rsm, d_depot_code, d_q, sort, dir]);
+  }, [d_national_id, d_tech_id, d_rsm, d_depot_code, d_training_type, d_q, sort, dir]);
 
   React.useEffect(() => {
     fetchData(page);
   }, [page]);
 
   React.useEffect(() => {
-    fetchKpis();
-  }, [d_national_id, d_tech_id, d_rsm, d_depot_code, d_q]);
+    // Reset KPI initialized state เมื่อ filter เปลี่ยน
+    setKpiInitialized(false);
+    debouncedFetchKpis();
+    fetchDepotCodeCount();
+    fetchWorkgroupData();
+    fetchTechnicianData();
+  }, [d_national_id, d_tech_id, d_rsm, d_depot_code, d_training_type, d_q]);
 
   // Trigger immediate update when selectedRsm changes
   React.useEffect(() => {
@@ -555,6 +826,9 @@ export default function TechBrowser() {
     // Always fetch when selectedRsm changes (including null)
     fetchData(1);
     fetchKpis();
+    fetchDepotCodeCount();
+    fetchWorkgroupData();
+    fetchTechnicianData();
   }, [selectedRsm]);
 
   // Trigger immediate update when selectedCtm changes
@@ -563,6 +837,9 @@ export default function TechBrowser() {
     // Always fetch when selectedCtm changes (including null)
     fetchData(1);
     fetchKpis();
+    fetchDepotCodeCount();
+    fetchWorkgroupData();
+    fetchTechnicianData();
   }, [selectedCtm]);
 
   /* ดึงรายการ RSM, Chart data และ KPI ตอน mount */
@@ -570,33 +847,107 @@ export default function TechBrowser() {
     fetchRsmOptions();
     fetchChartData();
     fetchKpis(); // เพิ่มการเรียก KPI ทันทีเมื่อ mount
+    fetchDepotCodeCount(); // เพิ่มการนับ depot_code
+    fetchDepotCodesByProvider(); // เพิ่มการนับ depot_code by provider
+    fetchPivotData(); // เพิ่มการดึงข้อมูล pivot table
+    fetchWorkgroupData(); // เพิ่มการดึงข้อมูล workgroup count
+    fetchTechnicianData(); // เพิ่มการดึงข้อมูล technician count
   }, []);
 
-  const start = (page - 1) * 50 + 1;
-  const end = Math.min(total, page * 50);
+  /* Cleanup timeout on unmount */
+  React.useEffect(() => {
+    return () => {
+      if (kpiTimeoutRef.current) {
+        clearTimeout(kpiTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  /* Monitor initial load completion */
+  React.useEffect(() => {
+    if (!loading && !kpiLoading && !chartLoading && !initialLoadComplete) {
+      const totalTime = performance.now() - componentStartTime;
+      console.log(`🎯 TechBrowser initial load completed in ${totalTime.toFixed(2)}ms`);
+      setInitialLoadComplete(true);
+      
+      // Check if we have login timing data
+      const loginStartTime = localStorage.getItem('loginStartTime');
+      if (loginStartTime) {
+        const totalLoginTime = performance.now() - parseFloat(loginStartTime);
+        console.log(`🎯 Total time from login to TechBrowser ready: ${totalLoginTime.toFixed(2)}ms`);
+        localStorage.removeItem('loginStartTime'); // Clean up
+      }
+    }
+  }, [loading, kpiLoading, chartLoading, initialLoadComplete, componentStartTime]);
+
+  const start = (page - 1) * 10 + 1;
+  const end = Math.min(total, page * 10);
 
   /* ---------- Render ---------- */
   return (
-    <div style={{ padding: 24 }}>
+    <div>
+      {/* Show loading overlay if KPI is loading */}
+      {kpiLoading && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(255,255,255,0.8)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999,
+          flexDirection: 'column',
+          gap: '20px'
+        }}>
+          <div style={{
+            width: '60px',
+            height: '60px',
+            border: '6px solid #f3f3f3',
+            borderTop: '6px solid #3498db',
+            borderRadius: '50%',
+            animation: 'spin 1s linear infinite'
+          }}></div>
+          <div style={{ fontSize: '18px', color: '#666' }}>
+            กำลังโหลดข้อมูล...
+          </div>
+          <style jsx>{`
+            @keyframes spin {
+              0% { transform: rotate(0deg); }
+              100% { transform: rotate(360deg); }
+            }
+          `}</style>
+        </div>
+      )}
 
-
-      {/* ===== KPI row ===== */}
+      {/* ===== KPI Container + Technicians by RSM Table ===== */}
       <div style={{ 
-        background: "#eeeeee",
-        padding: "16px",
-        borderRadius: "8px",
-        marginBottom: "8px"
+        display: "flex", 
+        gap: "16px", 
+        alignItems: "stretch",
+        marginBottom: "16px" 
       }}>
+        {/* ===== KPI rows ===== */}
+        <div style={{ 
+          background: "#eeeeee",
+          padding: "16px",
+          borderRadius: "8px",
+          width: "650px"
+        }}>
+        {/* บรรทัดที่ 1: Technicians, Installation, Repair + Depot */}
         <div
           style={{
             display: "grid",
             gridAutoFlow: "column",
-            gridAutoColumns: "minmax(220px, 1fr)",
-            gap: 12,
+            gridAutoColumns: "130px",
+            gap: 2,
             alignItems: "stretch",
             minHeight: 65,
             height: 65,
             overflow: "hidden",
+            marginBottom: 4,
           }}
         >
           {/* Total */}
@@ -615,10 +966,10 @@ export default function TechBrowser() {
             title="คลิกเพื่อล้างตัวกรองทั้งหมด"
           >
             <div style={{ ...cardTitle, color: "rgba(255,255,255,0.8)" }}>
-              Technicians (จำนวนคน)
+              Technicians (คน)
             </div>
             <div style={{ ...cardNumber, color: "white" }}>
-              {!kpiInitialized ? "กำลังโหลด..." : `${(kpi?.total ?? 0).toLocaleString()} (100%)`}
+              {kpiLoading ? "กำลังโหลด..." : (kpiInitialized ? `${(kpi?.total ?? 0).toLocaleString()} (100%)` : "กำลังโหลด...")}
             </div>
           </div>
 
@@ -669,12 +1020,92 @@ export default function TechBrowser() {
                   {name}
                 </div>
                 <div style={{ ...cardNumber, color: "white" }}>
-                  {!kpiInitialized ? "" : `${count.toLocaleString()} (${pct}%)`}
+                  {depotByProviderLoading ? "กำลังโหลด..." : (() => {
+                    const providerName = name === "Depot True Tech" ? "True Tech" : "เถ้าแก่เทค";
+                    const depotCount = depotByProvider[providerName] || 0;
+                    const percentage = depotCodeCount > 0 ? ((depotCount / depotCodeCount) * 100).toFixed(1) : 0;
+                    return `${depotCount} (${percentage}%)`;
+                  })()}
                 </div>
               </div>
             );
           })}
 
+          {/* Depot Code */}
+          <div
+            style={{
+              ...cardStyle,
+              cursor: "pointer",
+              background: "#203864",
+              color: "white",
+              border: "none",
+              marginLeft: "10px",
+            }}
+            onClick={() => {
+              clearFilters();
+              setQ("");
+            }}
+            title="คลิกเพื่อล้างตัวกรองทั้งหมด - ข้อมูล Depot Code"
+          >
+            <div style={{ ...cardTitle, color: "rgba(255,255,255,0.8)" }}>
+              Depot Code
+            </div>
+            <div style={{ ...cardNumber, color: "white" }}>
+              {depotCodeLoading ? "กำลังโหลด..." : depotCodeCount.toLocaleString()}
+            </div>
+          </div>
+
+          {/* Depot WW-Provider */}
+          <div
+            style={{
+              ...cardStyle,
+              cursor: "pointer",
+              background: "#87BFFF",
+              color: "white",
+              border: "none",
+            }}
+            onClick={() => {
+              if (q === "Depot WW-Provider") {
+                setQ("");
+              } else {
+                clearFilters();
+                setQ("Depot WW-Provider");
+              }
+            }}
+            onMouseOver={(e) => {
+              if (q !== "Depot WW-Provider") e.currentTarget.style.transform = "scale(1.02)";
+            }}
+            onMouseOut={(e) => {
+              if (q !== "Depot WW-Provider") e.currentTarget.style.transform = "scale(1)";
+            }}
+            title="คลิกเพื่อกรองตาม Depot WW-Provider"
+          >
+            <div style={{ ...cardTitle, color: "rgba(255,255,255,0.8)" }}>
+              Depot WW
+            </div>
+            <div style={{ ...cardNumber, color: "white" }}>
+              {depotByProviderLoading ? "กำลังโหลด..." : (() => {
+                const count = depotByProvider["WW-Provider"] || 0;
+                const percentage = depotCodeCount > 0 ? ((count / depotCodeCount) * 100).toFixed(1) : 0;
+                return `${count} (${percentage}%)`;
+              })()}
+            </div>
+          </div>
+        </div>
+
+        {/* บรรทัดที่ 2: WW-Provider, True Tech, เถ้าแก่เทค + Depot Provider */}
+        <div
+          style={{
+            display: "grid",
+            gridAutoFlow: "column",
+            gridAutoColumns: "130px",
+            gap: 2,
+            alignItems: "stretch",
+            minHeight: 65,
+            height: 65,
+            overflow: "hidden",
+          }}
+        >
           {/* Provider */}
           {["WW-Provider", "True Tech", "เถ้าแก่เทค"].map((name, index) => {
             const f = (kpi?.by_provider || []).find(
@@ -733,14 +1164,121 @@ export default function TechBrowser() {
                     color: "white",
                   }}
                 >
-                  {!kpiInitialized ? "" : `${count.toLocaleString()} (${pct}%)`}
+                  {kpiLoading ? "โหลด..." : (kpiInitialized ? `${count.toLocaleString()} (${pct}%)` : "โหลด...")}
+                </div>
+              </div>
+            );
+          })}
+
+          {/* Depot Provider cards */}
+          {["Depot True Tech", "Depot เถ้าแก่เทค"].map((name, index) => {
+            // TODO: เพิ่มข้อมูลจริงจาก API ในอนาคต
+            const count = 0;
+            const pct = 0;
+
+            const colors = [
+              { bg: "#87BFFF", text: "white" },
+              { bg: "#87BFFF", text: "white" },
+            ];
+
+            return (
+              <div
+                key={name}
+                style={{
+                  ...cardStyle,
+                  cursor: "pointer",
+                  background: colors[index].bg,
+                  color: colors[index].text,
+                  border: q === name ? "2px solid #fff" : "none",
+                  transition: "all 0.2s ease",
+                  transform: q === name ? "scale(1.05)" : "scale(1)",
+                  boxShadow: q === name ? "0 8px 16px rgba(0,0,0,0.2)" : "0 1px 2px rgba(0,0,0,0.04)",
+                  marginLeft: index === 0 ? "10px" : "0",
+                }}
+                onClick={() => {
+                  if (q === name) {
+                    setQ("");
+                  } else {
+                    clearFilters();
+                    setQ(name);
+                  }
+                }}
+                onMouseOver={(e) => {
+                  if (q !== name) e.currentTarget.style.transform = "scale(1.02)";
+                }}
+                onMouseOut={(e) => {
+                  if (q !== name) e.currentTarget.style.transform = "scale(1)";
+                }}
+                title={`คลิกเพื่อกรองตาม ${name}`}
+              >
+                <div
+                  style={{
+                    ...cardTitle,
+                    color: "rgba(255,255,255,0.8)",
+                  }}
+                >
+                  {name}
+                </div>
+                <div
+                  style={{
+                    ...cardNumber,
+                    color: "white",
+                  }}
+                >
+                  {depotByProviderLoading ? "กำลังโหลด..." : (() => {
+                    const providerName = name === "Depot True Tech" ? "True Tech" : "เถ้าแก่เทค";
+                    const depotCount = depotByProvider[providerName] || 0;
+                    const percentage = depotCodeCount > 0 ? ((depotCount / depotCodeCount) * 100).toFixed(1) : 0;
+                    console.log(`🔍 Card ${name}: Looking for provider "${providerName}", found count: ${depotCount}, all providers:`, Object.keys(depotByProvider));
+                    return `${depotCount} (${percentage}%)`;
+                  })()}
                 </div>
               </div>
             );
           })}
         </div>
+
+        </div>
+        {/* ===== /KPI rows ===== */}
+
+        {/* Technicians by RSM Table */}
+        <div style={{
+          background: "#ffffff",
+          border: "1px solid #e5e7eb",
+          borderRadius: "8px",
+          padding: "12px",
+          flex: "1",
+          minWidth: "700px",
+          boxShadow: "0 1px 2px rgba(0,0,0,0.04)",
+          display: "flex",
+          flexDirection: "column"
+        }}>
+          {pivotData.length > 0 ? (
+            <div style={{ 
+              fontSize: "12px", 
+              overflow: "auto",
+              flex: "1",
+              display: "flex",
+              flexDirection: "column"
+            }}>
+              <PivotTableComponent 
+                data={pivotData} 
+                workgroupData={workgroupData} 
+                technicianData={technicianData}
+              />
+            </div>
+          ) : (
+            <div style={{ 
+              textAlign: "center", 
+              color: "#6b7280", 
+              padding: "20px",
+              fontSize: "12px"
+            }}>
+              กำลังโหลดข้อมูล...
+            </div>
+          )}
+        </div>
       </div>
-      {/* ===== /KPI row ===== */}
 
       {/* ===== Stacked Column Charts ===== */}
       <div style={{ marginBottom: 20 }}>
@@ -1032,6 +1570,9 @@ export default function TechBrowser() {
           gridTemplateColumns: "repeat(5, minmax(0, 1fr))",
           gap: 8,
           marginBottom: 12,
+          backgroundColor: "#7F7F7F",
+          padding: "12px",
+          borderRadius: "8px"
         }}
       >
         <input
@@ -1066,6 +1607,36 @@ export default function TechBrowser() {
           value={depot_code}
           onChange={(e) => setDepotCode(e.target.value)}
         />
+        <select
+          value={training_type}
+          onChange={(e) => setTrainingType(e.target.value)}
+          style={{ 
+            minWidth: "180px",
+            padding: "4px 8px",
+            border: "1px solid #ccc",
+            borderRadius: "4px"
+          }}
+        >
+          <option value="">— ประเภทการอบรม —</option>
+          <option value="svc_install">install</option>
+          <option value="svc_repair">repair</option>
+          <option value="svc_nonstandard">nonstandard</option>
+          <option value="svc_corporate">corporate</option>
+          <option value="svc_solar">solar</option>
+          <option value="svc_fttr">fttr</option>
+          <option value="svc_2g">2g</option>
+          <option value="svc_cctv">cctv</option>
+          <option value="svc_cyod">cyod</option>
+          <option value="svc_dongle">dongle</option>
+          <option value="svc_iot">iot</option>
+          <option value="svc_gigatex">gigatex</option>
+          <option value="svc_wifi">wifi</option>
+          <option value="svc_smarthome">smarthome</option>
+          <option value="svc_catv_settop_box">catv_settop_box</option>
+          <option value="svc_true_id">true_id</option>
+          <option value="svc_true_inno">true_inno</option>
+          <option value="svc_l3">l3</option>
+        </select>
         <input
           placeholder="ค้นหา (พิมพ์อะไรก็ได้)"
           value={q}
@@ -1193,31 +1764,57 @@ export default function TechBrowser() {
                         );
                       })()
                     ) : c === "national_id" ? (
-                      <span
-                        style={{
-                          color: "#2563eb",
-                          cursor: "pointer",
-                          textDecoration: "underline",
-                          fontWeight: 500,
-                        }}
-                        onClick={() => openDetail(r)}
-                        title="คลิกเพื่อดูข้อมูลทั้งหมด"
-                      >
-                        {maskNationalId(r[c] ?? "")}
-                      </span>
+                      // แสดงผลต่างกันตาม role
+                      isAdmin() ? (
+                        <span
+                          style={{
+                            color: "#2563eb",
+                            cursor: "pointer",
+                            textDecoration: "underline",
+                            fontWeight: 500,
+                          }}
+                          onClick={() => openDetail(r)}
+                          title="คลิกเพื่อดูข้อมูลทั้งหมด (Admin เท่านั้น)"
+                        >
+                          {maskNationalId(r[c] ?? "")}
+                        </span>
+                      ) : (
+                        <span
+                          style={{
+                            color: "#374151",
+                            fontWeight: 400,
+                          }}
+                          title="ข้อมูลสำหรับผู้ดูแลระบบเท่านั้น"
+                        >
+                          {maskNationalId(r[c] ?? "")}
+                        </span>
+                      )
                     ) : c === "tech_id" ? (
-                      <span
-                        style={{
-                          color: "#2563eb",
-                          cursor: "pointer",
-                          textDecoration: "underline",
-                          fontWeight: 500,
-                        }}
-                        onClick={() => openDetail(r)}
-                        title="คลิกเพื่อดูข้อมูลทั้งหมด"
-                      >
-                        {r[c] ?? ""}
-                      </span>
+                      // แสดงผลต่างกันตาม role
+                      isAdmin() ? (
+                        <span
+                          style={{
+                            color: "#2563eb",
+                            cursor: "pointer",
+                            textDecoration: "underline",
+                            fontWeight: 500,
+                          }}
+                          onClick={() => openDetail(r)}
+                          title="คลิกเพื่อดูข้อมูลทั้งหมด (Admin เท่านั้น)"
+                        >
+                          {r[c] ?? ""}
+                        </span>
+                      ) : (
+                        <span
+                          style={{
+                            color: "#374151",
+                            fontWeight: 400,
+                          }}
+                          title="ข้อมูลสำหรับผู้ดูแลระบบเท่านั้น"
+                        >
+                          {r[c] ?? ""}
+                        </span>
+                      )
                     ) : (
                       r[c] ?? ""
                     )}
@@ -1500,6 +2097,8 @@ export default function TechBrowser() {
           </div>
         </div>
       )}
+
+
     </div>
   );
 }
@@ -1698,9 +2297,9 @@ const cardStyle: React.CSSProperties = {
   padding: "12px 14px",
   background: "#fff",
   boxShadow: "0 1px 2px rgba(0,0,0,0.04)",
-  minHeight: 110,
+  minHeight: 65,
   transition: "all 0.2s ease-in-out",
 };
 const cardTitle: React.CSSProperties = { fontSize: 12, color: "#6b7280", marginBottom: 4 };
-const cardNumber: React.CSSProperties = { fontSize: 24, fontWeight: 700 };
+const cardNumber: React.CSSProperties = { fontSize: 14, fontWeight: 700 };
 const cardSub: React.CSSProperties = { fontSize: 12, color: "#6b7280" };

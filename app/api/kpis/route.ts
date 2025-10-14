@@ -68,12 +68,28 @@ function applyFilters(query: any, params: URLSearchParams) {
   const fRsm = get('f_rsm');
   const fCtm = get('f_ctm');
   const fDepot = get('f_depot_code');
+  const fTrainingType = get('f_training_type');
 
   if (fNat) query = (query as any).ilike('national_id', `%${fNat}%`);
   if (fTech) query = (query as any).ilike('tech_id', `%${fTech}%`);
   if (fRsm) query = (query as any).ilike('rsm', `%${fRsm}%`);
   if (fCtm) query = (query as any).ilike('ctm', `%${fCtm}%`);
   if (fDepot) query = (query as any).ilike('depot_code', `%${fDepot}%`);
+  
+  // กรองตามประเภทการอบรม
+  if (fTrainingType) {
+    const serviceColumns = [
+      "svc_install","svc_repair","svc_nonstandard","svc_corporate","svc_solar",
+      "svc_fttr","svc_2g","svc_cctv","svc_cyod","svc_dongle","svc_iot",
+      "svc_gigatex","svc_wifi","svc_smarthome","svc_catv_settop_box",
+      "svc_true_id","svc_true_inno","svc_l3"
+    ];
+    
+    // ตรวจสอบว่าค่าที่เลือกอยู่ในรายการที่รองรับ
+    if (serviceColumns.includes(fTrainingType)) {
+      query = (query as any).eq(fTrainingType, "Pass");
+    }
+  }
 
   const q = sanitize(params.get('q'));
   if (q) {
@@ -151,73 +167,128 @@ async function collectDistinct(
   return Array.from(set);
 }
 
+// Simple cache to store results for 30 seconds
+const cache = new Map();
+const CACHE_TTL = 30 * 1000; // 30 seconds
+
 export async function GET(req: Request) {
   try {
-    // Debug environment variables
     console.log('🔧 KPI API Environment check:');
     console.log('NEXT_PUBLIC_SUPABASE_URL:', process.env.NEXT_PUBLIC_SUPABASE_URL ? '✅' : '❌');
     console.log('SUPABASE_SERVICE_ROLE:', process.env.SUPABASE_SERVICE_ROLE ? '✅' : '❌');
     
     const url = new URL(req.url);
     const params = url.searchParams;
+    
+    // TEMPORARILY DISABLE CACHE to fix 0 display issue
+    // const cacheKey = url.search || 'default';
+    // const cached = cache.get(cacheKey);
+    // if (cached && (Date.now() - cached.timestamp) < CACHE_TTL) {
+    //   console.log('📦 KPI Cache hit');
+    //   return new NextResponse(JSON.stringify(cached.data), {
+    //     status: 200,
+    //     headers: {
+    //       'content-type': 'application/json; charset=utf-8',
+    //       'x-cache': 'HIT'
+    //     }
+    //   });
+    // }
+
     const supabase = supabaseAdmin();
 
-    // ===== TOTAL (ใช้ count ที่ไม่ติดลิมิต)
-    let qTotal: any = supabase.from('technicians').select('*', { count: 'exact', head: true });
-    qTotal = applyFilters(qTotal, params);
-    qTotal = await applyDateFilterSafe(qTotal, params);
-    const { count: total = 0, error: eTotal } = await qTotal;
-    if (eTotal) throw eTotal;
+    // ===== Fetch all data with pagination (like RSM Provider API)
+    let allData: any[] = [];
+    let from = 0;
+    const pageSize = 1000;
+    let hasMore = true;
 
-    // ===== BY WORK_TYPE (distinct + count per key)
-    const by_work_type: { key: string; count: number; percent: number }[] = [];
-    const workTypes = await collectDistinct(supabase, 'work_type', params);
-
-    for (const key of workTypes) {
-      let q: any = supabase.from('technicians').select('*', { count: 'exact', head: true }).eq('work_type', key);
-      q = applyFilters(q, params);
-      q = await applyDateFilterSafe(q, params);
-      const { count = 0, error } = await q;
+    while (hasMore) {
+      let query: any = supabase.from('technicians').select('work_type, provider, national_id').range(from, from + pageSize - 1);
+      query = applyFilters(query, params);
+      query = await applyDateFilterSafe(query, params);
+      const { data, error } = await query;
+      
       if (error) throw error;
-      by_work_type.push({
+      
+      if (data && data.length > 0) {
+        allData = [...allData, ...data];
+        from += pageSize;
+        hasMore = data.length === pageSize;
+      } else {
+        hasMore = false;
+      }
+    }
+
+    console.log(`📊 KPI API: Fetched ${allData?.length || 0} records from database`);
+
+    // Count unique national_id by work_type and provider
+    const workTypeCounts: Record<string, Set<string>> = {};
+    const providerCounts: Record<string, Set<string>> = {};
+    
+    allData.forEach((row: any) => {
+      const workType = String(row.work_type || "").trim();
+      const provider = String(row.provider || "").trim();
+      const nationalId = row.national_id;
+      
+      if (!nationalId) return; // Skip rows without national_id
+      
+      // Count by work_type
+      if (workType && workType !== "null" && workType !== "undefined") {
+        if (!workTypeCounts[workType]) workTypeCounts[workType] = new Set();
+        workTypeCounts[workType].add(nationalId);
+      }
+      
+      // Count by provider  
+      if (provider && provider !== "null" && provider !== "undefined") {
+        if (!providerCounts[provider]) providerCounts[provider] = new Set();
+        providerCounts[provider].add(nationalId);
+      }
+    });
+
+    // Calculate total unique technicians
+    const uniqueNationalIds = new Set<string>();
+    allData.forEach((row: any) => {
+      if (row.national_id) uniqueNationalIds.add(row.national_id);
+    });
+    const total = uniqueNationalIds.size;
+
+    // Convert Sets to counts for work_type
+    const by_work_type = Object.entries(workTypeCounts).map(([key, set]) => {
+      const count = set.size;
+      return {
         key,
         count,
         percent: total ? +((100 * count) / total).toFixed(2) : 0,
-      });
-    }
+      };
+    });
 
-    // ===== BY PROVIDER (distinct + count per key)
-    const by_provider: { key: string; count: number; percent: number }[] = [];
-    const providers = await collectDistinct(supabase, 'provider', params);
-
-    for (const key of providers) {
-      let q: any = supabase.from('technicians').select('*', { count: 'exact', head: true }).eq('provider', key);
-      q = applyFilters(q, params);
-      q = await applyDateFilterSafe(q, params);
-      const { count = 0, error } = await q;
-      if (error) throw error;
-      by_provider.push({
+    // Convert Sets to counts for provider
+    const by_provider = Object.entries(providerCounts).map(([key, set]) => {
+      const count = set.size;
+      return {
         key,
         count,
         percent: total ? +((100 * count) / total).toFixed(2) : 0,
-      });
-    }
+      };
+    });
 
     const body = {
-      total,
-      by_work_type: by_work_type.sort((a, b) => b.count - a.count),
-      by_provider: by_provider.sort((a, b) => b.count - a.count),
+      data: {
+        total,
+        by_work_type: by_work_type.sort((a, b) => b.count - a.count),
+        by_provider: by_provider.sort((a, b) => b.count - a.count),
+      }
     };
+
+    // TEMPORARILY DISABLE CACHE to fix 0 display issue
+    // cache.set(cacheKey, { data: body, timestamp: Date.now() });
 
     return new NextResponse(JSON.stringify(body), {
       status: 200,
       headers: {
         'content-type': 'application/json; charset=utf-8',
-        'cache-control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
-        'pragma': 'no-cache',
-        'expires': '0',
-        'surrogate-control': 'no-store',
-        'x-vercel-cache': 'no-cache'
+        'cache-control': 'no-store, no-cache, must-revalidate',
+        'x-cache': 'DISABLED'
       },
     });
   } catch (e: any) {

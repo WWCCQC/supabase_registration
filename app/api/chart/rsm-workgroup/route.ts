@@ -15,7 +15,7 @@ export async function GET() {
       return NextResponse.json({ error: countError.message }, { status: 400 });
     }
     
-    // Fetch all data with proper pagination (no nullsFirst issue)
+    // Fetch all data with proper pagination including national_id for unique counting
     let allData: any[] = [];
     let from = 0;
     const pageSize = 1000;
@@ -24,7 +24,7 @@ export async function GET() {
     while (hasMore) {
       const { data, error } = await supabase
         .from("technicians")
-        .select("rsm, provider, workgroup_status")
+        .select("rsm, provider, workgroup_status, national_id")
         .order("tech_id", { ascending: true })
         .range(from, from + pageSize - 1);
       
@@ -60,38 +60,44 @@ export async function GET() {
       });
     }
 
-    // จัดกลุ่มข้อมูลตาม RSM และ workgroup_status
-    const groupedData: Record<string, { หัวหน้า: number; ลูกน้อง: number }> = {};
+    // จัดกลุ่มข้อมูลตาม RSM และ workgroup_status using UNIQUE national_id counting
+    const groupedData: Record<string, { หัวหน้า: Set<string>; ลูกน้อง: Set<string> }> = {};
     
-    // ตัวแปรสำหรับนับข้อมูลทั้งหมด - ใช้ totalCount เพื่อให้ตรงกับ Supabase Table Editor
-    let totalRecords = totalCount || 0;
-    let recordsWithRsm = 0;
-    let recordsWithoutRsm = 0;
-    let recordsWithStatus = 0;
-    let recordsWithoutStatus = 0;
+    // ตัวแปรสำหรับนับข้อมูลทั้งหมด using unique national_id
+    const allNationalIds = new Set<string>();
+    const nationalIdsWithRsm = new Set<string>();
+    const nationalIdsWithoutRsm = new Set<string>();
+    const nationalIdsWithStatus = new Set<string>();
+    const nationalIdsWithoutStatus = new Set<string>();
     
     allData.forEach((row: any) => {
       const rsm = String(row.rsm || "").trim();
       const status = String(row.workgroup_status || "").toLowerCase().trim();
+      const nationalId = String(row.national_id || "").trim();
       
-      // นับข้อมูลที่มี/ไม่มี RSM
-      if (rsm) {
-        recordsWithRsm++;
+      // Skip records without national_id
+      if (!nationalId || nationalId === "null" || nationalId === "undefined") return;
+      
+      allNationalIds.add(nationalId);
+      
+      // นับข้อมูลที่มี/ไม่มี RSM (unique)
+      if (rsm && rsm !== "null" && rsm !== "undefined") {
+        nationalIdsWithRsm.add(nationalId);
       } else {
-        recordsWithoutRsm++;
+        nationalIdsWithoutRsm.add(nationalId);
       }
       
-      // นับข้อมูลที่มี/ไม่มี workgroup_status
-      if (status) {
-        recordsWithStatus++;
+      // นับข้อมูลที่มี/ไม่มี workgroup_status (unique)
+      if (status && status !== "null" && status !== "undefined") {
+        nationalIdsWithStatus.add(nationalId);
       } else {
-        recordsWithoutStatus++;
+        nationalIdsWithoutStatus.add(nationalId);
       }
       
-      if (!rsm) return; // ข้ามข้อมูลที่ไม่มี RSM สำหรับการจัดกลุ่ม
+      if (!rsm || rsm === "null" || rsm === "undefined") return; // ข้ามข้อมูลที่ไม่มี RSM สำหรับการจัดกลุ่ม
       
       if (!groupedData[rsm]) {
-        groupedData[rsm] = { หัวหน้า: 0, ลูกน้อง: 0 };
+        groupedData[rsm] = { หัวหน้า: new Set<string>(), ลูกน้อง: new Set<string>() };
       }
       
       // แปลง workgroup_status เป็น หัวหน้า/ลูกน้อง
@@ -107,17 +113,17 @@ export async function GET() {
           cleanStatus.includes("หัวหน้า") || // จัดการ encoding ผิด
           status === "หัวหน้า"
       )) {
-        groupedData[rsm].หัวหน้า++;
+        groupedData[rsm].หัวหน้า.add(nationalId);
       } else if (status && (
           status.includes("ลูกน้อง") ||
           status === "ลูกน้อง" ||
           cleanStatus.includes("ลูกน้อง")
       )) {
         // ถ้าเป็นลูกน้องอย่างชัดเจน
-        groupedData[rsm].ลูกน้อง++;
+        groupedData[rsm].ลูกน้อง.add(nationalId);
       } else if (status) {
         // ถ้ามี status อื่นๆ ที่ไม่ใช่หัวหน้า = ลูกน้อง
-        groupedData[rsm].ลูกน้อง++;
+        groupedData[rsm].ลูกน้อง.add(nationalId);
       }
     });
 
@@ -125,21 +131,21 @@ export async function GET() {
     const chartData = Object.entries(groupedData)
       .map(([rsm, counts]) => ({
         rsm,
-        หัวหน้า: counts.หัวหน้า,
-        ลูกน้อง: counts.ลูกน้อง,
-        total: counts.หัวหน้า + counts.ลูกน้อง
+        หัวหน้า: counts.หัวหน้า.size,
+        ลูกน้อง: counts.ลูกน้อง.size,
+        total: counts.หัวหน้า.size + counts.ลูกน้อง.size
       }))
       .sort((a, b) => b.total - a.total) // เรียงตาม total มากไปน้อย
       .slice(0, 20); // แสดงแค่ top 20 RSM
     
-    // คำนวณ summary จากข้อมูลทั้งหมด
+    // คำนวณ summary จากข้อมูลทั้งหมด using unique counts
     const allTotals = Object.values(groupedData);
-    const totalLeaders = allTotals.reduce((sum, item) => sum + item.หัวหน้า, 0);
-    const totalMembers = allTotals.reduce((sum, item) => sum + item.ลูกน้อง, 0);
+    const totalLeaders = allTotals.reduce((sum, item) => sum + item.หัวหน้า.size, 0);
+    const totalMembers = allTotals.reduce((sum, item) => sum + item.ลูกน้อง.size, 0);
     const totalTechniciansWithRsm = totalLeaders + totalMembers;
     
-    console.log(`📊 Chart Summary: Total Records: ${totalRecords}, Records with RSM: ${recordsWithRsm}, Records without RSM: ${recordsWithoutRsm}`);
-    console.log(`📊 Chart Summary: Records with Status: ${recordsWithStatus}, Records without Status: ${recordsWithoutStatus}`);
+    console.log(`📊 Chart Summary: Total Records: ${allNationalIds.size}, Records with RSM: ${nationalIdsWithRsm.size}, Records without RSM: ${nationalIdsWithoutRsm.size}`);
+    console.log(`📊 Chart Summary: Records with Status: ${nationalIdsWithStatus.size}, Records without Status: ${nationalIdsWithoutStatus.size}`);
     console.log(`📊 Chart Summary: Total RSM: ${Object.keys(groupedData).length}, Total Technicians with RSM: ${totalTechniciansWithRsm}, Leaders: ${totalLeaders}, Members: ${totalMembers}`);
 
     return NextResponse.json(
@@ -147,12 +153,12 @@ export async function GET() {
         chartData,
         summary: {
           totalRsm: Object.keys(groupedData).length,           // จำนวน RSM ทั้งหมด
-          totalTechnicians: totalCount || 0,                   // ใช้ totalCount จาก DB
+          totalTechnicians: allNationalIds.size,               // ใช้ unique national_id count เพื่อให้ตรงกับการ์ด Technicians
           totalTechniciansWithRsm: totalTechniciansWithRsm,    // จำนวนช่างที่มี RSM
           totalLeaders: totalLeaders,                          // จำนวนหัวหน้าทั้งหมด
           totalMembers: totalMembers,                          // จำนวนลูกน้องทั้งหมด
-          recordsWithoutRsm: recordsWithoutRsm,                // จำนวนช่างที่ไม่มี RSM
-          recordsWithoutStatus: recordsWithoutStatus           // จำนวนช่างที่ไม่มี workgroup_status
+          recordsWithoutRsm: nationalIdsWithoutRsm.size,       // จำนวนช่างที่ไม่มี RSM (unique)
+          recordsWithoutStatus: nationalIdsWithoutStatus.size  // จำนวนช่างที่ไม่มี workgroup_status (unique)
         }
       },
       {

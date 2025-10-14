@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabaseServer } from "@/lib/supabaseServer";
+import { supabaseAdmin } from "@/lib/supabase-admin";
 import { mapCtmToThaiName } from "@/lib/ctmMapping";
 
 type TechnicianData = {
@@ -9,7 +9,28 @@ type TechnicianData = {
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = supabaseServer();
+    const supabase = supabaseAdmin();
+    
+    // Count each provider separately using exact matching (like KPI API)
+    const mainProviders = ["WW-Provider", "True Tech", "เถ้าแก่เทค"];
+    const providerExactCounts: Record<string, number> = {};
+    
+    // Count each provider with exact match
+    for (const provider of mainProviders) {
+      const { count, error } = await supabase
+        .from("technicians")
+        .select("*", { count: "exact", head: true })
+        .eq("provider", provider);
+      
+      if (error) {
+        console.error(`CTM Provider count error for ${provider}:`, error);
+        return NextResponse.json({ error: error.message }, { status: 500 });
+      }
+      
+      providerExactCounts[provider] = count || 0;
+    }
+    
+    console.log("Provider exact counts:", providerExactCounts);
     
     // Get all technicians data with pagination to avoid 1000 record limit
     let allData: any[] = [];
@@ -48,10 +69,16 @@ export async function GET(request: NextRequest) {
       const originalCtm = String(tech.ctm || "").trim();
       const provider = String(tech.provider || "").trim();
 
-      // Skip if CTM is empty, null, or contains only whitespace
-      if (!originalCtm || originalCtm === "null" || originalCtm === "undefined") return;
       // Skip if provider is empty, null, or contains only whitespace  
       if (!provider || provider === "null" || provider === "undefined") return;
+      
+      // Only add the 3 main providers to the set
+      if (mainProviders.includes(provider)) {
+        providers.add(provider);
+      }
+
+      // Skip if CTM is empty, null, or contains only whitespace (for grouping only)
+      if (!originalCtm || originalCtm === "null" || originalCtm === "undefined") return;
 
       // Map CTM code to Thai name
       const ctm = mapCtmToThaiName(originalCtm);
@@ -65,7 +92,6 @@ export async function GET(request: NextRequest) {
       }
 
       groupedData[ctm][provider]++;
-      providers.add(provider);
     });
 
     // Convert to chart format and sort by total descending
@@ -86,17 +112,19 @@ export async function GET(request: NextRequest) {
       })
       .sort((a, b) => b.total - a.total); // Sort by total descending (มากไปน้อย)
 
-    // Calculate summary
+    // Calculate summary using exact provider counts
+    const totalFromExactCounts = Object.values(providerExactCounts).reduce((sum, count) => sum + count, 0);
+    
     const summary = {
       totalCtms: Object.keys(groupedData).length,
-      totalTechnicians: chartData.reduce((sum, item) => sum + item.total, 0),
-      providerBreakdown: Array.from(providers).map((provider) => {
-        const count = chartData.reduce((sum, item) => sum + (item[provider] || 0), 0);
-        const totalTechs = chartData.reduce((sum, item) => sum + item.total, 0);
+      totalTechnicians: totalFromExactCounts,  // Use total from exact counts
+      providerBreakdown: mainProviders.map((provider) => {
+        // Use exact counts from database query (like KPI API)
+        const count = providerExactCounts[provider] || 0;
         return {
           provider,
           count,
-          percentage: totalTechs > 0 ? Math.round((count / totalTechs) * 100) : 0
+          percentage: totalFromExactCounts > 0 ? Math.round((count / totalFromExactCounts) * 100) : 0
         };
       })
     };
@@ -104,8 +132,10 @@ export async function GET(request: NextRequest) {
     console.log('🔍 CTM Provider API Debug:');
     console.log('Total techs:', techs?.length);
     console.log('All data length:', allData.length);
+    console.log('Provider exact counts:', providerExactCounts);
     console.log('Grouped CTMs:', Object.keys(groupedData).length);
     console.log('Chart data length:', chartData.length);
+    console.log('Summary provider breakdown:', summary.providerBreakdown);
     console.log('Top 10 CTMs:', chartData.slice(0, 10).map(item => `${item.ctm}: ${item.total}`));
     
     // Debug CTM mapping
