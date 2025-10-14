@@ -983,8 +983,8 @@ export default function TechBrowser() {
             const pct = f?.percent ?? 0;
 
             const colors = [
-              { bg: "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)", text: "white" },
-              { bg: "#f36c60", text: "white" },
+              { bg: "#87BFFF", text: "white" },
+              { bg: "#87BFFF", text: "white" },
             ];
 
             return (
@@ -1116,9 +1116,9 @@ export default function TechBrowser() {
             const pct = f?.percent ?? 0;
 
             const colors = [
-              { bg: "linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)", text: "white" },
-              { bg: "linear-gradient(135deg, #fa709a 0%, #fee140 100%)", text: "white" },
-              { bg: "linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)", text: "#333" },
+              { bg: "#87BFFF", text: "white" },
+              { bg: "#87BFFF", text: "white" },
+              { bg: "#87BFFF", text: "white" },
             ];
 
             return (
