@@ -6,8 +6,16 @@ import Link from 'next/link';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import Navbar from '@/components/Navbar';
 
+interface User {
+  id: number;
+  employee_id: string;
+  full_name: string;
+  email?: string;
+  role: string;
+}
+
 function DashboardContent() {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
