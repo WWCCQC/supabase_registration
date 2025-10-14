@@ -16,14 +16,18 @@ const PROTECTED_PATHS = [
 // หน้าที่ admin เท่านั้น
 const ADMIN_ONLY_PATHS = [
   '/admin',
-  '/blacklist',
-  '/dashboard',
-  '/chart'
+  '/blacklist'
 ];
 
 // หน้าที่ manager และ admin เข้าได้
-const MANAGER_PATHS = [
+const MANAGER_ADMIN_PATHS = [
   '/chart'
+];
+
+// หน้าที่ user เข้าได้
+const USER_ALLOWED_PATHS = [
+  '/',           // หน้าแรก
+  '/dashboard'   // หน้าหลัก
 ];
 
 export async function middleware(request: NextRequest) {
@@ -70,13 +74,15 @@ export async function middleware(request: NextRequest) {
     // เช็ค role permissions
     if (ADMIN_ONLY_PATHS.some(path => pathname.startsWith(path))) {
       if (userRole !== 'admin') {
+        // User/Manager ไม่ได้เข้าหน้า admin - ส่งไปหน้าหลัก
         return NextResponse.redirect(new URL('/', request.url));
       }
     }
 
-    if (MANAGER_PATHS.some(path => pathname.startsWith(path))) {
+    if (MANAGER_ADMIN_PATHS.some(path => pathname.startsWith(path))) {
       if (userRole !== 'admin' && userRole !== 'manager') {
-        return NextResponse.redirect(new URL('/dashboard', request.url));
+        // User ไม่ได้เข้าหน้า chart - ส่งไปหน้าหลัก
+        return NextResponse.redirect(new URL('/', request.url));
       }
     }
 

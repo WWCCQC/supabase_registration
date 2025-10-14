@@ -7,7 +7,7 @@ import { useAuth } from '@/lib/useAuth';
 
 const Navbar = () => {
   const pathname = usePathname();
-  const { user, isAdmin } = useAuth();
+  const { user, isAdmin, isUser } = useAuth();
 
   // สไตล์สำหรับ nav items
   const navItemStyle = (isActive: boolean) => ({
@@ -75,6 +75,16 @@ const Navbar = () => {
           หน้าหลัก
         </Link>
 
+        {/* Charts - Manager และ Admin เท่านั้น */}
+        {!isUser() && (
+          <Link href="/chart" style={navItemStyle(pathname === '/chart')}>
+            <svg style={iconStyle} viewBox="0 0 24 24">
+              <path d="M3.5 18.49l6-6.01 4 4L22 6.92l-1.41-1.41-7.09 7.97-4-4L3.5 16.49z"/>
+            </svg>
+            ข้อมูลสถิติ
+          </Link>
+        )}
+
         {/* Blacklist - Admin เท่านั้น */}
         {isAdmin() && (
           <Link href="/blacklist" style={navItemStyle(pathname === '/blacklist')}>
@@ -86,31 +96,35 @@ const Navbar = () => {
           </Link>
         )}
 
-        {/* ลงทะเบียนอบรมช่าง */}
-        <a 
-          href="https://script.google.com/macros/s/AKfycbwstFfRSlgVSGa1PLJmZbpSSX91J0kkADXmExoaC-NTMyamhvqTg2flsNDAmmy0jfKIKg/exec"
-          target="_blank"
-          rel="noopener noreferrer"
-          style={navItemStyle(false)}
-        >
-          <svg style={iconStyle} viewBox="0 0 24 24">
-            <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
-          </svg>
-          ลงทะเบียนอบรมช่าง
-        </a>
+        {/* ลงทะเบียนอบรมช่าง - Admin และ Manager เท่านั้น */}
+        {!isUser() && (
+          <a 
+            href="https://script.google.com/macros/s/AKfycbwstFfRSlgVSGa1PLJmZbpSSX91J0kkADXmExoaC-NTMyamhvqTg2flsNDAmmy0jfKIKg/exec"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={navItemStyle(false)}
+          >
+            <svg style={iconStyle} viewBox="0 0 24 24">
+              <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
+            </svg>
+            ลงทะเบียนอบรมช่าง
+          </a>
+        )}
 
-        {/* อบรมช่างใหม่ */}
-        <a 
-          href="https://wwccqc.github.io/SLATrainingDashboard/"
-          target="_blank"
-          rel="noopener noreferrer"
-          style={navItemStyle(false)}
-        >
-          <svg style={iconStyle} viewBox="0 0 24 24">
-            <path d="M5 13.18v4L12 21l7-3.82v-4L12 17l-7-3.82zM12 3L1 9l11 6 9-4.91V17h2V9L12 3z"/>
-          </svg>
-          อบรมช่างใหม่
-        </a>
+        {/* อบรมช่างใหม่ - Admin และ Manager เท่านั้น */}
+        {!isUser() && (
+          <a 
+            href="https://wwccqc.github.io/SLATrainingDashboard/"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={navItemStyle(false)}
+          >
+            <svg style={iconStyle} viewBox="0 0 24 24">
+              <path d="M5 13.18v4L12 21l7-3.82v-4L12 17l-7-3.82zM12 3L1 9l11 6 9-4.91V17h2V9L12 3z"/>
+            </svg>
+            อบรมช่างใหม่
+          </a>
+        )}
 
 
 
@@ -126,7 +140,7 @@ const Navbar = () => {
           fontSize: '12px'
         }}>
           <div>
-            {user?.full_name} ({user?.role === 'admin' ? 'ผู้ดูแลระบบ' : 'ผู้ใช้'})
+            {user?.full_name} ({user?.role === 'admin' ? 'ผู้ดูแลระบบ' : user?.role === 'manager' ? 'ผู้จัดการ' : 'ผู้ใช้'})
           </div>
           
           <button 
