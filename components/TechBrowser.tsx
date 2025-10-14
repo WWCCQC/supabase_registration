@@ -600,8 +600,18 @@ export default function TechBrowser() {
   async function fetchPivotData() {
     setPivotLoading(true);
     try {
-      console.log('📊 Fetching pivot table data...');
-      const res = await fetch('/api/pivot-data', { cache: "no-store" });
+      console.log('📊 Fetching pivot table data with filter q:', q);
+      
+      // Build URL with current filter
+      const params = new URLSearchParams();
+      if (q) {
+        params.append('q', q);
+      }
+      
+      const url = `/api/pivot-data${params.toString() ? '?' + params.toString() : ''}`;
+      console.log('📊 Pivot API URL:', url);
+      
+      const res = await fetch(url, { cache: "no-store" });
       const json = await res.json();
       
       if (json.data && Array.isArray(json.data)) {
@@ -853,6 +863,11 @@ export default function TechBrowser() {
     fetchWorkgroupData(); // เพิ่มการดึงข้อมูล workgroup count
     fetchTechnicianData(); // เพิ่มการดึงข้อมูล technician count
   }, []);
+
+  /* Re-fetch pivot data when filter changes */
+  React.useEffect(() => {
+    fetchPivotData();
+  }, [q]);
 
   /* Cleanup timeout on unmount */
   React.useEffect(() => {

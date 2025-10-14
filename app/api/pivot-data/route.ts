@@ -5,9 +5,44 @@ export const revalidate = 0;
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 
+function sanitize(s?: string | null) {
+  if (!s || typeof s !== 'string') return '';
+  return s.trim();
+}
+
+function applyFilters(query: any, params: URLSearchParams) {
+  const get = (k: string) => sanitize(params.get(k));
+
+  const filters: Record<string, string> = {
+    provider: get('provider'),
+    work_type: get('work_type'),
+    rsm: get('rsm'),
+  };
+
+  for (const [k, v] of Object.entries(filters)) {
+    if (v) query = (query as any).ilike(k, `%${v}%`);
+  }
+
+  // Handle 'q' parameter - search in multiple fields
+  const q = sanitize(params.get('q'));
+  if (q) {
+    // Map common card names to database values
+    if (q === 'Installation') {
+      query = (query as any).ilike('work_type', '%Installation%');
+    } else if (q === 'Repair') {
+      query = (query as any).ilike('work_type', '%Repair%');
+    } else if (q === 'WW-Provider' || q === 'True Tech' || q === 'เถ้าแก่เทค') {
+      query = (query as any).ilike('provider', `%${q}%`);
+    }
+  }
+
+  return query;
+}
+
 export async function GET(request: Request) {
   try {
-    console.log('📊 Starting pivot data fetch...');
+    const { searchParams } = new URL(request.url);
+    console.log('📊 Starting pivot data fetch with filters:', Object.fromEntries(searchParams));
     
     const supabase = supabaseAdmin();
     
@@ -18,7 +53,7 @@ export async function GET(request: Request) {
     let hasMore = true;
     
     while (hasMore) {
-      const { data, error } = await supabase
+      let query = supabase
         .from('technicians')
         .select('rsm, provider, work_type, national_id')
         .not('rsm', 'is', null)
@@ -26,8 +61,12 @@ export async function GET(request: Request) {
         .not('work_type', 'is', null)
         .neq('rsm', '')
         .neq('provider', '')
-        .neq('work_type', '')
-        .range(from, from + batchSize - 1);
+        .neq('work_type', '');
+
+      // Apply filters
+      query = applyFilters(query, searchParams);
+
+      const { data, error } = await query.range(from, from + batchSize - 1);
 
       if (error) {
         console.error('❌ Error in pivot data batch fetch:', error);
