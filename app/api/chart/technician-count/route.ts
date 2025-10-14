@@ -23,11 +23,11 @@ export async function GET(req: Request) {
 
     const supabase = supabaseAdmin();
 
-    // Build base query for all technicians (both หัวหน้า and ลูกน้อง) from Supabase
+    // Build base query for all technicians from Supabase
+    // Note: ไม่กรอง workgroup_status เพราะต้องการนับทุกคน
     let query = supabase
       .from("technicians")
-      .select("rsm, provider, work_type, workgroup_status, national_id")
-      .in("workgroup_status", ["หัวหน้า", "ลูกน้อง"]);
+      .select("rsm, provider, work_type, workgroup_status, national_id");
 
     console.log('📊 Querying Supabase for all technicians...');
 
