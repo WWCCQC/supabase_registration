@@ -3,8 +3,15 @@ import { NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic'; // กัน cache
 export async function GET() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  
+  if (!url || !key) {
+    return NextResponse.json(
+      { error: 'Missing Supabase environment variables' }, 
+      { status: 500 }
+    );
+  }
 
   const res = await fetch(`${url}/rest/v1/technicians?select=national_id`, {
     headers: {
