@@ -23,13 +23,13 @@ export async function GET(req: Request) {
 
     const supabase = supabaseAdmin();
 
-    // Build base query for workgroup heads (หัวหน้า) from Supabase
+    // Build base query - fetch ALL technicians first (not filtering by workgroup_status)
+    // This ensures we get all records from Supabase, then filter in-memory
     let query = supabase
       .from("technicians")
-      .select("rsm, provider, work_type, workgroup_status, national_id")
-      .eq("workgroup_status", "หัวหน้า");
+      .select("rsm, provider, work_type, workgroup_status, national_id");
 
-    console.log('📊 Querying Supabase for workgroup heads...');
+    console.log('📊 Querying Supabase for all technicians (will filter heads in-memory)...');
 
     // Apply filters to Supabase query
     if (f_national_id) query = query.ilike("national_id", `%${f_national_id}%`);
@@ -89,12 +89,16 @@ export async function GET(req: Request) {
       page++;
     }
 
-    console.log('📊 Total workgroup heads count:', allData.length);
+    console.log('📊 Total records fetched:', allData.length);
+
+    // Filter for หัวหน้า (heads) only after fetching all data
+    const headsOnly = allData.filter((row: any) => row.workgroup_status === "หัวหน้า");
+    console.log('📊 Total workgroup heads after filtering:', headsOnly.length);
 
     // Process data into pivot format - Count unique national_id
     const result: Record<string, Record<string, Set<string>>> = {};
 
-    allData.forEach((row: any) => {
+    headsOnly.forEach((row: any) => {
       const rsm = row.rsm || "Unknown";
       const provider = row.provider || "Unknown";
       const workType = row.work_type || "Unknown";
