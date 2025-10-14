@@ -317,7 +317,7 @@ export default function PivotTable({ data, workgroupData = {}, technicianData = 
               {grandTotal > 0 ? (
                 <span>
                   {grandTotal.toLocaleString()}
-                  {workgroupGrandTotal > 0 && <span style={{ color: 'red' }}>({workgroupGrandTotal})</span>}
+                  {workgroupGrandTotal > 0 && <span style={{ color: 'red' }}>({workgroupGrandTotal.toLocaleString()})</span>}
                 </span>
               ) : ''}
             </td>
@@ -370,7 +370,7 @@ export default function PivotTable({ data, workgroupData = {}, technicianData = 
                   {rsmGrandTotal > 0 ? (
                     <span>
                       {rsmGrandTotal.toLocaleString()}
-                      {rsmWorkgroupTotal > 0 && <span style={{ color: 'red' }}>({rsmWorkgroupTotal})</span>}
+                      {rsmWorkgroupTotal > 0 && <span style={{ color: 'red' }}>({rsmWorkgroupTotal.toLocaleString()})</span>}
                     </span>
                   ) : ''}
                 </td>
