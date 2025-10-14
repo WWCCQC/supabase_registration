@@ -1035,12 +1035,7 @@ export default function TechBrowser() {
                   {name}
                 </div>
                 <div style={{ ...cardNumber, color: "white" }}>
-                  {depotByProviderLoading ? "กำลังโหลด..." : (() => {
-                    const providerName = name === "Depot True Tech" ? "True Tech" : "เถ้าแก่เทค";
-                    const depotCount = depotByProvider[providerName] || 0;
-                    const percentage = depotCodeCount > 0 ? ((depotCount / depotCodeCount) * 100).toFixed(1) : 0;
-                    return `${depotCount} (${percentage}%)`;
-                  })()}
+                  {kpiLoading ? "กำลังโหลด..." : `${count.toLocaleString()} (${pct.toFixed(1)}%)`}
                 </div>
               </div>
             );
