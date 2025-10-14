@@ -52,7 +52,7 @@ export default function PivotTable({ data, workgroupData = {}, technicianData = 
       return (
         <span>
           {countStr}
-          <span style={{ color: 'red' }}>({workgroupCount})</span>
+          <span style={{ color: 'red' }}>({workgroupCount.toLocaleString()})</span>
         </span>
       );
     }
@@ -207,7 +207,7 @@ export default function PivotTable({ data, workgroupData = {}, technicianData = 
       return (
         <span>
           {countStr}
-          <span style={{ color: 'red' }}>({workgroupCount})</span>
+          <span style={{ color: 'red' }}>({workgroupCount.toLocaleString()})</span>
         </span>
       );
     }
