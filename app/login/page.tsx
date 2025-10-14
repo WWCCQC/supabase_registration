@@ -267,21 +267,6 @@ export default function LoginPage() {
             )}
           </button>
         </form>
-
-        {/* Demo Accounts Info */}
-        <div style={{
-          marginTop: '30px',
-          padding: '20px',
-          background: '#f8fafc',
-          borderRadius: '8px',
-          fontSize: '12px',
-          color: '#64748b'
-        }}>
-          <div style={{ fontWeight: 600, marginBottom: '8px' }}>💡 ข้อมูลทดสอบ:</div>
-          <div style={{ marginBottom: '4px' }}>👑 <strong>Admin:</strong> ADMIN001 / admin123</div>
-          <div style={{ marginBottom: '4px' }}>👨‍💼 <strong>Manager:</strong> MGR001 / manager123</div>
-          <div>👤 <strong>User:</strong> EMP001 / user123</div>
-        </div>
       </div>
 
       {/* CSS Animation */}
