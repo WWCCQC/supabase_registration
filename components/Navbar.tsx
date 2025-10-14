@@ -75,8 +75,8 @@ const Navbar = () => {
           หน้าหลัก
         </Link>
 
-        {/* Charts - Manager และ Admin เท่านั้น */}
-        {!isUser() && (
+        {/* Charts - ซ่อนไว้ไม่แสดง */}
+        {false && (
           <Link href="/chart" style={navItemStyle(pathname === '/chart')}>
             <svg style={iconStyle} viewBox="0 0 24 24">
               <path d="M3.5 18.49l6-6.01 4 4L22 6.92l-1.41-1.41-7.09 7.97-4-4L3.5 16.49z"/>
