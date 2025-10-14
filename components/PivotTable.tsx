@@ -412,6 +412,24 @@ export default function PivotTable({ data, workgroupData = {}, technicianData = 
           })}
         </tbody>
       </table>
+      
+      {/* หมายเหตุใต้ตาราง */}
+      <div style={{
+        marginTop: '12px',
+        padding: '8px',
+        fontSize: '12px',
+        color: '#6b7280',
+        backgroundColor: '#f9fafb',
+        borderRadius: '6px',
+        border: '1px solid #e5e7eb'
+      }}>
+        <div style={{ fontWeight: '500', marginBottom: '4px' }}>หมายเหตุ:</div>
+        <div>
+          <span style={{ color: '#000000' }}>จำนวนตัวเลข = จำนวนคน</span>
+          <span style={{ margin: '0 8px', color: '#d1d5db' }}>|</span>
+          <span style={{ color: 'red' }}>จำนวนตัวเลขสีแดงใน ( ) = จำนวนกองงาน</span>
+        </div>
+      </div>
     </div>
   );
 }
