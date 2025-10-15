@@ -29,14 +29,19 @@ export async function GET(req: Request) {
     const from = (page - 1) * pageSize;
     const to   = from + pageSize - 1;
 
-    const cols = [
-      "national_id","tech_id","full_name","gender","age","degree",
-      "doc_tech_card_url","phone","email","workgroup_status","work_type",
-      "provider","area","rsm","ctm","depot_code","depot_name","province",
+    // Define service/training columns
+    const serviceColumns = [
       "svc_install","svc_repair","svc_nonstandard","svc_corporate","svc_solar",
       "svc_fttr","svc_2g","svc_cctv","svc_cyod","svc_dongle","svc_iot",
       "svc_gigatex","svc_wifi","svc_smarthome","svc_catv_settop_box",
       "svc_true_id","svc_true_inno","svc_l3"
+    ];
+
+    const cols = [
+      "national_id","tech_id","full_name","gender","age","degree",
+      "doc_tech_card_url","phone","email","workgroup_status","work_type",
+      "provider","area","rsm","ctm","depot_code","depot_name","province",
+      ...serviceColumns
     ] as const;
 
     // sort params
@@ -58,13 +63,6 @@ export async function GET(req: Request) {
     
     // กรองตามประเภทการอบรม - ค้นหาคอลัมน์ที่มีค่า "Pass"
     if (f_training_type) {
-      const serviceColumns = [
-        "svc_install","svc_repair","svc_nonstandard","svc_corporate","svc_solar",
-        "svc_fttr","svc_2g","svc_cctv","svc_cyod","svc_dongle","svc_iot",
-        "svc_gigatex","svc_wifi","svc_smarthome","svc_catv_settop_box",
-        "svc_true_id","svc_true_inno","svc_l3"
-      ];
-      
       // ตรวจสอบว่าค่าที่เลือกอยู่ในรายการที่รองรับ
       if (serviceColumns.includes(f_training_type)) {
         countQuery = countQuery.eq(f_training_type, "Pass");
@@ -72,9 +70,22 @@ export async function GET(req: Request) {
     }
 
     if (q) {
-      const pattern = `%${q}%`;
-      const ors = cols.map(c => `${c}.ilike.${pattern}`).join(",");
-      countQuery = countQuery.or(ors);
+      // Check if query matches a service column name (e.g., "iot" -> "svc_iot")
+      const qLower = q.toLowerCase();
+      const matchedServiceCol = serviceColumns.find(col => 
+        col.toLowerCase().includes(qLower) || col.replace('svc_', '').toLowerCase() === qLower
+      );
+
+      if (matchedServiceCol) {
+        // If query matches a service column, search for "Pass" in that column
+        console.log(`🎯 Query "${q}" matches service column "${matchedServiceCol}" - searching for Pass`);
+        countQuery = countQuery.eq(matchedServiceCol, "Pass");
+      } else {
+        // Regular text search across all columns
+        const pattern = `%${q}%`;
+        const ors = cols.map(c => `${c}.ilike.${pattern}`).join(",");
+        countQuery = countQuery.or(ors);
+      }
     }
 
     const { count, error: countError } = await countQuery;
@@ -95,13 +106,6 @@ export async function GET(req: Request) {
     
     // กรองตามประเภทการอบรม - ค้นหาคอลัมน์ที่มีค่า "Pass"
     if (f_training_type) {
-      const serviceColumns = [
-        "svc_install","svc_repair","svc_nonstandard","svc_corporate","svc_solar",
-        "svc_fttr","svc_2g","svc_cctv","svc_cyod","svc_dongle","svc_iot",
-        "svc_gigatex","svc_wifi","svc_smarthome","svc_catv_settop_box",
-        "svc_true_id","svc_true_inno","svc_l3"
-      ];
-      
       // ตรวจสอบว่าค่าที่เลือกอยู่ในรายการที่รองรับ
       if (serviceColumns.includes(f_training_type)) {
         dataQuery = dataQuery.eq(f_training_type, "Pass");
@@ -109,16 +113,30 @@ export async function GET(req: Request) {
     }
 
     if (q) {
-      const pattern = `%${q}%`;
-      const ors = cols.map(c => `${c}.ilike.${pattern}`).join(",");
-      dataQuery = dataQuery.or(ors);
+      // Check if query matches a service column name (e.g., "iot" -> "svc_iot")
+      const qLower = q.toLowerCase();
+      const matchedServiceCol = serviceColumns.find(col => 
+        col.toLowerCase().includes(qLower) || col.replace('svc_', '').toLowerCase() === qLower
+      );
+
+      if (matchedServiceCol) {
+        // If query matches a service column, search for "Pass" in that column
+        console.log(`🎯 Query "${q}" matches service column "${matchedServiceCol}" - searching for Pass`);
+        dataQuery = dataQuery.eq(matchedServiceCol, "Pass");
+      } else {
+        // Regular text search across all columns
+        const pattern = `%${q}%`;
+        const ors = cols.map(c => `${c}.ilike.${pattern}`).join(",");
+        dataQuery = dataQuery.or(ors);
+        console.log('🔍 Search query (q):', q, '- Searching in', cols.length, 'columns');
+      }
     }
 
     dataQuery = dataQuery.order(sort, { ascending, nullsFirst: true }).range(from, to);
 
     const { data, error } = await dataQuery;
     
-    console.log('📊 Query result - count:', count, 'data length:', data?.length);
+    console.log('📊 Query result - Total matching records:', count, '| Displaying:', data?.length, 'records (page', page, ')');
     
     if (error) {
       console.error('❌ Supabase error:', error);
