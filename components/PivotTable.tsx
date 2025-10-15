@@ -425,7 +425,7 @@ export default function PivotTable({ data, workgroupData = {}, technicianData = 
       }}>
         <div style={{ fontWeight: '500', marginBottom: '4px' }}>หมายเหตุ:</div>
         <div>
-          <span style={{ color: '#000000' }}>จำนวนตัวเลข = จำนวนคน</span>
+          <span style={{ color: '#000000' }}>จำนวนตัวเลขสีดำ = จำนวนคน</span>
           <span style={{ margin: '0 8px', color: '#d1d5db' }}>|</span>
           <span style={{ color: 'red' }}>จำนวนตัวเลขสีแดงใน ( ) = จำนวนกองงาน</span>
         </div>
