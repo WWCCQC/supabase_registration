@@ -23,6 +23,8 @@ export default function CtmProviderChart({ selectedCtm, onCtmClick }: CtmProvide
   const [summary, setSummary] = React.useState<any>(null);
   const [providers, setProviders] = React.useState<string[]>([]);
   const [loading, setLoading] = React.useState(false);
+  const [startIndex, setStartIndex] = React.useState(0);
+  const itemsPerPage = 10; // จำนวน CTM ที่แสดงต่อหน้า
 
   // Colors for different providers (in desired order)
   const providerColors: { [key: string]: string } = {
@@ -93,6 +95,18 @@ export default function CtmProviderChart({ selectedCtm, onCtmClick }: CtmProvide
     );
   }
 
+  // Calculate pagination
+  const totalPages = Math.ceil(chartData.length / itemsPerPage);
+  const currentPage = Math.floor(startIndex / itemsPerPage) + 1;
+  const displayedData = chartData.slice(startIndex, startIndex + itemsPerPage);
+  
+  const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newStartIndex = parseInt(e.target.value);
+    setStartIndex(newStartIndex);
+  };
+  
+  const maxStartIndex = Math.max(0, chartData.length - itemsPerPage);
+
   return (
     <div style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}>
       {/* Custom Legend - เพิ่ม font family สำหรับภาษาไทย */}
@@ -134,9 +148,61 @@ export default function CtmProviderChart({ selectedCtm, onCtmClick }: CtmProvide
         </div>
       </div>
 
+      {/* Slider Control */}
+      <div style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: '8px',
+        paddingBottom: '15px',
+        paddingLeft: '20px',
+        paddingRight: '20px'
+      }}>
+        <div style={{
+          fontSize: '13px',
+          fontWeight: '500',
+          color: '#374151',
+          marginBottom: '5px'
+        }}>
+          แสดง CTM {startIndex + 1} - {Math.min(startIndex + itemsPerPage, chartData.length)} จากทั้งหมด {chartData.length} CTM
+        </div>
+        
+        <div style={{
+          width: '100%',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '12px'
+        }}>
+          <span style={{ fontSize: '12px', color: '#6b7280', minWidth: '40px' }}>
+            เริ่มต้น
+          </span>
+          
+          <input
+            type="range"
+            min="0"
+            max={maxStartIndex}
+            step={itemsPerPage}
+            value={startIndex}
+            onChange={handleSliderChange}
+            style={{
+              flex: 1,
+              height: '6px',
+              borderRadius: '3px',
+              outline: 'none',
+              cursor: 'pointer',
+              accentColor: '#3b82f6'
+            }}
+          />
+          
+          <span style={{ fontSize: '12px', color: '#6b7280', minWidth: '40px', textAlign: 'right' }}>
+            สิ้นสุด
+          </span>
+        </div>
+      </div>
+
       <ResponsiveContainer width="100%" height={500} key="ctm-provider-chart-new-order">
       <BarChart
-        data={chartData}
+        data={displayedData}
         margin={{ top: 20, right: 30, left: 40, bottom: 120 }}
         onClick={handleChartClick}
         style={{ cursor: "pointer" }}
@@ -209,7 +275,7 @@ export default function CtmProviderChart({ selectedCtm, onCtmClick }: CtmProvide
           fill="#3b82f6"
           name="WW-Provider"
         >
-          {chartData.map((entry, entryIndex) => (
+          {displayedData.map((entry, entryIndex) => (
             <Cell 
               key={`cell-WW-Provider-${entryIndex}`} 
               fill={selectedCtm === entry.ctm ? "#2563eb" : "#3b82f6"}
@@ -236,7 +302,7 @@ export default function CtmProviderChart({ selectedCtm, onCtmClick }: CtmProvide
           fill="#10b981"
           name="True Tech"
         >
-          {chartData.map((entry, entryIndex) => (
+          {displayedData.map((entry, entryIndex) => (
             <Cell 
               key={`cell-True Tech-${entryIndex}`} 
               fill={selectedCtm === entry.ctm ? "#059669" : "#10b981"}
@@ -263,7 +329,7 @@ export default function CtmProviderChart({ selectedCtm, onCtmClick }: CtmProvide
           fill="#f59e0b"
           name="เถ้าแก่เทค"
         >
-          {chartData.map((entry, entryIndex) => (
+          {displayedData.map((entry, entryIndex) => (
             <Cell 
               key={`cell-เถ้าแก่เทค-${entryIndex}`} 
               fill={selectedCtm === entry.ctm ? "#d97706" : "#f59e0b"}

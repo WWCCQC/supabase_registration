@@ -1381,7 +1381,38 @@ export default function TechBrowser() {
             <RsmProviderChart />
           </div>
 
-          {/* RSM Workgroup Chart (กราฟเดิม) - ย้ายมาเป็นอันที่สอง */}
+          {/* CTM Provider Distribution Chart - ย้ายมาอยู่แถวแรก */}
+          <div style={{
+            background: "white",
+            borderRadius: 12,
+            padding: 20,
+            boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+            border: "1px solid #e5e7eb",
+            position: "relative"
+          }}>
+            <h3 style={{
+              margin: "0 0 20px 0",
+              fontSize: 18,
+              fontWeight: 600,
+              color: "#1f2937"
+            }}>
+              🏪 CTM Provider Distribution
+            </h3>
+            <CtmProviderChart 
+              selectedCtm={selectedCtm}
+              onCtmClick={handleCtmClick}
+            />
+          </div>
+        </div>
+        
+        {/* บรรทัดใหม่: RSM Power Authority Status Chart (50%) + พื้นที่สำหรับตารางอีก 50% */}
+        <div style={{
+          display: "grid", 
+          gridTemplateColumns: "50% 50%", 
+          gap: "20px",
+          marginTop: "20px"
+        }}>
+          {/* RSM Workgroup Chart (RSM Power Authority Status) - 50% */}
           <div style={{
             background: "white",
             borderRadius: 12,
@@ -1574,15 +1605,8 @@ export default function TechBrowser() {
             </div>
           )}
           </div>
-        </div>
-        
-        {/* บรรทัดใหม่: CTM Provider Distribution Chart */}
-        <div style={{
-          display: "grid", 
-          gridTemplateColumns: "100%", 
-          gap: "20px",
-          marginTop: "20px"
-        }}>
+
+          {/* พื้นที่สำหรับตารางหรือกราฟอื่น - 50% */}
           <div style={{
             background: "white",
             borderRadius: 12,
@@ -1597,12 +1621,16 @@ export default function TechBrowser() {
               fontWeight: 600,
               color: "#1f2937"
             }}>
-              🏪 CTM Provider Distribution
+              📊 พื้นที่สำหรับตาราง
             </h3>
-            <CtmProviderChart 
-              selectedCtm={selectedCtm}
-              onCtmClick={handleCtmClick}
-            />
+            <div style={{ 
+              textAlign: "center", 
+              padding: 40,
+              color: "#9ca3af",
+              fontSize: 14 
+            }}>
+              พื้นที่ว่างสำหรับเพิ่มตารางหรือเนื้อหาอื่น
+            </div>
           </div>
         </div>
 
