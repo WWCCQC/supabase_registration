@@ -24,7 +24,7 @@ export async function GET() {
     while (hasMore) {
       const { data, error } = await supabase
         .from("technicians")
-        .select("rsm, provider, workgroup_status, national_id")
+        .select("rsm, provider, power_authority, national_id")
         .order("tech_id", { ascending: true })
         .range(from, from + pageSize - 1);
       
@@ -52,27 +52,27 @@ export async function GET() {
           totalRsm: 0,
           totalTechnicians: totalCount || 0,  // ใช้ totalCount แทน 0
           totalTechniciansWithRsm: 0,
-          totalLeaders: 0,
-          totalMembers: 0,
+          totalYes: 0,
+          totalNo: 0,
           recordsWithoutRsm: totalCount || 0,  // ใช้ totalCount แทน 0
-          recordsWithoutStatus: totalCount || 0  // ใช้ totalCount แทน 0
+          recordsWithoutAuthority: totalCount || 0  // ใช้ totalCount แทน 0
         }
       });
     }
 
-    // จัดกลุ่มข้อมูลตาม RSM และ workgroup_status using UNIQUE national_id counting
-    const groupedData: Record<string, { หัวหน้า: Set<string>; ลูกน้อง: Set<string> }> = {};
+    // จัดกลุ่มข้อมูลตาม RSM และ power_authority using UNIQUE national_id counting
+    const groupedData: Record<string, { Yes: Set<string>; No: Set<string> }> = {};
     
     // ตัวแปรสำหรับนับข้อมูลทั้งหมด using unique national_id
     const allNationalIds = new Set<string>();
     const nationalIdsWithRsm = new Set<string>();
     const nationalIdsWithoutRsm = new Set<string>();
-    const nationalIdsWithStatus = new Set<string>();
-    const nationalIdsWithoutStatus = new Set<string>();
+    const nationalIdsWithAuthority = new Set<string>();
+    const nationalIdsWithoutAuthority = new Set<string>();
     
     allData.forEach((row: any) => {
       const rsm = String(row.rsm || "").trim();
-      const status = String(row.workgroup_status || "").toLowerCase().trim();
+      const powerAuthority = String(row.power_authority || "").trim();
       const nationalId = String(row.national_id || "").trim();
       
       // Skip records without national_id
@@ -87,43 +87,26 @@ export async function GET() {
         nationalIdsWithoutRsm.add(nationalId);
       }
       
-      // นับข้อมูลที่มี/ไม่มี workgroup_status (unique)
-      if (status && status !== "null" && status !== "undefined") {
-        nationalIdsWithStatus.add(nationalId);
+      // นับข้อมูลที่มี/ไม่มี power_authority (unique)
+      if (powerAuthority && powerAuthority !== "null" && powerAuthority !== "undefined") {
+        nationalIdsWithAuthority.add(nationalId);
       } else {
-        nationalIdsWithoutStatus.add(nationalId);
+        nationalIdsWithoutAuthority.add(nationalId);
       }
       
       if (!rsm || rsm === "null" || rsm === "undefined") return; // ข้ามข้อมูลที่ไม่มี RSM สำหรับการจัดกลุ่ม
       
       if (!groupedData[rsm]) {
-        groupedData[rsm] = { หัวหน้า: new Set<string>(), ลูกน้อง: new Set<string>() };
+        groupedData[rsm] = { Yes: new Set<string>(), No: new Set<string>() };
       }
       
-      // แปลง workgroup_status เป็น หัวหน้า/ลูกน้อง
-      // ตรวจสอบค่าต่างๆ ที่อาจหมายถึงหัวหน้า (รวมจัดการ encoding ผิด)
-      const cleanStatus = status ? status.replace(/[^\u0E00-\u0E7Fa-zA-Z]/g, '') : '';
+      // แปลง power_authority เป็น Yes/No
+      const cleanAuthority = powerAuthority.toLowerCase();
       
-      if (status && (
-          status.includes("หัวหน้า") || 
-          status.includes("leader") || 
-          status === "l" || 
-          status === "หน." ||
-          status.includes("head") ||
-          cleanStatus.includes("หัวหน้า") || // จัดการ encoding ผิด
-          status === "หัวหน้า"
-      )) {
-        groupedData[rsm].หัวหน้า.add(nationalId);
-      } else if (status && (
-          status.includes("ลูกน้อง") ||
-          status === "ลูกน้อง" ||
-          cleanStatus.includes("ลูกน้อง")
-      )) {
-        // ถ้าเป็นลูกน้องอย่างชัดเจน
-        groupedData[rsm].ลูกน้อง.add(nationalId);
-      } else if (status) {
-        // ถ้ามี status อื่นๆ ที่ไม่ใช่หัวหน้า = ลูกน้อง
-        groupedData[rsm].ลูกน้อง.add(nationalId);
+      if (cleanAuthority === "yes" || cleanAuthority === "y") {
+        groupedData[rsm].Yes.add(nationalId);
+      } else if (cleanAuthority === "no" || cleanAuthority === "n") {
+        groupedData[rsm].No.add(nationalId);
       }
     });
 
@@ -131,22 +114,22 @@ export async function GET() {
     const chartData = Object.entries(groupedData)
       .map(([rsm, counts]) => ({
         rsm,
-        หัวหน้า: counts.หัวหน้า.size,
-        ลูกน้อง: counts.ลูกน้อง.size,
-        total: counts.หัวหน้า.size + counts.ลูกน้อง.size
+        Yes: counts.Yes.size,
+        No: counts.No.size,
+        total: counts.Yes.size + counts.No.size
       }))
       .sort((a, b) => b.total - a.total) // เรียงตาม total มากไปน้อย
       .slice(0, 20); // แสดงแค่ top 20 RSM
     
     // คำนวณ summary จากข้อมูลทั้งหมด using unique counts
     const allTotals = Object.values(groupedData);
-    const totalLeaders = allTotals.reduce((sum, item) => sum + item.หัวหน้า.size, 0);
-    const totalMembers = allTotals.reduce((sum, item) => sum + item.ลูกน้อง.size, 0);
-    const totalTechniciansWithRsm = totalLeaders + totalMembers;
+    const totalYes = allTotals.reduce((sum, item) => sum + item.Yes.size, 0);
+    const totalNo = allTotals.reduce((sum, item) => sum + item.No.size, 0);
+    const totalTechniciansWithRsm = totalYes + totalNo;
     
     console.log(`📊 Chart Summary: Total Records: ${allNationalIds.size}, Records with RSM: ${nationalIdsWithRsm.size}, Records without RSM: ${nationalIdsWithoutRsm.size}`);
-    console.log(`📊 Chart Summary: Records with Status: ${nationalIdsWithStatus.size}, Records without Status: ${nationalIdsWithoutStatus.size}`);
-    console.log(`📊 Chart Summary: Total RSM: ${Object.keys(groupedData).length}, Total Technicians with RSM: ${totalTechniciansWithRsm}, Leaders: ${totalLeaders}, Members: ${totalMembers}`);
+    console.log(`📊 Chart Summary: Records with Authority: ${nationalIdsWithAuthority.size}, Records without Authority: ${nationalIdsWithoutAuthority.size}`);
+    console.log(`📊 Chart Summary: Total RSM: ${Object.keys(groupedData).length}, Total Technicians with RSM: ${totalTechniciansWithRsm}, Yes: ${totalYes}, No: ${totalNo}`);
 
     return NextResponse.json(
       { 
@@ -155,10 +138,10 @@ export async function GET() {
           totalRsm: Object.keys(groupedData).length,           // จำนวน RSM ทั้งหมด
           totalTechnicians: allNationalIds.size,               // ใช้ unique national_id count เพื่อให้ตรงกับการ์ด Technicians
           totalTechniciansWithRsm: totalTechniciansWithRsm,    // จำนวนช่างที่มี RSM
-          totalLeaders: totalLeaders,                          // จำนวนหัวหน้าทั้งหมด
-          totalMembers: totalMembers,                          // จำนวนลูกน้องทั้งหมด
+          totalYes: totalYes,                                  // จำนวนช่างที่มี power_authority = Yes
+          totalNo: totalNo,                                    // จำนวนช่างที่มี power_authority = No
           recordsWithoutRsm: nationalIdsWithoutRsm.size,       // จำนวนช่างที่ไม่มี RSM (unique)
-          recordsWithoutStatus: nationalIdsWithoutStatus.size  // จำนวนช่างที่ไม่มี workgroup_status (unique)
+          recordsWithoutAuthority: nationalIdsWithoutAuthority.size  // จำนวนช่างที่ไม่มี power_authority (unique)
         }
       },
       {

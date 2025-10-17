@@ -14,19 +14,19 @@ import {
 
 type ChartData = {
   rsm: string;
-  หัวหน้า: number;
-  ลูกน้อง: number;
+  Yes: number;
+  No: number;
   total: number;
 };
 
 type Summary = {
   totalRsm: number;
   totalTechnicians: number;
-  totalLeaders: number;
-  totalMembers: number;
+  totalYes: number;
+  totalNo: number;
   totalTechniciansWithRsm: number;
   recordsWithoutRsm: number;
-  recordsWithoutStatus: number;
+  recordsWithoutAuthority: number;
 };
 
 export default function RsmWorkgroupChart() {
@@ -129,7 +129,7 @@ export default function RsmWorkgroupChart() {
     <div style={{ padding: 24 }}>
       <div style={{ marginBottom: 20 }}>
         <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 12 }}>
-          📊 Stacked Column Chart: RSM by Workgroup Status
+          📊 Stacked Column Chart: RSM by Power Authority
         </h2>
         
         {/* Summary Cards */}
@@ -148,13 +148,13 @@ export default function RsmWorkgroupChart() {
               <div style={summaryLabelStyle}>ช่างทั้งหมด</div>
               <div style={summaryValueStyle}>{summary.totalTechnicians.toLocaleString()}</div>
             </div>
-            <div style={{...summaryCardStyle, background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"}}>
-              <div style={{...summaryLabelStyle, color: "rgba(255,255,255,0.9)"}}>หัวหน้า</div>
-              <div style={{...summaryValueStyle, color: "white"}}>{summary.totalLeaders.toLocaleString()}</div>
+            <div style={{...summaryCardStyle, background: "linear-gradient(135deg, #10b981 0%, #059669 100%)"}}>
+              <div style={{...summaryLabelStyle, color: "rgba(255,255,255,0.9)"}}>Power Authority: Yes</div>
+              <div style={{...summaryValueStyle, color: "white"}}>{summary.totalYes.toLocaleString()}</div>
             </div>
-            <div style={{...summaryCardStyle, background: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)"}}>
-              <div style={{...summaryLabelStyle, color: "rgba(255,255,255,0.9)"}}>ลูกน้อง</div>
-              <div style={{...summaryValueStyle, color: "white"}}>{summary.totalMembers.toLocaleString()}</div>
+            <div style={{...summaryCardStyle, background: "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)"}}>
+              <div style={{...summaryLabelStyle, color: "rgba(255,255,255,0.9)"}}>Power Authority: No</div>
+              <div style={{...summaryValueStyle, color: "white"}}>{summary.totalNo.toLocaleString()}</div>
             </div>
           </div>
         )}
@@ -180,8 +180,8 @@ export default function RsmWorkgroupChart() {
               <div style={{ fontSize: 16, fontWeight: 600, color: "#ef4444" }}>{summary.recordsWithoutRsm.toLocaleString()}</div>
             </div>
             <div style={{ textAlign: "center" }}>
-              <div style={{ fontSize: 12, color: "#64748b", marginBottom: 4 }}>ช่างที่ไม่มี Status</div>
-              <div style={{ fontSize: 16, fontWeight: 600, color: "#f59e0b" }}>{summary.recordsWithoutStatus.toLocaleString()}</div>
+              <div style={{ fontSize: 12, color: "#64748b", marginBottom: 4 }}>ช่างที่ไม่มี Power Authority</div>
+              <div style={{ fontSize: 16, fontWeight: 600, color: "#f59e0b" }}>{summary.recordsWithoutAuthority.toLocaleString()}</div>
             </div>
           </div>
         )}
@@ -223,16 +223,16 @@ export default function RsmWorkgroupChart() {
                 iconType="rect"
               />
               <Bar 
-                dataKey="หัวหน้า" 
+                dataKey="Yes" 
                 stackId="a" 
-                fill="#8b5cf6"
-                name="หัวหน้า"
+                fill="#10b981"
+                name="Yes"
               />
               <Bar 
-                dataKey="ลูกน้อง" 
+                dataKey="No" 
                 stackId="a" 
-                fill="#ec4899"
-                name="ลูกน้อง"
+                fill="#f59e0b"
+                name="No"
               />
             </BarChart>
           </ResponsiveContainer>

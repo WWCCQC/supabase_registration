@@ -1396,7 +1396,7 @@ export default function TechBrowser() {
               fontWeight: 600,
               color: "#1f2937"
             }}>
-              🏢 RSM Workgroup Status
+              🏢 RSM Power Authority Status
             </h3>
 
           {chartLoading ? (
@@ -1462,30 +1462,30 @@ export default function TechBrowser() {
                   iconType="rect"
                   wrapperStyle={{ paddingBottom: "10px" }}
                   formatter={(value: string) => {
-                    if (value === "หัวหน้า" && chartSummary?.totalLeaders) {
-                      return `${value} (${chartSummary.totalLeaders.toLocaleString()})`;
+                    if (value === "Yes" && chartSummary?.totalYes) {
+                      return `${value} (${chartSummary.totalYes.toLocaleString()})`;
                     }
-                    if (value === "ลูกน้อง" && chartSummary?.totalMembers) {
-                      return `${value} (${chartSummary.totalMembers.toLocaleString()})`;
+                    if (value === "No" && chartSummary?.totalNo) {
+                      return `${value} (${chartSummary.totalNo.toLocaleString()})`;
                     }
                     return value;
                   }}
                 />
                 <Bar 
-                  dataKey="หัวหน้า" 
+                  dataKey="Yes" 
                   stackId="a" 
                   fill="#2baf2b"
-                  name="หัวหน้า"
+                  name="Yes"
                 >
                   {chartData.map((entry, index) => (
                     <Cell 
-                      key={`cell-leader-${index}`} 
+                      key={`cell-yes-${index}`} 
                       fill={selectedRsm === entry.rsm ? "#1b5e20" : "#2baf2b"}
                       opacity={selectedRsm && selectedRsm !== entry.rsm ? 0.5 : 1}
                     />
                   ))}
                   <LabelList 
-                    dataKey="หัวหน้า" 
+                    dataKey="Yes" 
                     position="center"
                     fill="white"
                     fontSize={11}
@@ -1497,20 +1497,20 @@ export default function TechBrowser() {
                   />
                 </Bar>
                 <Bar 
-                  dataKey="ลูกน้อง" 
+                  dataKey="No" 
                   stackId="a" 
                   fill="#fbc02d"
-                  name="ลูกน้อง"
+                  name="No"
                 >
                   {chartData.map((entry, index) => (
                     <Cell 
-                      key={`cell-member-${index}`} 
+                      key={`cell-no-${index}`} 
                       fill={selectedRsm === entry.rsm ? "#f57f17" : "#fbc02d"}
                       opacity={selectedRsm && selectedRsm !== entry.rsm ? 0.5 : 1}
                     />
                   ))}
                   <LabelList 
-                    dataKey="ลูกน้อง" 
+                    dataKey="No" 
                     position="center"
                     fill="white"
                     fontSize={11}
