@@ -59,10 +59,14 @@ export default function RsmWorkgroupChart() {
     }
   }
 
-  // Custom label for showing numbers on bars
+  // Custom label for showing numbers on bars with percentage
   const renderCustomLabel = (props: any) => {
-    const { x, y, width, height, value } = props;
+    const { x, y, width, height, value, payload } = props;
     if (!value || value === 0) return null;
+    
+    // คำนวณ % จากผลรวมของ Yes + No ใน RSM นั้นๆ
+    const total = (payload.Yes || 0) + (payload.No || 0);
+    const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : '0.0';
     
     return (
       <text
@@ -71,11 +75,11 @@ export default function RsmWorkgroupChart() {
         fill="#000"
         textAnchor="middle"
         dominantBaseline="middle"
-        fontSize="12"
+        fontSize="11"
         fontWeight="bold"
         style={{ pointerEvents: "none" }}
       >
-        {value}
+        {value} ({percentage}%)
       </text>
     );
   };
@@ -151,7 +155,7 @@ export default function RsmWorkgroupChart() {
     <div style={{ padding: 24 }}>
       <div style={{ marginBottom: 20 }}>
         <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 12 }}>
-          📊 Stacked Column Chart: RSM by Power Authority
+          ⚡ Stacked Column Chart: RSM by Power Authority
         </h2>
         
         {/* Summary Cards */}
@@ -247,14 +251,14 @@ export default function RsmWorkgroupChart() {
               <Bar 
                 dataKey="Yes" 
                 stackId="a" 
-                fill="#10b981"
+                fill="#0EAD69"
                 name="Yes"
                 label={renderCustomLabel}
               />
               <Bar 
                 dataKey="No" 
                 stackId="a" 
-                fill="#f59e0b"
+                fill="#D90429"
                 name="No"
                 label={renderCustomLabel}
               />

@@ -1396,7 +1396,7 @@ export default function TechBrowser() {
               fontWeight: 600,
               color: "#1f2937"
             }}>
-              🏢 RSM Power Authority Status
+              ⚡ RSM Power Authority Status
             </h3>
 
           {chartLoading ? (
@@ -1478,13 +1478,13 @@ export default function TechBrowser() {
                 <Bar 
                   dataKey="Yes" 
                   stackId="a" 
-                  fill="#2baf2b"
+                  fill="#0EAD69"
                   name="Yes"
                 >
                   {chartData.map((entry, index) => (
                     <Cell 
                       key={`cell-yes-${index}`} 
-                      fill={selectedRsm === entry.rsm ? "#1b5e20" : "#2baf2b"}
+                      fill={selectedRsm === entry.rsm ? "#0A7A4A" : "#0EAD69"}
                       opacity={selectedRsm && selectedRsm !== entry.rsm ? 0.5 : 1}
                     />
                   ))}
@@ -1492,24 +1492,40 @@ export default function TechBrowser() {
                     dataKey="Yes" 
                     position="center"
                     fill="white"
-                    fontSize={11}
+                    fontSize={10}
                     fontWeight="bold"
-                    formatter={(value: any) => {
-                      const num = Number(value);
-                      return num > 0 ? String(num) : '';
+                    content={(props: any) => {
+                      const { x, y, width, height, value, index } = props;
+                      if (!value || value === 0) return null;
+                      const entry = chartData[index];
+                      const total = (entry.Yes || 0) + (entry.No || 0);
+                      const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : '0.0';
+                      return (
+                        <text
+                          x={x + width / 2}
+                          y={y + height / 2}
+                          fill="white"
+                          textAnchor="middle"
+                          dominantBaseline="middle"
+                          fontSize="10"
+                          fontWeight="bold"
+                        >
+                          {value} ({percentage}%)
+                        </text>
+                      );
                     }}
                   />
                 </Bar>
                 <Bar 
                   dataKey="No" 
                   stackId="a" 
-                  fill="#fbc02d"
+                  fill="#D90429"
                   name="No"
                 >
                   {chartData.map((entry, index) => (
                     <Cell 
                       key={`cell-no-${index}`} 
-                      fill={selectedRsm === entry.rsm ? "#f57f17" : "#fbc02d"}
+                      fill={selectedRsm === entry.rsm ? "#A0021F" : "#D90429"}
                       opacity={selectedRsm && selectedRsm !== entry.rsm ? 0.5 : 1}
                     />
                   ))}
@@ -1517,11 +1533,27 @@ export default function TechBrowser() {
                     dataKey="No" 
                     position="center"
                     fill="white"
-                    fontSize={11}
+                    fontSize={10}
                     fontWeight="bold"
-                    formatter={(value: any) => {
-                      const num = Number(value);
-                      return num > 0 ? String(num) : '';
+                    content={(props: any) => {
+                      const { x, y, width, height, value, index } = props;
+                      if (!value || value === 0) return null;
+                      const entry = chartData[index];
+                      const total = (entry.Yes || 0) + (entry.No || 0);
+                      const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : '0.0';
+                      return (
+                        <text
+                          x={x + width / 2}
+                          y={y + height / 2}
+                          fill="white"
+                          textAnchor="middle"
+                          dominantBaseline="middle"
+                          fontSize="10"
+                          fontWeight="bold"
+                        >
+                          {value} ({percentage}%)
+                        </text>
+                      );
                     }}
                   />
                   {/* แสดงจำนวนรวมเหนือยอดกราฟ */}
