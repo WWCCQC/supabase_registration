@@ -1462,11 +1462,15 @@ export default function TechBrowser() {
                   iconType="rect"
                   wrapperStyle={{ paddingBottom: "10px" }}
                   formatter={(value: string) => {
-                    if (value === "Yes" && chartSummary?.totalYes) {
-                      return `${value} (${chartSummary.totalYes.toLocaleString()})`;
+                    // คำนวณยอดรวมจาก chartData ที่แสดงจริง (Top 8)
+                    const displayedYes = chartData.reduce((sum, item) => sum + (item.Yes || 0), 0);
+                    const displayedNo = chartData.reduce((sum, item) => sum + (item.No || 0), 0);
+                    
+                    if (value === "Yes") {
+                      return `${value} (${displayedYes.toLocaleString()})`;
                     }
-                    if (value === "No" && chartSummary?.totalNo) {
-                      return `${value} (${chartSummary.totalNo.toLocaleString()})`;
+                    if (value === "No") {
+                      return `${value} (${displayedNo.toLocaleString()})`;
                     }
                     return value;
                   }}

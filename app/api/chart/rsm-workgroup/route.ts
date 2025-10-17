@@ -96,11 +96,14 @@ export async function GET() {
       
       if (!rsm || rsm === "null" || rsm === "undefined") return; // ข้ามข้อมูลที่ไม่มี RSM สำหรับการจัดกลุ่ม
       
+      // ข้ามถ้าไม่มี power_authority (เข้มงวด: ต้องมีค่า Yes หรือ No เท่านั้น)
+      if (!powerAuthority || powerAuthority === "null" || powerAuthority === "undefined") return;
+      
       if (!groupedData[rsm]) {
         groupedData[rsm] = { Yes: new Set<string>(), No: new Set<string>() };
       }
       
-      // แปลง power_authority เป็น Yes/No
+      // แปลง power_authority เป็น Yes/No (เข้มงวด: ต้องตรงกับ Yes/No เท่านั้น)
       const cleanAuthority = powerAuthority.toLowerCase();
       
       if (cleanAuthority === "yes" || cleanAuthority === "y") {
@@ -108,6 +111,7 @@ export async function GET() {
       } else if (cleanAuthority === "no" || cleanAuthority === "n") {
         groupedData[rsm].No.add(nationalId);
       }
+      // หมายเหตุ: ถ้า power_authority ไม่ใช่ Yes/No จะไม่ถูกนับ (เข้มงวด)
     });
 
     // แปลงเป็น array format สำหรับ Recharts
