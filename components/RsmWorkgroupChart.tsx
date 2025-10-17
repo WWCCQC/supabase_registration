@@ -9,7 +9,8 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
-  Cell
+  Cell,
+  Label
 } from "recharts";
 
 type ChartData = {
@@ -57,6 +58,27 @@ export default function RsmWorkgroupChart() {
       setLoading(false);
     }
   }
+
+  // Custom label for showing numbers on bars
+  const renderCustomLabel = (props: any) => {
+    const { x, y, width, height, value } = props;
+    if (!value || value === 0) return null;
+    
+    return (
+      <text
+        x={x + width / 2}
+        y={y + height / 2}
+        fill="#000"
+        textAnchor="middle"
+        dominantBaseline="middle"
+        fontSize="12"
+        fontWeight="bold"
+        style={{ pointerEvents: "none" }}
+      >
+        {value}
+      </text>
+    );
+  };
 
   // Custom tooltip
   const CustomTooltip = ({ active, payload, label }: any) => {
@@ -227,12 +249,14 @@ export default function RsmWorkgroupChart() {
                 stackId="a" 
                 fill="#10b981"
                 name="Yes"
+                label={renderCustomLabel}
               />
               <Bar 
                 dataKey="No" 
                 stackId="a" 
                 fill="#f59e0b"
                 name="No"
+                label={renderCustomLabel}
               />
             </BarChart>
           </ResponsiveContainer>
