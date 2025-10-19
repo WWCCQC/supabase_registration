@@ -181,7 +181,6 @@ export default function TechBrowser() {
   const [tech_id, setTechId] = React.useState("");
   const [rsm, setRsm] = React.useState("");
   const [depot_code, setDepotCode] = React.useState("");
-  const [training_type, setTrainingType] = React.useState("");
   const [q, setQ] = React.useState("");
   
   /* Selected RSM from chart */
@@ -194,7 +193,6 @@ export default function TechBrowser() {
   const d_tech_id = useDebounced(tech_id);
   const d_rsm = useDebounced(rsm);
   const d_depot_code = useDebounced(depot_code);
-  const d_training_type = useDebounced(training_type);
   const d_q = useDebounced(q);
 
   /* debounce timer for KPI */
@@ -270,7 +268,6 @@ export default function TechBrowser() {
       params.set("ctm", selectedCtm);
     }
     if (d_depot_code) params.set("depot_code", d_depot_code);
-    if (d_training_type) params.set("training_type", d_training_type);
     if (d_q) params.set("q", d_q);
     return params;
   }
@@ -294,7 +291,6 @@ export default function TechBrowser() {
       p.set("f_ctm", selectedCtm);
     }
     if (d_depot_code) p.set("f_depot_code", d_depot_code);
-    if (d_training_type) p.set("f_training_type", d_training_type);
     if (d_q) p.set("q", d_q);
     return p;
   }
@@ -525,7 +521,6 @@ export default function TechBrowser() {
     setTechId("");
     setRsm("");
     setDepotCode("");
-    setTrainingType("");
     setQ("");
     setSelectedRsm(null);
     setSelectedCtm(null);
@@ -815,7 +810,7 @@ export default function TechBrowser() {
     console.log('🔧 User Agent:', navigator.userAgent);
     
     fetchData(1);
-  }, [d_national_id, d_tech_id, d_rsm, d_depot_code, d_training_type, d_q, sort, dir]);
+  }, [d_national_id, d_tech_id, d_rsm, d_depot_code, d_q, sort, dir]);
 
   React.useEffect(() => {
     fetchData(page);
@@ -828,7 +823,7 @@ export default function TechBrowser() {
     fetchDepotCodeCount();
     fetchWorkgroupData();
     fetchTechnicianData();
-  }, [d_national_id, d_tech_id, d_rsm, d_depot_code, d_training_type, d_q]);
+  }, [d_national_id, d_tech_id, d_rsm, d_depot_code, d_q]);
 
   // Trigger immediate update when selectedRsm changes
   React.useEffect(() => {
@@ -1681,36 +1676,6 @@ export default function TechBrowser() {
           value={depot_code}
           onChange={(e) => setDepotCode(e.target.value)}
         />
-        <select
-          value={training_type}
-          onChange={(e) => setTrainingType(e.target.value)}
-          style={{ 
-            minWidth: "180px",
-            padding: "4px 8px",
-            border: "1px solid #ccc",
-            borderRadius: "4px"
-          }}
-        >
-          <option value="">— ประเภทการอบรม —</option>
-          <option value="svc_install">install</option>
-          <option value="svc_repair">repair</option>
-          <option value="svc_nonstandard">nonstandard</option>
-          <option value="svc_corporate">corporate</option>
-          <option value="svc_solar">solar</option>
-          <option value="svc_fttr">fttr</option>
-          <option value="svc_2g">2g</option>
-          <option value="svc_cctv">cctv</option>
-          <option value="svc_cyod">cyod</option>
-          <option value="svc_dongle">dongle</option>
-          <option value="svc_iot">iot</option>
-          <option value="svc_gigatex">gigatex</option>
-          <option value="svc_wifi">wifi</option>
-          <option value="svc_smarthome">smarthome</option>
-          <option value="svc_catv_settop_box">catv_settop_box</option>
-          <option value="svc_true_id">true_id</option>
-          <option value="svc_true_inno">true_inno</option>
-          <option value="svc_l3">l3</option>
-        </select>
         <input
           placeholder="ค้นหา (พิมพ์อะไรก็ได้)"
           value={q}
