@@ -47,6 +47,16 @@ const PivotTable = dynamic(() => import("./PivotTable"), {
   )
 });
 
+// Dynamic import สำหรับ DepotPowerRanking
+const DepotPowerRanking = dynamic(() => import("./DepotPowerRanking"), { 
+  ssr: false,
+  loading: () => (
+    <div style={{ padding: 24, textAlign: "center" }}>
+      <div style={{ fontSize: 16, color: "#666" }}>กำลังโหลด Depot Power Ranking...</div>
+    </div>
+  )
+});
+
 /* ---------- Types ---------- */
 type Row = { [key: string]: any };
 
@@ -1616,16 +1626,9 @@ export default function TechBrowser() {
               fontWeight: 600,
               color: "#1f2937"
             }}>
-              📊 พื้นที่สำหรับตาราง
+              🏆 Top 10 Depot - บัตรการไฟฟ้าสูงสุด
             </h3>
-            <div style={{ 
-              textAlign: "center", 
-              padding: 40,
-              color: "#9ca3af",
-              fontSize: 14 
-            }}>
-              พื้นที่ว่างสำหรับเพิ่มตารางหรือเนื้อหาอื่น
-            </div>
+            <DepotPowerRanking />
           </div>
         </div>
 
