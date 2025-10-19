@@ -24,7 +24,7 @@ export default function CtmProviderChart({ selectedCtm, onCtmClick }: CtmProvide
   const [providers, setProviders] = React.useState<string[]>([]);
   const [loading, setLoading] = React.useState(false);
   const [startIndex, setStartIndex] = React.useState(0);
-  const itemsPerPage = 10; // จำนวน CTM ที่แสดงต่อหน้า
+  const itemsPerPage = 15; // จำนวน CTM ที่แสดงต่อหน้า
 
   // Colors for different providers (in desired order)
   const providerColors: { [key: string]: string } = {
@@ -181,7 +181,7 @@ export default function CtmProviderChart({ selectedCtm, onCtmClick }: CtmProvide
             type="range"
             min="0"
             max={maxStartIndex}
-            step={itemsPerPage}
+            step="1"
             value={startIndex}
             onChange={handleSliderChange}
             style={{
