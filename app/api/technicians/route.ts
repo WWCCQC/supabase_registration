@@ -31,10 +31,10 @@ export async function GET(req: Request) {
 
     // Define service/training columns
     const serviceColumns = [
-      "svc_install","svc_repair","svc_nonstandard","svc_corporate","svc_solar",
-      "svc_fttr","svc_2g","svc_cctv","svc_cyod","svc_dongle","svc_iot",
-      "svc_gigatex","svc_wifi","svc_smarthome","svc_catv_settop_box",
-      "svc_true_id","svc_true_inno","svc_l3"
+      "svc_install","svc_repair","svc_ojt","svc_safety","svc_softskill","svc_5p",
+      "svc_nonstandard","svc_corporate","svc_solar","svc_fttr","svc_2g","svc_cctv",
+      "svc_cyod","svc_dongle","svc_iot","svc_gigatex","svc_wifi","svc_smarthome",
+      "svc_catv_settop_box","svc_true_id","svc_true_inno","svc_l3"
     ];
 
     const cols = [
