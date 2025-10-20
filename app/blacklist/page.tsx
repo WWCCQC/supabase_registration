@@ -162,10 +162,7 @@ function BlacklistContent() {
           color: '#1f2937',
           marginBottom: '16px'
         }}>
-          รายชื่อช่างที่ถูก Blacklist (ทั้งหมด {totalCount} รายการ)
-          <span style={{ fontSize: '14px', color: '#dc2626', fontWeight: 400, marginLeft: 8 }}>
-            :update ทุกวันเวลา 8.00 น
-          </span>
+          รายชื่อช่างที่ถูก Blacklist : update ทุกวันเวลา 8.00 น
         </h1>
         
         {/* Search and Export Bar */}
