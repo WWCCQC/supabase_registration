@@ -172,7 +172,7 @@ const WIDTHS: Partial<Record<(typeof COLS)[number], number>> = {
 /* ---------- Component ---------- */
 export default function TechBrowser() {
   /* Auth check */
-  const { user, isAdmin } = useAuth();
+  const { user, isAdmin, isManager } = useAuth();
   
   /* Performance Timing */
   const [componentStartTime] = React.useState(() => performance.now());
@@ -763,9 +763,9 @@ export default function TechBrowser() {
 
   /** เปิด popup แล้วโหลด “ข้อมูลเต็มแถว” จาก /api/technicians/[tech_id] */
   async function openDetail(fullRowCandidate: Row) {
-    // เช็คสิทธิ์ก่อน - เฉพาะ admin เท่านั้นที่ดูรายละเอียดได้
-    if (!isAdmin()) {
-      alert("ไม่มีสิทธิ์ในการดูรายละเอียดช่างแต่ละคน\nสำหรับผู้ดูแลระบบเท่านั้น");
+    // เช็คสิทธิ์ก่อน - Admin และ Manager เท่านั้นที่ดูรายละเอียดได้
+    if (!isAdmin() && !isManager()) {
+      alert("ไม่มีสิทธิ์ในการดูรายละเอียดช่างแต่ละคน\nสำหรับผู้ดูแลระบบและผู้จัดการเท่านั้น");
       return;
     }
     
@@ -1807,7 +1807,7 @@ export default function TechBrowser() {
                       })()
                     ) : c === "national_id" ? (
                       // แสดงผลต่างกันตาม role
-                      isAdmin() ? (
+                      (isAdmin() || isManager()) ? (
                         <span
                           style={{
                             color: "#2563eb",
@@ -1816,7 +1816,7 @@ export default function TechBrowser() {
                             fontWeight: 500,
                           }}
                           onClick={() => openDetail(r)}
-                          title="คลิกเพื่อดูข้อมูลทั้งหมด (Admin เท่านั้น)"
+                          title="คลิกเพื่อดูข้อมูลทั้งหมด (Admin และ Manager)"
                         >
                           {maskNationalId(r[c] ?? "")}
                         </span>
@@ -1826,14 +1826,14 @@ export default function TechBrowser() {
                             color: "#374151",
                             fontWeight: 400,
                           }}
-                          title="ข้อมูลสำหรับผู้ดูแลระบบเท่านั้น"
+                          title="ข้อมูลสำหรับผู้ดูแลระบบและผู้จัดการเท่านั้น"
                         >
                           {maskNationalId(r[c] ?? "")}
                         </span>
                       )
                     ) : c === "tech_id" ? (
                       // แสดงผลต่างกันตาม role
-                      isAdmin() ? (
+                      (isAdmin() || isManager()) ? (
                         <span
                           style={{
                             color: "#2563eb",
@@ -1842,7 +1842,7 @@ export default function TechBrowser() {
                             fontWeight: 500,
                           }}
                           onClick={() => openDetail(r)}
-                          title="คลิกเพื่อดูข้อมูลทั้งหมด (Admin เท่านั้น)"
+                          title="คลิกเพื่อดูข้อมูลทั้งหมด (Admin และ Manager)"
                         >
                           {r[c] ?? ""}
                         </span>

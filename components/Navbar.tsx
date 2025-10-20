@@ -106,8 +106,8 @@ const Navbar = () => {
           </Link>
         )}
 
-        {/* ลงทะเบียนอบรมช่าง - Admin และ Manager เท่านั้น */}
-        {!isUser() && (
+        {/* ลงทะเบียนอบรมช่าง - Admin เท่านั้น */}
+        {isAdmin() && (
           <a 
             href="https://script.google.com/macros/s/AKfycbwstFfRSlgVSGa1PLJmZbpSSX91J0kkADXmExoaC-NTMyamhvqTg2flsNDAmmy0jfKIKg/exec"
             target="_blank"
@@ -121,8 +121,8 @@ const Navbar = () => {
           </a>
         )}
 
-        {/* อบรมช่างใหม่ - Admin และ Manager เท่านั้น */}
-        {!isUser() && (
+        {/* อบรมช่างใหม่ - Admin เท่านั้น */}
+        {isAdmin() && (
           <a 
             href="https://wwccqc.github.io/SLATrainingDashboard/"
             target="_blank"
