@@ -50,6 +50,10 @@ export function useAuth() {
     return authState.user?.role === 'admin';
   };
 
+  const isManager = () => {
+    return authState.user?.role === 'manager';
+  };
+
   const isUser = () => {
     return authState.user?.role === 'user';
   };
@@ -57,6 +61,7 @@ export function useAuth() {
   return {
     ...authState,
     isAdmin,
+    isManager,
     isUser,
     checkAuth
   };

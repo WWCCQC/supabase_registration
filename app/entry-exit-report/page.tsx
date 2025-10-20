@@ -5,7 +5,7 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 
 export default function EntryExitReportPage() {
   return (
-    <ProtectedRoute requiredRole="admin">
+    <ProtectedRoute allowedRoles={['admin', 'manager']}>
       <div style={{ minHeight: "100vh", backgroundColor: "#f3f4f6" }}>
         <Navbar />
         

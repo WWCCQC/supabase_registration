@@ -380,7 +380,7 @@ function BlacklistContent() {
 
 export default function BlacklistPage() {
   return (
-    <ProtectedRoute>
+    <ProtectedRoute allowedRoles={['admin', 'manager']}>
       <Navbar />
       <BlacklistContent />
     </ProtectedRoute>

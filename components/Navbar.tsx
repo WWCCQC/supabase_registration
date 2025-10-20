@@ -7,7 +7,7 @@ import { useAuth } from '@/lib/useAuth';
 
 const Navbar = () => {
   const pathname = usePathname();
-  const { user, isAdmin, isUser } = useAuth();
+  const { user, isAdmin, isManager, isUser } = useAuth();
 
   // สไตล์สำหรับ nav items
   const navItemStyle = (isActive: boolean) => ({
@@ -85,8 +85,8 @@ const Navbar = () => {
           </Link>
         )}
 
-        {/* Blacklist - Admin เท่านั้น */}
-        {isAdmin() && (
+        {/* Blacklist - Admin และ Manager */}
+        {(isAdmin() || isManager()) && (
           <Link href="/blacklist" style={navItemStyle(pathname === '/blacklist')}>
             <svg style={iconStyle} viewBox="0 0 24 24">
               <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
@@ -96,8 +96,8 @@ const Navbar = () => {
           </Link>
         )}
 
-        {/* Technician Entry & Exit Report - Admin เท่านั้น */}
-        {isAdmin() && (
+        {/* Technician Entry & Exit Report - Admin และ Manager */}
+        {(isAdmin() || isManager()) && (
           <Link href="/entry-exit-report" style={navItemStyle(pathname === '/entry-exit-report')}>
             <svg style={iconStyle} viewBox="0 0 24 24">
               <path d="M9 11H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2zm2-7h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V9h14v11z"/>
