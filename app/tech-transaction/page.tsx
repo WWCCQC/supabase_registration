@@ -1,0 +1,1339 @@
+"use client";
+
+import { useState, useEffect, useMemo } from 'react';
+import ProtectedRoute from '@/components/ProtectedRoute';
+import Navbar from '@/components/Navbar';
+import * as XLSX from 'xlsx';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+
+interface TransactionItem {
+  Year?: number;
+  Month?: string;
+  Week?: number;
+  Date?: string;
+  provider?: string;
+  Register?: string;
+  Register_Ref?: string;
+  [key: string]: any;
+}
+
+function TechTransactionContent() {
+  const [data, setData] = useState<TransactionItem[]>([]);
+  const [allData, setAllData] = useState<TransactionItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const [searchTerm, setSearchTerm] = useState('');
+  
+  // Filter states - changed to arrays for multi-select
+  const [selectedYears, setSelectedYears] = useState<string[]>([]);
+  const [selectedMonths, setSelectedMonths] = useState<string[]>([]);
+  const [selectedWeeks, setSelectedWeeks] = useState<string[]>([]);
+  const [selectedDates, setSelectedDates] = useState<string[]>([]);
+  const [filterOptions, setFilterOptions] = useState<{
+    years: any[];
+    months: any[];
+    weeks: any[];
+    dates: any[];
+  }>({ years: [], months: [], weeks: [], dates: [] });
+  
+  // Dropdown open/close states
+  const [yearDropdownOpen, setYearDropdownOpen] = useState(false);
+  const [monthDropdownOpen, setMonthDropdownOpen] = useState(false);
+  const [weekDropdownOpen, setWeekDropdownOpen] = useState(false);
+  const [dateDropdownOpen, setDateDropdownOpen] = useState(false);
+  
+  const itemsPerPage = 50;
+  
+  // Auto-close dropdown function
+  const autoCloseDropdown = (closeFunction: () => void) => {
+    setTimeout(() => {
+      closeFunction();
+    }, 3000); // 3 seconds delay
+  };
+
+  useEffect(() => {
+    fetchTransactions();
+  }, [currentPage]);
+
+  useEffect(() => {
+    fetchAllData();
+    fetchFilterOptions();
+  }, []);
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedYears, selectedMonths, selectedWeeks, selectedDates, searchTerm]);
+
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (!target.closest('.dropdown-container')) {
+        setYearDropdownOpen(false);
+        setMonthDropdownOpen(false);
+        setWeekDropdownOpen(false);
+        setDateDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  const fetchTransactions = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      console.log('🔍 Fetching Transactions via API...', { page: currentPage, limit: itemsPerPage });
+
+      const response = await fetch(`/api/transaction?page=${currentPage}&limit=${itemsPerPage}`);
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('❌ API Error:', errorData);
+        throw new Error(errorData.error || 'Failed to fetch transaction data');
+      }
+
+      const result = await response.json();
+      
+      console.log('✅ Transaction API Response:', {
+        dataLength: result.data?.length,
+        totalCount: result.totalCount,
+        page: result.page,
+        totalPages: result.totalPages
+      });
+
+      setData(result.data || []);
+      setTotalCount(result.totalCount || 0);
+      
+    } catch (err: any) {
+      console.error('❌ Error fetching transactions:', err);
+      setError(err.message || 'An error occurred while fetching data');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchAllData = async () => {
+    try {
+      console.log('📥 Fetching all transaction data...');
+      
+      // First, get total count
+      const countResponse = await fetch(`/api/transaction?page=1&limit=1`);
+      if (!countResponse.ok) {
+        throw new Error('Failed to fetch count');
+      }
+      const countResult = await countResponse.json();
+      const totalCount = countResult.totalCount || 0;
+      
+      console.log('📊 Total records in database:', totalCount);
+      
+      // Fetch in batches (1000 per batch)
+      let allRecords: any[] = [];
+      const batchSize = 1000;
+      const totalPages = Math.ceil(totalCount / batchSize);
+      
+      console.log('🔄 Fetching', totalPages, 'batches...');
+
+      for (let page = 1; page <= totalPages; page++) {
+        const response = await fetch(`/api/transaction?page=${page}&limit=${batchSize}`);
+        
+        if (!response.ok) {
+          console.error('Failed to fetch page', page);
+          continue;
+        }
+
+        const result = await response.json();
+        allRecords = [...allRecords, ...(result.data || [])];
+        
+        console.log(`📦 Batch ${page}/${totalPages}: ${result.data?.length} records (total: ${allRecords.length})`);
+      }
+
+      setAllData(allRecords);
+      
+      // Debug: Check what months are in the data
+      const monthsInData = [...new Set(allRecords.map((item: any) => item.Month).filter(Boolean))];
+      console.log('✅ All transaction data loaded:', allRecords.length, '/', totalCount, 'records');
+      console.log('📅 Months in allData:', monthsInData);
+      console.log('🗓️ First 5 records:', allRecords.slice(0, 5));
+    } catch (err: any) {
+      console.error('❌ Error fetching all data:', err);
+    }
+  };
+
+  const fetchFilterOptions = async () => {
+    try {
+      console.log('🔽 Fetching filter options...');
+      
+      const response = await fetch('/api/transaction/filters');
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch filter options');
+      }
+
+      const options = await response.json();
+      setFilterOptions(options);
+      
+      console.log('✅ Filter options loaded:', {
+        years: options.years?.length,
+        months: options.months?.length,
+        weeks: options.weeks?.length,
+        dates: options.dates?.length
+      });
+    } catch (err: any) {
+      console.error('❌ Error fetching filter options:', err);
+    }
+  };
+
+  // Filter allData instead of data
+  const filteredAllData = useMemo(() => {
+    let filtered = allData;
+
+    // Apply filters (multi-select)
+    if (selectedYears.length > 0) {
+      filtered = filtered.filter(item => selectedYears.includes(String(item.Year)));
+    }
+    if (selectedMonths.length > 0) {
+      filtered = filtered.filter(item => selectedMonths.includes(String(item.Month)));
+    }
+    if (selectedWeeks.length > 0) {
+      filtered = filtered.filter(item => selectedWeeks.includes(String(item.Week)));
+    }
+    if (selectedDates.length > 0) {
+      filtered = filtered.filter(item => selectedDates.includes(String(item.Date)));
+    }
+
+    // Apply search term
+    if (searchTerm.trim()) {
+      const lowerSearch = searchTerm.toLowerCase();
+      filtered = filtered.filter((item) => {
+        return Object.values(item).some((value) =>
+          String(value).toLowerCase().includes(lowerSearch)
+        );
+      });
+    }
+
+    return filtered;
+  }, [allData, searchTerm, selectedYears, selectedMonths, selectedWeeks, selectedDates]);
+
+  // Paginate the filtered data
+  const filteredData = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return filteredAllData.slice(startIndex, endIndex);
+  }, [filteredAllData, currentPage, itemsPerPage]);
+
+  // Update total count based on filtered data
+  const filteredTotalCount = filteredAllData.length;
+
+  const totalPages = Math.ceil(filteredTotalCount / itemsPerPage);
+
+  const handlePageChange = (newPage: number) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      setCurrentPage(newPage);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  const exportToExcel = () => {
+    try {
+      console.log('📊 Exporting to Excel...', allData.length, 'rows');
+
+      if (allData.length === 0) {
+        alert('ไม่มีข้อมูลสำหรับ Export');
+        return;
+      }
+
+      // Get all unique columns from data
+      const allColumns = new Set<string>();
+      allData.forEach(item => {
+        Object.keys(item).forEach(key => {
+          if (key !== 'id') { // Skip id column
+            allColumns.add(key);
+          }
+        });
+      });
+
+      console.log('📋 Columns to export:', Array.from(allColumns));
+
+      const exportData = allData.map((item, index) => {
+        const row: any = { 'ลำดับ': index + 1 };
+        
+        // Add all columns dynamically
+        allColumns.forEach(col => {
+          row[col] = item[col] !== null && item[col] !== undefined ? String(item[col]) : '';
+        });
+        
+        return row;
+      });
+
+      const ws = XLSX.utils.json_to_sheet(exportData);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Transactions');
+
+      // Auto-adjust column widths
+      const colWidths = [{ wch: 8 }]; // ลำดับ
+      allColumns.forEach(() => {
+        colWidths.push({ wch: 20 }); // Default width for all columns
+      });
+      ws['!cols'] = colWidths;
+
+      const fileName = `Tech_Transaction_${new Date().toISOString().split('T')[0]}.xlsx`;
+      XLSX.writeFile(wb, fileName);
+
+      console.log('✅ Excel exported successfully:', fileName);
+    } catch (err: any) {
+      console.error('❌ Export error:', err);
+      alert('เกิดข้อผิดพลาดในการ Export: ' + err.message);
+    }
+  };
+
+  const columns = useMemo(() => {
+    if (filteredData.length === 0) return [];
+    return Object.keys(filteredData[0]).filter(key => 
+      !['id'].includes(key)
+    );
+  }, [filteredData]);
+
+  // Prepare chart data (use filtered allData based on filter selections)
+  const chartData = useMemo(() => {
+    console.log('🎯 Preparing chart data...', {
+      allDataLength: allData?.length,
+      filters: { selectedYears, selectedMonths, selectedWeeks, selectedDates }
+    });
+
+    if (!allData || allData.length === 0) {
+      console.log('⚠️ No allData available');
+      return [];
+    }
+
+    // First, filter allData based on filter selections
+    let chartSourceData = allData;
+    console.log('📊 Initial data:', chartSourceData.length);
+
+    if (selectedYears.length > 0) {
+      chartSourceData = chartSourceData.filter(item => selectedYears.includes(String(item.Year)));
+      console.log('🔽 After Year filter:', chartSourceData.length);
+    }
+    if (selectedMonths.length > 0) {
+      chartSourceData = chartSourceData.filter(item => selectedMonths.includes(String(item.Month)));
+      console.log('🔽 After Month filter:', chartSourceData.length);
+    }
+    if (selectedWeeks.length > 0) {
+      chartSourceData = chartSourceData.filter(item => selectedWeeks.includes(String(item.Week)));
+      console.log('🔽 After Week filter:', chartSourceData.length);
+    }
+    if (selectedDates.length > 0) {
+      chartSourceData = chartSourceData.filter(item => selectedDates.includes(String(item.Date)));
+      console.log('🔽 After Date filter:', chartSourceData.length);
+    }
+
+    // Group by Date and count Register types
+    const dateGroups: { [key: string]: { new: number; resigned: number } } = {};
+
+    chartSourceData.forEach(item => {
+      const date = item.Date || '';
+      const register = item.Register || '';
+
+      if (!dateGroups[date]) {
+        dateGroups[date] = { new: 0, resigned: 0 };
+      }
+
+      // Count based on Register value
+      if (register.includes('ช่างใหม่') || register.toLowerCase().includes('new')) {
+        dateGroups[date].new += 1;
+      } else if (register.includes('ช่างลาออก') || register.toLowerCase().includes('resign')) {
+        dateGroups[date].resigned += 1;
+      }
+    });
+
+    // Convert to array and sort by date
+    const chartArray = Object.entries(dateGroups)
+      .map(([date, counts]) => ({
+        date,
+        'ช่างใหม่': counts.new,
+        'ช่างลาออก': counts.resigned
+      }))
+      .sort((a, b) => {
+        // Sort by date (assuming format YYYY-MM-DD)
+        return a.date.localeCompare(b.date);
+      });
+
+    // Show last 60 days only if no filters applied, otherwise show all filtered dates
+    const isFiltered = selectedYears.length > 0 || selectedMonths.length > 0 || selectedWeeks.length > 0 || selectedDates.length > 0;
+    const finalChartArray = isFiltered ? chartArray : chartArray.slice(-60);
+
+    console.log('📈 Chart data prepared:', finalChartArray.length, 'dates', isFiltered ? '(filtered)' : '(last 60 days)');
+    return finalChartArray;
+  }, [allData, selectedYears, selectedMonths, selectedWeeks, selectedDates]);
+
+  if (loading && currentPage === 1) {
+    return (
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        minHeight: '400px',
+        fontSize: '18px',
+        color: '#6b7280'
+      }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ marginBottom: '16px' }}>⏳ กำลังโหลดข้อมูล...</div>
+          <div style={{
+            width: '40px',
+            height: '40px',
+            border: '4px solid #e5e7eb',
+            borderTop: '4px solid #3b82f6',
+            borderRadius: '50%',
+            animation: 'spin 1s linear infinite',
+            margin: '0 auto'
+          }}></div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div style={{
+        padding: '24px',
+        margin: '24px',
+        backgroundColor: '#fee2e2',
+        border: '1px solid #ef4444',
+        borderRadius: '8px',
+        color: '#991b1b'
+      }}>
+        <strong>❌ เกิดข้อผิดพลาด:</strong> {error}
+      </div>
+    );
+  }
+
+  return (
+    <div style={{
+      padding: '32px',
+      maxWidth: '1400px',
+      margin: '0 auto',
+      backgroundColor: '#f9fafb',
+      minHeight: '100vh'
+    }}>
+      <div style={{
+        backgroundColor: 'white',
+        borderRadius: '12px',
+        padding: '32px',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+      }}>
+        <h1 style={{
+          fontSize: '28px',
+          fontWeight: 'bold',
+          color: '#1f2937',
+          marginBottom: '24px'
+        }}>
+          Tech-Transaction
+        </h1>
+
+        {/* Filter Section */}
+        <div style={{
+          backgroundColor: '#f8fafc',
+          borderRadius: '8px',
+          padding: '20px',
+          marginBottom: '24px',
+          border: '1px solid #e2e8f0'
+        }}>
+          <h3 style={{
+            fontSize: '16px',
+            fontWeight: '600',
+            color: '#374151',
+            marginBottom: '12px',
+            margin: '0 0 12px 0'
+          }}>
+            🔍 ตัวกรองข้อมูล
+          </h3>
+          
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+            gap: '12px',
+            marginBottom: '16px'
+          }}>
+            {/* Year Filter */}
+            <div className="dropdown-container" style={{ position: 'relative' }}>
+              <label style={{ 
+                fontSize: '14px', 
+                fontWeight: '500', 
+                color: '#374151',
+                display: 'block',
+                marginBottom: '4px'
+              }}>
+                ปี (Year)
+              </label>
+              <div
+                onClick={() => setYearDropdownOpen(!yearDropdownOpen)}
+                style={{
+                  width: '100%',
+                  padding: '8px 12px',
+                  fontSize: '14px',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '6px',
+                  backgroundColor: 'white',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center'
+                }}
+              >
+                <span style={{ color: selectedYears.length > 0 ? '#000' : '#9ca3af' }}>
+                  {selectedYears.length > 0 
+                    ? `${selectedYears.length} selected`
+                    : 'ทั้งหมด'}
+                </span>
+                <span style={{ fontSize: '12px' }}>▼</span>
+              </div>
+              
+              {yearDropdownOpen && (
+                <div style={{
+                  position: 'absolute',
+                  top: '100%',
+                  left: 0,
+                  right: 0,
+                  marginTop: '4px',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '6px',
+                  backgroundColor: 'white',
+                  maxHeight: '250px',
+                  overflowY: 'auto',
+                  zIndex: 1000,
+                  boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
+                }}>
+                  <div style={{ 
+                    padding: '8px',
+                    borderBottom: '1px solid #e5e7eb',
+                    display: 'flex',
+                    gap: '8px',
+                    position: 'sticky',
+                    top: 0,
+                    backgroundColor: 'white'
+                  }}>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedYears(filterOptions.years);
+                      }}
+                      style={{
+                        fontSize: '11px',
+                        color: '#3b82f6',
+                        background: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
+                        padding: '2px 4px'
+                      }}
+                    >
+                      Select All
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedYears([]);
+                      }}
+                      style={{
+                        fontSize: '11px',
+                        color: '#ef4444',
+                        background: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
+                        padding: '2px 4px'
+                      }}
+                    >
+                      Clear All
+                    </button>
+                  </div>
+                  {filterOptions.years.map(year => (
+                    <label key={year} style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      padding: '8px 12px',
+                      cursor: 'pointer',
+                      fontSize: '14px'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f3f4f6'}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selectedYears.includes(year)}
+                        onChange={(e) => {
+                          e.stopPropagation();
+                          if (e.target.checked) {
+                            setSelectedYears([...selectedYears, year]);
+                          } else {
+                            setSelectedYears(selectedYears.filter(y => y !== year));
+                          }
+                          autoCloseDropdown(() => setYearDropdownOpen(false));
+                        }}
+                        style={{ marginRight: '8px', cursor: 'pointer' }}
+                      />
+                      {year}
+                    </label>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Month Filter */}
+            <div className="dropdown-container" style={{ position: 'relative' }}>
+              <label style={{ 
+                fontSize: '14px', 
+                fontWeight: '500', 
+                color: '#374151',
+                display: 'block',
+                marginBottom: '4px'
+              }}>
+                เดือน (Month)
+              </label>
+              <div
+                onClick={() => setMonthDropdownOpen(!monthDropdownOpen)}
+                style={{
+                  width: '100%',
+                  padding: '8px 12px',
+                  fontSize: '14px',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '6px',
+                  backgroundColor: 'white',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center'
+                }}
+              >
+                <span style={{ color: selectedMonths.length > 0 ? '#000' : '#9ca3af' }}>
+                  {selectedMonths.length > 0 
+                    ? `${selectedMonths.length} selected`
+                    : 'ทั้งหมด'}
+                </span>
+                <span style={{ fontSize: '12px' }}>▼</span>
+              </div>
+              
+              {monthDropdownOpen && (
+                <div style={{
+                  position: 'absolute',
+                  top: '100%',
+                  left: 0,
+                  right: 0,
+                  marginTop: '4px',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '6px',
+                  backgroundColor: 'white',
+                  maxHeight: '250px',
+                  overflowY: 'auto',
+                  zIndex: 1000,
+                  boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
+                }}>
+                  <div style={{ 
+                    padding: '8px',
+                    borderBottom: '1px solid #e5e7eb',
+                    display: 'flex',
+                    gap: '8px',
+                    position: 'sticky',
+                    top: 0,
+                    backgroundColor: 'white'
+                  }}>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedMonths(filterOptions.months);
+                      }}
+                      style={{
+                        fontSize: '11px',
+                        color: '#3b82f6',
+                        background: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
+                        padding: '2px 4px'
+                      }}
+                    >
+                      Select All
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedMonths([]);
+                      }}
+                      style={{
+                        fontSize: '11px',
+                        color: '#ef4444',
+                        background: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
+                        padding: '2px 4px'
+                      }}
+                    >
+                      Clear All
+                    </button>
+                  </div>
+                  {filterOptions.months.map(month => (
+                    <label key={month} style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      padding: '8px 12px',
+                      cursor: 'pointer',
+                      fontSize: '14px'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f3f4f6'}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selectedMonths.includes(month)}
+                        onChange={(e) => {
+                          e.stopPropagation();
+                          if (e.target.checked) {
+                            setSelectedMonths([...selectedMonths, month]);
+                          } else {
+                            setSelectedMonths(selectedMonths.filter(m => m !== month));
+                          }
+                          autoCloseDropdown(() => setMonthDropdownOpen(false));
+                        }}
+                        style={{ marginRight: '8px', cursor: 'pointer' }}
+                      />
+                      {month}
+                    </label>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Week Filter */}
+            <div className="dropdown-container" style={{ position: 'relative' }}>
+              <label style={{ 
+                fontSize: '14px', 
+                fontWeight: '500', 
+                color: '#374151',
+                display: 'block',
+                marginBottom: '4px'
+              }}>
+                สัปดาห์ (Week)
+              </label>
+              <div
+                onClick={() => setWeekDropdownOpen(!weekDropdownOpen)}
+                style={{
+                  width: '100%',
+                  padding: '8px 12px',
+                  fontSize: '14px',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '6px',
+                  backgroundColor: 'white',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center'
+                }}
+              >
+                <span style={{ color: selectedWeeks.length > 0 ? '#000' : '#9ca3af' }}>
+                  {selectedWeeks.length > 0 
+                    ? `${selectedWeeks.length} selected`
+                    : 'ทั้งหมด'}
+                </span>
+                <span style={{ fontSize: '12px' }}>▼</span>
+              </div>
+              
+              {weekDropdownOpen && (
+                <div style={{
+                  position: 'absolute',
+                  top: '100%',
+                  left: 0,
+                  right: 0,
+                  marginTop: '4px',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '6px',
+                  backgroundColor: 'white',
+                  maxHeight: '250px',
+                  overflowY: 'auto',
+                  zIndex: 1000,
+                  boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
+                }}>
+                  <div style={{ 
+                    padding: '8px',
+                    borderBottom: '1px solid #e5e7eb',
+                    display: 'flex',
+                    gap: '8px',
+                    position: 'sticky',
+                    top: 0,
+                    backgroundColor: 'white'
+                  }}>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedWeeks(filterOptions.weeks);
+                      }}
+                      style={{
+                        fontSize: '11px',
+                        color: '#3b82f6',
+                        background: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
+                        padding: '2px 4px'
+                      }}
+                    >
+                      Select All
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedWeeks([]);
+                      }}
+                      style={{
+                        fontSize: '11px',
+                        color: '#ef4444',
+                        background: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
+                        padding: '2px 4px'
+                      }}
+                    >
+                      Clear All
+                    </button>
+                  </div>
+                  {filterOptions.weeks.map(week => (
+                    <label key={week} style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      padding: '8px 12px',
+                      cursor: 'pointer',
+                      fontSize: '14px'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f3f4f6'}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selectedWeeks.includes(week)}
+                        onChange={(e) => {
+                          e.stopPropagation();
+                          if (e.target.checked) {
+                            setSelectedWeeks([...selectedWeeks, week]);
+                          } else {
+                            setSelectedWeeks(selectedWeeks.filter(w => w !== week));
+                          }
+                          autoCloseDropdown(() => setWeekDropdownOpen(false));
+                        }}
+                        style={{ marginRight: '8px', cursor: 'pointer' }}
+                      />
+                      สัปดาห์ที่ {week}
+                    </label>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Date Filter */}
+            <div className="dropdown-container" style={{ position: 'relative' }}>
+              <label style={{ 
+                fontSize: '14px', 
+                fontWeight: '500', 
+                color: '#374151',
+                display: 'block',
+                marginBottom: '4px'
+              }}>
+                วันที่ (Date)
+              </label>
+              <div
+                onClick={() => setDateDropdownOpen(!dateDropdownOpen)}
+                style={{
+                  width: '100%',
+                  padding: '8px 12px',
+                  fontSize: '14px',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '6px',
+                  backgroundColor: 'white',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center'
+                }}
+              >
+                <span style={{ color: selectedDates.length > 0 ? '#000' : '#9ca3af' }}>
+                  {selectedDates.length > 0 
+                    ? `${selectedDates.length} selected`
+                    : 'ทั้งหมด'}
+                </span>
+                <span style={{ fontSize: '12px' }}>▼</span>
+              </div>
+              
+              {dateDropdownOpen && (
+                <div style={{
+                  position: 'absolute',
+                  top: '100%',
+                  left: 0,
+                  right: 0,
+                  marginTop: '4px',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '6px',
+                  backgroundColor: 'white',
+                  maxHeight: '250px',
+                  overflowY: 'auto',
+                  zIndex: 1000,
+                  boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
+                }}>
+                  <div style={{ 
+                    padding: '8px',
+                    borderBottom: '1px solid #e5e7eb',
+                    display: 'flex',
+                    gap: '8px',
+                    position: 'sticky',
+                    top: 0,
+                    backgroundColor: 'white'
+                  }}>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedDates(filterOptions.dates);
+                      }}
+                      style={{
+                        fontSize: '11px',
+                        color: '#3b82f6',
+                        background: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
+                        padding: '2px 4px'
+                      }}
+                    >
+                      Select All
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedDates([]);
+                      }}
+                      style={{
+                        fontSize: '11px',
+                        color: '#ef4444',
+                        background: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
+                        padding: '2px 4px'
+                      }}
+                    >
+                      Clear All
+                    </button>
+                  </div>
+                  {filterOptions.dates.map(date => (
+                    <label key={date} style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      padding: '8px 12px',
+                      cursor: 'pointer',
+                      fontSize: '14px'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f3f4f6'}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selectedDates.includes(date)}
+                        onChange={(e) => {
+                          e.stopPropagation();
+                          if (e.target.checked) {
+                            setSelectedDates([...selectedDates, date]);
+                          } else {
+                            setSelectedDates(selectedDates.filter(d => d !== date));
+                          }
+                          autoCloseDropdown(() => setDateDropdownOpen(false));
+                        }}
+                        style={{ marginRight: '8px', cursor: 'pointer' }}
+                      />
+                      {date}
+                    </label>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Clear Filters Button */}
+          <button
+            onClick={() => {
+              setSelectedYears([]);
+              setSelectedMonths([]);
+              setSelectedWeeks([]);
+              setSelectedDates([]);
+              setSearchTerm('');
+            }}
+            style={{
+              padding: '8px 16px',
+              fontSize: '14px',
+              fontWeight: '500',
+              color: '#6b7280',
+              backgroundColor: 'white',
+              border: '1px solid #d1d5db',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              transition: 'all 0.2s'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = '#f3f4f6';
+              e.currentTarget.style.borderColor = '#9ca3af';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'white';
+              e.currentTarget.style.borderColor = '#d1d5db';
+            }}
+          >
+            🗑️ ล้างตัวกรอง
+          </button>
+        </div>
+
+        {/* Chart Section */}
+        {chartData.length > 0 && (
+          <div style={{
+            backgroundColor: '#f9fafb',
+            borderRadius: '12px',
+            padding: '24px',
+            marginBottom: '32px',
+            boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
+          }}>
+            <h2 style={{
+              fontSize: '20px',
+              fontWeight: '600',
+              color: '#374151',
+              marginBottom: '16px'
+            }}>
+              ช่างใหม่ vs ช่างลาออก รายวัน
+            </h2>
+            <ResponsiveContainer width="100%" height={400}>
+              <LineChart
+                data={chartData}
+                margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                <XAxis 
+                  dataKey="date" 
+                  stroke="#6b7280"
+                  style={{ fontSize: '12px' }}
+                  angle={-45}
+                  textAnchor="end"
+                  height={80}
+                />
+                <YAxis 
+                  stroke="#6b7280"
+                  style={{ fontSize: '12px' }}
+                />
+                <Tooltip 
+                  contentStyle={{
+                    backgroundColor: 'white',
+                    border: '1px solid #e5e7eb',
+                    borderRadius: '8px',
+                    padding: '12px'
+                  }}
+                />
+                <Legend 
+                  wrapperStyle={{
+                    paddingTop: '20px'
+                  }}
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="ช่างใหม่" 
+                  stroke="#10b981" 
+                  strokeWidth={2}
+                  dot={{ fill: '#10b981', r: 4 }}
+                  activeDot={{ r: 6 }}
+                  label={{ 
+                    position: 'top', 
+                    fill: '#10b981', 
+                    fontSize: 11,
+                    formatter: (value: any) => (value && value > 0) ? value : ''
+                  }}
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="ช่างลาออก" 
+                  stroke="#ef4444" 
+                  strokeWidth={2}
+                  dot={{ fill: '#ef4444', r: 4 }}
+                  activeDot={{ r: 6 }}
+                  label={{ 
+                    position: 'top', 
+                    fill: '#ef4444', 
+                    fontSize: 11,
+                    formatter: (value: any) => (value && value > 0) ? value : ''
+                  }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        )}
+
+        <div style={{
+          display: 'flex',
+          gap: '16px',
+          marginBottom: '24px',
+          alignItems: 'center',
+          flexWrap: 'wrap'
+        }}>
+          <input
+            type="text"
+            placeholder="🔍 ค้นหา Provider, Register, Month..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            style={{
+              flex: 1,
+              minWidth: '300px',
+              padding: '12px 16px',
+              fontSize: '16px',
+              border: '2px solid #e5e7eb',
+              borderRadius: '8px',
+              outline: 'none',
+              transition: 'border-color 0.2s'
+            }}
+            onFocus={(e) => e.target.style.borderColor = '#3b82f6'}
+            onBlur={(e) => e.target.style.borderColor = '#e5e7eb'}
+          />
+
+          <button
+            onClick={exportToExcel}
+            disabled={allData.length === 0}
+            style={{
+              padding: '12px 24px',
+              fontSize: '16px',
+              fontWeight: '600',
+              color: 'white',
+              backgroundColor: allData.length === 0 ? '#9ca3af' : '#10b981',
+              border: 'none',
+              borderRadius: '8px',
+              cursor: allData.length === 0 ? 'not-allowed' : 'pointer',
+              transition: 'all 0.2s',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}
+            onMouseEnter={(e) => {
+              if (allData.length > 0) {
+                e.currentTarget.style.backgroundColor = '#059669';
+                e.currentTarget.style.transform = 'translateY(-2px)';
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (allData.length > 0) {
+                e.currentTarget.style.backgroundColor = '#10b981';
+                e.currentTarget.style.transform = 'translateY(0)';
+              }
+            }}
+          >
+            📥 Export to Excel
+          </button>
+        </div>
+
+        <div style={{
+          fontSize: '14px',
+          color: '#6b7280',
+          marginBottom: '16px'
+        }}>
+          แสดง {filteredData.length} รายการ จากทั้งหมด {filteredTotalCount.toLocaleString()} รายการ
+          {(selectedYears.length > 0 || selectedMonths.length > 0 || selectedWeeks.length > 0 || selectedDates.length > 0 || searchTerm) && 
+            ` (${(selectedYears.length > 0 || selectedMonths.length > 0 || selectedWeeks.length > 0 || selectedDates.length > 0) ? 'กรองตาม Filter' : ''}${searchTerm ? ` ค้นหา "${searchTerm}"` : ''})`
+          }
+        </div>
+
+        <div style={{ overflowX: 'auto' }}>
+          <table style={{
+            width: '100%',
+            borderCollapse: 'collapse',
+            fontSize: '14px',
+            backgroundColor: 'white',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+            borderRadius: '8px',
+            overflow: 'hidden'
+          }}>
+            <thead>
+              <tr style={{ backgroundColor: '#f3f4f6' }}>
+                <th style={{
+                  padding: '16px',
+                  textAlign: 'left',
+                  fontWeight: '600',
+                  color: '#374151',
+                  borderBottom: '2px solid #e5e7eb',
+                  position: 'sticky',
+                  top: 0,
+                  backgroundColor: '#f3f4f6',
+                  zIndex: 10
+                }}>
+                  ลำดับ
+                </th>
+                {columns.map((col) => (
+                  <th key={col} style={{
+                    padding: '16px',
+                    textAlign: 'left',
+                    fontWeight: '600',
+                    color: '#374151',
+                    borderBottom: '2px solid #e5e7eb',
+                    position: 'sticky',
+                    top: 0,
+                    backgroundColor: '#f3f4f6',
+                    zIndex: 10
+                  }}>
+                    {col.replace(/_/g, ' ').toUpperCase()}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {filteredData.length === 0 ? (
+                <tr>
+                  <td colSpan={columns.length + 1} style={{
+                    padding: '48px',
+                    textAlign: 'center',
+                    color: '#9ca3af',
+                    fontSize: '16px'
+                  }}>
+                    {searchTerm ? '🔍 ไม่พบข้อมูลที่ค้นหา' : '📭 ไม่มีข้อมูล'}
+                  </td>
+                </tr>
+              ) : (
+                filteredData.map((item, index) => (
+                  <tr key={item.id || index} style={{
+                    borderBottom: '1px solid #e5e7eb',
+                    transition: 'background-color 0.2s'
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f9fafb'}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'white'}
+                  >
+                    <td style={{ padding: '16px', color: '#6b7280' }}>
+                      {(currentPage - 1) * itemsPerPage + index + 1}
+                    </td>
+                    {columns.map((col) => (
+                      <td key={col} style={{
+                        padding: '16px',
+                        color: '#374151',
+                        maxWidth: '300px',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap'
+                      }}>
+                        {item[col] !== null && item[col] !== undefined
+                          ? String(item[col])
+                          : '-'}
+                      </td>
+                    ))}
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        {totalPages > 1 && (
+          <div style={{
+            marginTop: '32px',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            gap: '8px',
+            flexWrap: 'wrap'
+          }}>
+            <button
+              onClick={() => handlePageChange(1)}
+              disabled={currentPage === 1}
+              style={{
+                padding: '8px 16px',
+                fontSize: '14px',
+                fontWeight: '500',
+                color: currentPage === 1 ? '#9ca3af' : '#374151',
+                backgroundColor: 'white',
+                border: '1px solid #e5e7eb',
+                borderRadius: '6px',
+                cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+                transition: 'all 0.2s'
+              }}
+            >
+              « แรก
+            </button>
+
+            <button
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={currentPage === 1}
+              style={{
+                padding: '8px 16px',
+                fontSize: '14px',
+                fontWeight: '500',
+                color: currentPage === 1 ? '#9ca3af' : '#374151',
+                backgroundColor: 'white',
+                border: '1px solid #e5e7eb',
+                borderRadius: '6px',
+                cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+                transition: 'all 0.2s'
+              }}
+            >
+              ‹ ก่อนหน้า
+            </button>
+
+            <span style={{
+              padding: '8px 16px',
+              fontSize: '14px',
+              color: '#374151',
+              fontWeight: '500'
+            }}>
+              หน้า {currentPage} / {totalPages}
+            </span>
+
+            <button
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              style={{
+                padding: '8px 16px',
+                fontSize: '14px',
+                fontWeight: '500',
+                color: currentPage === totalPages ? '#9ca3af' : '#374151',
+                backgroundColor: 'white',
+                border: '1px solid #e5e7eb',
+                borderRadius: '6px',
+                cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+                transition: 'all 0.2s'
+              }}
+            >
+              ถัดไป ›
+            </button>
+
+            <button
+              onClick={() => handlePageChange(totalPages)}
+              disabled={currentPage === totalPages}
+              style={{
+                padding: '8px 16px',
+                fontSize: '14px',
+                fontWeight: '500',
+                color: currentPage === totalPages ? '#9ca3af' : '#374151',
+                backgroundColor: 'white',
+                border: '1px solid #e5e7eb',
+                borderRadius: '6px',
+                cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+                transition: 'all 0.2s'
+              }}
+            >
+              สุดท้าย »
+            </button>
+          </div>
+        )}
+      </div>
+
+      <style jsx>{`
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+      `}</style>
+    </div>
+  );
+}
+
+export default function TechTransactionPage() {
+  return (
+    <ProtectedRoute allowedRoles={['admin', 'manager']}>
+      <Navbar />
+      <TechTransactionContent />
+    </ProtectedRoute>
+  );
+}
