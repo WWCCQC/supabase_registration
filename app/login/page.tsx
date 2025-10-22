@@ -169,7 +169,7 @@ export default function LoginPage() {
             marginBottom: '10px',
             opacity: 0.95
           }}>
-            Customer Connected & Network Management
+            Command Center & Quality Control
           </div>
           
           <div style={{
