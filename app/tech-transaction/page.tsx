@@ -203,7 +203,11 @@ function TechTransactionContent() {
       filtered = filtered.filter(item => selectedMonths.includes(String(item.Month)));
     }
     if (selectedWeeks.length > 0) {
-      filtered = filtered.filter(item => selectedWeeks.includes(String(item.Week)));
+      // Week in database is number, but selectedWeeks is string array
+      filtered = filtered.filter(item => {
+        const weekStr = String(item.Week);
+        return selectedWeeks.includes(weekStr);
+      });
     }
     if (selectedDates.length > 0) {
       filtered = filtered.filter(item => selectedDates.includes(String(item.Date)));

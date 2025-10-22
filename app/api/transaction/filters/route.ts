@@ -71,7 +71,8 @@ export async function GET(request: Request) {
       return monthOrder.indexOf(a) - monthOrder.indexOf(b);
     });
     
-    const weeks = [...new Set(allTransactions?.map((item: any) => item.Week).filter(Boolean))].sort((a: any, b: any) => Number(a) - Number(b));
+    // Convert weeks to strings for consistent comparison
+    const weeks = [...new Set(allTransactions?.map((item: any) => String(item.Week)).filter(Boolean))].sort((a: any, b: any) => Number(a) - Number(b));
     const dates = [...new Set(allTransactions?.map((item: any) => item.Date).filter(Boolean))].sort();
     
     console.log('🔍 Unique values found:', {
