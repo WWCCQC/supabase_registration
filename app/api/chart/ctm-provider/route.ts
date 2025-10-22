@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
       const to = from + pageSize - 1;
       const { data: pageData, error: pageError } = await supabase
         .from("technicians")
-        .select("ctm, provider")
+        .select("ctm, provider, national_id")  // เพิ่ม national_id
         .range(from, to);
         
       if (pageError) {
@@ -61,13 +61,17 @@ export async function GET(request: NextRequest) {
     
     const techs = allData;
 
-    // Group data by CTM and Provider
-    const groupedData: { [key: string]: { [provider: string]: number } } = {};
+    // Group data by CTM and Provider - Count unique national_id
+    const groupedData: { [key: string]: { [provider: string]: Set<string> } } = {};
     const providers = new Set<string>();
 
-    (techs as TechnicianData[]).forEach((tech) => {
+    (techs as any[]).forEach((tech) => {
       const originalCtm = String(tech.ctm || "").trim();
       const provider = String(tech.provider || "").trim();
+      const nationalId = tech.national_id;
+
+      // Skip if national_id is missing
+      if (!nationalId) return;
 
       // Skip if provider is empty, null, or contains only whitespace  
       if (!provider || provider === "null" || provider === "undefined") return;
@@ -88,10 +92,11 @@ export async function GET(request: NextRequest) {
       }
 
       if (!groupedData[ctm][provider]) {
-        groupedData[ctm][provider] = 0;
+        groupedData[ctm][provider] = new Set();
       }
 
-      groupedData[ctm][provider]++;
+      // Add national_id to Set (automatically handles duplicates)
+      groupedData[ctm][provider].add(nationalId);
     });
 
     // Convert to chart format and sort by total descending
@@ -100,9 +105,9 @@ export async function GET(request: NextRequest) {
         const item: any = { ctm };
         let total = 0;
 
-        // Add each provider as a property
+        // Add each provider as a property - convert Set to count
         providers.forEach((provider) => {
-          const count = groupedData[ctm][provider] || 0;
+          const count = groupedData[ctm][provider]?.size || 0;
           item[provider] = count;
           total += count;
         });
