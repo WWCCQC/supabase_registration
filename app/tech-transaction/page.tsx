@@ -719,6 +719,37 @@ function TechTransactionContent() {
           gap: '16px',
           marginBottom: '24px'
         }}>
+          {/* Card 0: จำนวน Transaction */}
+          <div style={{
+            background: 'linear-gradient(135deg, #056D8D 0%, #044d63 100%)',
+            borderRadius: '12px',
+            padding: '24px',
+            color: 'white',
+            boxShadow: '0 4px 6px rgba(5, 109, 141, 0.2)'
+          }}>
+            <div style={{
+              fontSize: '14px',
+              fontWeight: '500',
+              marginBottom: '8px',
+              opacity: 0.9
+            }}>
+              จำนวน Transaction
+            </div>
+            <div style={{
+              fontSize: '42px',
+              fontWeight: 'bold',
+              marginBottom: '4px'
+            }}>
+              {(statistics.newTechs + statistics.resignedTechs).toLocaleString()}
+            </div>
+            <div style={{
+              fontSize: '12px',
+              opacity: 0.8
+            }}>
+              Total Transactions
+            </div>
+          </div>
+
           {/* Card 1: ช่างใหม่ */}
           <div style={{
             background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
