@@ -70,6 +70,10 @@ export async function GET() {
     const nationalIdsWithAuthority = new Set<string>();
     const nationalIdsWithoutAuthority = new Set<string>();
     
+    // เพิ่มตัวแปรสำหรับนับ Yes/No ทั้งหมด (ไม่จำกัดแค่มี RSM)
+    const allYesNationalIds = new Set<string>();
+    const allNoNationalIds = new Set<string>();
+    
     allData.forEach((row: any) => {
       const rsm = String(row.rsm || "").trim();
       const powerAuthority = String(row.power_authority || "").trim();
@@ -90,6 +94,14 @@ export async function GET() {
       // นับข้อมูลที่มี/ไม่มี power_authority (unique)
       if (powerAuthority && powerAuthority !== "null" && powerAuthority !== "undefined") {
         nationalIdsWithAuthority.add(nationalId);
+        
+        // นับ Yes/No จากข้อมูลทั้งหมด (ไม่ว่าจะมี RSM หรือไม่)
+        const cleanAuthority = powerAuthority.toLowerCase();
+        if (cleanAuthority === "yes" || cleanAuthority === "y") {
+          allYesNationalIds.add(nationalId);
+        } else if (cleanAuthority === "no" || cleanAuthority === "n") {
+          allNoNationalIds.add(nationalId);
+        }
       } else {
         nationalIdsWithoutAuthority.add(nationalId);
       }
@@ -125,15 +137,15 @@ export async function GET() {
       .sort((a, b) => b.total - a.total) // เรียงตาม total มากไปน้อย
       .slice(0, 20); // แสดงแค่ top 20 RSM
     
-    // คำนวณ summary จากข้อมูลทั้งหมด using unique counts
-    const allTotals = Object.values(groupedData);
-    const totalYes = allTotals.reduce((sum, item) => sum + item.Yes.size, 0);
-    const totalNo = allTotals.reduce((sum, item) => sum + item.No.size, 0);
-    const totalTechniciansWithRsm = totalYes + totalNo;
+    // คำนวณ summary จากข้อมูลทั้งหมด (ไม่จำกัดแค่มี RSM) using unique counts
+    const totalYes = allYesNationalIds.size;  // ใช้ค่าจาก Set ที่นับทั้งหมด
+    const totalNo = allNoNationalIds.size;    // ใช้ค่าจาก Set ที่นับทั้งหมด
+    const totalTechniciansWithRsm = nationalIdsWithRsm.size;
     
     console.log(`📊 Chart Summary: Total Records: ${allNationalIds.size}, Records with RSM: ${nationalIdsWithRsm.size}, Records without RSM: ${nationalIdsWithoutRsm.size}`);
     console.log(`📊 Chart Summary: Records with Authority: ${nationalIdsWithAuthority.size}, Records without Authority: ${nationalIdsWithoutAuthority.size}`);
-    console.log(`📊 Chart Summary: Total RSM: ${Object.keys(groupedData).length}, Total Technicians with RSM: ${totalTechniciansWithRsm}, Yes: ${totalYes}, No: ${totalNo}`);
+    console.log(`📊 Chart Summary: Total RSM: ${Object.keys(groupedData).length}, Total Technicians with RSM: ${totalTechniciansWithRsm}`);
+    console.log(`📊 Chart Summary: Total Yes (all): ${totalYes}, Total No (all): ${totalNo}, Sum: ${totalYes + totalNo}`);
 
     return NextResponse.json(
       { 
