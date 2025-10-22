@@ -98,57 +98,163 @@ export default function LoginPage() {
   return (
     <div style={{
       minHeight: '100vh',
-      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
       display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '20px'
+      position: 'relative',
+      overflow: 'hidden'
     }}>
+      {/* Left Side - Brand Section */}
       <div style={{
-        background: 'white',
-        borderRadius: '16px',
-        boxShadow: '0 20px 40px rgba(0,0,0,0.1)',
-        padding: '40px',
-        width: '100%',
-        maxWidth: '400px',
-        position: 'relative'
+        flex: '1',
+        background: 'linear-gradient(135deg, #1e40af 0%, #7c3aed 50%, #db2777 100%)',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: '60px 40px',
+        color: 'white',
+        position: 'relative',
+        overflow: 'hidden'
       }}>
-        {/* Logo หรือชื่อระบบ */}
+        {/* Decorative Background Circles */}
         <div style={{
-          textAlign: 'center',
-          marginBottom: '30px'
+          position: 'absolute',
+          width: '500px',
+          height: '500px',
+          borderRadius: '50%',
+          background: 'rgba(255, 255, 255, 0.1)',
+          top: '-150px',
+          left: '-150px',
+          backdropFilter: 'blur(60px)'
+        }} />
+        <div style={{
+          position: 'absolute',
+          width: '400px',
+          height: '400px',
+          borderRadius: '50%',
+          background: 'rgba(255, 255, 255, 0.08)',
+          bottom: '-100px',
+          right: '-100px',
+          backdropFilter: 'blur(60px)'
+        }} />
+
+        {/* Content */}
+        <div style={{
+          position: 'relative',
+          zIndex: 1,
+          maxWidth: '500px',
+          textAlign: 'center'
         }}>
           <div style={{
-            fontSize: '48px',
-            marginBottom: '10px'
-          }}>🔐</div>
+            fontSize: '64px',
+            marginBottom: '30px',
+            animation: 'float 3s ease-in-out infinite'
+          }}>
+            🔐
+          </div>
+          
           <h1 style={{
-            margin: 0,
-            fontSize: '24px',
-            fontWeight: 600,
-            color: '#333',
-            marginBottom: '8px'
+            fontSize: '42px',
+            fontWeight: '700',
+            marginBottom: '20px',
+            lineHeight: '1.2',
+            textShadow: '0 2px 10px rgba(0,0,0,0.2)'
           }}>
-            เข้าสู่ระบบ
+            ยินดีต้อนรับ
           </h1>
-          <p style={{
-            margin: 0,
-            color: '#666',
-            fontSize: '14px'
+
+          <div style={{
+            fontSize: '20px',
+            fontWeight: '500',
+            lineHeight: '1.8',
+            marginBottom: '10px',
+            opacity: 0.95
           }}>
-            ระบบจัดการข้อมูลช่าง
+            Customer Connected & Network Management
+          </div>
+          
+          <div style={{
+            fontSize: '18px',
+            fontWeight: '400',
+            lineHeight: '1.8',
+            marginBottom: '10px',
+            opacity: 0.9
+          }}>
+            Customer Connected Business
+          </div>
+          
+          <div style={{
+            fontSize: '18px',
+            fontWeight: '400',
+            lineHeight: '1.8',
+            opacity: 0.9
+          }}>
+            Installation & Maintenance
+          </div>
+
+          <div style={{
+            marginTop: '40px',
+            height: '2px',
+            width: '80px',
+            background: 'rgba(255, 255, 255, 0.5)',
+            margin: '40px auto 20px'
+          }} />
+
+          <p style={{
+            fontSize: '14px',
+            opacity: 0.8,
+            fontWeight: '300'
+          }}>
+            ระบบจัดการข้อมูลช่างและบริหารทีมงาน
           </p>
         </div>
+      </div>
+
+      {/* Right Side - Login Form */}
+      <div style={{
+        flex: '1',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '40px',
+        background: '#ffffff'
+      }}>
+        <div style={{
+          width: '100%',
+          maxWidth: '450px',
+          padding: '40px'
+        }}>
+          {/* Logo หรือชื่อระบบ */}
+          <div style={{
+            textAlign: 'center',
+            marginBottom: '40px'
+          }}>
+            <h1 style={{
+              margin: 0,
+              fontSize: '32px',
+              fontWeight: 700,
+              color: '#1e293b',
+              marginBottom: '8px'
+            }}>
+              เข้าสู่ระบบ
+            </h1>
+            <p style={{
+              margin: 0,
+              color: '#64748b',
+              fontSize: '16px'
+            }}>
+              กรุณาใส่ข้อมูลเพื่อเข้าใช้งานระบบ
+            </p>
+          </div>
 
         <form onSubmit={handleSubmit}>
           {/* Employee ID Input */}
-          <div style={{ marginBottom: '20px' }}>
+          <div style={{ marginBottom: '24px' }}>
             <label style={{
               display: 'block',
-              marginBottom: '8px',
-              fontSize: '14px',
-              fontWeight: 500,
-              color: '#333'
+              marginBottom: '10px',
+              fontSize: '15px',
+              fontWeight: 600,
+              color: '#1e293b'
             }}>
               รหัสพนักงาน
             </label>
@@ -157,30 +263,39 @@ export default function LoginPage() {
               value={employeeId}
               onChange={(e) => setEmployeeId(e.target.value)}
               onKeyPress={handleKeyPress}
-              placeholder="ใส่รหัสพนักงาน"
+              placeholder="กรุณาใส่รหัสพนักงาน"
               style={{
                 width: '100%',
-                padding: '12px 16px',
-                border: '2px solid #e1e5e9',
-                borderRadius: '8px',
+                padding: '14px 18px',
+                border: '2px solid #e2e8f0',
+                borderRadius: '10px',
                 fontSize: '16px',
                 outline: 'none',
-                transition: 'border-color 0.2s ease',
-                boxSizing: 'border-box'
+                transition: 'all 0.2s ease',
+                boxSizing: 'border-box',
+                backgroundColor: '#f8fafc'
               }}
-              onFocus={(e) => e.target.style.borderColor = '#667eea'}
-              onBlur={(e) => e.target.style.borderColor = '#e1e5e9'}
+              onFocus={(e) => {
+                e.target.style.borderColor = '#3b82f6';
+                e.target.style.backgroundColor = '#ffffff';
+                e.target.style.boxShadow = '0 0 0 4px rgba(59, 130, 246, 0.1)';
+              }}
+              onBlur={(e) => {
+                e.target.style.borderColor = '#e2e8f0';
+                e.target.style.backgroundColor = '#f8fafc';
+                e.target.style.boxShadow = 'none';
+              }}
             />
           </div>
 
           {/* Password Input */}
-          <div style={{ marginBottom: '24px' }}>
+          <div style={{ marginBottom: '28px' }}>
             <label style={{
               display: 'block',
-              marginBottom: '8px',
-              fontSize: '14px',
-              fontWeight: 500,
-              color: '#333'
+              marginBottom: '10px',
+              fontSize: '15px',
+              fontWeight: 600,
+              color: '#1e293b'
             }}>
               รหัสผ่าน
             </label>
@@ -189,19 +304,28 @@ export default function LoginPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               onKeyPress={handleKeyPress}
-              placeholder="ใส่รหัสผ่าน"
+              placeholder="กรุณาใส่รหัสผ่าน"
               style={{
                 width: '100%',
-                padding: '12px 16px',
-                border: '2px solid #e1e5e9',
-                borderRadius: '8px',
+                padding: '14px 18px',
+                border: '2px solid #e2e8f0',
+                borderRadius: '10px',
                 fontSize: '16px',
                 outline: 'none',
-                transition: 'border-color 0.2s ease',
-                boxSizing: 'border-box'
+                transition: 'all 0.2s ease',
+                boxSizing: 'border-box',
+                backgroundColor: '#f8fafc'
               }}
-              onFocus={(e) => e.target.style.borderColor = '#667eea'}
-              onBlur={(e) => e.target.style.borderColor = '#e1e5e9'}
+              onFocus={(e) => {
+                e.target.style.borderColor = '#3b82f6';
+                e.target.style.backgroundColor = '#ffffff';
+                e.target.style.boxShadow = '0 0 0 4px rgba(59, 130, 246, 0.1)';
+              }}
+              onBlur={(e) => {
+                e.target.style.borderColor = '#e2e8f0';
+                e.target.style.backgroundColor = '#f8fafc';
+                e.target.style.boxShadow = 'none';
+              }}
             />
           </div>
 
@@ -226,35 +350,36 @@ export default function LoginPage() {
             disabled={loading}
             style={{
               width: '100%',
-              padding: '14px 20px',
-              background: loading ? '#a0a0a0' : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              padding: '16px 24px',
+              background: loading ? '#94a3b8' : 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 50%, #ec4899 100%)',
               color: 'white',
               border: 'none',
-              borderRadius: '8px',
-              fontSize: '16px',
-              fontWeight: 600,
+              borderRadius: '10px',
+              fontSize: '17px',
+              fontWeight: 700,
               cursor: loading ? 'not-allowed' : 'pointer',
-              transition: 'all 0.2s ease',
-              boxShadow: loading ? 'none' : '0 4px 12px rgba(102, 126, 234, 0.4)'
+              transition: 'all 0.3s ease',
+              boxShadow: loading ? 'none' : '0 8px 20px rgba(59, 130, 246, 0.4)',
+              letterSpacing: '0.5px'
             }}
             onMouseOver={(e) => {
               if (!loading) {
-                e.currentTarget.style.transform = 'translateY(-1px)';
-                e.currentTarget.style.boxShadow = '0 6px 16px rgba(102, 126, 234, 0.5)';
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow = '0 12px 28px rgba(59, 130, 246, 0.5)';
               }
             }}
             onMouseOut={(e) => {
               if (!loading) {
                 e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = '0 4px 12px rgba(102, 126, 234, 0.4)';
+                e.currentTarget.style.boxShadow = '0 8px 20px rgba(59, 130, 246, 0.4)';
               }
             }}
           >
             {loading ? (
-              <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+              <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
                 <span style={{
-                  width: '16px',
-                  height: '16px',
+                  width: '18px',
+                  height: '18px',
                   border: '2px solid transparent',
                   borderTop: '2px solid white',
                   borderRadius: '50%',
@@ -266,14 +391,53 @@ export default function LoginPage() {
               'เข้าสู่ระบบ'
             )}
           </button>
+
+          {/* Footer Text */}
+          <div style={{
+            textAlign: 'center',
+            marginTop: '30px',
+            paddingTop: '24px',
+            borderTop: '1px solid #e2e8f0'
+          }}>
+            <p style={{
+              fontSize: '13px',
+              color: '#94a3b8',
+              margin: 0
+            }}>
+              © 2025 Technician Management System
+            </p>
+          </div>
         </form>
+
+        </div>
       </div>
 
-      {/* CSS Animation */}
+      {/* CSS Animations */}
       <style jsx global>{`
         @keyframes spin {
           0% { transform: rotate(0deg); }
           100% { transform: rotate(360deg); }
+        }
+        
+        @keyframes float {
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(-20px); }
+        }
+
+        @media (max-width: 968px) {
+          .login-container {
+            flex-direction: column;
+          }
+          .left-section {
+            min-height: 300px;
+            padding: 40px 20px;
+          }
+          .left-section h1 {
+            font-size: 28px !important;
+          }
+          .left-section div {
+            font-size: 16px !important;
+          }
         }
       `}</style>
     </div>
