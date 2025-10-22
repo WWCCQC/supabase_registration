@@ -70,11 +70,27 @@ export async function GET(req: Request) {
     
     // Initialize provider counts
     const providers = ["WW-Provider", "True Tech", "เถ้าแก่เทค"];
-    const providerCounts: Record<string, number> = {
-      "WW-Provider": 0,
-      "True Tech": 0,
-      "เถ้าแก่เทค": 0
-    };
+    const providerExactCounts: Record<string, number> = {};
+    
+    // Count each provider with exact match (like KPI API)
+    for (const provider of providers) {
+      let exactQuery = supabase
+        .from("technicians")
+        .select("*", { count: "exact", head: true })
+        .eq("provider", provider);
+      
+      exactQuery = applyFilters(exactQuery, params);
+      const { count, error } = await exactQuery;
+      
+      if (error) {
+        console.error(`RSM Provider count error for ${provider}:`, error);
+        return NextResponse.json({ error: error.message }, { status: 500 });
+      }
+      
+      providerExactCounts[provider] = count || 0;
+    }
+    
+    console.log("Provider exact counts from database:", providerExactCounts);
     
     // Fetch all data with proper pagination for chart grouping - include national_id for unique counting
     let allData: any[] = [];
@@ -161,12 +177,15 @@ export async function GET(req: Request) {
       // Note: Other providers are not counted
     });
 
-    // Calculate provider counts from Sets
-    providerCounts["WW-Provider"] = providerSets["WW-Provider"].size;
-    providerCounts["True Tech"] = providerSets["True Tech"].size;  
-    providerCounts["เถ้าแก่เทค"] = providerSets["เถ้าแก่เทค"].size;
+    // Calculate provider counts from Sets (for chart display)
+    const providerSetCounts = {
+      "WW-Provider": providerSets["WW-Provider"].size,
+      "True Tech": providerSets["True Tech"].size,
+      "เถ้าแก่เทค": providerSets["เถ้าแก่เทค"].size
+    };
 
-    console.log("Provider exact counts:", providerCounts);
+    console.log("Provider counts from Sets (chart data):", providerSetCounts);
+    console.log("Provider exact counts (for legend):", providerExactCounts);
 
     // Convert to array format for Recharts
     const chartData = Object.entries(groupedData)
@@ -179,15 +198,15 @@ export async function GET(req: Request) {
       }))
       .sort((a, b) => b.total - a.total);
 
-    // Calculate summary using exact provider counts (like KPI API)
-    const totalMainProviders = Object.values(providerCounts).reduce((sum, count) => sum + count, 0);
+    // Calculate summary using exact provider counts (like KPI API and CTM Provider Chart)
+    const totalMainProviders = Object.values(providerExactCounts).reduce((sum, count) => sum + count, 0);
     
     const summary = {
       totalRsm: Object.keys(groupedData).length,
       totalTechnicians: totalCount || 0,
       providerBreakdown: providers.map((provider) => {
-        // Use exact provider counts from database query (like KPI API)
-        const count = providerCounts[provider] || 0;
+        // Use exact counts from database query (like KPI API)
+        const count = providerExactCounts[provider] || 0;
         return {
           provider,
           count,
@@ -195,11 +214,11 @@ export async function GET(req: Request) {
         };
       }),
       // Keep old format for backward compatibility
-      providers: providerCounts
+      providers: providerExactCounts
     };
 
     console.log(`RSM Provider Chart Summary: Total RSM: ${Object.keys(groupedData).length}`);
-    console.log(`✅ Provider totals from exact counts: WW-Provider: ${providerCounts["WW-Provider"]}, True Tech: ${providerCounts["True Tech"]}, เถ้าแก่เทค: ${providerCounts["เถ้าแก่เทค"]}`);
+    console.log(`✅ Provider totals from exact counts: WW-Provider: ${providerExactCounts["WW-Provider"]}, True Tech: ${providerExactCounts["True Tech"]}, เถ้าแก่เทค: ${providerExactCounts["เถ้าแก่เทค"]}`);
 
     return NextResponse.json(
       { 
