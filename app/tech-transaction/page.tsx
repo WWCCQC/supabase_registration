@@ -1378,8 +1378,8 @@ function TechTransactionContent() {
                     dataKey="ช่างใหม่" 
                     stroke="#10b981" 
                     strokeWidth={2}
-                    dot={{ fill: '#10b981', r: 4 }}
-                    activeDot={{ r: 6 }}
+                    dot={{ fill: '#10b981', r: 2 }}
+                    activeDot={{ r: 4 }}
                     label={{ 
                       position: 'top', 
                       fill: '#10b981', 
@@ -1392,8 +1392,8 @@ function TechTransactionContent() {
                     dataKey="ช่างลาออก" 
                     stroke="#ef4444" 
                     strokeWidth={2}
-                    dot={{ fill: '#ef4444', r: 4 }}
-                    activeDot={{ r: 6 }}
+                    dot={{ fill: '#ef4444', r: 2 }}
+                    activeDot={{ r: 4 }}
                     label={{ 
                       position: 'top', 
                       fill: '#ef4444', 
