@@ -512,6 +512,94 @@ function TechTransactionContent() {
     return chartArray;
   }, [allData, selectedYears, selectedMonths, selectedWeeks, selectedDates]);
 
+  // Prepare Top 10 Depot - New Technicians
+  const top10NewDepots = useMemo(() => {
+    if (!allData || allData.length === 0) {
+      return [];
+    }
+
+    // Filter data based on selections
+    let chartSourceData = allData;
+    
+    if (selectedYears.length > 0) {
+      chartSourceData = chartSourceData.filter(item => selectedYears.includes(String(item.Year)));
+    }
+    if (selectedMonths.length > 0) {
+      chartSourceData = chartSourceData.filter(item => selectedMonths.includes(String(item.Month)));
+    }
+    if (selectedWeeks.length > 0) {
+      chartSourceData = chartSourceData.filter(item => selectedWeeks.includes(String(item.Week)));
+    }
+    if (selectedDates.length > 0) {
+      chartSourceData = chartSourceData.filter(item => selectedDates.includes(String(item.Date)));
+    }
+
+    // Group by depot_name for new technicians
+    const depotCounts: { [key: string]: number } = {};
+
+    chartSourceData.forEach(item => {
+      const depot = item.depot_name || 'N/A';
+      const register = item.Register || '';
+
+      if (register.includes('างใหม่')) {
+        depotCounts[depot] = (depotCounts[depot] || 0) + 1;
+      }
+    });
+
+    // Convert to array, sort by count descending, and take top 10
+    const topDepots = Object.entries(depotCounts)
+      .map(([depot, count]) => ({ depot, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 10);
+
+    console.log('📊 Top 10 New Depots prepared:', topDepots.length);
+    return topDepots;
+  }, [allData, selectedYears, selectedMonths, selectedWeeks, selectedDates]);
+
+  // Prepare Top 10 Depot - Resigned Technicians
+  const top10ResignedDepots = useMemo(() => {
+    if (!allData || allData.length === 0) {
+      return [];
+    }
+
+    // Filter data based on selections
+    let chartSourceData = allData;
+    
+    if (selectedYears.length > 0) {
+      chartSourceData = chartSourceData.filter(item => selectedYears.includes(String(item.Year)));
+    }
+    if (selectedMonths.length > 0) {
+      chartSourceData = chartSourceData.filter(item => selectedMonths.includes(String(item.Month)));
+    }
+    if (selectedWeeks.length > 0) {
+      chartSourceData = chartSourceData.filter(item => selectedWeeks.includes(String(item.Week)));
+    }
+    if (selectedDates.length > 0) {
+      chartSourceData = chartSourceData.filter(item => selectedDates.includes(String(item.Date)));
+    }
+
+    // Group by depot_name for resigned technicians
+    const depotCounts: { [key: string]: number } = {};
+
+    chartSourceData.forEach(item => {
+      const depot = item.depot_name || 'N/A';
+      const register = item.Register || '';
+
+      if (register.includes('ช่างลาออก')) {
+        depotCounts[depot] = (depotCounts[depot] || 0) + 1;
+      }
+    });
+
+    // Convert to array, sort by count descending, and take top 10
+    const topDepots = Object.entries(depotCounts)
+      .map(([depot, count]) => ({ depot, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 10);
+
+    console.log('📊 Top 10 Resigned Depots prepared:', topDepots.length);
+    return topDepots;
+  }, [allData, selectedYears, selectedMonths, selectedWeeks, selectedDates]);
+
   if (loading && currentPage === 1) {
     return (
       <div style={{
@@ -1461,6 +1549,238 @@ function TechTransactionContent() {
                 />
               </BarChart>
             </ResponsiveContainer>
+          </div>
+        )}
+
+        {/* Top 10 Depot Tables - Side by Side */}
+        {(top10NewDepots.length > 0 || top10ResignedDepots.length > 0) && (
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
+            gap: '24px',
+            marginBottom: '32px'
+          }}>
+            {/* Top 10 Depot - New Technicians */}
+            {top10NewDepots.length > 0 && (
+              <div style={{
+                backgroundColor: '#f9fafb',
+                borderRadius: '12px',
+                padding: '24px',
+                boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
+              }}>
+                <h2 style={{
+                  fontSize: '18px',
+                  fontWeight: '600',
+                  color: '#374151',
+                  marginBottom: '16px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}>
+                  <span style={{
+                    display: 'inline-block',
+                    width: '4px',
+                    height: '20px',
+                    backgroundColor: '#059669',
+                    borderRadius: '2px'
+                  }}></span>
+                  Top 10 Depot - ช่างใหม่
+                </h2>
+                <div style={{ overflowX: 'auto' }}>
+                  <table style={{
+                    width: '100%',
+                    borderCollapse: 'collapse',
+                    fontSize: '14px',
+                    backgroundColor: 'white',
+                    borderRadius: '8px',
+                    overflow: 'hidden'
+                  }}>
+                    <thead>
+                      <tr style={{ backgroundColor: '#f0fdf4' }}>
+                        <th style={{
+                          padding: '12px 16px',
+                          textAlign: 'center',
+                          fontWeight: '600',
+                          color: '#059669',
+                          borderBottom: '2px solid #059669',
+                          width: '60px'
+                        }}>
+                          อันดับ
+                        </th>
+                        <th style={{
+                          padding: '12px 16px',
+                          textAlign: 'left',
+                          fontWeight: '600',
+                          color: '#059669',
+                          borderBottom: '2px solid #059669'
+                        }}>
+                          Depot Name
+                        </th>
+                        <th style={{
+                          padding: '12px 16px',
+                          textAlign: 'center',
+                          fontWeight: '600',
+                          color: '#059669',
+                          borderBottom: '2px solid #059669',
+                          width: '100px'
+                        }}>
+                          จำนวน
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {top10NewDepots.map((item, index) => (
+                        <tr key={index} style={{
+                          borderBottom: '1px solid #e5e7eb',
+                          transition: 'background-color 0.2s'
+                        }}
+                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f0fdf4'}
+                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                        >
+                          <td style={{
+                            padding: '12px 16px',
+                            textAlign: 'center',
+                            fontWeight: '600',
+                            color: index < 3 ? '#059669' : '#6b7280'
+                          }}>
+                            {index === 0 && '🥇'}
+                            {index === 1 && '🥈'}
+                            {index === 2 && '🥉'}
+                            {index > 2 && (index + 1)}
+                          </td>
+                          <td style={{
+                            padding: '12px 16px',
+                            color: '#374151'
+                          }}>
+                            {item.depot}
+                          </td>
+                          <td style={{
+                            padding: '12px 16px',
+                            textAlign: 'center',
+                            fontWeight: '600',
+                            color: '#059669',
+                            fontSize: '16px'
+                          }}>
+                            {item.count.toLocaleString()}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {/* Top 10 Depot - Resigned Technicians */}
+            {top10ResignedDepots.length > 0 && (
+              <div style={{
+                backgroundColor: '#f9fafb',
+                borderRadius: '12px',
+                padding: '24px',
+                boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
+              }}>
+                <h2 style={{
+                  fontSize: '18px',
+                  fontWeight: '600',
+                  color: '#374151',
+                  marginBottom: '16px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}>
+                  <span style={{
+                    display: 'inline-block',
+                    width: '4px',
+                    height: '20px',
+                    backgroundColor: '#dc2626',
+                    borderRadius: '2px'
+                  }}></span>
+                  Top 10 Depot - ช่างลาออก
+                </h2>
+                <div style={{ overflowX: 'auto' }}>
+                  <table style={{
+                    width: '100%',
+                    borderCollapse: 'collapse',
+                    fontSize: '14px',
+                    backgroundColor: 'white',
+                    borderRadius: '8px',
+                    overflow: 'hidden'
+                  }}>
+                    <thead>
+                      <tr style={{ backgroundColor: '#fef2f2' }}>
+                        <th style={{
+                          padding: '12px 16px',
+                          textAlign: 'center',
+                          fontWeight: '600',
+                          color: '#dc2626',
+                          borderBottom: '2px solid #dc2626',
+                          width: '60px'
+                        }}>
+                          อันดับ
+                        </th>
+                        <th style={{
+                          padding: '12px 16px',
+                          textAlign: 'left',
+                          fontWeight: '600',
+                          color: '#dc2626',
+                          borderBottom: '2px solid #dc2626'
+                        }}>
+                          Depot Name
+                        </th>
+                        <th style={{
+                          padding: '12px 16px',
+                          textAlign: 'center',
+                          fontWeight: '600',
+                          color: '#dc2626',
+                          borderBottom: '2px solid #dc2626',
+                          width: '100px'
+                        }}>
+                          จำนวน
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {top10ResignedDepots.map((item, index) => (
+                        <tr key={index} style={{
+                          borderBottom: '1px solid #e5e7eb',
+                          transition: 'background-color 0.2s'
+                        }}
+                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#fef2f2'}
+                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                        >
+                          <td style={{
+                            padding: '12px 16px',
+                            textAlign: 'center',
+                            fontWeight: '600',
+                            color: index < 3 ? '#dc2626' : '#6b7280'
+                          }}>
+                            {index === 0 && '🥇'}
+                            {index === 1 && '🥈'}
+                            {index === 2 && '🥉'}
+                            {index > 2 && (index + 1)}
+                          </td>
+                          <td style={{
+                            padding: '12px 16px',
+                            color: '#374151'
+                          }}>
+                            {item.depot}
+                          </td>
+                          <td style={{
+                            padding: '12px 16px',
+                            textAlign: 'center',
+                            fontWeight: '600',
+                            color: '#dc2626',
+                            fontSize: '16px'
+                          }}>
+                            {item.count.toLocaleString()}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
