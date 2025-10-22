@@ -1313,20 +1313,20 @@ function TechTransactionContent() {
                     />
                     <Bar 
                       dataKey="ช่างลาออก" 
-                      fill="#8b5cf6"
+                      fill="#dc2626"
                       label={{ 
                         position: 'top', 
-                        fill: '#8b5cf6', 
+                        fill: '#dc2626', 
                         fontSize: 11,
                         formatter: (value: any) => (value && value > 0) ? value : ''
                       }}
                     />
                     <Bar 
                       dataKey="ช่างใหม่" 
-                      fill="#3b82f6"
+                      fill="#059669"
                       label={{ 
                         position: 'top', 
-                        fill: '#3b82f6', 
+                        fill: '#059669', 
                         fontSize: 11,
                         formatter: (value: any) => (value && value > 0) ? value : ''
                       }}
