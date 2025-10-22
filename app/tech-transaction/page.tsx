@@ -228,13 +228,17 @@ function TechTransactionContent() {
 
   // Calculate statistics from filtered data
   const statistics = useMemo(() => {
-    const newTechs = filteredAllData.filter(item => 
-      String(item.Register).includes('ช่างใหม่')
-    ).length;
+    // Use exact match or includes to catch variations
+    const newTechs = filteredAllData.filter(item => {
+      const register = String(item.Register || '');
+      // Match "ช่างใหม่" or corrupted "��่างใหม่"
+      return register.includes('างใหม่');
+    }).length;
     
-    const resignedTechs = filteredAllData.filter(item => 
-      String(item.Register).includes('ช่างลาออก')
-    ).length;
+    const resignedTechs = filteredAllData.filter(item => {
+      const register = String(item.Register || '');
+      return register.includes('ช่างลาออก');
+    }).length;
     
     const netChange = newTechs - resignedTechs;
     
