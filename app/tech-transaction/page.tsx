@@ -600,6 +600,54 @@ function TechTransactionContent() {
     return topDepots;
   }, [allData, selectedYears, selectedMonths, selectedWeeks, selectedDates]);
 
+  // Prepare Pivot Table Data (RSM x Provider x Work Type)
+  const pivotTableData = useMemo(() => {
+    if (!allData || allData.length === 0) {
+      return null;
+    }
+
+    // Filter data based on selections
+    let sourceData = allData;
+    
+    if (selectedYears.length > 0) {
+      sourceData = sourceData.filter(item => selectedYears.includes(String(item.Year)));
+    }
+    if (selectedMonths.length > 0) {
+      sourceData = sourceData.filter(item => selectedMonths.includes(String(item.Month)));
+    }
+    if (selectedWeeks.length > 0) {
+      sourceData = sourceData.filter(item => selectedWeeks.includes(String(item.Week)));
+    }
+    if (selectedDates.length > 0) {
+      sourceData = sourceData.filter(item => selectedDates.includes(String(item.Date)));
+    }
+
+    // Create nested structure: RSM -> Provider -> WorkType -> {new, resigned}
+    const pivotData: { [rsm: string]: { [provider: string]: { [workType: string]: { new: number; resigned: number } } } } = {};
+    
+    sourceData.forEach(item => {
+      const rsm = item.rsm || 'N/A';
+      const provider = item.provider || 'N/A';
+      const workType = item.work_type || 'N/A';
+      const register = item.Register || '';
+
+      if (!pivotData[rsm]) pivotData[rsm] = {};
+      if (!pivotData[rsm][provider]) pivotData[rsm][provider] = {};
+      if (!pivotData[rsm][provider][workType]) {
+        pivotData[rsm][provider][workType] = { new: 0, resigned: 0 };
+      }
+
+      if (register.includes('างใหม่')) {
+        pivotData[rsm][provider][workType].new += 1;
+      } else if (register.includes('ช่างลาออก')) {
+        pivotData[rsm][provider][workType].resigned += 1;
+      }
+    });
+
+    console.log('📊 Pivot table data prepared');
+    return pivotData;
+  }, [allData, selectedYears, selectedMonths, selectedWeeks, selectedDates]);
+
   if (loading && currentPage === 1) {
     return (
       <div style={{
@@ -1479,37 +1527,43 @@ function TechTransactionContent() {
           </div>
         )}
 
-        {/* RSM Chart - Full Width Below */}
+        {/* RSM Chart and Pivot Table - Side by Side */}
         {rsmChartData.length > 0 && (
           <div style={{
-            backgroundColor: '#f9fafb',
-            borderRadius: '12px',
-            padding: '24px',
-            marginBottom: '32px',
-            boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
+            display: 'grid',
+            gridTemplateColumns: '1fr 1fr',
+            gap: '24px',
+            marginBottom: '32px'
           }}>
-            <h2 style={{
-              fontSize: '18px',
-              fontWeight: '600',
-              color: '#374151',
-              marginBottom: '16px'
+            {/* RSM Chart */}
+            <div style={{
+              backgroundColor: '#f9fafb',
+              borderRadius: '12px',
+              padding: '24px',
+              boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
             }}>
-              ช่างใหม่ vs ช่างลาออก (RSM)
-            </h2>
-            <ResponsiveContainer width="100%" height={400}>
-              <BarChart
-                data={rsmChartData}
-                margin={{ top: 5, right: 30, left: 20, bottom: 80 }}
-              >
-                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                <XAxis 
-                  dataKey="rsm" 
-                  stroke="#6b7280"
-                  style={{ fontSize: '11px' }}
-                  angle={-45}
-                  textAnchor="end"
-                  height={80}
-                />
+              <h2 style={{
+                fontSize: '18px',
+                fontWeight: '600',
+                color: '#374151',
+                marginBottom: '16px'
+              }}>
+                ช่างใหม่ vs ช่างลาออก (RSM)
+              </h2>
+              <ResponsiveContainer width="100%" height={400}>
+                <BarChart
+                  data={rsmChartData}
+                  margin={{ top: 5, right: 30, left: 20, bottom: 80 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                  <XAxis 
+                    dataKey="rsm" 
+                    stroke="#6b7280"
+                    style={{ fontSize: '11px' }}
+                    angle={-45}
+                    textAnchor="end"
+                    height={80}
+                  />
                 <YAxis 
                   stroke="#6b7280"
                   style={{ fontSize: '12px' }}
@@ -1549,6 +1603,281 @@ function TechTransactionContent() {
                 />
               </BarChart>
             </ResponsiveContainer>
+            </div>
+
+            {/* Pivot Table */}
+            {pivotTableData && (
+              <div style={{
+                backgroundColor: '#f9fafb',
+                borderRadius: '12px',
+                padding: '24px',
+                boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+                maxHeight: '500px',
+                overflow: 'auto'
+              }}>
+                <h2 style={{
+                  fontSize: '18px',
+                  fontWeight: '600',
+                  color: '#374151',
+                  marginBottom: '16px'
+                }}>
+                  สรุปข้อมูล RSM x Provider
+                </h2>
+                <div style={{ overflowX: 'auto' }}>
+                  <table style={{
+                    width: '100%',
+                    borderCollapse: 'collapse',
+                    fontSize: '10px',
+                    backgroundColor: 'white',
+                    fontFamily: 'Arial, sans-serif'
+                  }}>
+                    <thead style={{ position: 'sticky', top: 0, zIndex: 10 }}>
+                      <tr>
+                        <th rowSpan={2} style={{
+                          padding: '4px 2px',
+                          border: '1px solid #2c5aa0',
+                          fontWeight: 'bold',
+                          backgroundColor: '#4472C4',
+                          color: 'white',
+                          textAlign: 'center',
+                          fontSize: '10px',
+                          lineHeight: '1.2'
+                        }}>RSM</th>
+                        <th rowSpan={2} style={{
+                          padding: '4px 2px',
+                          border: '1px solid #2c5aa0',
+                          fontWeight: 'bold',
+                          backgroundColor: '#4472C4',
+                          color: 'white',
+                          textAlign: 'center',
+                          fontSize: '10px',
+                          lineHeight: '1.2'
+                        }}>Grand Total</th>
+                        <th colSpan={2} style={{
+                          padding: '4px 2px',
+                          border: '1px solid #2c5aa0',
+                          fontWeight: 'bold',
+                          backgroundColor: '#4472C4',
+                          color: 'white',
+                          textAlign: 'center',
+                          fontSize: '10px',
+                          lineHeight: '1.2'
+                        }}>WW-Provider</th>
+                        <th colSpan={2} style={{
+                          padding: '4px 2px',
+                          border: '1px solid #2c5aa0',
+                          fontWeight: 'bold',
+                          backgroundColor: '#4472C4',
+                          color: 'white',
+                          textAlign: 'center',
+                          fontSize: '10px',
+                          lineHeight: '1.2'
+                        }}>truetech</th>
+                        <th colSpan={2} style={{
+                          padding: '4px 2px',
+                          border: '1px solid #2c5aa0',
+                          fontWeight: 'bold',
+                          backgroundColor: '#4472C4',
+                          color: 'white',
+                          textAlign: 'center',
+                          fontSize: '10px',
+                          lineHeight: '1.2'
+                        }}>เถ้าแก่เทค</th>
+                      </tr>
+                      <tr>
+                        <th style={{ 
+                          padding: '4px 2px', 
+                          border: '1px solid #2c5aa0', 
+                          backgroundColor: '#4472C4', 
+                          color: 'white',
+                          fontSize: '10px',
+                          lineHeight: '1.2',
+                          fontWeight: 'bold'
+                        }}>ช่างใหม่</th>
+                        <th style={{ 
+                          padding: '4px 2px', 
+                          border: '1px solid #2c5aa0', 
+                          backgroundColor: '#4472C4', 
+                          color: 'white',
+                          fontSize: '10px',
+                          lineHeight: '1.2',
+                          fontWeight: 'bold'
+                        }}>ช่างลาออก</th>
+                        <th style={{ 
+                          padding: '4px 2px', 
+                          border: '1px solid #2c5aa0', 
+                          backgroundColor: '#4472C4', 
+                          color: 'white',
+                          fontSize: '10px',
+                          lineHeight: '1.2',
+                          fontWeight: 'bold'
+                        }}>ช่างใหม่</th>
+                        <th style={{ 
+                          padding: '4px 2px', 
+                          border: '1px solid #2c5aa0', 
+                          backgroundColor: '#4472C4', 
+                          color: 'white',
+                          fontSize: '10px',
+                          lineHeight: '1.2',
+                          fontWeight: 'bold'
+                        }}>ช่างลาออก</th>
+                        <th style={{ 
+                          padding: '4px 2px', 
+                          border: '1px solid #2c5aa0', 
+                          backgroundColor: '#4472C4', 
+                          color: 'white',
+                          fontSize: '10px',
+                          lineHeight: '1.2',
+                          fontWeight: 'bold'
+                        }}>ช่างใหม่</th>
+                        <th style={{ 
+                          padding: '4px 2px', 
+                          border: '1px solid #2c5aa0', 
+                          backgroundColor: '#4472C4', 
+                          color: 'white',
+                          fontSize: '10px',
+                          lineHeight: '1.2',
+                          fontWeight: 'bold'
+                        }}>ช่างลาออก</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {/* Grand Total Row */}
+                      <tr style={{ backgroundColor: '#f9fafb', fontWeight: 'bold' }}>
+                        <td style={{ 
+                          padding: '2px 3px', 
+                          border: '1px solid #d1d5db',
+                          fontSize: '10px',
+                          lineHeight: '1.2'
+                        }}>Grand Total</td>
+                        <td style={{ 
+                          padding: '2px 3px', 
+                          border: '1px solid #d1d5db', 
+                          textAlign: 'right',
+                          fontSize: '10px',
+                          lineHeight: '1.2'
+                        }}>
+                          {(() => {
+                            const netTotal = Object.values(pivotTableData).reduce((sum, providers) => 
+                              sum + Object.values(providers).reduce((pSum, workTypes) => 
+                                pSum + Object.values(workTypes).reduce((wSum, counts) => 
+                                  wSum + counts.new - counts.resigned, 0), 0), 0);
+                            return (
+                              <span style={{ color: netTotal < 0 ? '#dc2626' : 'inherit' }}>
+                                {netTotal}
+                              </span>
+                            );
+                          })()}
+                        </td>
+                        {['WW-Provider', 'truetech', 'เถ้าแก่เทค'].map(provider => {
+                          let newTotal = 0, resignedTotal = 0;
+                          Object.values(pivotTableData).forEach(providers => {
+                            if (providers[provider]) {
+                              Object.values(providers[provider]).forEach(counts => {
+                                newTotal += counts.new;
+                                resignedTotal += counts.resigned;
+                              });
+                            }
+                          });
+                          return (
+                            <>
+                              <td key={`${provider}-new`} style={{ 
+                                padding: '2px 3px', 
+                                border: '1px solid #d1d5db', 
+                                textAlign: 'right',
+                                fontSize: '10px',
+                                lineHeight: '1.2'
+                              }}>
+                                <span style={{ color: newTotal < 0 ? '#dc2626' : 'inherit' }}>
+                                  {newTotal || ''}
+                                </span>
+                              </td>
+                              <td key={`${provider}-resigned`} style={{ 
+                                padding: '2px 3px', 
+                                border: '1px solid #d1d5db', 
+                                textAlign: 'right',
+                                fontSize: '10px',
+                                lineHeight: '1.2',
+                                color: '#dc2626'
+                              }}>
+                                {resignedTotal ? `-${resignedTotal}` : ''}
+                              </td>
+                            </>
+                          );
+                        })}
+                      </tr>
+                      
+                      {/* RSM Rows */}
+                      {Object.keys(pivotTableData).sort().map(rsm => {
+                        const providers = pivotTableData[rsm];
+                        let rsmTotal = 0;
+                        Object.values(providers).forEach(workTypes => {
+                          Object.values(workTypes).forEach(counts => {
+                            rsmTotal += counts.new - counts.resigned;
+                          });
+                        });
+
+                        return (
+                          <tr key={rsm}>
+                            <td style={{ 
+                              padding: '2px 3px', 
+                              border: '1px solid #d1d5db',
+                              fontSize: '10px',
+                              lineHeight: '1.2'
+                            }}>{rsm}</td>
+                            <td style={{ 
+                              padding: '2px 3px', 
+                              border: '1px solid #d1d5db', 
+                              textAlign: 'right',
+                              fontSize: '10px',
+                              lineHeight: '1.2'
+                            }}>
+                              <span style={{ color: rsmTotal < 0 ? '#dc2626' : 'inherit' }}>
+                                {rsmTotal}
+                              </span>
+                            </td>
+                            {['WW-Provider', 'truetech', 'เถ้าแก่เทค'].map(provider => {
+                              let newCount = 0, resignedCount = 0;
+                              if (providers[provider]) {
+                                Object.values(providers[provider]).forEach(counts => {
+                                  newCount += counts.new;
+                                  resignedCount += counts.resigned;
+                                });
+                              }
+                              return (
+                                <>
+                                  <td key={`${rsm}-${provider}-new`} style={{ 
+                                    padding: '2px 3px', 
+                                    border: '1px solid #d1d5db', 
+                                    textAlign: 'right',
+                                    fontSize: '10px',
+                                    lineHeight: '1.2'
+                                  }}>
+                                    <span style={{ color: newCount < 0 ? '#dc2626' : 'inherit' }}>
+                                      {newCount || ''}
+                                    </span>
+                                  </td>
+                                  <td key={`${rsm}-${provider}-resigned`} style={{ 
+                                    padding: '2px 3px', 
+                                    border: '1px solid #d1d5db', 
+                                    textAlign: 'right',
+                                    fontSize: '10px',
+                                    lineHeight: '1.2',
+                                    color: '#dc2626'
+                                  }}>
+                                    {resignedCount ? `-${resignedCount}` : ''}
+                                  </td>
+                                </>
+                              );
+                            })}
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
