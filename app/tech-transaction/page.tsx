@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from 'react';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import Navbar from '@/components/Navbar';
 import * as XLSX from 'xlsx';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 interface TransactionItem {
   Year?: number;
@@ -373,9 +373,9 @@ function TechTransactionContent() {
       }
 
       // Count based on Register value
-      if (register.includes('ช่างใหม่') || register.toLowerCase().includes('new')) {
+      if (register.includes('างใหม่')) {
         dateGroups[date].new += 1;
-      } else if (register.includes('ช่างลาออก') || register.toLowerCase().includes('resign')) {
+      } else if (register.includes('ช่างลาออก')) {
         dateGroups[date].resigned += 1;
       }
     });
@@ -398,6 +398,65 @@ function TechTransactionContent() {
 
     console.log('📈 Chart data prepared:', finalChartArray.length, 'dates', isFiltered ? '(filtered)' : '(last 60 days)');
     return finalChartArray;
+  }, [allData, selectedYears, selectedMonths, selectedWeeks, selectedDates]);
+
+  // Prepare monthly chart data
+  const monthlyChartData = useMemo(() => {
+    if (!allData || allData.length === 0) {
+      return [];
+    }
+
+    // Filter data based on selections
+    let chartSourceData = allData;
+    
+    if (selectedYears.length > 0) {
+      chartSourceData = chartSourceData.filter(item => selectedYears.includes(String(item.Year)));
+    }
+    if (selectedMonths.length > 0) {
+      chartSourceData = chartSourceData.filter(item => selectedMonths.includes(String(item.Month)));
+    }
+    if (selectedWeeks.length > 0) {
+      chartSourceData = chartSourceData.filter(item => selectedWeeks.includes(String(item.Week)));
+    }
+    if (selectedDates.length > 0) {
+      chartSourceData = chartSourceData.filter(item => selectedDates.includes(String(item.Date)));
+    }
+
+    // Group by Month
+    const monthGroups: { [key: string]: { new: number; resigned: number } } = {};
+
+    chartSourceData.forEach(item => {
+      const month = item.Month || '';
+      const register = item.Register || '';
+
+      if (!monthGroups[month]) {
+        monthGroups[month] = { new: 0, resigned: 0 };
+      }
+
+      if (register.includes('างใหม่')) {
+        monthGroups[month].new += 1;
+      } else if (register.includes('ช่างลาออก')) {
+        monthGroups[month].resigned += 1;
+      }
+    });
+
+    // Month order for sorting
+    const monthOrder = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+
+    // Convert to array and sort by month order
+    const chartArray = Object.entries(monthGroups)
+      .map(([month, counts]) => ({
+        month,
+        'ช่างลาออก': counts.resigned,
+        'ช่างใหม่': counts.new
+      }))
+      .sort((a, b) => monthOrder.indexOf(a.month) - monthOrder.indexOf(b.month));
+
+    console.log('📊 Monthly chart data prepared:', chartArray.length, 'months');
+    return chartArray;
   }, [allData, selectedYears, selectedMonths, selectedWeeks, selectedDates]);
 
   if (loading && currentPage === 1) {
@@ -1119,84 +1178,163 @@ function TechTransactionContent() {
           </button>
         </div>
 
-        {/* Chart Section */}
+        {/* Charts Section - Side by Side */}
         {chartData.length > 0 && (
           <div style={{
-            backgroundColor: '#f9fafb',
-            borderRadius: '12px',
-            padding: '24px',
-            marginBottom: '32px',
-            boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(500px, 1fr))',
+            gap: '24px',
+            marginBottom: '32px'
           }}>
-            <h2 style={{
-              fontSize: '20px',
-              fontWeight: '600',
-              color: '#374151',
-              marginBottom: '16px'
+            {/* Daily Line Chart */}
+            <div style={{
+              backgroundColor: '#f9fafb',
+              borderRadius: '12px',
+              padding: '24px',
+              boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
             }}>
-              ช่างใหม่ vs ช่างลาออก รายวัน
-            </h2>
-            <ResponsiveContainer width="100%" height={400}>
-              <LineChart
-                data={chartData}
-                margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-              >
-                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                <XAxis 
-                  dataKey="date" 
-                  stroke="#6b7280"
-                  style={{ fontSize: '12px' }}
-                  angle={-45}
-                  textAnchor="end"
-                  height={80}
-                />
-                <YAxis 
-                  stroke="#6b7280"
-                  style={{ fontSize: '12px' }}
-                />
-                <Tooltip 
-                  contentStyle={{
-                    backgroundColor: 'white',
-                    border: '1px solid #e5e7eb',
-                    borderRadius: '8px',
-                    padding: '12px'
-                  }}
-                />
-                <Legend 
-                  wrapperStyle={{
-                    paddingTop: '20px'
-                  }}
-                />
-                <Line 
-                  type="monotone" 
-                  dataKey="ช่างใหม่" 
-                  stroke="#10b981" 
-                  strokeWidth={2}
-                  dot={{ fill: '#10b981', r: 4 }}
-                  activeDot={{ r: 6 }}
-                  label={{ 
-                    position: 'top', 
-                    fill: '#10b981', 
-                    fontSize: 11,
-                    formatter: (value: any) => (value && value > 0) ? value : ''
-                  }}
-                />
-                <Line 
-                  type="monotone" 
-                  dataKey="ช่างลาออก" 
-                  stroke="#ef4444" 
-                  strokeWidth={2}
-                  dot={{ fill: '#ef4444', r: 4 }}
-                  activeDot={{ r: 6 }}
-                  label={{ 
-                    position: 'top', 
-                    fill: '#ef4444', 
-                    fontSize: 11,
-                    formatter: (value: any) => (value && value > 0) ? value : ''
-                  }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
+              <h2 style={{
+                fontSize: '18px',
+                fontWeight: '600',
+                color: '#374151',
+                marginBottom: '16px'
+              }}>
+                ช่างใหม่ vs ช่างลาออก รายวัน
+              </h2>
+              <ResponsiveContainer width="100%" height={400}>
+                <LineChart
+                  data={chartData}
+                  margin={{ top: 5, right: 30, left: 20, bottom: 80 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                  <XAxis 
+                    dataKey="date" 
+                    stroke="#6b7280"
+                    style={{ fontSize: '11px' }}
+                    angle={-45}
+                    textAnchor="end"
+                    height={80}
+                  />
+                  <YAxis 
+                    stroke="#6b7280"
+                    style={{ fontSize: '12px' }}
+                  />
+                  <Tooltip 
+                    contentStyle={{
+                      backgroundColor: 'white',
+                      border: '1px solid #e5e7eb',
+                      borderRadius: '8px',
+                      padding: '12px'
+                    }}
+                  />
+                  <Legend 
+                    wrapperStyle={{
+                      paddingTop: '20px'
+                    }}
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="ช่างใหม่" 
+                    stroke="#10b981" 
+                    strokeWidth={2}
+                    dot={{ fill: '#10b981', r: 4 }}
+                    activeDot={{ r: 6 }}
+                    label={{ 
+                      position: 'top', 
+                      fill: '#10b981', 
+                      fontSize: 11,
+                      formatter: (value: any) => (value && value > 0) ? value : ''
+                    }}
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="ช่างลาออก" 
+                    stroke="#ef4444" 
+                    strokeWidth={2}
+                    dot={{ fill: '#ef4444', r: 4 }}
+                    activeDot={{ r: 6 }}
+                    label={{ 
+                      position: 'top', 
+                      fill: '#ef4444', 
+                      fontSize: 11,
+                      formatter: (value: any) => (value && value > 0) ? value : ''
+                    }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+
+            {/* Monthly Bar Chart */}
+            {monthlyChartData.length > 0 && (
+              <div style={{
+                backgroundColor: '#f9fafb',
+                borderRadius: '12px',
+                padding: '24px',
+                boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
+              }}>
+                <h2 style={{
+                  fontSize: '18px',
+                  fontWeight: '600',
+                  color: '#374151',
+                  marginBottom: '16px'
+                }}>
+                  ช่างใหม่ vs ช่างลาออก รายเดือน
+                </h2>
+                <ResponsiveContainer width="100%" height={400}>
+                  <BarChart
+                    data={monthlyChartData}
+                    margin={{ top: 5, right: 30, left: 20, bottom: 80 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                    <XAxis 
+                      dataKey="month" 
+                      stroke="#6b7280"
+                      style={{ fontSize: '12px' }}
+                      angle={-45}
+                      textAnchor="end"
+                      height={80}
+                    />
+                    <YAxis 
+                      stroke="#6b7280"
+                      style={{ fontSize: '12px' }}
+                    />
+                    <Tooltip 
+                      contentStyle={{
+                        backgroundColor: 'white',
+                        border: '1px solid #e5e7eb',
+                        borderRadius: '8px',
+                        padding: '12px'
+                      }}
+                    />
+                    <Legend 
+                      wrapperStyle={{
+                        paddingTop: '20px'
+                      }}
+                    />
+                    <Bar 
+                      dataKey="ช่างลาออก" 
+                      fill="#8b5cf6"
+                      label={{ 
+                        position: 'top', 
+                        fill: '#8b5cf6', 
+                        fontSize: 11,
+                        formatter: (value: any) => (value && value > 0) ? value : ''
+                      }}
+                    />
+                    <Bar 
+                      dataKey="ช่างใหม่" 
+                      fill="#3b82f6"
+                      label={{ 
+                        position: 'top', 
+                        fill: '#3b82f6', 
+                        fontSize: 11,
+                        formatter: (value: any) => (value && value > 0) ? value : ''
+                      }}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            )}
           </div>
         )}
 
