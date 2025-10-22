@@ -709,7 +709,7 @@ function TechTransactionContent() {
           color: '#1f2937',
           marginBottom: '24px'
         }}>
-          Tech-Transaction
+          Tech-Transaction (2025) : update ทุกวันเวลา 8.00 น.
         </h1>
 
         {/* Statistics Cards */}
