@@ -222,6 +222,25 @@ function TechTransactionContent() {
     return filtered;
   }, [allData, searchTerm, selectedYears, selectedMonths, selectedWeeks, selectedDates]);
 
+  // Calculate statistics from filtered data
+  const statistics = useMemo(() => {
+    const newTechs = filteredAllData.filter(item => 
+      String(item.Register).includes('ช่างใหม่')
+    ).length;
+    
+    const resignedTechs = filteredAllData.filter(item => 
+      String(item.Register).includes('ช่างลาออก')
+    ).length;
+    
+    const netChange = newTechs - resignedTechs;
+    
+    return {
+      newTechs,
+      resignedTechs,
+      netChange
+    };
+  }, [filteredAllData]);
+
   // Paginate the filtered data
   const filteredData = useMemo(() => {
     const startIndex = (currentPage - 1) * itemsPerPage;
@@ -436,6 +455,111 @@ function TechTransactionContent() {
         }}>
           Tech-Transaction
         </h1>
+
+        {/* Statistics Cards */}
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+          gap: '16px',
+          marginBottom: '24px'
+        }}>
+          {/* Card 1: ช่างใหม่ */}
+          <div style={{
+            background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+            borderRadius: '12px',
+            padding: '24px',
+            color: 'white',
+            boxShadow: '0 4px 6px rgba(16, 185, 129, 0.2)'
+          }}>
+            <div style={{
+              fontSize: '14px',
+              fontWeight: '500',
+              marginBottom: '8px',
+              opacity: 0.9
+            }}>
+              ช่างใหม่
+            </div>
+            <div style={{
+              fontSize: '42px',
+              fontWeight: 'bold',
+              marginBottom: '4px'
+            }}>
+              {statistics.newTechs.toLocaleString()}
+            </div>
+            <div style={{
+              fontSize: '12px',
+              opacity: 0.8
+            }}>
+              New Technicians
+            </div>
+          </div>
+
+          {/* Card 2: ช่างลาออก */}
+          <div style={{
+            background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+            borderRadius: '12px',
+            padding: '24px',
+            color: 'white',
+            boxShadow: '0 4px 6px rgba(239, 68, 68, 0.2)'
+          }}>
+            <div style={{
+              fontSize: '14px',
+              fontWeight: '500',
+              marginBottom: '8px',
+              opacity: 0.9
+            }}>
+              ช่างลาออก
+            </div>
+            <div style={{
+              fontSize: '42px',
+              fontWeight: 'bold',
+              marginBottom: '4px'
+            }}>
+              {statistics.resignedTechs.toLocaleString()}
+            </div>
+            <div style={{
+              fontSize: '12px',
+              opacity: 0.8
+            }}>
+              Resigned Technicians
+            </div>
+          </div>
+
+          {/* Card 3: การเปลี่ยนแปลงสุทธิ */}
+          <div style={{
+            background: statistics.netChange >= 0 
+              ? 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)'
+              : 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+            borderRadius: '12px',
+            padding: '24px',
+            color: 'white',
+            boxShadow: statistics.netChange >= 0
+              ? '0 4px 6px rgba(59, 130, 246, 0.2)'
+              : '0 4px 6px rgba(245, 158, 11, 0.2)'
+          }}>
+            <div style={{
+              fontSize: '14px',
+              fontWeight: '500',
+              marginBottom: '8px',
+              opacity: 0.9
+            }}>
+              การเปลี่ยนแปลงสุทธิ
+            </div>
+            <div style={{
+              fontSize: '42px',
+              fontWeight: 'bold',
+              marginBottom: '4px'
+            }}>
+              {statistics.netChange >= 0 ? '+' : ''}{statistics.netChange.toLocaleString()}
+            </div>
+            <div style={{
+              fontSize: '12px',
+              opacity: 0.8
+            }}>
+              Net Change ({statistics.newTechs} - {statistics.resignedTechs})
+            </div>
+          </div>
+        </div>
 
         {/* Filter Section */}
         <div style={{
