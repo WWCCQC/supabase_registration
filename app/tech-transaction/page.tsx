@@ -459,6 +459,59 @@ function TechTransactionContent() {
     return chartArray;
   }, [allData, selectedYears, selectedMonths, selectedWeeks, selectedDates]);
 
+  // Prepare RSM chart data
+  const rsmChartData = useMemo(() => {
+    if (!allData || allData.length === 0) {
+      return [];
+    }
+
+    // Filter data based on selections
+    let chartSourceData = allData;
+    
+    if (selectedYears.length > 0) {
+      chartSourceData = chartSourceData.filter(item => selectedYears.includes(String(item.Year)));
+    }
+    if (selectedMonths.length > 0) {
+      chartSourceData = chartSourceData.filter(item => selectedMonths.includes(String(item.Month)));
+    }
+    if (selectedWeeks.length > 0) {
+      chartSourceData = chartSourceData.filter(item => selectedWeeks.includes(String(item.Week)));
+    }
+    if (selectedDates.length > 0) {
+      chartSourceData = chartSourceData.filter(item => selectedDates.includes(String(item.Date)));
+    }
+
+    // Group by RSM
+    const rsmGroups: { [key: string]: { new: number; resigned: number } } = {};
+
+    chartSourceData.forEach(item => {
+      const rsm = item.rsm || 'N/A';
+      const register = item.Register || '';
+
+      if (!rsmGroups[rsm]) {
+        rsmGroups[rsm] = { new: 0, resigned: 0 };
+      }
+
+      if (register.includes('างใหม่')) {
+        rsmGroups[rsm].new += 1;
+      } else if (register.includes('ช่างลาออก')) {
+        rsmGroups[rsm].resigned += 1;
+      }
+    });
+
+    // Convert to array and sort by RSM name
+    const chartArray = Object.entries(rsmGroups)
+      .map(([rsm, counts]) => ({
+        rsm,
+        'ช่างลาออก': counts.resigned,
+        'ช่างใหม่': counts.new
+      }))
+      .sort((a, b) => a.rsm.localeCompare(b.rsm));
+
+    console.log('📊 RSM chart data prepared:', chartArray.length, 'RSMs');
+    return chartArray;
+  }, [allData, selectedYears, selectedMonths, selectedWeeks, selectedDates]);
+
   if (loading && currentPage === 1) {
     return (
       <div style={{
@@ -1335,6 +1388,79 @@ function TechTransactionContent() {
                 </ResponsiveContainer>
               </div>
             )}
+          </div>
+        )}
+
+        {/* RSM Chart - Full Width Below */}
+        {rsmChartData.length > 0 && (
+          <div style={{
+            backgroundColor: '#f9fafb',
+            borderRadius: '12px',
+            padding: '24px',
+            marginBottom: '32px',
+            boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
+          }}>
+            <h2 style={{
+              fontSize: '18px',
+              fontWeight: '600',
+              color: '#374151',
+              marginBottom: '16px'
+            }}>
+              ช่างใหม่ vs ช่างลาออก (RSM)
+            </h2>
+            <ResponsiveContainer width="100%" height={400}>
+              <BarChart
+                data={rsmChartData}
+                margin={{ top: 5, right: 30, left: 20, bottom: 80 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                <XAxis 
+                  dataKey="rsm" 
+                  stroke="#6b7280"
+                  style={{ fontSize: '11px' }}
+                  angle={-45}
+                  textAnchor="end"
+                  height={80}
+                />
+                <YAxis 
+                  stroke="#6b7280"
+                  style={{ fontSize: '12px' }}
+                />
+                <Tooltip 
+                  contentStyle={{
+                    backgroundColor: 'white',
+                    border: '1px solid #e5e7eb',
+                    borderRadius: '8px',
+                    padding: '12px'
+                  }}
+                />
+                <Legend 
+                  wrapperStyle={{
+                    paddingTop: '20px'
+                  }}
+                />
+                <Bar 
+                  dataKey="ช่างลาออก" 
+                  fill="#dc2626"
+                  label={{ 
+                    position: 'top', 
+                    fill: '#dc2626', 
+                    fontSize: 11,
+                    formatter: (value: any) => (value && value > 0) ? value : ''
+                  }}
+                />
+                <Bar 
+                  dataKey="ช่างใหม่" 
+                  fill="#059669"
+                  label={{ 
+                    position: 'top', 
+                    fill: '#059669', 
+                    fontSize: 11,
+                    formatter: (value: any) => (value && value > 0) ? value : ''
+                  }}
+                />
+              </BarChart>
+            </ResponsiveContainer>
           </div>
         )}
 
