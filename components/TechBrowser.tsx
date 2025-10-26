@@ -643,10 +643,18 @@ export default function TechBrowser() {
     setWorkgroupLoading(true);
     try {
       const params = buildFilterParamsOnly();
+      // Add cache-busting parameter
+      params.set('_t', Date.now().toString());
       const url = `/api/chart/workgroup-count?${params.toString()}`;
       console.log('👥 Fetching workgroup data from:', url);
       
-      const res = await fetch(url, { cache: "no-store" });
+      const res = await fetch(url, { 
+        cache: "no-store",
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache'
+        }
+      });
       const json = await res.json();
       
       if (!res.ok) {
@@ -654,12 +662,28 @@ export default function TechBrowser() {
       }
       
       console.log('👥 Workgroup data response:', json);
+      console.log('👥 Response timestamp:', json.timestamp);
+      console.log('👥 Response message:', json.message);
       setWorkgroupData(json.data || json); // Support both {data: ..., grandTotal: ...} and old format
       setWorkgroupGrandTotal(json.grandTotal || 0); // Get grandTotal from API
       
       const endTime = performance.now();
       console.log(`👥 Workgroup data loaded in ${(endTime - startTime).toFixed(2)}ms`);
-      console.log(`👥 Workgroup Grand Total: ${json.grandTotal || 0}`);
+      console.log(`👥 Workgroup Grand Total from API: ${json.grandTotal || 0}`);
+      
+      // Verify grand total calculation
+      let calculatedTotal = 0;
+      if (json.data) {
+        Object.keys(json.data).forEach(rsm => {
+          Object.keys(json.data[rsm]).forEach(key => {
+            if (key.includes('_Installation') || key.includes('_Repair')) {
+              calculatedTotal += json.data[rsm][key];
+            }
+          });
+        });
+      }
+      console.log(`👥 Workgroup Grand Total (calculated in frontend): ${calculatedTotal}`);
+      console.log(`👥 Difference: ${Math.abs((json.grandTotal || 0) - calculatedTotal)}`);
       
     } catch (error) {
       console.error('Error fetching workgroup data:', error);

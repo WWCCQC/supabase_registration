@@ -167,8 +167,23 @@ export async function GET(req: Request) {
 
     console.log('📊 Workgroup result:', result);
     console.log('📊 Workgroup Grand Total (unique):', grandTotal);
+    console.log('📊 Timestamp:', new Date().toISOString());
 
-    return NextResponse.json({ data: result, grandTotal });
+    return NextResponse.json(
+      { 
+        data: result, 
+        grandTotal,
+        timestamp: new Date().toISOString(),
+        message: 'Workgroup count calculated from unique national_id'
+      },
+      {
+        headers: {
+          'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+          'Pragma': 'no-cache',
+          'Expires': '0',
+        }
+      }
+    );
 
   } catch (e: any) {
     console.error('❌ Workgroup count API error:', e);
