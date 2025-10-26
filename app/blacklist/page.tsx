@@ -24,6 +24,12 @@ function BlacklistContent() {
   const [searchTerm, setSearchTerm] = useState('');
   const itemsPerPage = 50;
 
+  // Advanced search filters
+  const [searchCompany, setSearchCompany] = useState('');
+  const [searchId, setSearchId] = useState('');
+  const [searchName, setSearchName] = useState('');
+  const [searchSurename, setSearchSurename] = useState('');
+
   useEffect(() => {
     fetchBlacklist();
   }, [currentPage]);
@@ -79,15 +85,49 @@ function BlacklistContent() {
   };
 
   const filteredData = useMemo(() => {
-    if (!searchTerm) return data;
+    let filtered = data;
     
-    const searchLower = searchTerm.toLowerCase();
-    return data.filter((row) => {
-      return Object.values(row).some((value) => 
-        value?.toString().toLowerCase().includes(searchLower)
+    // Apply advanced filters
+    if (searchCompany) {
+      const searchLower = searchCompany.toLowerCase();
+      filtered = filtered.filter(row => 
+        row.Company?.toString().toLowerCase().includes(searchLower)
       );
-    });
-  }, [data, searchTerm]);
+    }
+    
+    if (searchId) {
+      const searchLower = searchId.toLowerCase();
+      filtered = filtered.filter(row => 
+        row.ID?.toString().toLowerCase().includes(searchLower)
+      );
+    }
+    
+    if (searchName) {
+      const searchLower = searchName.toLowerCase();
+      filtered = filtered.filter(row => 
+        row.Name?.toString().toLowerCase().includes(searchLower)
+      );
+    }
+    
+    if (searchSurename) {
+      const searchLower = searchSurename.toLowerCase();
+      filtered = filtered.filter(row => 
+        row.Surename?.toString().toLowerCase().includes(searchLower)
+      );
+    }
+    
+    // Apply general search if no advanced filters
+    if (!searchCompany && !searchId && !searchName && !searchSurename && searchTerm) {
+      const searchLower = searchTerm.toLowerCase();
+      filtered = filtered.filter((row) => {
+        return Object.values(row).some((value) => 
+          value?.toString().toLowerCase().includes(searchLower)
+        );
+      });
+    }
+    
+    return filtered;
+  }, [data, searchTerm, searchCompany, searchId, searchName, searchSurename]);
 
   const exportToExcel = () => {
     try {
@@ -165,7 +205,227 @@ function BlacklistContent() {
           รายชื่อช่างที่ถูก Blacklist : update ทุกวันเวลา 8.00 น
         </h1>
         
-        {/* Search and Export Bar */}
+        {/* Advanced Search Filters */}
+        <div style={{
+          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          borderRadius: '12px',
+          padding: '24px',
+          marginBottom: '20px',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+        }}>
+          <div style={{
+            color: 'white',
+            fontSize: '16px',
+            fontWeight: '600',
+            marginBottom: '16px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px'
+          }}>
+            🔍 ค้นหาขั้นสูง
+          </div>
+
+          {/* Row 1: Company Search */}
+          <div style={{ marginBottom: '16px' }}>
+            <label style={{
+              display: 'block',
+              color: 'white',
+              fontSize: '13px',
+              fontWeight: '500',
+              marginBottom: '6px',
+              opacity: 0.95
+            }}>
+              Depot / ชื่อร้าน / ชื่อบริษัท
+            </label>
+            <input
+              type="text"
+              placeholder="ค้นหาตามชื่อบริษัท..."
+              value={searchCompany}
+              onChange={(e) => setSearchCompany(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '12px 16px',
+                fontSize: '14px',
+                border: '2px solid rgba(255,255,255,0.3)',
+                borderRadius: '8px',
+                outline: 'none',
+                backgroundColor: 'rgba(255,255,255,0.95)',
+                transition: 'all 0.2s ease'
+              }}
+              onFocus={(e) => {
+                e.target.style.borderColor = 'white';
+                e.target.style.backgroundColor = 'white';
+                e.target.style.boxShadow = '0 0 0 3px rgba(255,255,255,0.2)';
+              }}
+              onBlur={(e) => {
+                e.target.style.borderColor = 'rgba(255,255,255,0.3)';
+                e.target.style.backgroundColor = 'rgba(255,255,255,0.95)';
+                e.target.style.boxShadow = 'none';
+              }}
+            />
+          </div>
+
+          {/* Row 2: ID, Name, Surname Search */}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+            gap: '12px'
+          }}>
+            <div>
+              <label style={{
+                display: 'block',
+                color: 'white',
+                fontSize: '13px',
+                fontWeight: '500',
+                marginBottom: '6px',
+                opacity: 0.95
+              }}>
+                รหัสพนักงาน
+              </label>
+              <input
+                type="text"
+                placeholder="ค้นหารหัส..."
+                value={searchId}
+                onChange={(e) => setSearchId(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '12px 16px',
+                  fontSize: '14px',
+                  border: '2px solid rgba(255,255,255,0.3)',
+                  borderRadius: '8px',
+                  outline: 'none',
+                  backgroundColor: 'rgba(255,255,255,0.95)',
+                  transition: 'all 0.2s ease'
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = 'white';
+                  e.target.style.backgroundColor = 'white';
+                  e.target.style.boxShadow = '0 0 0 3px rgba(255,255,255,0.2)';
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = 'rgba(255,255,255,0.3)';
+                  e.target.style.backgroundColor = 'rgba(255,255,255,0.95)';
+                  e.target.style.boxShadow = 'none';
+                }}
+              />
+            </div>
+
+            <div>
+              <label style={{
+                display: 'block',
+                color: 'white',
+                fontSize: '13px',
+                fontWeight: '500',
+                marginBottom: '6px',
+                opacity: 0.95
+              }}>
+                ชื่อ
+              </label>
+              <input
+                type="text"
+                placeholder="ค้นหาชื่อ..."
+                value={searchName}
+                onChange={(e) => setSearchName(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '12px 16px',
+                  fontSize: '14px',
+                  border: '2px solid rgba(255,255,255,0.3)',
+                  borderRadius: '8px',
+                  outline: 'none',
+                  backgroundColor: 'rgba(255,255,255,0.95)',
+                  transition: 'all 0.2s ease'
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = 'white';
+                  e.target.style.backgroundColor = 'white';
+                  e.target.style.boxShadow = '0 0 0 3px rgba(255,255,255,0.2)';
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = 'rgba(255,255,255,0.3)';
+                  e.target.style.backgroundColor = 'rgba(255,255,255,0.95)';
+                  e.target.style.boxShadow = 'none';
+                }}
+              />
+            </div>
+
+            <div>
+              <label style={{
+                display: 'block',
+                color: 'white',
+                fontSize: '13px',
+                fontWeight: '500',
+                marginBottom: '6px',
+                opacity: 0.95
+              }}>
+                นามสกุล
+              </label>
+              <input
+                type="text"
+                placeholder="ค้นหานามสกุล..."
+                value={searchSurename}
+                onChange={(e) => setSearchSurename(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '12px 16px',
+                  fontSize: '14px',
+                  border: '2px solid rgba(255,255,255,0.3)',
+                  borderRadius: '8px',
+                  outline: 'none',
+                  backgroundColor: 'rgba(255,255,255,0.95)',
+                  transition: 'all 0.2s ease'
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = 'white';
+                  e.target.style.backgroundColor = 'white';
+                  e.target.style.boxShadow = '0 0 0 3px rgba(255,255,255,0.2)';
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = 'rgba(255,255,255,0.3)';
+                  e.target.style.backgroundColor = 'rgba(255,255,255,0.95)';
+                  e.target.style.boxShadow = 'none';
+                }}
+              />
+            </div>
+          </div>
+
+          {/* Clear All Filters Button */}
+          {(searchCompany || searchId || searchName || searchSurename) && (
+            <div style={{ marginTop: '16px', textAlign: 'right' }}>
+              <button
+                onClick={() => {
+                  setSearchCompany('');
+                  setSearchId('');
+                  setSearchName('');
+                  setSearchSurename('');
+                }}
+                style={{
+                  padding: '8px 20px',
+                  backgroundColor: 'rgba(255,255,255,0.2)',
+                  color: 'white',
+                  border: '2px solid white',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontSize: '13px',
+                  fontWeight: '600',
+                  transition: 'all 0.2s ease'
+                }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.backgroundColor = 'white';
+                  e.currentTarget.style.color = '#667eea';
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.2)';
+                  e.currentTarget.style.color = 'white';
+                }}
+              >
+                ✕ ล้างการค้นหา
+              </button>
+            </div>
+          )}
+        </div>
+        
+        {/* General Search and Export Bar */}
         <div style={{
           display: 'flex',
           gap: '12px',
@@ -174,7 +434,7 @@ function BlacklistContent() {
         }}>
           <input
             type="text"
-            placeholder="ค้นหา... (ชื่อ, นามสกุล, บริษัท, หมายเหตุ)"
+            placeholder="ค้นหาทั่วไป... (ทุกคอลัมน์)"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             style={{
@@ -212,9 +472,9 @@ function BlacklistContent() {
           </button>
         </div>
         
-        {searchTerm && (
+        {(searchTerm || searchCompany || searchId || searchName || searchSurename) && (
           <div style={{ marginTop: '12px', fontSize: '14px', color: '#6b7280' }}>
-            พบ {filteredData.length} รายการจากการค้นหา "{searchTerm}"
+            พบ {filteredData.length} รายการจากการค้นหา
           </div>
         )}
       </div>
@@ -227,7 +487,9 @@ function BlacklistContent() {
           borderRadius: '8px'
         }}>
           <p style={{ fontSize: '16px', color: '#6b7280' }}>
-            {searchTerm ? `ไม่พบข้อมูลที่ค้นหา "${searchTerm}"` : 'ไม่พบข้อมูลในตาราง Blacklist'}
+            {(searchTerm || searchCompany || searchId || searchName || searchSurename) 
+              ? 'ไม่พบข้อมูลที่ค้นหา' 
+              : 'ไม่พบข้อมูลในตาราง Blacklist'}
           </p>
         </div>
       ) : (
