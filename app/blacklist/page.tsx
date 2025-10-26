@@ -20,7 +20,7 @@ function BlacklistContent() {
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
-  const itemsPerPage = 50;
+  const itemsPerPage = 10; // เปลี่ยนเป็น 10 บรรทัดต่อหน้า
 
   // Advanced search filters
   const [searchCompany, setSearchCompany] = useState('');
@@ -131,9 +131,14 @@ function BlacklistContent() {
   }, [filteredData, currentPage, itemsPerPage]);
 
   const totalPages = Math.ceil(filteredData.length / itemsPerPage);
-  const columns = filteredData.length > 0 
-    ? Object.keys(filteredData[0]).filter(col => col !== 'วันที่ Update') 
+  
+  // Get columns from allData instead (so we always have column structure)
+  const columns = allData.length > 0 
+    ? Object.keys(allData[0]).filter(col => col !== 'วันที่ Update') 
     : [];
+  
+  // Check if user has searched
+  const hasSearched = searchCompany || searchId || searchName || searchSurename;
 
   if (loading) {
     return (
@@ -397,97 +402,116 @@ function BlacklistContent() {
           )}
         </div>
         
-        {(searchCompany || searchId || searchName || searchSurename) && (
+        {hasSearched && (
           <div style={{ marginTop: '12px', fontSize: '14px', color: '#6b7280' }}>
             พบ {filteredData.length} รายการจากการค้นหา
           </div>
         )}
       </div>
 
-      {filteredData.length === 0 ? (
-        <div style={{
-          textAlign: 'center',
-          padding: '60px 20px',
-          backgroundColor: '#f9fafb',
-          borderRadius: '8px'
+      {/* แสดงตารางเสมอ */}
+      <div style={{ 
+        overflowX: 'auto',
+        backgroundColor: 'white',
+        borderRadius: '8px',
+        border: '1px solid #e5e7eb'
+      }}>
+        <table style={{
+          width: '100%',
+          borderCollapse: 'collapse',
+          fontSize: '14px'
         }}>
-          <p style={{ fontSize: '16px', color: '#6b7280' }}>
-            {(searchCompany || searchId || searchName || searchSurename) 
-              ? 'ไม่พบข้อมูลที่ค้นหา' 
-              : 'ไม่พบข้อมูลในตาราง Blacklist'}
-          </p>
-        </div>
-      ) : (
-        <>
-          <div style={{ 
-            overflowX: 'auto',
-            backgroundColor: 'white',
-            borderRadius: '8px',
-            border: '1px solid #e5e7eb'
-          }}>
-            <table style={{
-              width: '100%',
-              borderCollapse: 'collapse',
-              fontSize: '14px'
-            }}>
-              <thead>
-                <tr style={{ backgroundColor: '#f9fafb' }}>
+          <thead>
+            <tr style={{ backgroundColor: '#f9fafb' }}>
+              {columns.map((col) => (
+                <th
+                  key={col}
+                  style={{
+                    padding: '12px 16px',
+                    textAlign: 'left',
+                    fontWeight: '600',
+                    color: '#374151',
+                    borderBottom: '2px solid #e5e7eb',
+                    whiteSpace: 'nowrap'
+                  }}
+                >
+                  {col}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {!hasSearched ? (
+              <tr>
+                <td 
+                  colSpan={columns.length}
+                  style={{
+                    padding: '60px 20px',
+                    textAlign: 'center',
+                    color: '#9ca3af',
+                    fontSize: '15px',
+                    fontStyle: 'italic'
+                  }}
+                >
+                  🔍 กรุณาค้นหาเพื่อแสดงข้อมูล
+                </td>
+              </tr>
+            ) : filteredData.length === 0 ? (
+              <tr>
+                <td 
+                  colSpan={columns.length}
+                  style={{
+                    padding: '60px 20px',
+                    textAlign: 'center',
+                    color: '#ef4444',
+                    fontSize: '15px'
+                  }}
+                >
+                  ❌ ไม่พบข้อมูลที่ค้นหา
+                </td>
+              </tr>
+            ) : (
+              paginatedData.map((row, index) => (
+                <tr
+                  key={row.id || index}
+                  style={{
+                    borderBottom: '1px solid #e5e7eb',
+                    backgroundColor: index % 2 === 0 ? 'white' : '#f9fafb'
+                  }}
+                >
                   {columns.map((col) => (
-                    <th
+                    <td
                       key={col}
                       style={{
                         padding: '12px 16px',
-                        textAlign: 'left',
-                        fontWeight: '600',
-                        color: '#374151',
-                        borderBottom: '2px solid #e5e7eb',
-                        whiteSpace: 'nowrap'
+                        color: '#6b7280'
                       }}
                     >
-                      {col}
-                    </th>
+                      {row[col] !== null && row[col] !== undefined
+                        ? String(row[col])
+                        : '-'}
+                    </td>
                   ))}
                 </tr>
-              </thead>
-              <tbody>
-                {paginatedData.map((row, index) => (
-                  <tr
-                    key={row.id || index}
-                    style={{
-                      borderBottom: '1px solid #e5e7eb',
-                      backgroundColor: index % 2 === 0 ? 'white' : '#f9fafb'
-                    }}
-                  >
-                    {columns.map((col) => (
-                      <td
-                        key={col}
-                        style={{
-                          padding: '12px 16px',
-                          color: '#6b7280'
-                        }}
-                      >
-                        {row[col] !== null && row[col] !== undefined
-                          ? String(row[col])
-                          : '-'}
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
 
-          <div style={{
-            marginTop: '24px',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            flexWrap: 'wrap',
-            gap: '16px'
-          }}>
-            <div style={{ color: '#6b7280', fontSize: '14px' }}>
-              แสดง {((currentPage - 1) * itemsPerPage) + 1} - {Math.min(currentPage * itemsPerPage, filteredData.length)} จาก {filteredData.length} รายการ
-            </div>
+      {/* Pagination - แสดงเฉพาะเมื่อมีการค้นหาและมีผลลัพธ์ */}
+      {hasSearched && filteredData.length > 0 && (
+        <div style={{
+          marginTop: '24px',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: '16px'
+        }}>
+          <div style={{ color: '#6b7280', fontSize: '14px' }}>
+            แสดง {((currentPage - 1) * itemsPerPage) + 1} - {Math.min(currentPage * itemsPerPage, filteredData.length)} จาก {filteredData.length} รายการ
+          </div>
             
             <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
               <button
@@ -559,7 +583,6 @@ function BlacklistContent() {
               </button>
             </div>
           </div>
-        </>
       )}
     </div>
   );
