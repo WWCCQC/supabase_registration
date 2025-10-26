@@ -1158,63 +1158,8 @@ export default function TechBrowser() {
           background: "#eeeeee",
           padding: "16px",
           borderRadius: "8px",
-          width: "650px",
-          position: "relative"
+          width: "650px"
         }}>
-        
-        {/* Manual Refresh Button */}
-        <button
-          onClick={handleManualRefresh}
-          disabled={isRefreshing}
-          style={{
-            position: "absolute",
-            top: "8px",
-            right: "8px",
-            background: isRefreshing 
-              ? "linear-gradient(135deg, #9ca3af 0%, #6b7280 100%)" 
-              : "linear-gradient(135deg, #10b981 0%, #059669 100%)",
-            color: "white",
-            border: "none",
-            borderRadius: "8px",
-            padding: "8px 16px",
-            fontSize: "13px",
-            fontWeight: "600",
-            cursor: isRefreshing ? "not-allowed" : "pointer",
-            boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
-            display: "flex",
-            alignItems: "center",
-            gap: "6px",
-            transition: "all 0.2s ease",
-            zIndex: 10,
-            opacity: isRefreshing ? 0.7 : 1
-          }}
-          onMouseEnter={(e) => {
-            if (!isRefreshing) {
-              e.currentTarget.style.transform = "translateY(-1px)";
-              e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.2)";
-            }
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.transform = "translateY(0)";
-            e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.15)";
-          }}
-          title="รีเฟรชข้อมูลทั้งหมดทันที (Force refresh all data)"
-        >
-          <span style={{
-            display: "inline-block",
-            animation: isRefreshing ? "spin 1s linear infinite" : "none"
-          }}>
-            🔄
-          </span>
-          {isRefreshing ? "กำลังรีเฟรช..." : "รีเฟรชข้อมูล"}
-        </button>
-        <style jsx>{`
-          @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-          }
-        `}</style>
-
         {/* บรรทัดที่ 1: Technicians, Installation, Repair + Depot */}
         <div
           style={{
@@ -1525,8 +1470,64 @@ export default function TechBrowser() {
           minWidth: "700px",
           boxShadow: "0 1px 2px rgba(0,0,0,0.04)",
           display: "flex",
-          flexDirection: "column"
+          flexDirection: "column",
+          position: "relative"
         }}>
+          
+          {/* Manual Refresh Button */}
+          <button
+            onClick={handleManualRefresh}
+            disabled={isRefreshing}
+            style={{
+              position: "absolute",
+              top: "12px",
+              right: "12px",
+              background: isRefreshing 
+                ? "linear-gradient(135deg, #9ca3af 0%, #6b7280 100%)" 
+                : "linear-gradient(135deg, #10b981 0%, #059669 100%)",
+              color: "white",
+              border: "none",
+              borderRadius: "8px",
+              padding: "8px 16px",
+              fontSize: "13px",
+              fontWeight: "600",
+              cursor: isRefreshing ? "not-allowed" : "pointer",
+              boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+              transition: "all 0.2s ease",
+              zIndex: 10,
+              opacity: isRefreshing ? 0.7 : 1
+            }}
+            onMouseEnter={(e) => {
+              if (!isRefreshing) {
+                e.currentTarget.style.transform = "translateY(-1px)";
+                e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.2)";
+              }
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = "translateY(0)";
+              e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.15)";
+            }}
+            title="รีเฟรชข้อมูลทั้งหมดทันที (Force refresh all data)"
+          >
+            <span style={{
+              display: "inline-block",
+              animation: isRefreshing ? "spin 1s linear infinite" : "none"
+            }}>
+              🔄
+            </span>
+            {isRefreshing ? "กำลังรีเฟรช..." : "รีเฟรชข้อมูล"}
+          </button>
+          
+          <style jsx>{`
+            @keyframes spin {
+              0% { transform: rotate(0deg); }
+              100% { transform: rotate(360deg); }
+            }
+          `}</style>
+
           {pivotData.length > 0 ? (
             <div style={{ 
               fontSize: "12px", 
