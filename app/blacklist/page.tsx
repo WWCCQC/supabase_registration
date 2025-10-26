@@ -38,6 +38,11 @@ function BlacklistContent() {
     fetchAllData();
   }, []);
 
+  // Reset to page 1 when search filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchCompany, searchId, searchName, searchSurename, searchTerm]);
+
   const fetchBlacklist = async () => {
     try {
       setLoading(true);
@@ -85,7 +90,8 @@ function BlacklistContent() {
   };
 
   const filteredData = useMemo(() => {
-    let filtered = data;
+    // Always filter from allData instead of current page data
+    let filtered = allData;
     
     // Apply advanced filters
     if (searchCompany) {
@@ -127,11 +133,11 @@ function BlacklistContent() {
     }
     
     return filtered;
-  }, [data, searchTerm, searchCompany, searchId, searchName, searchSurename]);
+  }, [allData, searchTerm, searchCompany, searchId, searchName, searchSurename]);
 
   const exportToExcel = () => {
     try {
-      const dataToExport = searchTerm ? filteredData : allData;
+      const dataToExport = (searchTerm || searchCompany || searchId || searchName || searchSurename) ? filteredData : allData;
       const columns = dataToExport.length > 0 
         ? Object.keys(dataToExport[0]).filter(col => col !== 'วันที่ Update') 
         : [];
@@ -158,9 +164,16 @@ function BlacklistContent() {
     }
   };
 
-  const totalPages = Math.ceil(totalCount / itemsPerPage);
-  const columns = data.length > 0 
-    ? Object.keys(data[0]).filter(col => col !== 'วันที่ Update') 
+  // Pagination for filtered data
+  const paginatedData = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return filteredData.slice(startIndex, endIndex);
+  }, [filteredData, currentPage, itemsPerPage]);
+
+  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+  const columns = filteredData.length > 0 
+    ? Object.keys(filteredData[0]).filter(col => col !== 'วันที่ Update') 
     : [];
 
   if (loading) {
@@ -525,7 +538,7 @@ function BlacklistContent() {
                 </tr>
               </thead>
               <tbody>
-                {filteredData.map((row, index) => (
+                {paginatedData.map((row, index) => (
                   <tr
                     key={row.id || index}
                     style={{
@@ -561,7 +574,7 @@ function BlacklistContent() {
             gap: '16px'
           }}>
             <div style={{ color: '#6b7280', fontSize: '14px' }}>
-              แสดง {((currentPage - 1) * itemsPerPage) + 1} - {Math.min(currentPage * itemsPerPage, totalCount)} จาก {totalCount} รายการ
+              แสดง {((currentPage - 1) * itemsPerPage) + 1} - {Math.min(currentPage * itemsPerPage, filteredData.length)} จาก {filteredData.length} รายการ
             </div>
             
             <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
