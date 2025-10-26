@@ -247,6 +247,7 @@ export default function TechBrowser() {
 
   /* workgroup count data */
   const [workgroupData, setWorkgroupData] = React.useState<Record<string, Record<string, number>>>({});
+  const [workgroupGrandTotal, setWorkgroupGrandTotal] = React.useState<number>(0);
   const [workgroupLoading, setWorkgroupLoading] = React.useState(false);
 
   /* technician count data */
@@ -653,14 +654,17 @@ export default function TechBrowser() {
       }
       
       console.log('👥 Workgroup data response:', json);
-      setWorkgroupData(json);
+      setWorkgroupData(json.data || json); // Support both {data: ..., grandTotal: ...} and old format
+      setWorkgroupGrandTotal(json.grandTotal || 0); // Get grandTotal from API
       
       const endTime = performance.now();
       console.log(`👥 Workgroup data loaded in ${(endTime - startTime).toFixed(2)}ms`);
+      console.log(`👥 Workgroup Grand Total: ${json.grandTotal || 0}`);
       
     } catch (error) {
       console.error('Error fetching workgroup data:', error);
       setWorkgroupData({});
+      setWorkgroupGrandTotal(0);
     } finally {
       setWorkgroupLoading(false);
     }
@@ -1362,7 +1366,8 @@ export default function TechBrowser() {
             }}>
               <PivotTableComponent 
                 data={pivotData} 
-                workgroupData={workgroupData} 
+                workgroupData={workgroupData}
+                workgroupGrandTotal={workgroupGrandTotal}
                 technicianData={technicianData}
               />
             </div>

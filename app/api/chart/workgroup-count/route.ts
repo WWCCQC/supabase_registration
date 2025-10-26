@@ -100,35 +100,75 @@ export async function GET(req: Request) {
     console.log('📊 Total workgroup heads after filtering:', headsOnly.length);
     console.log('📊 Sample statuses found:', [...new Set(allData.map((r: any) => r.workgroup_status).filter(Boolean))].slice(0, 10));
 
-    // Process data into pivot format - Count ROWS (not unique national_id)
-    // Because one person can be head of both Installation AND Repair workgroups
+    // Process data into pivot format - Count UNIQUE national_id (not rows)
+    // Use Set to track unique national_id per RSM x Provider x WorkType
     const result: Record<string, Record<string, number>> = {};
+    const uniqueSets: Record<string, Record<string, Set<string>>> = {};
 
     headsOnly.forEach((row: any) => {
       const rsm = row.rsm || "Unknown";
       const provider = row.provider || "Unknown";
       const workType = row.work_type || "Unknown";
+      const nationalId = row.national_id || "";
 
+      // Skip if no national_id
+      if (!nationalId || nationalId === "null" || nationalId === "undefined") return;
+
+      if (!uniqueSets[rsm]) {
+        uniqueSets[rsm] = {};
+      }
+
+      // Track unique national_id by provider_worktype combination
+      if (workType === "Installation") {
+        const key = `${provider}_Installation`;
+        if (!uniqueSets[rsm][key]) {
+          uniqueSets[rsm][key] = new Set<string>();
+        }
+        uniqueSets[rsm][key].add(nationalId);
+      } else if (workType === "Repair") {
+        const key = `${provider}_Repair`;
+        if (!uniqueSets[rsm][key]) {
+          uniqueSets[rsm][key] = new Set<string>();
+        }
+        uniqueSets[rsm][key].add(nationalId);
+      }
+    });
+
+    // Convert Sets to counts
+    Object.keys(uniqueSets).forEach(rsm => {
       if (!result[rsm]) {
         result[rsm] = {};
       }
-
-      // Count rows by provider_worktype combination
-      if (workType === "Installation") {
-        const key = `${provider}_Installation`;
-        result[rsm][key] = (result[rsm][key] || 0) + 1;
-      } else if (workType === "Repair") {
-        const key = `${provider}_Repair`;
-        result[rsm][key] = (result[rsm][key] || 0) + 1;
-      }
-
-      // Count rows by provider totals
-      result[rsm][provider] = (result[rsm][provider] || 0) + 1;
+      Object.keys(uniqueSets[rsm]).forEach(key => {
+        result[rsm][key] = uniqueSets[rsm][key].size;
+      });
     });
 
-    console.log('📊 Workgroup result:', result);
+    // Calculate provider totals AFTER counting unique national_ids
+    // Provider Total = Installation + Repair (still counting unique people)
+    Object.keys(result).forEach(rsm => {
+      const providers = ['WW-Provider', 'True Tech', 'เถ้าแก่เทค'];
+      providers.forEach(provider => {
+        const installCount = result[rsm][`${provider}_Installation`] || 0;
+        const repairCount = result[rsm][`${provider}_Repair`] || 0;
+        result[rsm][provider] = installCount + repairCount;
+      });
+    });
 
-    return NextResponse.json(result);
+    // Calculate REAL Grand Total (unique national_id across ALL RSMs)
+    const grandTotalSet = new Set<string>();
+    headsOnly.forEach((row: any) => {
+      const nationalId = row.national_id || "";
+      if (nationalId && nationalId !== "null" && nationalId !== "undefined") {
+        grandTotalSet.add(nationalId);
+      }
+    });
+    const grandTotal = grandTotalSet.size;
+
+    console.log('📊 Workgroup result:', result);
+    console.log('📊 Workgroup Grand Total (unique):', grandTotal);
+
+    return NextResponse.json({ data: result, grandTotal });
 
   } catch (e: any) {
     console.error('❌ Workgroup count API error:', e);

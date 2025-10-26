@@ -13,11 +13,12 @@ interface PivotData {
 interface PivotTableProps {
   data: PivotData[];
   workgroupData?: Record<string, Record<string, number>>;
+  workgroupGrandTotal?: number;
   technicianData?: Record<string, Record<string, number>>;
   loading?: boolean;
 }
 
-export default function PivotTable({ data, workgroupData = {}, technicianData = {}, loading = false }: PivotTableProps) {
+export default function PivotTable({ data, workgroupData = {}, workgroupGrandTotal = 0, technicianData = {}, loading = false }: PivotTableProps) {
   if (loading) {
     return (
       <div style={{ 
@@ -150,10 +151,9 @@ export default function PivotTable({ data, workgroupData = {}, technicianData = 
     });
   });
 
-  // Calculate workgroup grand totals
+  // Calculate workgroup grand totals (for provider/worktype breakdown only, use prop for actual grand total)
   const workgroupProviderTotals: {[provider: string]: {[workType: string]: number}} = {};
   const workgroupRsmTotals: {[rsm: string]: {[provider: string]: number}} = {};
-  let workgroupGrandTotal = 0;
 
   providers.forEach(provider => {
     workgroupProviderTotals[provider] = { Installation: 0, Repair: 0 };
@@ -171,15 +171,6 @@ export default function PivotTable({ data, workgroupData = {}, technicianData = 
       const installCount = workgroupData[rsm]?.[`${provider}_Installation`] || 0;
       const repairCount = workgroupData[rsm]?.[`${provider}_Repair`] || 0;
       workgroupRsmTotals[rsm][provider] = installCount + repairCount;
-    });
-  });
-
-  // Calculate workgroup grand total from technicianGrandTotal
-  rsms.forEach(rsm => {
-    providers.forEach(provider => {
-      const installCount = workgroupData[rsm]?.[`${provider}_Installation`] || 0;
-      const repairCount = workgroupData[rsm]?.[`${provider}_Repair`] || 0;
-      workgroupGrandTotal += installCount + repairCount;
     });
   });
 
