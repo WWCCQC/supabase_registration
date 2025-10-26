@@ -373,7 +373,15 @@ export default function TechBrowser() {
     const startTime = performance.now();
     setChartLoading(true);
     try {
-      const res = await fetch("/api/chart/rsm-workgroup", { cache: "no-store" });
+      // Add cache-busting parameter
+      const cacheBuster = Date.now();
+      const res = await fetch(`/api/chart/rsm-workgroup?_t=${cacheBuster}`, { 
+        cache: "no-store",
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache'
+        }
+      });
       const json = await res.json();
       
       if (!res.ok) throw new Error(json?.error || "Failed to fetch chart data");
@@ -700,10 +708,18 @@ export default function TechBrowser() {
     setTechnicianLoading(true);
     try {
       const params = buildFilterParamsOnly();
+      // Add cache-busting parameter
+      params.set('_t', Date.now().toString());
       const url = `/api/chart/technician-count?${params.toString()}`;
       console.log('👨‍💼 Fetching technician data from:', url);
       
-      const res = await fetch(url, { cache: "no-store" });
+      const res = await fetch(url, { 
+        cache: "no-store",
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache'
+        }
+      });
       const json = await res.json();
       
       if (!res.ok) {
@@ -1015,6 +1031,82 @@ export default function TechBrowser() {
   const start = (page - 1) * 10 + 1;
   const end = Math.min(total, page * 10);
 
+  /* Manual Refresh Function */
+  const [isRefreshing, setIsRefreshing] = React.useState(false);
+  
+  async function handleManualRefresh() {
+    setIsRefreshing(true);
+    console.log('🔄 Manual refresh triggered!');
+    
+    try {
+      // Refresh all data with cache-busting
+      await Promise.all([
+        fetchData(page),
+        fetchKpis(),
+        fetchChartData(),
+        fetchDepotCodeCount(),
+        fetchDepotCodesByProvider(),
+        fetchPivotData(),
+        fetchWorkgroupData(),
+        fetchTechnicianData()
+      ]);
+      
+      // Show success notification
+      if (typeof window !== 'undefined') {
+        const notification = document.createElement('div');
+        notification.style.cssText = `
+          position: fixed;
+          top: 80px;
+          right: 20px;
+          background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+          color: white;
+          padding: 16px 24px;
+          border-radius: 8px;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+          z-index: 10000;
+          font-size: 14px;
+          font-weight: 500;
+          animation: slideIn 0.3s ease-out;
+        `;
+        notification.textContent = '✅ รีเฟรชข้อมูลสำเร็จ!';
+        document.body.appendChild(notification);
+
+        setTimeout(() => {
+          notification.style.animation = 'slideOut 0.3s ease-in';
+          setTimeout(() => notification.remove(), 300);
+        }, 2000);
+      }
+      
+      console.log('✅ Manual refresh completed!');
+    } catch (error) {
+      console.error('❌ Manual refresh error:', error);
+      
+      // Show error notification
+      if (typeof window !== 'undefined') {
+        const notification = document.createElement('div');
+        notification.style.cssText = `
+          position: fixed;
+          top: 80px;
+          right: 20px;
+          background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+          color: white;
+          padding: 16px 24px;
+          border-radius: 8px;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+          z-index: 10000;
+          font-size: 14px;
+          font-weight: 500;
+        `;
+        notification.textContent = '❌ เกิดข้อผิดพลาดในการรีเฟรช';
+        document.body.appendChild(notification);
+
+        setTimeout(() => notification.remove(), 3000);
+      }
+    } finally {
+      setIsRefreshing(false);
+    }
+  }
+
   /* ---------- Render ---------- */
   return (
     <div>
@@ -1066,8 +1158,63 @@ export default function TechBrowser() {
           background: "#eeeeee",
           padding: "16px",
           borderRadius: "8px",
-          width: "650px"
+          width: "650px",
+          position: "relative"
         }}>
+        
+        {/* Manual Refresh Button */}
+        <button
+          onClick={handleManualRefresh}
+          disabled={isRefreshing}
+          style={{
+            position: "absolute",
+            top: "8px",
+            right: "8px",
+            background: isRefreshing 
+              ? "linear-gradient(135deg, #9ca3af 0%, #6b7280 100%)" 
+              : "linear-gradient(135deg, #10b981 0%, #059669 100%)",
+            color: "white",
+            border: "none",
+            borderRadius: "8px",
+            padding: "8px 16px",
+            fontSize: "13px",
+            fontWeight: "600",
+            cursor: isRefreshing ? "not-allowed" : "pointer",
+            boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
+            display: "flex",
+            alignItems: "center",
+            gap: "6px",
+            transition: "all 0.2s ease",
+            zIndex: 10,
+            opacity: isRefreshing ? 0.7 : 1
+          }}
+          onMouseEnter={(e) => {
+            if (!isRefreshing) {
+              e.currentTarget.style.transform = "translateY(-1px)";
+              e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.2)";
+            }
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = "translateY(0)";
+            e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.15)";
+          }}
+          title="รีเฟรชข้อมูลทั้งหมดทันที (Force refresh all data)"
+        >
+          <span style={{
+            display: "inline-block",
+            animation: isRefreshing ? "spin 1s linear infinite" : "none"
+          }}>
+            🔄
+          </span>
+          {isRefreshing ? "กำลังรีเฟรช..." : "รีเฟรชข้อมูล"}
+        </button>
+        <style jsx>{`
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+        `}</style>
+
         {/* บรรทัดที่ 1: Technicians, Installation, Repair + Depot */}
         <div
           style={{
