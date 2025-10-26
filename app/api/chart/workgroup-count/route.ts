@@ -168,6 +168,7 @@ export async function GET(req: Request) {
     console.log('📊 Workgroup result:', result);
     console.log('📊 Workgroup Grand Total (unique):', grandTotal);
     console.log('📊 Timestamp:', new Date().toISOString());
+    console.log('📊 Version: 2.0 - Fixed unique counting');
 
     return NextResponse.json(
       { 
