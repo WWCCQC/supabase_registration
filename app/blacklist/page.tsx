@@ -3,7 +3,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import Navbar from '@/components/Navbar';
-import * as XLSX from 'xlsx';
 
 interface BlacklistItem {
   id: number;
@@ -21,7 +20,6 @@ function BlacklistContent() {
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
-  const [searchTerm, setSearchTerm] = useState('');
   const itemsPerPage = 50;
 
   // Advanced search filters
@@ -41,7 +39,7 @@ function BlacklistContent() {
   // Reset to page 1 when search filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchCompany, searchId, searchName, searchSurename, searchTerm]);
+  }, [searchCompany, searchId, searchName, searchSurename]);
 
   const fetchBlacklist = async () => {
     try {
@@ -122,47 +120,8 @@ function BlacklistContent() {
       );
     }
     
-    // Apply general search if no advanced filters
-    if (!searchCompany && !searchId && !searchName && !searchSurename && searchTerm) {
-      const searchLower = searchTerm.toLowerCase();
-      filtered = filtered.filter((row) => {
-        return Object.values(row).some((value) => 
-          value?.toString().toLowerCase().includes(searchLower)
-        );
-      });
-    }
-    
     return filtered;
-  }, [allData, searchTerm, searchCompany, searchId, searchName, searchSurename]);
-
-  const exportToExcel = () => {
-    try {
-      const dataToExport = (searchTerm || searchCompany || searchId || searchName || searchSurename) ? filteredData : allData;
-      const columns = dataToExport.length > 0 
-        ? Object.keys(dataToExport[0]).filter(col => col !== 'วันที่ Update') 
-        : [];
-
-      const exportData = dataToExport.map(row => {
-        const newRow: any = {};
-        columns.forEach(col => {
-          newRow[col] = row[col];
-        });
-        return newRow;
-      });
-
-      const worksheet = XLSX.utils.json_to_sheet(exportData);
-      const workbook = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(workbook, worksheet, 'Blacklist');
-      
-      const date = new Date().toISOString().split('T')[0];
-      XLSX.writeFile(workbook, `Blacklist_${date}.xlsx`);
-      
-      console.log('✅ Exported', exportData.length, 'records to Excel');
-    } catch (err) {
-      console.error('Error exporting to Excel:', err);
-      alert('เกิดข้อผิดพลาดในการ export ไฟล์');
-    }
-  };
+  }, [allData, searchCompany, searchId, searchName, searchSurename]);
 
   // Pagination for filtered data
   const paginatedData = useMemo(() => {
@@ -438,54 +397,7 @@ function BlacklistContent() {
           )}
         </div>
         
-        {/* General Search and Export Bar */}
-        <div style={{
-          display: 'flex',
-          gap: '12px',
-          alignItems: 'center',
-          flexWrap: 'wrap'
-        }}>
-          <input
-            type="text"
-            placeholder="ค้นหาทั่วไป... (ทุกคอลัมน์)"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            style={{
-              flex: '1',
-              minWidth: '300px',
-              padding: '10px 16px',
-              fontSize: '14px',
-              border: '1px solid #d1d5db',
-              borderRadius: '6px',
-              outline: 'none'
-            }}
-            onFocus={(e) => e.target.style.borderColor = '#3b82f6'}
-            onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
-          />
-          
-          <button
-            onClick={exportToExcel}
-            style={{
-              padding: '10px 20px',
-              backgroundColor: '#10b981',
-              color: 'white',
-              border: 'none',
-              borderRadius: '6px',
-              cursor: 'pointer',
-              fontSize: '14px',
-              fontWeight: '500',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px'
-            }}
-            onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#059669'}
-            onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#10b981'}
-          >
-            📥 Export Excel
-          </button>
-        </div>
-        
-        {(searchTerm || searchCompany || searchId || searchName || searchSurename) && (
+        {(searchCompany || searchId || searchName || searchSurename) && (
           <div style={{ marginTop: '12px', fontSize: '14px', color: '#6b7280' }}>
             พบ {filteredData.length} รายการจากการค้นหา
           </div>
@@ -500,7 +412,7 @@ function BlacklistContent() {
           borderRadius: '8px'
         }}>
           <p style={{ fontSize: '16px', color: '#6b7280' }}>
-            {(searchTerm || searchCompany || searchId || searchName || searchSurename) 
+            {(searchCompany || searchId || searchName || searchSurename) 
               ? 'ไม่พบข้อมูลที่ค้นหา' 
               : 'ไม่พบข้อมูลในตาราง Blacklist'}
           </p>
