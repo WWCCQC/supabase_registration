@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from 'react';
+import { createClient } from '@supabase/supabase-js';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import Navbar from '@/components/Navbar';
 import * as XLSX from 'xlsx';
@@ -82,6 +83,77 @@ function TechTransactionContent() {
     document.addEventListener('mousedown', handleClickOutside);
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  // Setup Realtime subscription for transaction table
+  useEffect(() => {
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
+
+    console.log('🔔 Setting up Realtime subscription for transaction table...');
+
+    const channel = supabase
+      .channel('transaction-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'transaction'
+        },
+        (payload) => {
+          console.log('🔔 Transaction data changed!', payload);
+          console.log('🔄 Auto-refreshing data...');
+
+          const eventType = payload.eventType;
+          const message = eventType === 'INSERT' ? '✅ มีข้อมูล Transaction ใหม่' :
+                         eventType === 'UPDATE' ? '🔄 ข้อมูล Transaction ถูกอัพเดท' :
+                         eventType === 'DELETE' ? '🗑️ ข้อมูล Transaction ถูกลบ' :
+                         '🔄 ข้อมูลมีการเปลี่ยนแปลง';
+          
+          // แสดง notification
+          if (typeof window !== 'undefined') {
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+              position: fixed;
+              top: 80px;
+              right: 20px;
+              background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+              color: white;
+              padding: 16px 24px;
+              border-radius: 8px;
+              box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+              z-index: 10000;
+              font-size: 14px;
+              font-weight: 500;
+              animation: slideIn 0.3s ease-out;
+            `;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+              notification.style.animation = 'slideOut 0.3s ease-in';
+              setTimeout(() => notification.remove(), 300);
+            }, 3000);
+          }
+
+          // รีเฟรชข้อมูลทั้งหมด
+          fetchAllData();
+          fetchFilterOptions();
+        }
+      )
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          console.log('✅ Transaction Realtime subscription active!');
+        }
+      });
+
+    return () => {
+      console.log('🔕 Cleaning up Transaction Realtime subscription');
+      supabase.removeChannel(channel);
     };
   }, []);
 
@@ -2412,4 +2484,33 @@ export default function TechTransactionPage() {
       <TechTransactionContent />
     </ProtectedRoute>
   );
+}
+
+// Add CSS animations for notifications (Tech-Transaction)
+if (typeof window !== 'undefined' && !document.getElementById('transaction-notification-styles')) {
+  const style = document.createElement('style');
+  style.id = 'transaction-notification-styles';
+  style.textContent = `
+    @keyframes slideIn {
+      from {
+        transform: translateX(400px);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+    @keyframes slideOut {
+      from {
+        transform: translateX(0);
+        opacity: 1;
+      }
+      to {
+        transform: translateX(400px);
+        opacity: 0;
+      }
+    }
+  `;
+  document.head.appendChild(style);
 }

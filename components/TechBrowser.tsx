@@ -1,6 +1,7 @@
 "use client";
 import React from "react";
 import dynamic from "next/dynamic";
+import { createClient } from '@supabase/supabase-js';
 import { getFieldLabel, SECTION_LABELS, KPI_LABELS } from "../lib/fieldLabels";
 import { useAuth } from "@/lib/useAuth";
 import PivotTableComponent from "./PivotTable";
@@ -899,6 +900,89 @@ export default function TechBrowser() {
       }
     }
   }, [loading, kpiLoading, chartLoading, initialLoadComplete, componentStartTime]);
+
+  /* Setup Realtime subscription for technician table */
+  React.useEffect(() => {
+    // สร้าง Supabase client
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
+
+    console.log('🔔 Setting up Realtime subscription for technician table...');
+
+    // Subscribe to changes
+    const channel = supabase
+      .channel('technician-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',              // ฟังทุก event (INSERT, UPDATE, DELETE)
+          schema: 'public',
+          table: 'technician'
+        },
+        (payload) => {
+          console.log('🔔 Technician data changed!', payload);
+          console.log('🔄 Auto-refreshing data...');
+
+          // แสดง notification
+          const eventType = payload.eventType;
+          const message = eventType === 'INSERT' ? '✅ มีข้อมูลช่างใหม่' :
+                         eventType === 'UPDATE' ? '🔄 ข้อมูลช่างถูกอัพเดท' :
+                         eventType === 'DELETE' ? '🗑️ ข้อมูลช่างถูกลบ' :
+                         '🔄 ข้อมูลมีการเปลี่ยนแปลง';
+          
+          // แสดง toast notification (ถ้าต้องการ)
+          if (typeof window !== 'undefined') {
+            // สร้าง notification element
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+              position: fixed;
+              top: 80px;
+              right: 20px;
+              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+              color: white;
+              padding: 16px 24px;
+              border-radius: 8px;
+              box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+              z-index: 10000;
+              font-size: 14px;
+              font-weight: 500;
+              animation: slideIn 0.3s ease-out;
+            `;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+
+            // ลบหลัง 3 วินาที
+            setTimeout(() => {
+              notification.style.animation = 'slideOut 0.3s ease-in';
+              setTimeout(() => notification.remove(), 300);
+            }, 3000);
+          }
+
+          // อัพเดทข้อมูลทั้งหมด
+          fetchData(page);
+          fetchKpis();
+          fetchChartData();
+          fetchDepotCodeCount();
+          fetchDepotCodesByProvider();
+          fetchPivotData();
+          fetchWorkgroupData();
+          fetchTechnicianData();
+        }
+      )
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          console.log('✅ Realtime subscription active!');
+        }
+      });
+
+    // Cleanup
+    return () => {
+      console.log('🔕 Cleaning up Realtime subscription');
+      supabase.removeChannel(channel);
+    };
+  }, [page]);
 
   const start = (page - 1) * 10 + 1;
   const end = Math.min(total, page * 10);
@@ -2262,6 +2346,35 @@ function Field({
       </div>
     </div>
   );
+}
+
+// Add CSS animations for notifications
+if (typeof window !== 'undefined' && !document.getElementById('realtime-notification-styles')) {
+  const style = document.createElement('style');
+  style.id = 'realtime-notification-styles';
+  style.textContent = `
+    @keyframes slideIn {
+      from {
+        transform: translateX(400px);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+    @keyframes slideOut {
+      from {
+        transform: translateX(0);
+        opacity: 1;
+      }
+      to {
+        transform: translateX(400px);
+        opacity: 0;
+      }
+    }
+  `;
+  document.head.appendChild(style);
 }
 
 function WorkExperienceField({ row }: { row: Row }) {
