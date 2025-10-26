@@ -92,52 +92,43 @@ export async function GET(req: Request) {
     console.log('📊 Total records fetched:', allData.length);
 
     // Filter for หัวหน้า (heads) only after fetching all data
-    const headsOnly = allData.filter((row: any) => row.workgroup_status === "หัวหน้า");
+    // Support variations: "หัวหน้า", "หัวหน้", or any text starting with "หัวหน"
+    const headsOnly = allData.filter((row: any) => {
+      const status = row.workgroup_status || "";
+      return status === "หัวหน้า" || status === "หัวหน้" || status.startsWith("หัวหน");
+    });
     console.log('📊 Total workgroup heads after filtering:', headsOnly.length);
+    console.log('📊 Sample statuses found:', [...new Set(allData.map((r: any) => r.workgroup_status).filter(Boolean))].slice(0, 10));
 
-    // Process data into pivot format - Count unique national_id
-    const result: Record<string, Record<string, Set<string>>> = {};
+    // Process data into pivot format - Count ROWS (not unique national_id)
+    // Because one person can be head of both Installation AND Repair workgroups
+    const result: Record<string, Record<string, number>> = {};
 
     headsOnly.forEach((row: any) => {
       const rsm = row.rsm || "Unknown";
       const provider = row.provider || "Unknown";
       const workType = row.work_type || "Unknown";
-      const nationalId = row.national_id;
-
-      if (!nationalId) return; // Skip rows without national_id
 
       if (!result[rsm]) {
         result[rsm] = {};
       }
 
-      // Count unique national_id by provider_worktype combination
+      // Count rows by provider_worktype combination
       if (workType === "Installation") {
         const key = `${provider}_Installation`;
-        if (!result[rsm][key]) result[rsm][key] = new Set();
-        result[rsm][key].add(nationalId);
+        result[rsm][key] = (result[rsm][key] || 0) + 1;
       } else if (workType === "Repair") {
         const key = `${provider}_Repair`;
-        if (!result[rsm][key]) result[rsm][key] = new Set();
-        result[rsm][key].add(nationalId);
+        result[rsm][key] = (result[rsm][key] || 0) + 1;
       }
 
-      // Count unique national_id by provider totals
-      if (!result[rsm][provider]) result[rsm][provider] = new Set();
-      result[rsm][provider].add(nationalId);
+      // Count rows by provider totals
+      result[rsm][provider] = (result[rsm][provider] || 0) + 1;
     });
 
-    // Convert Sets to counts
-    const finalResult: Record<string, Record<string, number>> = {};
-    Object.keys(result).forEach(rsm => {
-      finalResult[rsm] = {};
-      Object.keys(result[rsm]).forEach(key => {
-        finalResult[rsm][key] = result[rsm][key].size;
-      });
-    });
+    console.log('📊 Workgroup result:', result);
 
-    console.log('📊 Workgroup result:', finalResult);
-
-    return NextResponse.json(finalResult);
+    return NextResponse.json(result);
 
   } catch (e: any) {
     console.error('❌ Workgroup count API error:', e);
