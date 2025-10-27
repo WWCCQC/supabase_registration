@@ -1820,7 +1820,7 @@ function TechTransactionContent() {
                   color: '#374151',
                   marginBottom: '16px'
                 }}>
-                  สัดส่วนช่างลาออกตาม Provider (ถึง Sep)
+                  สัดส่วนช่างลาออกตาม Provider (as of September)
                 </h2>
                 {pieData.length > 0 ? (
                   <>
