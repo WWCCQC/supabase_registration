@@ -1667,9 +1667,9 @@ function TechTransactionContent() {
           // คำนวณข้อมูล Pie Chart สำหรับช่างลาออกแยกตาม Provider (ถึง September)
           const monthsToInclude = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September'];
           
-          // ใช้ข้อมูลที่เหมาะสม: ถ้ามี filter/search ใช้ filteredData, ถ้าไม่มีใช้ allData
+          // ใช้ filteredAllData เพื่อแสดงข้อมูลทั้งหมดที่ผ่าน filter (ไม่ใช่แค่หน้าปัจจุบัน)
           const dataForPieChart = (selectedYears.length > 0 || selectedMonths.length > 0 || selectedWeeks.length > 0 || selectedDates.length > 0 || searchTerm) 
-            ? filteredData 
+            ? filteredAllData 
             : allData;
           
           const providerResignedData = dataForPieChart
