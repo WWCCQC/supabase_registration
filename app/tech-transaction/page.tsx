@@ -1751,7 +1751,7 @@ function TechTransactionContent() {
                           <text
                             x={x + width / 2}
                             y={y - 10}
-                            fill="#374151"
+                            fill="#ef4444"
                             fontSize={11}
                             fontWeight="600"
                             textAnchor="middle"
@@ -1764,16 +1764,6 @@ function TechTransactionContent() {
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>
-              
-              {/* Custom Labels on Chart */}
-              <div style={{ 
-                textAlign: 'center', 
-                fontSize: '12px', 
-                color: '#6b7280',
-                marginTop: '8px'
-              }}>
-                💡 สีเขียว = ช่างทั้งหมด | สีแดง = ช่างลาออก (แสดงจำนวนและเปอร์เซ็นต์)
-              </div>
             </div>
           ) : null;
         })()}
