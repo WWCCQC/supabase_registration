@@ -1667,7 +1667,7 @@ function TechTransactionContent() {
           // คำนวณข้อมูล Pie Chart สำหรับช่างลาออกแยกตาม Provider (ถึง September)
           const monthsToInclude = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September'];
           
-          const providerResignedData = filteredData
+          const providerResignedData = allData
             .filter((item: any) => {
               // กรองเฉพาะ Register = "ช่างลาออก"
               if (item.Register !== 'ช่างลาออก') return false;
