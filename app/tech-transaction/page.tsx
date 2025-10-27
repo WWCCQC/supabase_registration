@@ -1719,7 +1719,7 @@ function TechTransactionContent() {
                   color: '#374151',
                   marginBottom: '16px'
                 }}>
-                  จำนวนช่างทั้งหมด vs ช่างลาออก รายเดือน
+                  จำนวนช่างทั้งหมด vs ช่างลาออก รายเดือน (as of September)
                 </h2>
                 <ResponsiveContainer width="100%" height={450}>
                   <BarChart
