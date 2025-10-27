@@ -1630,6 +1630,158 @@ function TechTransactionContent() {
           </div>
         )}
 
+        {/* Monthly Technician Comparison Chart (Total vs Resigned) */}
+        {(() => {
+          // ข้อมูลจำนวนช่างทั้งหมดแต่ละเดือน
+          const monthlyTechnicianData = [
+            { month: 'January', total: 2632 },
+            { month: 'February', total: 2660 },
+            { month: 'March', total: 2704 },
+            { month: 'April', total: 2679 },
+            { month: 'May', total: 3154 },
+            { month: 'June', total: 3147 },
+            { month: 'July', total: 2987 },
+            { month: 'August', total: 2971 },
+            { month: 'September', total: 2932 }
+          ];
+
+          // คำนวณจำนวนช่างลาออกจาก monthlyChartData
+          const resignedByMonth = monthlyChartData.reduce((acc: any, item: any) => {
+            acc[item.month] = item['ช่างลาออก'] || 0;
+            return acc;
+          }, {});
+
+          // รวมข้อมูลและคำนวณ %
+          const comparisonData = monthlyTechnicianData.map(item => {
+            const resigned = resignedByMonth[item.month] || 0;
+            const remaining = item.total - resigned;
+            const resignedPercent = item.total > 0 ? ((resigned / item.total) * 100).toFixed(1) : '0';
+            
+            return {
+              month: item.month,
+              'ช่างทั้งหมด': item.total,
+              'ช่างลาออก': resigned,
+              'ช่างคงเหลือ': remaining,
+              'เปอร์เซ็นต์ลาออก': resignedPercent
+            };
+          });
+
+          return comparisonData.length > 0 ? (
+            <div style={{
+              marginBottom: '32px',
+              backgroundColor: '#f9fafb',
+              borderRadius: '12px',
+              padding: '24px',
+              boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
+            }}>
+              <h2 style={{
+                fontSize: '18px',
+                fontWeight: '600',
+                color: '#374151',
+                marginBottom: '16px'
+              }}>
+                จำนวนช่างทั้งหมด vs ช่างลาออก รายเดือน
+              </h2>
+              <ResponsiveContainer width="100%" height={400}>
+                <BarChart
+                  data={comparisonData}
+                  margin={{ top: 20, right: 30, left: 20, bottom: 80 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                  <XAxis 
+                    dataKey="month" 
+                    stroke="#6b7280"
+                    style={{ fontSize: '12px' }}
+                    angle={-45}
+                    textAnchor="end"
+                    height={80}
+                  />
+                  <YAxis 
+                    stroke="#6b7280"
+                    style={{ fontSize: '12px' }}
+                  />
+                  <Tooltip 
+                    contentStyle={{
+                      backgroundColor: 'white',
+                      border: '1px solid #e5e7eb',
+                      borderRadius: '8px',
+                      padding: '12px'
+                    }}
+                    formatter={(value: any, name: string) => {
+                      if (name === 'เปอร์เซ็นต์ลาออก') return `${value}%`;
+                      return value.toLocaleString();
+                    }}
+                  />
+                  <Legend 
+                    wrapperStyle={{
+                      paddingTop: '20px'
+                    }}
+                  />
+                  <Bar 
+                    dataKey="ช่างคงเหลือ" 
+                    stackId="a"
+                    fill="#10b981"
+                    label={{ 
+                      position: 'inside', 
+                      fill: 'white', 
+                      fontSize: 11,
+                      formatter: (value: any) => (value && value > 0) ? value.toLocaleString() : ''
+                    }}
+                  />
+                  <Bar 
+                    dataKey="ช่างลาออก" 
+                    stackId="a"
+                    fill="#ef4444"
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+              
+              {/* Custom Labels on Chart */}
+              <div style={{ 
+                textAlign: 'center', 
+                fontSize: '12px', 
+                color: '#6b7280',
+                marginTop: '8px'
+              }}>
+                💡 กราฟแสดงจำนวนช่างทั้งหมด (สีเขียว + สีแดง) และเปอร์เซ็นต์ช่างลาออก
+              </div>
+              
+              {/* Summary Table */}
+              <div style={{ marginTop: '24px', overflowX: 'auto' }}>
+                <table style={{
+                  width: '100%',
+                  borderCollapse: 'collapse',
+                  fontSize: '13px',
+                  backgroundColor: 'white',
+                  borderRadius: '8px',
+                  overflow: 'hidden'
+                }}>
+                  <thead>
+                    <tr style={{ backgroundColor: '#f3f4f6' }}>
+                      <th style={{ padding: '10px', textAlign: 'left', borderBottom: '2px solid #e5e7eb', fontWeight: '600', color: '#374151' }}>เดือน</th>
+                      <th style={{ padding: '10px', textAlign: 'center', borderBottom: '2px solid #e5e7eb', fontWeight: '600', color: '#374151' }}>ช่างทั้งหมด</th>
+                      <th style={{ padding: '10px', textAlign: 'center', borderBottom: '2px solid #e5e7eb', fontWeight: '600', color: '#ef4444' }}>ช่างลาออก</th>
+                      <th style={{ padding: '10px', textAlign: 'center', borderBottom: '2px solid #e5e7eb', fontWeight: '600', color: '#10b981' }}>ช่างคงเหลือ</th>
+                      <th style={{ padding: '10px', textAlign: 'center', borderBottom: '2px solid #e5e7eb', fontWeight: '600', color: '#f59e0b' }}>% ลาออก</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {comparisonData.map((item, index) => (
+                      <tr key={index} style={{ borderBottom: '1px solid #e5e7eb' }}>
+                        <td style={{ padding: '10px', color: '#374151' }}>{item.month}</td>
+                        <td style={{ padding: '10px', textAlign: 'center', fontWeight: '600', color: '#374151' }}>{item['ช่างทั้งหมด'].toLocaleString()}</td>
+                        <td style={{ padding: '10px', textAlign: 'center', fontWeight: '600', color: '#ef4444' }}>{item['ช่างลาออก'].toLocaleString()}</td>
+                        <td style={{ padding: '10px', textAlign: 'center', fontWeight: '600', color: '#10b981' }}>{item['ช่างคงเหลือ'].toLocaleString()}</td>
+                        <td style={{ padding: '10px', textAlign: 'center', fontWeight: '600', color: '#f59e0b' }}>{item['เปอร์เซ็นต์ลาออก']}%</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          ) : null;
+        })()}
+
         {/* RSM Chart and Pivot Table - Side by Side */}
         {rsmChartData.length > 0 && (
           <div style={{
