@@ -5,7 +5,7 @@ import { createClient } from '@supabase/supabase-js';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import Navbar from '@/components/Navbar';
 import * as XLSX from 'xlsx';
-import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell, LabelList } from 'recharts';
 
 interface TransactionItem {
   Year?: number;
@@ -1654,15 +1654,13 @@ function TechTransactionContent() {
           // รวมข้อมูลและคำนวณ %
           const comparisonData = monthlyTechnicianData.map(item => {
             const resigned = resignedByMonth[item.month] || 0;
-            const remaining = item.total - resigned;
             const resignedPercent = item.total > 0 ? ((resigned / item.total) * 100).toFixed(1) : '0';
             
             return {
               month: item.month,
               'ช่างทั้งหมด': item.total,
               'ช่างลาออก': resigned,
-              'ช่างคงเหลือ': remaining,
-              'เปอร์เซ็นต์ลาออก': resignedPercent
+              resignedPercent: resignedPercent
             };
           });
 
@@ -1682,10 +1680,10 @@ function TechTransactionContent() {
               }}>
                 จำนวนช่างทั้งหมด vs ช่างลาออก รายเดือน
               </h2>
-              <ResponsiveContainer width="100%" height={400}>
+              <ResponsiveContainer width="100%" height={450}>
                 <BarChart
                   data={comparisonData}
-                  margin={{ top: 20, right: 30, left: 20, bottom: 80 }}
+                  margin={{ top: 40, right: 30, left: 20, bottom: 80 }}
                 >
                   <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                   <XAxis 
@@ -1707,9 +1705,11 @@ function TechTransactionContent() {
                       borderRadius: '8px',
                       padding: '12px'
                     }}
-                    formatter={(value: any, name: string) => {
-                      if (name === 'เปอร์เซ็นต์ลาออก') return `${value}%`;
-                      return value.toLocaleString();
+                    formatter={(value: any, name: string, props: any) => {
+                      if (name === 'ช่างลาออก') {
+                        return [`${value.toLocaleString()} (${props.payload.resignedPercent}%)`, name];
+                      }
+                      return [value.toLocaleString(), name];
                     }}
                   />
                   <Legend 
@@ -1718,21 +1718,50 @@ function TechTransactionContent() {
                     }}
                   />
                   <Bar 
-                    dataKey="ช่างคงเหลือ" 
-                    stackId="a"
+                    dataKey="ช่างทั้งหมด" 
                     fill="#10b981"
-                    label={{ 
-                      position: 'inside', 
-                      fill: 'white', 
-                      fontSize: 11,
-                      formatter: (value: any) => (value && value > 0) ? value.toLocaleString() : ''
-                    }}
-                  />
+                    radius={[8, 8, 0, 0]}
+                  >
+                    <LabelList 
+                      dataKey="ช่างทั้งหมด" 
+                      position="top" 
+                      fill="#10b981"
+                      fontSize={11}
+                      fontWeight="600"
+                      formatter={(value: any) => value.toLocaleString()}
+                    />
+                  </Bar>
                   <Bar 
                     dataKey="ช่างลาออก" 
-                    stackId="a"
                     fill="#ef4444"
-                  />
+                    radius={[8, 8, 0, 0]}
+                  >
+                    <LabelList 
+                      dataKey="ช่างลาออก"
+                      position="center"
+                      fill="white"
+                      fontSize={11}
+                      fontWeight="600"
+                      content={(props: any) => {
+                        const { x, y, width, value, index } = props;
+                        const item = comparisonData[index];
+                        if (!item || !value) return null;
+                        
+                        return (
+                          <text
+                            x={x + width / 2}
+                            y={y - 10}
+                            fill="#374151"
+                            fontSize={11}
+                            fontWeight="600"
+                            textAnchor="middle"
+                          >
+                            {`${value.toLocaleString()} (${item.resignedPercent}%)`}
+                          </text>
+                        );
+                      }}
+                    />
+                  </Bar>
                 </BarChart>
               </ResponsiveContainer>
               
@@ -1743,40 +1772,7 @@ function TechTransactionContent() {
                 color: '#6b7280',
                 marginTop: '8px'
               }}>
-                💡 กราฟแสดงจำนวนช่างทั้งหมด (สีเขียว + สีแดง) และเปอร์เซ็นต์ช่างลาออก
-              </div>
-              
-              {/* Summary Table */}
-              <div style={{ marginTop: '24px', overflowX: 'auto' }}>
-                <table style={{
-                  width: '100%',
-                  borderCollapse: 'collapse',
-                  fontSize: '13px',
-                  backgroundColor: 'white',
-                  borderRadius: '8px',
-                  overflow: 'hidden'
-                }}>
-                  <thead>
-                    <tr style={{ backgroundColor: '#f3f4f6' }}>
-                      <th style={{ padding: '10px', textAlign: 'left', borderBottom: '2px solid #e5e7eb', fontWeight: '600', color: '#374151' }}>เดือน</th>
-                      <th style={{ padding: '10px', textAlign: 'center', borderBottom: '2px solid #e5e7eb', fontWeight: '600', color: '#374151' }}>ช่างทั้งหมด</th>
-                      <th style={{ padding: '10px', textAlign: 'center', borderBottom: '2px solid #e5e7eb', fontWeight: '600', color: '#ef4444' }}>ช่างลาออก</th>
-                      <th style={{ padding: '10px', textAlign: 'center', borderBottom: '2px solid #e5e7eb', fontWeight: '600', color: '#10b981' }}>ช่างคงเหลือ</th>
-                      <th style={{ padding: '10px', textAlign: 'center', borderBottom: '2px solid #e5e7eb', fontWeight: '600', color: '#f59e0b' }}>% ลาออก</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {comparisonData.map((item, index) => (
-                      <tr key={index} style={{ borderBottom: '1px solid #e5e7eb' }}>
-                        <td style={{ padding: '10px', color: '#374151' }}>{item.month}</td>
-                        <td style={{ padding: '10px', textAlign: 'center', fontWeight: '600', color: '#374151' }}>{item['ช่างทั้งหมด'].toLocaleString()}</td>
-                        <td style={{ padding: '10px', textAlign: 'center', fontWeight: '600', color: '#ef4444' }}>{item['ช่างลาออก'].toLocaleString()}</td>
-                        <td style={{ padding: '10px', textAlign: 'center', fontWeight: '600', color: '#10b981' }}>{item['ช่างคงเหลือ'].toLocaleString()}</td>
-                        <td style={{ padding: '10px', textAlign: 'center', fontWeight: '600', color: '#f59e0b' }}>{item['เปอร์เซ็นต์ลาออก']}%</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                💡 สีเขียว = ช่างทั้งหมด | สีแดง = ช่างลาออก (แสดงจำนวนและเปอร์เซ็นต์)
               </div>
             </div>
           ) : null;
