@@ -1857,49 +1857,6 @@ function TechTransactionContent() {
                         />
                       </PieChart>
                     </ResponsiveContainer>
-                    
-                    {/* Summary Table */}
-                    <div style={{ marginTop: '16px' }}>
-                      <table style={{
-                        width: '100%',
-                        borderCollapse: 'collapse',
-                        fontSize: '13px',
-                        backgroundColor: 'white',
-                        borderRadius: '8px',
-                        overflow: 'hidden'
-                      }}>
-                        <thead>
-                          <tr style={{ backgroundColor: '#f3f4f6' }}>
-                            <th style={{ padding: '10px', textAlign: 'left', borderBottom: '2px solid #e5e7eb', fontWeight: '600', color: '#374151' }}>Provider</th>
-                            <th style={{ padding: '10px', textAlign: 'center', borderBottom: '2px solid #e5e7eb', fontWeight: '600', color: '#374151' }}>จำนวน</th>
-                            <th style={{ padding: '10px', textAlign: 'center', borderBottom: '2px solid #e5e7eb', fontWeight: '600', color: '#374151' }}>%</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {pieData.map((item, index) => (
-                            <tr key={index} style={{ borderBottom: '1px solid #e5e7eb' }}>
-                              <td style={{ padding: '10px', color: '#374151', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                <span style={{ 
-                                  display: 'inline-block', 
-                                  width: '12px', 
-                                  height: '12px', 
-                                  borderRadius: '2px',
-                                  backgroundColor: COLORS[item.name as keyof typeof COLORS] || '#9ca3af'
-                                }}></span>
-                                {item.name}
-                              </td>
-                              <td style={{ padding: '10px', textAlign: 'center', fontWeight: '600', color: '#374151' }}>{item.value.toLocaleString()}</td>
-                              <td style={{ padding: '10px', textAlign: 'center', fontWeight: '600', color: '#f59e0b' }}>{item.percent}%</td>
-                            </tr>
-                          ))}
-                          <tr style={{ backgroundColor: '#f9fafb', fontWeight: '600' }}>
-                            <td style={{ padding: '10px', color: '#374151' }}>รวม</td>
-                            <td style={{ padding: '10px', textAlign: 'center', color: '#ef4444' }}>{totalResigned.toLocaleString()}</td>
-                            <td style={{ padding: '10px', textAlign: 'center', color: '#10b981' }}>100%</td>
-                          </tr>
-                        </tbody>
-                      </table>
-                    </div>
                   </>
                 ) : (
                   <div style={{
