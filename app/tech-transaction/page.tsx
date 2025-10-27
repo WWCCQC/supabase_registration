@@ -295,6 +295,13 @@ function TechTransactionContent() {
       });
     }
 
+    // Sort by Date (newest to oldest)
+    filtered.sort((a, b) => {
+      const dateA = a.Date ? new Date(a.Date).getTime() : 0;
+      const dateB = b.Date ? new Date(b.Date).getTime() : 0;
+      return dateB - dateA; // Descending order (newest first)
+    });
+
     return filtered;
   }, [allData, searchTerm, selectedYears, selectedMonths, selectedWeeks, selectedDates]);
 
