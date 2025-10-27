@@ -396,7 +396,7 @@ function TechTransactionContent() {
   const columns = useMemo(() => {
     if (filteredData.length === 0) return [];
     return Object.keys(filteredData[0]).filter(key => 
-      !['id', 'NATIONAL ID', 'Year', 'Month', 'Week'].includes(key)
+      !['id', 'NATIONAL ID', 'national_id', 'Year', 'Month', 'Week'].includes(key)
     );
   }, [filteredData]);
 
