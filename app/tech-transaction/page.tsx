@@ -5,7 +5,7 @@ import { createClient } from '@supabase/supabase-js';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import Navbar from '@/components/Navbar';
 import * as XLSX from 'xlsx';
-import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell, LabelList } from 'recharts';
+import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell, LabelList, PieChart, Pie } from 'recharts';
 
 interface TransactionItem {
   Year?: number;
@@ -1630,7 +1630,7 @@ function TechTransactionContent() {
           </div>
         )}
 
-        {/* Monthly Technician Comparison Chart (Total vs Resigned) */}
+        {/* Monthly Technician Comparison Chart (Total vs Resigned) + Provider Pie Chart */}
         {(() => {
           // ข้อมูลจำนวนช่างทั้งหมดแต่ละเดือน
           const monthlyTechnicianData = [
@@ -1664,106 +1664,254 @@ function TechTransactionContent() {
             };
           });
 
+          // คำนวณข้อมูล Pie Chart สำหรับช่างลาออกแยกตาม Provider (ถึง September)
+          const monthsToInclude = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September'];
+          
+          const providerResignedData = filteredData
+            .filter((item: any) => {
+              // กรองเฉพาะ Register = "ช่างลาออก"
+              if (item.Register !== 'ช่างลาออก') return false;
+              
+              // กรองเฉพาะเดือนถึง September
+              if (item.Month && !monthsToInclude.includes(item.Month)) return false;
+              
+              // กรอง Provider ที่ต้องการ
+              const provider = item.provider || item.Provider || '';
+              return provider === 'WW-Provider' || provider === 'truetech' || provider === 'เถ้าแก่เทค';
+            })
+            .reduce((acc: any, item: any) => {
+              const provider = item.provider || item.Provider || 'Unknown';
+              acc[provider] = (acc[provider] || 0) + 1;
+              return acc;
+            }, {});
+
+          const totalResigned = Object.values(providerResignedData).reduce((sum: number, count: any) => sum + count, 0);
+          
+          const pieData = Object.entries(providerResignedData).map(([provider, count]: [string, any]) => ({
+            name: provider,
+            value: count,
+            percent: totalResigned > 0 ? ((count / totalResigned) * 100).toFixed(1) : '0'
+          }));
+
+          const COLORS = {
+            'WW-Provider': '#3b82f6',
+            'truetech': '#8b5cf6',
+            'เถ้าแก่เทค': '#f59e0b'
+          };
+
           return comparisonData.length > 0 ? (
             <div style={{
-              marginBottom: '32px',
-              backgroundColor: '#f9fafb',
-              borderRadius: '12px',
-              padding: '24px',
-              boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr',
+              gap: '24px',
+              marginBottom: '32px'
             }}>
-              <h2 style={{
-                fontSize: '18px',
-                fontWeight: '600',
-                color: '#374151',
-                marginBottom: '16px'
+              {/* Bar Chart */}
+              <div style={{
+                backgroundColor: '#f9fafb',
+                borderRadius: '12px',
+                padding: '24px',
+                boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
               }}>
-                จำนวนช่างทั้งหมด vs ช่างลาออก รายเดือน
-              </h2>
-              <ResponsiveContainer width="100%" height={450}>
-                <BarChart
-                  data={comparisonData}
-                  margin={{ top: 40, right: 30, left: 20, bottom: 80 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                  <XAxis 
-                    dataKey="month" 
-                    stroke="#6b7280"
-                    style={{ fontSize: '12px' }}
-                    angle={-45}
-                    textAnchor="end"
-                    height={80}
-                  />
-                  <YAxis 
-                    stroke="#6b7280"
-                    style={{ fontSize: '12px' }}
-                  />
-                  <Tooltip 
-                    contentStyle={{
-                      backgroundColor: 'white',
-                      border: '1px solid #e5e7eb',
-                      borderRadius: '8px',
-                      padding: '12px'
-                    }}
-                    formatter={(value: any, name: string, props: any) => {
-                      if (name === 'ช่างลาออก') {
-                        return [`${value.toLocaleString()} (${props.payload.resignedPercent}%)`, name];
-                      }
-                      return [value.toLocaleString(), name];
-                    }}
-                  />
-                  <Legend 
-                    wrapperStyle={{
-                      paddingTop: '20px'
-                    }}
-                  />
-                  <Bar 
-                    dataKey="ช่างทั้งหมด" 
-                    fill="#10b981"
-                    radius={[8, 8, 0, 0]}
+                <h2 style={{
+                  fontSize: '18px',
+                  fontWeight: '600',
+                  color: '#374151',
+                  marginBottom: '16px'
+                }}>
+                  จำนวนช่างทั้งหมด vs ช่างลาออก รายเดือน
+                </h2>
+                <ResponsiveContainer width="100%" height={450}>
+                  <BarChart
+                    data={comparisonData}
+                    margin={{ top: 40, right: 30, left: 20, bottom: 80 }}
                   >
-                    <LabelList 
-                      dataKey="ช่างทั้งหมด" 
-                      position="top" 
-                      fill="#10b981"
-                      fontSize={11}
-                      fontWeight="600"
-                      formatter={(value: any) => value.toLocaleString()}
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                    <XAxis 
+                      dataKey="month" 
+                      stroke="#6b7280"
+                      style={{ fontSize: '12px' }}
+                      angle={-45}
+                      textAnchor="end"
+                      height={80}
                     />
-                  </Bar>
-                  <Bar 
-                    dataKey="ช่างลาออก" 
-                    fill="#ef4444"
-                    radius={[8, 8, 0, 0]}
-                  >
-                    <LabelList 
-                      dataKey="ช่างลาออก"
-                      position="center"
-                      fill="white"
-                      fontSize={11}
-                      fontWeight="600"
-                      content={(props: any) => {
-                        const { x, y, width, value, index } = props;
-                        const item = comparisonData[index];
-                        if (!item || !value) return null;
-                        
-                        return (
-                          <text
-                            x={x + width / 2}
-                            y={y - 10}
-                            fill="#ef4444"
-                            fontSize={11}
-                            fontWeight="600"
-                            textAnchor="middle"
-                          >
-                            {`${value.toLocaleString()} (${item.resignedPercent}%)`}
-                          </text>
-                        );
+                    <YAxis 
+                      stroke="#6b7280"
+                      style={{ fontSize: '12px' }}
+                    />
+                    <Tooltip 
+                      contentStyle={{
+                        backgroundColor: 'white',
+                        border: '1px solid #e5e7eb',
+                        borderRadius: '8px',
+                        padding: '12px'
+                      }}
+                      formatter={(value: any, name: string, props: any) => {
+                        if (name === 'ช่างลาออก') {
+                          return [`${value.toLocaleString()} (${props.payload.resignedPercent}%)`, name];
+                        }
+                        return [value.toLocaleString(), name];
                       }}
                     />
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
+                    <Legend 
+                      wrapperStyle={{
+                        paddingTop: '20px'
+                      }}
+                    />
+                    <Bar 
+                      dataKey="ช่างทั้งหมด" 
+                      fill="#10b981"
+                      radius={[8, 8, 0, 0]}
+                    >
+                      <LabelList 
+                        dataKey="ช่างทั้งหมด" 
+                        position="top" 
+                        fill="#10b981"
+                        fontSize={11}
+                        fontWeight="600"
+                        formatter={(value: any) => value.toLocaleString()}
+                      />
+                    </Bar>
+                    <Bar 
+                      dataKey="ช่างลาออก" 
+                      fill="#ef4444"
+                      radius={[8, 8, 0, 0]}
+                    >
+                      <LabelList 
+                        dataKey="ช่างลาออก"
+                        position="center"
+                        fill="white"
+                        fontSize={11}
+                        fontWeight="600"
+                        content={(props: any) => {
+                          const { x, y, width, value, index } = props;
+                          const item = comparisonData[index];
+                          if (!item || !value) return null;
+                          
+                          return (
+                            <text
+                              x={x + width / 2}
+                              y={y - 10}
+                              fill="#ef4444"
+                              fontSize={11}
+                              fontWeight="600"
+                              textAnchor="middle"
+                            >
+                              {`${value.toLocaleString()} (${item.resignedPercent}%)`}
+                            </text>
+                          );
+                        }}
+                      />
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+
+              {/* Pie Chart - Provider Resigned */}
+              <div style={{
+                backgroundColor: '#f9fafb',
+                borderRadius: '12px',
+                padding: '24px',
+                boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
+              }}>
+                <h2 style={{
+                  fontSize: '18px',
+                  fontWeight: '600',
+                  color: '#374151',
+                  marginBottom: '16px'
+                }}>
+                  สัดส่วนช่างลาออกตาม Provider (ถึง Sep)
+                </h2>
+                {pieData.length > 0 ? (
+                  <>
+                    <ResponsiveContainer width="100%" height={350}>
+                      <PieChart>
+                        <Pie
+                          data={pieData}
+                          cx="50%"
+                          cy="50%"
+                          labelLine={false}
+                          label={(entry) => `${entry.value} (${entry.percent}%)`}
+                          outerRadius={120}
+                          fill="#8884d8"
+                          dataKey="value"
+                        >
+                          {pieData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={COLORS[entry.name as keyof typeof COLORS] || '#9ca3af'} />
+                          ))}
+                        </Pie>
+                        <Tooltip 
+                          formatter={(value: any, name: string, props: any) => {
+                            return [`${value.toLocaleString()} คน (${props.payload.percent}%)`, name];
+                          }}
+                          contentStyle={{
+                            backgroundColor: 'white',
+                            border: '1px solid #e5e7eb',
+                            borderRadius: '8px',
+                            padding: '12px'
+                          }}
+                        />
+                        <Legend 
+                          verticalAlign="bottom"
+                          height={36}
+                        />
+                      </PieChart>
+                    </ResponsiveContainer>
+                    
+                    {/* Summary Table */}
+                    <div style={{ marginTop: '16px' }}>
+                      <table style={{
+                        width: '100%',
+                        borderCollapse: 'collapse',
+                        fontSize: '13px',
+                        backgroundColor: 'white',
+                        borderRadius: '8px',
+                        overflow: 'hidden'
+                      }}>
+                        <thead>
+                          <tr style={{ backgroundColor: '#f3f4f6' }}>
+                            <th style={{ padding: '10px', textAlign: 'left', borderBottom: '2px solid #e5e7eb', fontWeight: '600', color: '#374151' }}>Provider</th>
+                            <th style={{ padding: '10px', textAlign: 'center', borderBottom: '2px solid #e5e7eb', fontWeight: '600', color: '#374151' }}>จำนวน</th>
+                            <th style={{ padding: '10px', textAlign: 'center', borderBottom: '2px solid #e5e7eb', fontWeight: '600', color: '#374151' }}>%</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {pieData.map((item, index) => (
+                            <tr key={index} style={{ borderBottom: '1px solid #e5e7eb' }}>
+                              <td style={{ padding: '10px', color: '#374151', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <span style={{ 
+                                  display: 'inline-block', 
+                                  width: '12px', 
+                                  height: '12px', 
+                                  borderRadius: '2px',
+                                  backgroundColor: COLORS[item.name as keyof typeof COLORS] || '#9ca3af'
+                                }}></span>
+                                {item.name}
+                              </td>
+                              <td style={{ padding: '10px', textAlign: 'center', fontWeight: '600', color: '#374151' }}>{item.value.toLocaleString()}</td>
+                              <td style={{ padding: '10px', textAlign: 'center', fontWeight: '600', color: '#f59e0b' }}>{item.percent}%</td>
+                            </tr>
+                          ))}
+                          <tr style={{ backgroundColor: '#f9fafb', fontWeight: '600' }}>
+                            <td style={{ padding: '10px', color: '#374151' }}>รวม</td>
+                            <td style={{ padding: '10px', textAlign: 'center', color: '#ef4444' }}>{totalResigned.toLocaleString()}</td>
+                            <td style={{ padding: '10px', textAlign: 'center', color: '#10b981' }}>100%</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </>
+                ) : (
+                  <div style={{
+                    textAlign: 'center',
+                    padding: '80px 20px',
+                    color: '#9ca3af',
+                    fontSize: '15px'
+                  }}>
+                    ไม่มีข้อมูลช่างลาออกในช่วงที่เลือก
+                  </div>
+                )}
+              </div>
             </div>
           ) : null;
         })()}
