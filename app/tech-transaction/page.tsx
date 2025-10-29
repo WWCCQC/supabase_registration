@@ -45,6 +45,9 @@ function TechTransactionContent() {
   const [weekDropdownOpen, setWeekDropdownOpen] = useState(false);
   const [dateDropdownOpen, setDateDropdownOpen] = useState(false);
   
+  // Top 10 Depot month filter
+  const [selectedDepotMonths, setSelectedDepotMonths] = useState<string[]>([]);
+  
   const itemsPerPage = 50;
   
   // Auto-close dropdown function
@@ -604,15 +607,19 @@ function TechTransactionContent() {
       return [];
     }
 
-    // Filter data based on selections
+    // Filter data based on selections (use depot-specific month filter if set, otherwise use main filters)
     let chartSourceData = allData;
     
     if (selectedYears.length > 0) {
       chartSourceData = chartSourceData.filter(item => selectedYears.includes(String(item.Year)));
     }
-    if (selectedMonths.length > 0) {
-      chartSourceData = chartSourceData.filter(item => selectedMonths.includes(String(item.Month)));
+    
+    // Use depot months filter if selected, otherwise use main months filter
+    const monthsToFilter = selectedDepotMonths.length > 0 ? selectedDepotMonths : selectedMonths;
+    if (monthsToFilter.length > 0) {
+      chartSourceData = chartSourceData.filter(item => monthsToFilter.includes(String(item.Month)));
     }
+    
     if (selectedWeeks.length > 0) {
       chartSourceData = chartSourceData.filter(item => selectedWeeks.includes(String(item.Week)));
     }
@@ -640,7 +647,7 @@ function TechTransactionContent() {
 
     console.log('📊 Top 10 New Depots prepared:', topDepots.length);
     return topDepots;
-  }, [allData, selectedYears, selectedMonths, selectedWeeks, selectedDates]);
+  }, [allData, selectedYears, selectedMonths, selectedWeeks, selectedDates, selectedDepotMonths]);
 
   // Prepare Top 10 Depot - Resigned Technicians
   const top10ResignedDepots = useMemo(() => {
@@ -648,15 +655,19 @@ function TechTransactionContent() {
       return [];
     }
 
-    // Filter data based on selections
+    // Filter data based on selections (use depot-specific month filter if set, otherwise use main filters)
     let chartSourceData = allData;
     
     if (selectedYears.length > 0) {
       chartSourceData = chartSourceData.filter(item => selectedYears.includes(String(item.Year)));
     }
-    if (selectedMonths.length > 0) {
-      chartSourceData = chartSourceData.filter(item => selectedMonths.includes(String(item.Month)));
+    
+    // Use depot months filter if selected, otherwise use main months filter
+    const monthsToFilter = selectedDepotMonths.length > 0 ? selectedDepotMonths : selectedMonths;
+    if (monthsToFilter.length > 0) {
+      chartSourceData = chartSourceData.filter(item => monthsToFilter.includes(String(item.Month)));
     }
+    
     if (selectedWeeks.length > 0) {
       chartSourceData = chartSourceData.filter(item => selectedWeeks.includes(String(item.Week)));
     }
@@ -684,7 +695,7 @@ function TechTransactionContent() {
 
     console.log('📊 Top 10 Resigned Depots prepared:', topDepots.length);
     return topDepots;
-  }, [allData, selectedYears, selectedMonths, selectedWeeks, selectedDates]);
+  }, [allData, selectedYears, selectedMonths, selectedWeeks, selectedDates, selectedDepotMonths]);
 
   // Prepare Pivot Table Data (RSM x Provider x Work Type)
   const pivotTableData = useMemo(() => {
@@ -2248,18 +2259,86 @@ function TechTransactionContent() {
 
         {/* Top 10 Depot Tables - Side by Side */}
         {(top10NewDepots.length > 0 || top10ResignedDepots.length > 0) && (
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
-            gap: '24px',
-            marginBottom: '32px'
-          }}>
+          <div>
+            {/* Month Filter for Top 10 Depot */}
+            <div style={{
+              backgroundColor: '#203864',
+              borderRadius: '12px',
+              padding: '16px',
+              marginBottom: '20px',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+            }}>
+              <h3 style={{
+                color: 'white',
+                fontSize: '16px',
+                fontWeight: '600',
+                marginBottom: '12px',
+                margin: '0 0 12px 0'
+              }}>
+                Ranking : จำนวน<span style={{ color: '#10b981' }}>ช่างใหม่</span>/<span style={{ color: '#ef4444' }}>ช่างลาออก</span> รายเดือน
+              </h3>
+              <div style={{
+                display: 'flex',
+                flexWrap: 'wrap',
+                gap: '8px'
+              }}>
+                {['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'].map(month => (
+                  <button
+                    key={month}
+                    onClick={() => {
+                      if (selectedDepotMonths.includes(month)) {
+                        setSelectedDepotMonths(selectedDepotMonths.filter(m => m !== month));
+                      } else {
+                        setSelectedDepotMonths([...selectedDepotMonths, month]);
+                      }
+                    }}
+                    style={{
+                      padding: '8px 16px',
+                      borderRadius: '8px',
+                      border: 'none',
+                      fontSize: '14px',
+                      fontWeight: '500',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s',
+                      backgroundColor: selectedDepotMonths.includes(month) ? '#ffffff' : 'rgba(255,255,255,0.2)',
+                      color: selectedDepotMonths.includes(month) ? '#203864' : 'white'
+                    }}
+                  >
+                    {month}
+                  </button>
+                ))}
+              </div>
+              {selectedDepotMonths.length > 0 && (
+                <button
+                  onClick={() => setSelectedDepotMonths([])}
+                  style={{
+                    padding: '6px 12px',
+                    borderRadius: '6px',
+                    border: '1px solid rgba(255,255,255,0.3)',
+                    fontSize: '12px',
+                    cursor: 'pointer',
+                    backgroundColor: 'transparent',
+                    color: 'white',
+                    marginTop: '8px'
+                  }}
+                >
+                  ล้างการเลือก ({selectedDepotMonths.length} เดือน)
+                </button>
+              )}
+            </div>
+
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
+              gap: '24px',
+              marginBottom: '32px'
+            }}>
             {/* Top 10 Depot - New Technicians */}
             {top10NewDepots.length > 0 && (
               <div style={{
                 backgroundColor: '#f9fafb',
                 borderRadius: '12px',
-                padding: '24px',
+                padding: '10px',
                 boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
               }}>
                 <h2 style={{
@@ -2370,7 +2449,7 @@ function TechTransactionContent() {
               <div style={{
                 backgroundColor: '#f9fafb',
                 borderRadius: '12px',
-                padding: '24px',
+                padding: '10px',
                 boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
               }}>
                 <h2 style={{
@@ -2475,6 +2554,7 @@ function TechTransactionContent() {
                 </div>
               </div>
             )}
+          </div>
           </div>
         )}
 
