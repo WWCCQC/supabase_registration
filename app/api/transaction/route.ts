@@ -37,6 +37,7 @@ export async function GET(request: Request) {
     const to = from + limit - 1;
 
     const { data, error, count } = await query
+      .order('Date', { ascending: false })
       .order('Year', { ascending: false })
       .order('Week', { ascending: false })
       .range(from, to);
@@ -44,6 +45,13 @@ export async function GET(request: Request) {
     if (error) {
       console.error('Supabase error:', error);
       return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    // Debug logging
+    console.log(`📊 Transaction API - Page ${page}, Limit ${limit}, Total: ${count}, Returned: ${data?.length}`);
+    if (data && data.length > 0) {
+      console.log(`📅 Date range: ${data[0]?.Date} to ${data[data.length - 1]?.Date}`);
+      console.log(`🔍 Register types: ${[...new Set(data.map(item => item.Register))].join(', ')}`);
     }
 
     return NextResponse.json({

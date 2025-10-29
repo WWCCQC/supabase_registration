@@ -217,14 +217,21 @@ function TechTransactionContent() {
         const response = await fetch(`/api/transaction?page=${page}&limit=${batchSize}`);
         
         if (!response.ok) {
-          console.error('Failed to fetch page', page);
+          console.error('❌ Failed to fetch page', page, response.status, response.statusText);
           continue;
         }
 
         const result = await response.json();
-        allRecords = [...allRecords, ...(result.data || [])];
+        const batchData = result.data || [];
+        allRecords = [...allRecords, ...batchData];
         
-        console.log(`📦 Batch ${page}/${totalPages}: ${result.data?.length} records (total: ${allRecords.length})`);
+        console.log(`📦 Batch ${page}/${totalPages}: ${batchData.length} records (total: ${allRecords.length})`);
+        
+        // Debug register types in each batch
+        if (batchData.length > 0) {
+          const registerTypes = [...new Set(batchData.map((item: any) => item.Register))];
+          console.log(`📋 Batch ${page} register types:`, registerTypes);
+        }
       }
 
       setAllData(allRecords);
