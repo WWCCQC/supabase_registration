@@ -4,6 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/useAuth';
+import LiveClock from './LiveClock';
 
 const Navbar = () => {
   const pathname = usePathname();
@@ -35,7 +36,7 @@ const Navbar = () => {
   return (
     <nav style={{
       backgroundColor: '#12239E',
-      padding: '0 24px',
+      padding: '0',
       boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
       borderRadius: '0 0 12px 12px',
       marginBottom: '20px'
@@ -45,8 +46,9 @@ const Navbar = () => {
         alignItems: 'center',
         gap: '16px',
         height: '56px',
-        maxWidth: '1200px',
-        margin: '0 auto'
+        width: '100%',
+        paddingLeft: '16px',
+        paddingRight: '16px'
       }}>
         {/* Brand/Title */}
         <div style={{
@@ -136,16 +138,18 @@ const Navbar = () => {
           </a>
         )}
 
+        {/* Live Clock */}
+        <LiveClock />
 
-
-        {/* Spacer */}
+        {/* Spacer - ดันส่วนขวาไปชิดขวา */}
         <div style={{ flex: 1 }} />
 
         {/* User Info */}
         <div style={{
           display: 'flex',
-          alignItems: 'center',
-          gap: '12px',
+          flexDirection: 'column',
+          alignItems: 'flex-start',
+          gap: '4px',
           color: '#e5e7eb',
           fontSize: '12px'
         }}>
@@ -159,13 +163,14 @@ const Navbar = () => {
               window.location.href = '/login';
             }}
             style={{
-              padding: '4px 8px',
+              padding: '2px 6px',
               backgroundColor: 'rgba(220, 38, 38, 0.8)',
               color: 'white',
               border: '1px solid rgba(220, 38, 38, 0.3)',
               borderRadius: '4px',
               cursor: 'pointer',
-              fontSize: '11px'
+              fontSize: '10px',
+              alignSelf: 'flex-start'
             }}
           >
             ออกจากระบบ
