@@ -117,19 +117,26 @@ export async function GET(request: NextRequest) {
       })
       .sort((a, b) => b.total - a.total); // Sort by total descending (มากไปน้อย)
 
-    // Calculate summary using exact provider counts
-    const totalFromExactCounts = Object.values(providerExactCounts).reduce((sum, count) => sum + count, 0);
+    // Calculate summary from chart data (actual displayed data)
+    const chartProviderTotals: Record<string, number> = {};
+    chartData.forEach((item) => {
+      mainProviders.forEach((provider) => {
+        chartProviderTotals[provider] = (chartProviderTotals[provider] || 0) + (item[provider] || 0);
+      });
+    });
+    
+    const totalFromChartData = Object.values(chartProviderTotals).reduce((sum, count) => sum + count, 0);
     
     const summary = {
       totalCtms: Object.keys(groupedData).length,
-      totalTechnicians: totalFromExactCounts,  // Use total from exact counts
+      totalTechnicians: totalFromChartData,  // Use total from chart data
       providerBreakdown: mainProviders.map((provider) => {
-        // Use exact counts from database query (like KPI API)
-        const count = providerExactCounts[provider] || 0;
+        // Use counts from chart data (what's actually displayed)
+        const count = chartProviderTotals[provider] || 0;
         return {
           provider,
           count,
-          percentage: totalFromExactCounts > 0 ? Math.round((count / totalFromExactCounts) * 100) : 0
+          percentage: totalFromChartData > 0 ? Math.round((count / totalFromChartData) * 100) : 0
         };
       })
     };
