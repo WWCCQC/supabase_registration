@@ -151,6 +151,7 @@ const COLS = [
   "depot_code",
   "depot_name",
   "province",
+  "power_authority",
 ] as const;
 
 /** ความกว้างต่อคอลัมน์ (px) */
@@ -168,6 +169,7 @@ const WIDTHS: Partial<Record<(typeof COLS)[number], number>> = {
   depot_code: 120,
   depot_name: 200,
   province: 160,
+  power_authority: 140,
 };
 
 /* ---------- Component ---------- */
@@ -199,6 +201,9 @@ export default function TechBrowser() {
   
   /* Selected CTM from chart */
   const [selectedCtm, setSelectedCtm] = React.useState<string | null>(null);
+  
+  /* Selected Power Authority Status from chart */
+  const [selectedPowerAuthority, setSelectedPowerAuthority] = React.useState<string | null>(null);
 
   const d_national_id = useDebounced(national_id);
   const d_tech_id = useDebounced(tech_id);
@@ -279,6 +284,10 @@ export default function TechBrowser() {
     if (selectedCtm) {
       params.set("ctm", selectedCtm);
     }
+    // Add Power Authority filter
+    if (selectedPowerAuthority) {
+      params.set("power_authority", selectedPowerAuthority);
+    }
     if (d_depot_code) params.set("depot_code", d_depot_code);
     if (d_q) params.set("q", d_q);
     return params;
@@ -302,6 +311,11 @@ export default function TechBrowser() {
       p.set("ctm", selectedCtm);
       p.set("f_ctm", selectedCtm);
     }
+    // Add Power Authority filter for KPI
+    if (selectedPowerAuthority) {
+      p.set("power_authority", selectedPowerAuthority);
+      p.set("f_power_authority", selectedPowerAuthority);
+    }
     if (d_depot_code) p.set("f_depot_code", d_depot_code);
     if (d_q) p.set("q", d_q);
     return p;
@@ -316,6 +330,7 @@ export default function TechBrowser() {
       const url = `/api/technicians?${params.toString()}`;
       console.log('🔍 Fetching data with selectedRsm:', selectedRsm);
       console.log('🔍 Fetching data with selectedCtm:', selectedCtm);
+      console.log('🔍 Fetching data with selectedPowerAuthority:', selectedPowerAuthority);
       console.log('🔍 Fetching data from:', url);
       
       // เพิ่ม timeout และ headers
@@ -740,22 +755,38 @@ export default function TechBrowser() {
     }
   }
   
-  // Handle chart bar click
+  // Handle chart bar click for specific power authority status
+  function handlePowerAuthorityClick(rsm: string, powerAuthority: "Yes" | "No") {
+    console.log('📊 Power Authority bar clicked:', { rsm, powerAuthority });
+    
+    // Toggle selection if same RSM and power authority is clicked
+    if (selectedRsm === rsm && selectedPowerAuthority === powerAuthority) {
+      console.log('📊 Deselecting RSM and Power Authority');
+      setSelectedRsm(null);
+      setSelectedPowerAuthority(null);
+      setRsm("");
+    } else {
+      console.log('📊 Selecting RSM:', rsm, 'Power Authority:', powerAuthority);
+      setSelectedRsm(rsm);
+      setSelectedPowerAuthority(powerAuthority);
+      setRsm(rsm);
+    }
+  }
+
+  // Handle general chart click (fallback)
   function handleChartClick(data: any) {
     if (data && data.activePayload && data.activePayload[0]) {
       const clickedRsm = data.activePayload[0].payload.rsm;
-      console.log('📊 Chart clicked:', clickedRsm);
+      console.log('📊 General chart clicked:', clickedRsm);
       
-      // Toggle selection
-      if (selectedRsm === clickedRsm) {
+      // Only handle RSM selection without power authority filter
+      if (selectedRsm === clickedRsm && !selectedPowerAuthority) {
         console.log('📊 Deselecting RSM');
         setSelectedRsm(null);
-        // Clear the input field too
         setRsm("");
-      } else {
+      } else if (!selectedPowerAuthority) {
         console.log('📊 Selecting RSM:', clickedRsm);
         setSelectedRsm(clickedRsm);
-        // Update the input field to show selected RSM
         setRsm(clickedRsm);
       }
     }
@@ -1641,8 +1672,6 @@ export default function TechBrowser() {
                 <BarChart
                   data={chartData}
                   margin={{ top: 20, right: 30, left: 20, bottom: 100 }}
-                  onClick={handleChartClick}
-                  style={{ cursor: "pointer" }}
                 >
                 <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                 <XAxis 
@@ -1713,14 +1742,35 @@ export default function TechBrowser() {
                   stackId="a" 
                   fill="#0EAD69"
                   name="Yes"
+                  onClick={(data: any) => {
+                    if (data && data.rsm) {
+                      handlePowerAuthorityClick(data.rsm, "Yes");
+                    }
+                  }}
+                  style={{ cursor: "pointer" }}
                 >
-                  {chartData.map((entry, index) => (
-                    <Cell 
-                      key={`cell-yes-${index}`} 
-                      fill={selectedRsm === entry.rsm ? "#0A7A4A" : "#0EAD69"}
-                      opacity={selectedRsm && selectedRsm !== entry.rsm ? 0.5 : 1}
-                    />
-                  ))}
+                  {chartData.map((entry, index) => {
+                    const isRsmSelected = selectedRsm === entry.rsm;
+                    const isPowerAuthoritySelected = selectedPowerAuthority === "Yes";
+                    const isFullySelected = isRsmSelected && isPowerAuthoritySelected;
+                    
+                    return (
+                      <Cell 
+                        key={`cell-yes-${index}`} 
+                        fill={isFullySelected ? "#0A7A4A" : "#0EAD69"}
+                        opacity={
+                          (selectedRsm && !isRsmSelected) || 
+                          (selectedPowerAuthority && selectedPowerAuthority !== "Yes") 
+                            ? 0.5 : 1
+                        }
+                        style={{ cursor: "pointer" }}
+                        onMouseDown={(e: any) => {
+                          e.stopPropagation();
+                          handlePowerAuthorityClick(entry.rsm, "Yes");
+                        }}
+                      />
+                    );
+                  })}
                   <LabelList 
                     dataKey="Yes" 
                     position="center"
@@ -1754,14 +1804,35 @@ export default function TechBrowser() {
                   stackId="a" 
                   fill="#D90429"
                   name="No"
+                  onClick={(data: any) => {
+                    if (data && data.rsm) {
+                      handlePowerAuthorityClick(data.rsm, "No");
+                    }
+                  }}
+                  style={{ cursor: "pointer" }}
                 >
-                  {chartData.map((entry, index) => (
-                    <Cell 
-                      key={`cell-no-${index}`} 
-                      fill={selectedRsm === entry.rsm ? "#A0021F" : "#D90429"}
-                      opacity={selectedRsm && selectedRsm !== entry.rsm ? 0.5 : 1}
-                    />
-                  ))}
+                  {chartData.map((entry, index) => {
+                    const isRsmSelected = selectedRsm === entry.rsm;
+                    const isPowerAuthoritySelected = selectedPowerAuthority === "No";
+                    const isFullySelected = isRsmSelected && isPowerAuthoritySelected;
+                    
+                    return (
+                      <Cell 
+                        key={`cell-no-${index}`} 
+                        fill={isFullySelected ? "#A0021F" : "#D90429"}
+                        opacity={
+                          (selectedRsm && !isRsmSelected) || 
+                          (selectedPowerAuthority && selectedPowerAuthority !== "No") 
+                            ? 0.5 : 1
+                        }
+                        style={{ cursor: "pointer" }}
+                        onMouseDown={(e: any) => {
+                          e.stopPropagation();
+                          handlePowerAuthorityClick(entry.rsm, "No");
+                        }}
+                      />
+                    );
+                  })}
                   <LabelList 
                     dataKey="No" 
                     position="center"

@@ -23,6 +23,7 @@ export async function GET(req: Request) {
     const f_rsm         = url.searchParams.get("rsm") || "";
     const f_ctm         = url.searchParams.get("ctm") || "";
     const f_depot_code  = url.searchParams.get("depot_code") || "";
+    const f_power_authority = url.searchParams.get("power_authority") || "";
     const f_training_type = url.searchParams.get("training_type") || "";
     const q             = sanitizeQ(url.searchParams.get("q"));
 
@@ -41,7 +42,7 @@ export async function GET(req: Request) {
       "national_id","tech_id","full_name","gender","age","degree",
       "doc_tech_card_url","phone","email","workgroup_status","work_type",
       "provider","area","rsm","ctm","depot_code","depot_name","province",
-      ...serviceColumns
+      "power_authority",...serviceColumns
     ] as const;
 
     // sort params
@@ -60,6 +61,7 @@ export async function GET(req: Request) {
     if (f_rsm)         countQuery = countQuery.ilike("rsm",         `%${f_rsm}%`);
     if (f_ctm)         countQuery = countQuery.ilike("ctm",         `%${f_ctm}%`);
     if (f_depot_code)  countQuery = countQuery.ilike("depot_code",  `%${f_depot_code}%`);
+    if (f_power_authority) countQuery = countQuery.eq("power_authority", f_power_authority);
     
     // กรองตามประเภทการอบรม - ค้นหาคอลัมน์ที่มีค่า "Pass"
     if (f_training_type) {
@@ -103,6 +105,7 @@ export async function GET(req: Request) {
     if (f_rsm)         dataQuery = dataQuery.ilike("rsm",         `%${f_rsm}%`);
     if (f_ctm)         dataQuery = dataQuery.ilike("ctm",         `%${f_ctm}%`);
     if (f_depot_code)  dataQuery = dataQuery.ilike("depot_code",  `%${f_depot_code}%`);
+    if (f_power_authority) dataQuery = dataQuery.eq("power_authority", f_power_authority);
     
     // กรองตามประเภทการอบรม - ค้นหาคอลัมน์ที่มีค่า "Pass"
     if (f_training_type) {
@@ -164,6 +167,7 @@ export async function GET(req: Request) {
       depot_code:         r.depot_code         ?? null,
       depot_name:         r.depot_name         ?? null,
       province:           r.province           ?? r.ctm_province ?? null,
+      power_authority:    r.power_authority    ?? null,
       // Service columns
       svc_install:        r.svc_install        ?? null,
       svc_repair:         r.svc_repair         ?? null,
