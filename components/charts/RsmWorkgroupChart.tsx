@@ -12,6 +12,8 @@ import {
   Cell,
   Label
 } from "recharts";
+import { supabaseBrowser } from "@/lib/supabase-browser";
+import ForceRefreshButton from "@/components/common/ForceRefreshButton";
 
 type ChartData = {
   rsm: string;
@@ -35,22 +37,70 @@ export default function RsmWorkgroupChart() {
   const [summary, setSummary] = React.useState<Summary | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
+  const [lastUpdated, setLastUpdated] = React.useState<string>("");
 
   React.useEffect(() => {
     fetchChartData();
+    setupRealtimeSubscription();
   }, []);
 
-  async function fetchChartData() {
+  // Setup real-time subscription
+  const setupRealtimeSubscription = () => {
+    const supabase = supabaseBrowser();
+    
+    console.log('🔄 Setting up real-time subscription for technicians table...');
+    
+    const subscription = supabase
+      .channel('technicians-changes')
+      .on('postgres_changes', 
+        { 
+          event: '*', 
+          schema: 'public', 
+          table: 'technicians' 
+        }, 
+        (payload) => {
+          console.log('📊 Real-time change detected:', payload);
+          // Refresh data when changes occur
+          fetchChartData();
+        }
+      )
+      .subscribe((status) => {
+        console.log('📡 Subscription status:', status);
+      });
+
+    // Cleanup subscription on unmount
+    return () => {
+      console.log('🔌 Cleaning up real-time subscription...');
+      subscription.unsubscribe();
+    };
+  };
+
+  async function fetchChartData(forceRefresh = false) {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/chart/rsm-workgroup", { cache: "no-store" });
+      const url = forceRefresh 
+        ? "/api/chart/rsm-workgroup?force=true" 
+        : "/api/chart/rsm-workgroup";
+        
+      const res = await fetch(url, { 
+        cache: "no-store",
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        }
+      });
       const json = await res.json();
       
       if (!res.ok) throw new Error(json?.error || "Failed to fetch chart data");
       
       setChartData(json.chartData || []);
       setSummary(json.summary || null);
+      setLastUpdated(new Date().toLocaleString('th-TH'));
+      
+      if (forceRefresh) {
+        console.log('🔄 Chart data force refreshed successfully');
+      }
     } catch (e: any) {
       console.error("Chart fetch error:", e);
       setError(e.message);
@@ -132,7 +182,7 @@ export default function RsmWorkgroupChart() {
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <span>❌ เกิดข้อผิดพลาด: {error}</span>
             <button 
-              onClick={fetchChartData}
+              onClick={() => fetchChartData(false)}
               style={{
                 background: "#dc2626",
                 color: "white",
@@ -154,9 +204,22 @@ export default function RsmWorkgroupChart() {
   return (
     <div style={{ padding: 24 }}>
       <div style={{ marginBottom: 20 }}>
-        <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 12 }}>
-          ⚡ Stacked Column Chart: RSM by Power Authority
-        </h2>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+          <h2 style={{ fontSize: 22, fontWeight: 700, margin: 0 }}>
+            ⚡ Stacked Column Chart: RSM by Power Authority
+          </h2>
+          <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+            {lastUpdated && (
+              <span style={{ fontSize: 12, color: '#666' }}>
+                อัปเดตล่าสุด: {lastUpdated}
+              </span>
+            )}
+            <ForceRefreshButton 
+              onRefresh={() => fetchChartData(true)}
+              apiEndpoint="/api/chart/rsm-workgroup"
+            />
+          </div>
+        </div>
         
         {/* Summary Cards */}
         {summary && (
@@ -269,7 +332,7 @@ export default function RsmWorkgroupChart() {
         {/* Refresh Button */}
         <div style={{ marginTop: 16, textAlign: "center" }}>
           <button 
-            onClick={fetchChartData}
+            onClick={() => fetchChartData(true)}
             disabled={loading}
             style={{
               padding: "8px 16px",

@@ -23,13 +23,16 @@ export async function GET(req: Request) {
 
     const supabase = supabaseAdmin();
 
-    // Build base query - fetch ALL technicians first (not filtering by workgroup_status)
-    // This ensures we get all records from Supabase, then filter in-memory
+    // Build base query - MUST match SQL WHERE conditions exactly
+    // WHERE rsm IS NOT NULL AND provider IS NOT NULL AND work_type IS NOT NULL
     let query = supabase
       .from("technicians")
-      .select("rsm, provider, work_type, workgroup_status, national_id");
+      .select("rsm, provider, work_type, workgroup_status, national_id")
+      .not("rsm", "is", null)
+      .not("provider", "is", null)
+      .not("work_type", "is", null);
 
-    console.log('📊 Querying Supabase for all technicians (will filter heads in-memory)...');
+    console.log('📊 Querying Supabase with WHERE conditions: rsm, provider, work_type NOT NULL...');
 
     // Apply filters to Supabase query
     if (f_national_id) query = query.ilike("national_id", `%${f_national_id}%`);
@@ -91,14 +94,27 @@ export async function GET(req: Request) {
 
     console.log('📊 Total records fetched:', allData.length);
 
-    // Filter for หัวหน้า (heads) only after fetching all data
-    // Support variations: "หัวหน้า", "หัวหน้", or any text starting with "หัวหน"
+    // Debug: Check all unique workgroup_status values
+    const allStatuses = [...new Set(allData.map((r: any) => r.workgroup_status).filter(Boolean))];
+    console.log('📊 All unique workgroup_status values:', allStatuses);
+    
+    // Count each status
+    const statusCounts: Record<string, number> = {};
+    allData.forEach((row: any) => {
+      const status = row.workgroup_status || "null";
+      statusCounts[status] = (statusCounts[status] || 0) + 1;
+    });
+    console.log('📊 Status counts:', statusCounts);
+    
+    // Filter for หัวหน้า (heads) - handle both correct and encoding-corrupted values
     const headsOnly = allData.filter((row: any) => {
       const status = row.workgroup_status || "";
-      return status === "หัวหน้า" || status === "หัวหน้" || status.startsWith("หัวหน");
+      // Match: "หัวหน้า" OR "หัวหน้���" (encoding issue)
+      return status === "หัวหน้า" || status === "หัวหน้���";
     });
     console.log('📊 Total workgroup heads after filtering:', headsOnly.length);
-    console.log('📊 Sample statuses found:', [...new Set(allData.map((r: any) => r.workgroup_status).filter(Boolean))].slice(0, 10));
+    console.log('📊 Expected from Supabase query: 1787');
+    console.log('📊 Difference:', headsOnly.length - 1787);
 
     // Process data into pivot format - Count UNIQUE national_id (not rows)
     // Use Set to track unique national_id per RSM x Provider x WorkType

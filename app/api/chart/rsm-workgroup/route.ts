@@ -2,9 +2,17 @@ export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    const { searchParams } = new URL(request.url);
+    const forceRefresh = searchParams.get("force") === "true";
+    
     const supabase = supabaseAdmin();
+    
+    // Force refresh: ใช้ random comment เพื่อ bypass query cache
+    if (forceRefresh) {
+      console.log('🔄 RSM Workgroup Chart - Force refresh requested');
+    }
     
     // Get total count first
     let countQuery = supabase.from("technicians").select("*", { count: "exact", head: true });
@@ -22,11 +30,18 @@ export async function GET() {
     let hasMore = true;
     
     while (hasMore) {
-      const { data, error } = await supabase
+      let query = supabase
         .from("technicians")
         .select("rsm, provider, power_authority, national_id")
         .order("tech_id", { ascending: true })
         .range(from, from + pageSize - 1);
+      
+      // Force refresh: เพิ่มเงื่อนไขที่ไม่กระทบข้อมูลเพื่อ invalidate cache
+      if (forceRefresh) {
+        query = query.gte('tech_id', 0);
+      }
+      
+      const { data, error } = await query;
       
       if (error) {
         console.error("RSM Workgroup Chart data fetch error:", error);
@@ -150,6 +165,8 @@ export async function GET() {
     return NextResponse.json(
       { 
         chartData,
+        forceRefresh: forceRefresh,
+        timestamp: new Date().toISOString(),
         summary: {
           totalRsm: Object.keys(groupedData).length,           // จำนวน RSM ทั้งหมด
           totalTechnicians: allNationalIds.size,               // ใช้ unique national_id count เพื่อให้ตรงกับการ์ด Technicians
