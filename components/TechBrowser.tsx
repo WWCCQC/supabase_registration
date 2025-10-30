@@ -4,7 +4,7 @@ import dynamic from "next/dynamic";
 import { createClient } from '@supabase/supabase-js';
 import { getFieldLabel, SECTION_LABELS, KPI_LABELS } from "../lib/fieldLabels";
 import { useAuth } from "@/lib/useAuth";
-import PivotTableComponent from "./PivotTable";
+import PivotTableComponent from "./tables/PivotTable";
 import {
   BarChart,
   Bar,
@@ -19,7 +19,7 @@ import {
 } from "recharts";
 
 // Dynamic import สำหรับ RsmProviderChart
-const RsmProviderChart = dynamic(() => import("./RsmProviderChart"), { 
+const RsmProviderChart = dynamic(() => import("./charts/RsmProviderChart"), { 
   ssr: false,
   loading: () => (
     <div style={{ padding: 24, textAlign: "center" }}>
@@ -29,7 +29,7 @@ const RsmProviderChart = dynamic(() => import("./RsmProviderChart"), {
 });
 
 // Dynamic import สำหรับ CtmProviderChart
-const CtmProviderChart = dynamic(() => import("./CtmProviderChart"), { 
+const CtmProviderChart = dynamic(() => import("./charts/CtmProviderChart"), { 
   ssr: false,
   loading: () => (
     <div style={{ padding: 24, textAlign: "center" }}>
@@ -39,7 +39,7 @@ const CtmProviderChart = dynamic(() => import("./CtmProviderChart"), {
 });
 
 // Dynamic import สำหรับ PivotTable
-const PivotTable = dynamic(() => import("./PivotTable"), { 
+const PivotTable = dynamic(() => import("./tables/PivotTable"), { 
   ssr: false,
   loading: () => (
     <div style={{ padding: 24, textAlign: "center" }}>
@@ -49,7 +49,7 @@ const PivotTable = dynamic(() => import("./PivotTable"), {
 });
 
 // Dynamic import สำหรับ DepotPowerRanking
-const DepotPowerRanking = dynamic(() => import("./DepotPowerRanking"), { 
+const DepotPowerRanking = dynamic(() => import("./charts/DepotPowerRanking"), { 
   ssr: false,
   loading: () => (
     <div style={{ padding: 24, textAlign: "center" }}>

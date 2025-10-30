@@ -1,6 +1,6 @@
 "use client";
 import React from "react";
-import { getFieldLabel } from "../lib/fieldLabels";
+import { getFieldLabel } from "../../lib/fieldLabels";
 
 /** แถวข้อมูลจาก Supabase (ยืดหยุ่น: รับทุกฟิลด์) */
 type Row = Record<string, any>;

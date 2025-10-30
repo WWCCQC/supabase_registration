@@ -1,6 +1,6 @@
 "use client";
 import { useState } from 'react';
-import ProtectedRoute from '@/components/ProtectedRoute';
+import ProtectedRoute from '@/components/common/ProtectedRoute';
 
 function LoginTestContent() {
   const [employeeId, setEmployeeId] = useState('ADMIN001');

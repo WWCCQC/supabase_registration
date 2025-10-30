@@ -1,10 +1,10 @@
 "use client";
 import dynamic from "next/dynamic";
-import ProtectedRoute from "@/components/ProtectedRoute";
-import Navbar from "@/components/Navbar";
+import ProtectedRoute from "@/components/common/ProtectedRoute";
+import Navbar from "@/components/common/Navbar";
 
 // Dynamic import เพื่อป้องกัน SSR issues กับ Recharts
-const RsmWorkgroupChart = dynamic(() => import("@/components/RsmWorkgroupChart"), { 
+const RsmWorkgroupChart = dynamic(() => import("@/components/charts/RsmWorkgroupChart"), { 
   ssr: false,
   loading: () => (
     <div style={{ padding: 24, textAlign: "center" }}>

@@ -3,8 +3,8 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import ProtectedRoute from '@/components/ProtectedRoute';
-import Navbar from '@/components/Navbar';
+import ProtectedRoute from '@/components/common/ProtectedRoute';
+import Navbar from '@/components/common/Navbar';
 
 interface User {
   id: number;

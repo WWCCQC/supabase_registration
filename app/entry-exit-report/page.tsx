@@ -1,7 +1,7 @@
 "use client";
 import React from "react";
-import Navbar from "@/components/Navbar";
-import ProtectedRoute from "@/components/ProtectedRoute";
+import Navbar from "@/components/common/Navbar";
+import ProtectedRoute from "@/components/common/ProtectedRoute";
 
 export default function EntryExitReportPage() {
   return (

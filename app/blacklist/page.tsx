@@ -1,8 +1,8 @@
 ﻿"use client";
 
 import { useState, useEffect, useMemo } from 'react';
-import ProtectedRoute from '@/components/ProtectedRoute';
-import Navbar from '@/components/Navbar';
+import ProtectedRoute from '@/components/common/ProtectedRoute';
+import Navbar from '@/components/common/Navbar';
 
 interface BlacklistItem {
   id: number;

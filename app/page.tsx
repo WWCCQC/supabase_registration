@@ -3,7 +3,7 @@
 import React from "react";
 import NextDynamic from "next/dynamic";
 import { useAuth } from "@/lib/useAuth";
-import Navbar from "@/components/Navbar";
+import Navbar from "@/components/common/Navbar";
 import Link from "next/link";
 
 // โหลด component แบบ client-only (เปลี่ยนชื่อ import เป็น NextDynamic)
