@@ -106,11 +106,11 @@ export async function GET(req: Request) {
     });
     console.log('📊 Status counts:', statusCounts);
     
-    // Filter for หัวหน้า (heads) - handle both correct and encoding-corrupted values
+    // Filter for หัวหน้า (heads) - any status starting with "ห" to handle encoding issues
     const headsOnly = allData.filter((row: any) => {
       const status = row.workgroup_status || "";
-      // Match: "หัวหน้า" OR "หัวหน้���" (encoding issue)
-      return status === "หัวหน้า" || status === "หัวหน้���";
+      // Match any status that starts with "ห" (covers หัวหน้า and หัวหน���า)
+      return status.startsWith("ห");
     });
     console.log('📊 Total workgroup heads after filtering:', headsOnly.length);
     console.log('📊 Expected from Supabase query: 1787');
