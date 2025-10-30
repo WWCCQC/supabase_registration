@@ -1724,7 +1724,17 @@ export default function TechBrowser() {
                   iconType="rect"
                   wrapperStyle={{ paddingBottom: "10px" }}
                   formatter={(value: string) => {
-                    // คำนวณยอดรวมจาก chartData ที่แสดงจริง (Top 8)
+                    // ใช้ข้อมูลจาก chartSummary ที่มีข้อมูลครบถ้วนทั้งหมด แทนการคำนวณจาก chartData ที่แสดงแค่ Top 8
+                    if (chartSummary) {
+                      if (value === "Yes") {
+                        return `${value} (${(chartSummary.totalYes || 0).toLocaleString()})`;
+                      }
+                      if (value === "No") {
+                        return `${value} (${(chartSummary.totalNo || 0).toLocaleString()})`;
+                      }
+                    }
+                    
+                    // Fallback: คำนวณจาก chartData ถ้าไม่มี chartSummary
                     const displayedYes = chartData.reduce((sum, item) => sum + (item.Yes || 0), 0);
                     const displayedNo = chartData.reduce((sum, item) => sum + (item.No || 0), 0);
                     
