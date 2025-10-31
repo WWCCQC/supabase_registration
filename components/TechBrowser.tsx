@@ -1115,7 +1115,7 @@ export default function TechBrowser() {
           borderRadius: "8px",
           width: "650px"
         }}>
-        {/* ปุ่มรีเฟรชและเวลาอัปเดต */}
+        {/* Header */}
         <div style={{ 
           display: "flex", 
           justifyContent: "space-between", 
@@ -1125,62 +1125,6 @@ export default function TechBrowser() {
         }}>
           <div style={{ fontSize: "14px", fontWeight: "bold", color: "#333" }}>
             📊 ข้อมูลสรุป (Dashboard)
-          </div>
-          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <span style={{ fontSize: "10px", color: "#666" }}>
-              {new Date().toLocaleString('th-TH')}
-            </span>
-            <button
-              onClick={async () => {
-                // Force refresh all data with force=true parameter
-                try {
-                  await Promise.all([
-                    fetchKpis(),
-                    fetchData(),
-                    fetch('/api/chart/rsm-workgroup?force=true').then(() => fetchChartData()),
-                    fetch('/api/pivot-data?force=true').then(() => fetchPivotData()),
-                    fetch('/api/chart/workgroup-count?force=true').then(() => fetchWorkgroupData())
-                  ]);
-                  console.log('🔄 All data refreshed successfully!');
-                } catch (error) {
-                  console.error('❌ Error refreshing data:', error);
-                }
-              }}
-              disabled={loading || kpiLoading || pivotLoading || workgroupLoading}
-              style={{
-                padding: "6px 12px",
-                background: (loading || kpiLoading || pivotLoading || workgroupLoading) ? "#ccc" : "#4CAF50",
-                color: "white",
-                border: "none",
-                borderRadius: "4px",
-                cursor: (loading || kpiLoading || pivotLoading || workgroupLoading) ? "not-allowed" : "pointer",
-                fontSize: "10px",
-                fontWeight: "bold",
-                display: "flex",
-                alignItems: "center",
-                gap: "4px"
-              }}
-              title="รีเฟรชข้อมูลทั้งหมดทันที (แก้ปัญหาข้อมูลล่าช้า)"
-            >
-              {(loading || kpiLoading || pivotLoading || workgroupLoading) ? (
-                <>
-                  <div style={{
-                    width: "12px",
-                    height: "12px",
-                    border: "2px solid #ffffff",
-                    borderTop: "2px solid transparent",
-                    borderRadius: "50%",
-                    transform: "rotate(0deg)",
-                    display: "inline-block"
-                  }}></div>
-                  รีเฟรช...
-                </>
-              ) : (
-                <>
-                  🔄 รีเฟรชทันที
-                </>
-              )}
-            </button>
           </div>
         </div>
         {/* บรรทัดที่ 1: Technicians, Installation, Repair + Depot */}
