@@ -1740,6 +1740,8 @@ function TechTransactionContent() {
                   <YAxis 
                     stroke="#6b7280"
                     style={{ fontSize: '12px' }}
+                    domain={[0, 'auto']}
+                    ticks={[0, 5, 10, 15, 20]}
                   />
                   <Tooltip 
                     contentStyle={{
@@ -1799,7 +1801,7 @@ function TechTransactionContent() {
                   fontSize: '18px',
                   fontWeight: '600',
                   color: '#374151',
-                  marginBottom: '16px'
+                  marginBottom: '8px'
                 }}>
                   ช่างใหม่ vs ช่างลาออก รายเดือน
                 </h2>
@@ -1817,6 +1819,7 @@ function TechTransactionContent() {
                     <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                     <XAxis dataKey="name" />
                     <YAxis yAxisId="left" label={{ value: 'จำนวน (คน)', angle: -90, position: 'insideLeft' }} />
+                    <YAxis yAxisId="right" orientation="right" tick={false} />
                     <Tooltip
                       content={({ active, payload }: any) => {
                         if (active && payload && payload.length) {
@@ -1882,7 +1885,7 @@ function TechTransactionContent() {
                     />
 
                     <Line
-                      yAxisId="left"
+                      yAxisId="right"
                       type="monotone"
                       dataKey="netChange"
                       stroke="#a855f7"
