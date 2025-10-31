@@ -5,7 +5,7 @@ import { createClient } from '@supabase/supabase-js';
 import ProtectedRoute from '@/components/common/ProtectedRoute';
 import Navbar from '@/components/common/Navbar';
 import * as XLSX from 'xlsx';
-import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell, LabelList, PieChart, Pie } from 'recharts';
+import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell, LabelList, PieChart, Pie, ComposedChart } from 'recharts';
 
 interface TransactionItem {
   Year?: number;
@@ -1789,10 +1789,11 @@ function TechTransactionContent() {
             {/* Monthly Bar Chart */}
             {monthlyChartData.length > 0 && (
               <div style={{
-                backgroundColor: '#f9fafb',
+                backgroundColor: 'white',
                 borderRadius: '12px',
                 padding: '24px',
-                boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
+                boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+                border: '1px solid #e5e7eb'
               }}>
                 <h2 style={{
                   fontSize: '18px',
@@ -1802,58 +1803,136 @@ function TechTransactionContent() {
                 }}>
                   ช่างใหม่ vs ช่างลาออก รายเดือน
                 </h2>
-                <ResponsiveContainer width="100%" height={400}>
-                  <BarChart
-                    data={monthlyChartData}
-                    margin={{ top: 5, right: 30, left: 20, bottom: 80 }}
+                <ResponsiveContainer width="100%" height={500}>
+                  <ComposedChart
+                    data={monthlyChartData.map(item => ({
+                      name: item.month.substring(0, 3),
+                      month: item.month,
+                      newTech: item['ช่างใหม่'],
+                      resignation: item['ช่างลาออก'],
+                      netChange: item['ช่างใหม่'] - item['ช่างลาออก']
+                    }))}
+                    margin={{ top: 160, right: 30, left: 0, bottom: 20 }}
                   >
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                    <XAxis 
-                      dataKey="month" 
-                      stroke="#6b7280"
-                      style={{ fontSize: '12px' }}
-                      angle={-45}
-                      textAnchor="end"
-                      height={80}
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                    <XAxis dataKey="name" />
+                    <YAxis yAxisId="left" label={{ value: 'จำนวน (คน)', angle: -90, position: 'insideLeft' }} />
+                    <YAxis
+                      yAxisId="right"
+                      orientation="right"
+                      label={{ value: 'Net Change', angle: 90, position: 'insideRight' }}
                     />
-                    <YAxis 
-                      stroke="#6b7280"
-                      style={{ fontSize: '12px' }}
-                    />
-                    <Tooltip 
-                      contentStyle={{
-                        backgroundColor: 'white',
-                        border: '1px solid #e5e7eb',
-                        borderRadius: '8px',
-                        padding: '12px'
+                    <Tooltip
+                      content={({ active, payload }: any) => {
+                        if (active && payload && payload.length) {
+                          const data = payload[0].payload;
+                          return (
+                            <div style={{
+                              backgroundColor: 'rgba(0,0,0,0.8)',
+                              backdropFilter: 'blur(8px)',
+                              padding: '12px',
+                              borderRadius: '8px',
+                              border: '1px solid rgba(255,255,255,0.1)'
+                            }}>
+                              <p style={{ color: 'white', fontWeight: 600, fontSize: '14px', marginBottom: '4px' }}>
+                                {data.month}
+                              </p>
+                              <p style={{ color: '#10b981', fontSize: '12px', margin: '2px 0' }}>
+                                ช่างใหม่: {data.newTech}
+                              </p>
+                              <p style={{ color: '#ef4444', fontSize: '12px', margin: '2px 0' }}>
+                                ช่างลาออก: {data.resignation}
+                              </p>
+                              <p style={{
+                                color: data.netChange >= 0 ? '#10b981' : '#ef4444',
+                                fontSize: '12px',
+                                fontWeight: 600,
+                                marginTop: '4px'
+                              }}>
+                                Net: {data.netChange > 0 ? '+' : ''}{data.netChange}
+                              </p>
+                            </div>
+                          );
+                        }
+                        return null;
                       }}
                     />
-                    <Legend 
-                      wrapperStyle={{
-                        paddingTop: '20px'
+                    <Legend />
+
+                    <Bar
+                      yAxisId="left"
+                      dataKey="newTech"
+                      fill="#10b981"
+                      radius={[8, 8, 0, 0]}
+                      name="ช่างใหม่"
+                      label={{
+                        position: 'top',
+                        fill: '#10b981',
+                        fontSize: 12,
+                        fontWeight: 'bold'
                       }}
                     />
-                    <Bar 
-                      dataKey="ช่างลาออก" 
-                      fill="#dc2626"
-                      label={{ 
-                        position: 'top', 
-                        fill: '#dc2626', 
-                        fontSize: 11,
-                        formatter: (value: any) => (value && value > 0) ? value : ''
+                    <Bar
+                      yAxisId="left"
+                      dataKey="resignation"
+                      fill="#ef4444"
+                      radius={[8, 8, 0, 0]}
+                      name="ช่างลาออก"
+                      label={{
+                        position: 'top',
+                        fill: '#ef4444',
+                        fontSize: 12,
+                        fontWeight: 'bold'
                       }}
                     />
-                    <Bar 
-                      dataKey="ช่างใหม่" 
-                      fill="#059669"
-                      label={{ 
-                        position: 'top', 
-                        fill: '#059669', 
-                        fontSize: 11,
-                        formatter: (value: any) => (value && value > 0) ? value : ''
+
+                    <Line
+                      yAxisId="right"
+                      type="monotone"
+                      dataKey="netChange"
+                      stroke="#a855f7"
+                      strokeDasharray="5 5"
+                      strokeWidth={2}
+                      dot={false}
+                      name="Net Change"
+                      label={(props: any) => {
+                        const { x, y, value, index } = props;
+                        const data = monthlyChartData[index];
+                        if (!data) return null;
+                        
+                        const netChange = data['ช่างใหม่'] - data['ช่างลาออก'];
+                        const color = netChange >= 0 ? '#10b981' : '#ef4444';
+                        
+                        return (
+                          <g>
+                            <text
+                              x={x}
+                              y={y - 35}
+                              textAnchor="middle"
+                              fill="#a855f7"
+                              fontSize={12}
+                              fontWeight="bold"
+                            >
+                              {value > 0 ? '+' : ''}{value}
+                            </text>
+                            {netChange > 0 ? (
+                              <polygon
+                                points={`${x},${y - 5} ${x + 5},${y + 5} ${x - 5},${y + 5}`}
+                                fill={color}
+                              />
+                            ) : netChange < 0 ? (
+                              <polygon
+                                points={`${x},${y + 5} ${x + 5},${y - 5} ${x - 5},${y - 5}`}
+                                fill={color}
+                              />
+                            ) : (
+                              <circle cx={x} cy={y} r={3} fill="#a855f7" />
+                            )}
+                          </g>
+                        );
                       }}
                     />
-                  </BarChart>
+                  </ComposedChart>
                 </ResponsiveContainer>
               </div>
             )}
