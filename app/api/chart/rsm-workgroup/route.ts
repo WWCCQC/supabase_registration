@@ -23,6 +23,65 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: countError.message }, { status: 400 });
     }
     
+    // Get power_authority counts from DB with pagination (for accurate Yes/No counts)
+    // Fetch all records with Yes/Y power_authority
+    let yesData: any[] = [];
+    let yesFrom = 0;
+    let yesHasMore = true;
+    
+    while (yesHasMore) {
+      const { data, error } = await supabase
+        .from("technicians")
+        .select("national_id")
+        .or('power_authority.ilike.Yes,power_authority.ilike.Y')
+        .range(yesFrom, yesFrom + 999);
+      
+      if (error) {
+        console.error("RSM Workgroup Chart Yes count error:", error);
+        break;
+      }
+      
+      if (data && data.length > 0) {
+        yesData = [...yesData, ...data];
+        yesFrom += 1000;
+        yesHasMore = data.length === 1000;
+      } else {
+        yesHasMore = false;
+      }
+    }
+    
+    // Fetch all records with No/N power_authority
+    let noData: any[] = [];
+    let noFrom = 0;
+    let noHasMore = true;
+    
+    while (noHasMore) {
+      const { data, error } = await supabase
+        .from("technicians")
+        .select("national_id")
+        .or('power_authority.ilike.No,power_authority.ilike.N')
+        .range(noFrom, noFrom + 999);
+      
+      if (error) {
+        console.error("RSM Workgroup Chart No count error:", error);
+        break;
+      }
+      
+      if (data && data.length > 0) {
+        noData = [...noData, ...data];
+        noFrom += 1000;
+        noHasMore = data.length === 1000;
+      } else {
+        noHasMore = false;
+      }
+    }
+    
+    // Count unique national_ids for Yes and No
+    const dbYesCount = yesData ? new Set(yesData.map(r => String(r.national_id).trim())).size : 0;
+    const dbNoCount = noData ? new Set(noData.map(r => String(r.national_id).trim())).size : 0;
+    
+    console.log(`📊 Power Authority counts from DB: Yes=${dbYesCount} (fetched ${yesData.length}), No=${dbNoCount} (fetched ${noData.length}), Total=${dbYesCount + dbNoCount}`);
+    
     // Fetch all data with proper pagination including national_id for unique counting
     let allData: any[] = [];
     let from = 0;
@@ -158,15 +217,24 @@ export async function GET(request: Request) {
       .sort((a, b) => b.total - a.total) // เรียงตาม total มากไปน้อย
       .slice(0, 20); // แสดงแค่ top 20 RSM
     
-    // คำนวณ summary จากข้อมูลทั้งหมด (ไม่จำกัดแค่มี RSM) using unique counts
-    const totalYes = allYesNationalIds.size;  // ใช้ค่าจาก Set ที่นับทั้งหมด
-    const totalNo = allNoNationalIds.size;    // ใช้ค่าจาก Set ที่นับทั้งหมด
+    // คำนวณ summary - ใช้ค่าจาก DB แทนค่าที่นับจาก fetched data
+    const totalYes = dbYesCount || allYesNationalIds.size;  // ใช้ค่าจาก DB แทน
+    const totalNo = dbNoCount || allNoNationalIds.size;     // ใช้ค่าจาก DB แทน
     const totalTechniciansWithRsm = nationalIdsWithRsm.size;
     
     console.log(`📊 Chart Summary: Total Records: ${allNationalIds.size}, Records with RSM: ${nationalIdsWithRsm.size}, Records without RSM: ${nationalIdsWithoutRsm.size}`);
     console.log(`📊 Chart Summary: Records with Authority: ${nationalIdsWithAuthority.size}, Records without Authority: ${nationalIdsWithoutAuthority.size}`);
     console.log(`📊 Chart Summary: Total RSM: ${Object.keys(groupedData).length}, Total Technicians with RSM: ${totalTechniciansWithRsm}`);
-    console.log(`📊 Chart Summary: Total Yes (all): ${totalYes}, Total No (all): ${totalNo}, Sum: ${totalYes + totalNo}`);
+    console.log(`📊 Chart Summary: Total Yes (DB): ${dbYesCount}, Total No (DB): ${dbNoCount}, Sum: ${dbYesCount + dbNoCount}`);
+    console.log(`📊 Chart Summary: Total Yes (fetched): ${allYesNationalIds.size}, Total No (fetched): ${allNoNationalIds.size}, Sum: ${allYesNationalIds.size + allNoNationalIds.size}`);
+    
+    // ⚠️ Warning if DB counts don't match fetched counts
+    if (dbYesCount !== allYesNationalIds.size || dbNoCount !== allNoNationalIds.size) {
+      console.warn(`⚠️  Warning: Power Authority counts mismatch!`);
+      console.warn(`   DB: Yes=${dbYesCount}, No=${dbNoCount}`);
+      console.warn(`   Fetched: Yes=${allYesNationalIds.size}, No=${allNoNationalIds.size}`);
+      console.warn(`   Using DB counts for accuracy`);
+    }
 
     return NextResponse.json(
       { 
@@ -185,7 +253,15 @@ export async function GET(request: Request) {
             dbCount: totalCount,
             fetchedCount: allData.length,
             uniqueNationalIds: allNationalIds.size,
-            discrepancy: totalCount ? totalCount - allData.length : 0
+            discrepancy: totalCount ? totalCount - allData.length : 0,
+            powerAuthority: {
+              dbYes: dbYesCount,
+              dbNo: dbNoCount,
+              fetchedYes: allYesNationalIds.size,
+              fetchedNo: allNoNationalIds.size,
+              yesDiff: dbYesCount - allYesNationalIds.size,
+              noDiff: dbNoCount - allNoNationalIds.size
+            }
           }
         }
       },
