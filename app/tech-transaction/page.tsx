@@ -353,34 +353,72 @@ function TechTransactionContent() {
 
   // Filter allData instead of data
   const filteredAllData = useMemo(() => {
+    console.log('🔍 Filtering data...', {
+      allDataLength: allData.length,
+      selectedYears,
+      selectedMonths,
+      selectedWeeks,
+      selectedDates,
+      searchTerm
+    });
+
     let filtered = allData;
 
     // Apply filters (multi-select)
     if (selectedYears.length > 0) {
-      filtered = filtered.filter(item => selectedYears.includes(String(item.Year)));
+      const beforeFilter = filtered.length;
+      filtered = filtered.filter(item => {
+        const itemYear = String(item.Year);
+        const match = selectedYears.includes(itemYear);
+        return match;
+      });
+      console.log(`📅 Year filter: ${beforeFilter} → ${filtered.length}`);
     }
+    
     if (selectedMonths.length > 0) {
-      filtered = filtered.filter(item => selectedMonths.includes(String(item.Month)));
+      const beforeFilter = filtered.length;
+      filtered = filtered.filter(item => {
+        const itemMonth = String(item.Month);
+        const match = selectedMonths.includes(itemMonth);
+        return match;
+      });
+      console.log(`📅 Month filter: ${beforeFilter} → ${filtered.length}`, { 
+        selectedMonths, 
+        sampleMonth: filtered[0]?.Month 
+      });
     }
+    
     if (selectedWeeks.length > 0) {
+      const beforeFilter = filtered.length;
       // Week in database is number, but selectedWeeks is string array
       filtered = filtered.filter(item => {
         const weekStr = String(item.Week);
-        return selectedWeeks.includes(weekStr);
+        const match = selectedWeeks.includes(weekStr);
+        return match;
       });
+      console.log(`📅 Week filter: ${beforeFilter} → ${filtered.length}`);
     }
+    
     if (selectedDates.length > 0) {
-      filtered = filtered.filter(item => selectedDates.includes(String(item.Date)));
+      const beforeFilter = filtered.length;
+      filtered = filtered.filter(item => {
+        const itemDate = String(item.Date);
+        const match = selectedDates.includes(itemDate);
+        return match;
+      });
+      console.log(`📅 Date filter: ${beforeFilter} → ${filtered.length}`);
     }
 
     // Apply search term
     if (searchTerm.trim()) {
+      const beforeFilter = filtered.length;
       const lowerSearch = searchTerm.toLowerCase();
       filtered = filtered.filter((item) => {
         return Object.values(item).some((value) =>
           String(value).toLowerCase().includes(lowerSearch)
         );
       });
+      console.log(`🔍 Search filter: ${beforeFilter} → ${filtered.length}`);
     }
 
     // Sort by Date (newest to oldest)
@@ -389,6 +427,8 @@ function TechTransactionContent() {
       const dateB = b.Date ? new Date(b.Date).getTime() : 0;
       return dateB - dateA; // Descending order (newest first)
     });
+
+    console.log(`✅ Final filtered count: ${filtered.length}`);
 
     return filtered;
   }, [allData, searchTerm, selectedYears, selectedMonths, selectedWeeks, selectedDates]);
