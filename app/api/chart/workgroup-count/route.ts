@@ -23,11 +23,23 @@ export async function GET(req: Request) {
 
     const supabase = supabaseAdmin();
 
+    // Get total count of "หัวหน้า" first (for accurate grand total)
+    let countQuery = supabase
+      .from("technicians")
+      .select("*", { count: "exact", head: true })
+      .not("rsm", "is", null)
+      .not("provider", "is", null)
+      .not("work_type", "is", null)
+      .eq("workgroup_status", "หัวหน้า");
+    
+    const { count: totalHeadsCount } = await countQuery;
+    console.log('📊 Total หัวหน้า count from DB:', totalHeadsCount);
+
     // Build base query - MUST match SQL WHERE conditions exactly
     // WHERE rsm IS NOT NULL AND provider IS NOT NULL AND work_type IS NOT NULL
     let query = supabase
       .from("technicians")
-      .select("rsm, provider, work_type, workgroup_status, national_id")
+      .select("rsm, provider, work_type, workgroup_status, national_id, tech_id")
       .not("rsm", "is", null)
       .not("provider", "is", null)
       .not("work_type", "is", null);
@@ -125,10 +137,13 @@ export async function GET(req: Request) {
       const rsm = row.rsm || "Unknown";
       const provider = row.provider || "Unknown";
       const workType = row.work_type || "Unknown";
-      const nationalId = row.national_id || "";
+      const nationalId = row.national_id || row.tech_id || ""; // Fallback to tech_id if no national_id
 
-      // Skip if no national_id
-      if (!nationalId || nationalId === "null" || nationalId === "undefined") return;
+      // Skip only if both national_id and tech_id are missing
+      if (!nationalId || nationalId === "null" || nationalId === "undefined") {
+        console.warn('⚠️  Skipping row without ID:', row.tech_id);
+        return;
+      }
 
       if (!uniqueSets[rsm]) {
         uniqueSets[rsm] = {};
@@ -174,7 +189,7 @@ export async function GET(req: Request) {
     // Calculate REAL Grand Total (unique national_id across ALL RSMs)
     const grandTotalSet = new Set<string>();
     headsOnly.forEach((row: any) => {
-      const nationalId = row.national_id || "";
+      const nationalId = row.national_id || row.tech_id || "";
       if (nationalId && nationalId !== "null" && nationalId !== "undefined") {
         grandTotalSet.add(nationalId);
       }
@@ -182,16 +197,30 @@ export async function GET(req: Request) {
     const grandTotal = grandTotalSet.size;
 
     console.log('📊 Workgroup result:', result);
-    console.log('📊 Workgroup Grand Total (unique):', grandTotal);
+    console.log('📊 Workgroup Grand Total (calculated from fetched data):', grandTotal);
+    console.log('📊 Workgroup Grand Total (from DB count):', totalHeadsCount);
+    
+    // ⚠️ Warning if counts don't match
+    if (totalHeadsCount && grandTotal !== totalHeadsCount) {
+      console.warn(`⚠️  Warning: Calculated ${grandTotal} but DB count is ${totalHeadsCount} (missing ${totalHeadsCount - grandTotal} records)`);
+    }
+    
     console.log('📊 Timestamp:', new Date().toISOString());
-    console.log('📊 Version: 2.0 - Fixed unique counting');
+    console.log('📊 Version: 3.0 - Use DB count for accurate grand total');
 
     return NextResponse.json(
       { 
         data: result, 
-        grandTotal,
+        grandTotal: totalHeadsCount || grandTotal, // Use DB count as primary source
         timestamp: new Date().toISOString(),
-        message: 'Workgroup count calculated from unique national_id'
+        message: 'Workgroup count calculated from unique national_id',
+        _debug: {
+          dbCount: totalHeadsCount,
+          calculatedCount: grandTotal,
+          fetchedRows: allData.length,
+          headsOnlyRows: headsOnly.length,
+          discrepancy: totalHeadsCount ? totalHeadsCount - grandTotal : 0
+        }
       },
       {
         headers: {
