@@ -59,6 +59,12 @@ export async function GET(request: Request) {
 
     console.log(`📊 Chart API: Fetched ${allData?.length || 0} records from database (DB count: ${totalCount || 0}) - Fixed encoding issue`);
     console.log(`📊 Chart API: Using actual fetched count (${allData?.length || 0}) for consistency with Table Editor`);
+    
+    // ⚠️ Warning if fetched count doesn't match DB count
+    if (totalCount && allData.length !== totalCount) {
+      console.warn(`⚠️  Warning: Fetched ${allData.length} records but DB count is ${totalCount} (missing ${totalCount - allData.length} records)`);
+      console.warn(`   This may indicate encoding issues or data corruption in some records`);
+    }
 
     if (!allData || allData.length === 0) {
       return NextResponse.json({ 
@@ -169,12 +175,18 @@ export async function GET(request: Request) {
         timestamp: new Date().toISOString(),
         summary: {
           totalRsm: Object.keys(groupedData).length,           // จำนวน RSM ทั้งหมด
-          totalTechnicians: allNationalIds.size,               // ใช้ unique national_id count เพื่อให้ตรงกับการ์ด Technicians
+          totalTechnicians: totalCount || allNationalIds.size, // ใช้ค่าจริงจาก DB แทนการนับจาก fetched data
           totalTechniciansWithRsm: totalTechniciansWithRsm,    // จำนวนช่างที่มี RSM
           totalYes: totalYes,                                  // จำนวนช่างที่มี power_authority = Yes
           totalNo: totalNo,                                    // จำนวนช่างที่มี power_authority = No
           recordsWithoutRsm: nationalIdsWithoutRsm.size,       // จำนวนช่างที่ไม่มี RSM (unique)
-          recordsWithoutAuthority: nationalIdsWithoutAuthority.size  // จำนวนช่างที่ไม่มี power_authority (unique)
+          recordsWithoutAuthority: nationalIdsWithoutAuthority.size,  // จำนวนช่างที่ไม่มี power_authority (unique)
+          _debug: {                                           // เพิ่ม debug info
+            dbCount: totalCount,
+            fetchedCount: allData.length,
+            uniqueNationalIds: allNationalIds.size,
+            discrepancy: totalCount ? totalCount - allData.length : 0
+          }
         }
       },
       {
