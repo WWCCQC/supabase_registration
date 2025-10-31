@@ -243,27 +243,45 @@ function TechTransactionContent() {
       setLoading(true);
       setError(null);
       
-      console.log('🔍 Fetching Transactions via API...', { page: currentPage, limit: itemsPerPage });
+      console.log('🔍 Fetching Transactions directly from DB...', { page: currentPage, limit: itemsPerPage });
 
-      const response = await fetch(`/api/transaction?page=${currentPage}&limit=${itemsPerPage}`);
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error('❌ API Error:', errorData);
-        throw new Error(errorData.error || 'Failed to fetch transaction data');
+      const supabase = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      );
+
+      // First get total count
+      const { count: totalRecords } = await supabase
+        .from('transaction')
+        .select('*', { count: 'exact', head: true });
+
+      console.log('📊 Total transaction records in DB:', totalRecords);
+
+      // Fetch paginated data
+      const from = (currentPage - 1) * itemsPerPage;
+      const to = from + itemsPerPage - 1;
+
+      const { data: fetchedData, error: fetchError } = await supabase
+        .from('transaction')
+        .select('*')
+        .order('Date', { ascending: false })
+        .order('Year', { ascending: false })
+        .order('Week', { ascending: false })
+        .range(from, to);
+
+      if (fetchError) {
+        console.error('❌ Supabase Error:', fetchError);
+        throw new Error(fetchError.message);
       }
 
-      const result = await response.json();
-      
-      console.log('✅ Transaction API Response:', {
-        dataLength: result.data?.length,
-        totalCount: result.totalCount,
-        page: result.page,
-        totalPages: result.totalPages
+      console.log('✅ Fetched from DB:', {
+        dataLength: fetchedData?.length,
+        totalCount: totalRecords,
+        page: currentPage
       });
 
-      setData(result.data || []);
-      setTotalCount(result.totalCount || 0);
+      setData(fetchedData || []);
+      setTotalCount(totalRecords || 0);
       
     } catch (err: any) {
       console.error('❌ Error fetching transactions:', err);
@@ -275,43 +293,61 @@ function TechTransactionContent() {
 
   const fetchAllData = async () => {
     try {
-      console.log('📥 Fetching all transaction data...');
+      console.log('📥 Fetching all transaction data directly from DB...');
       
+      const supabase = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      );
+
       // First, get total count
-      const countResponse = await fetch(`/api/transaction?page=1&limit=1`);
-      if (!countResponse.ok) {
-        throw new Error('Failed to fetch count');
-      }
-      const countResult = await countResponse.json();
-      const totalCount = countResult.totalCount || 0;
+      const { count: totalCount } = await supabase
+        .from('transaction')
+        .select('*', { count: 'exact', head: true });
       
       console.log('📊 Total records in database:', totalCount);
       
-      // Fetch in batches (1000 per batch)
+      // Fetch in batches (1000 per batch) using pagination
       let allRecords: any[] = [];
       const batchSize = 1000;
-      const totalPages = Math.ceil(totalCount / batchSize);
-      
-      console.log('🔄 Fetching', totalPages, 'batches...');
+      let currentBatch = 0;
+      let hasMore = true;
 
-      for (let page = 1; page <= totalPages; page++) {
-        const response = await fetch(`/api/transaction?page=${page}&limit=${batchSize}`);
-        
-        if (!response.ok) {
-          console.error('❌ Failed to fetch page', page, response.status, response.statusText);
-          continue;
+      while (hasMore) {
+        const from = currentBatch * batchSize;
+        const to = from + batchSize - 1;
+
+        const { data: batchData, error: batchError } = await supabase
+          .from('transaction')
+          .select('*')
+          .order('Date', { ascending: false })
+          .order('Year', { ascending: false })
+          .order('Week', { ascending: false })
+          .range(from, to);
+
+        if (batchError) {
+          console.error('❌ Error fetching batch', currentBatch, ':', batchError);
+          break;
         }
 
-        const result = await response.json();
-        const batchData = result.data || [];
-        allRecords = [...allRecords, ...batchData];
-        
-        console.log(`📦 Batch ${page}/${totalPages}: ${batchData.length} records (total: ${allRecords.length})`);
-        
-        // Debug register types in each batch
-        if (batchData.length > 0) {
+        if (batchData && batchData.length > 0) {
+          allRecords = [...allRecords, ...batchData];
+          console.log(`📦 Batch ${currentBatch + 1}: ${batchData.length} records (total: ${allRecords.length}/${totalCount})`);
+          
+          // Debug register types in each batch
           const registerTypes = [...new Set(batchData.map((item: any) => item.Register))];
-          console.log(`📋 Batch ${page} register types:`, registerTypes);
+          console.log(`📋 Batch ${currentBatch + 1} register types:`, registerTypes);
+
+          hasMore = batchData.length === batchSize;
+          currentBatch++;
+        } else {
+          hasMore = false;
+        }
+
+        // Safety limit
+        if (currentBatch > 10) {
+          console.warn('⚠️ Reached batch limit of 10');
+          break;
         }
       }
 
@@ -329,23 +365,54 @@ function TechTransactionContent() {
 
   const fetchFilterOptions = async () => {
     try {
-      console.log('🔽 Fetching filter options...');
+      console.log('🔽 Fetching filter options directly from DB...');
       
-      const response = await fetch('/api/transaction/filters');
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch filter options');
+      const supabase = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      );
+
+      // Get all unique values by fetching all data
+      const { data: allTransactions, error } = await supabase
+        .from('transaction')
+        .select('Year, Month, Week, Date');
+
+      if (error) {
+        console.error('❌ Error fetching filter data:', error);
+        throw error;
       }
 
-      const options = await response.json();
+      console.log('📥 Fetched transactions for filters:', allTransactions?.length);
+
+      // Month order for sorting
+      const monthOrder = [
+        'January', 'February', 'March', 'April', 'May', 'June',
+        'July', 'August', 'September', 'October', 'November', 'December'
+      ];
+
+      // Extract unique values and sort
+      const years = [...new Set(allTransactions?.map((item: any) => item.Year).filter(Boolean))].sort();
+      
+      // Sort months by calendar order
+      const uniqueMonths = [...new Set(allTransactions?.map((item: any) => item.Month).filter(Boolean))];
+      const months = uniqueMonths.sort((a: any, b: any) => {
+        return monthOrder.indexOf(a) - monthOrder.indexOf(b);
+      });
+      
+      // Convert weeks to strings for consistent comparison
+      const weeks = [...new Set(allTransactions?.map((item: any) => String(item.Week)).filter(Boolean))].sort((a: any, b: any) => Number(a) - Number(b));
+      const dates = [...new Set(allTransactions?.map((item: any) => item.Date).filter(Boolean))].sort();
+
+      const options = { years, months, weeks, dates };
       setFilterOptions(options);
       
-      console.log('✅ Filter options loaded:', {
-        years: options.years?.length,
-        months: options.months?.length,
-        weeks: options.weeks?.length,
-        dates: options.dates?.length
+      console.log('✅ Filter options loaded from DB:', {
+        years: years.length,
+        months: months.length,
+        weeks: weeks.length,
+        dates: dates.length
       });
+      console.log('📅 Months:', months);
     } catch (err: any) {
       console.error('❌ Error fetching filter options:', err);
     }
