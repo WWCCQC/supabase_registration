@@ -27,6 +27,10 @@ function TechTransactionContent() {
   const [totalCount, setTotalCount] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
   
+  // DB counts for accurate statistics
+  const [dbNewTechs, setDbNewTechs] = useState<number>(0);
+  const [dbResignedTechs, setDbResignedTechs] = useState<number>(0);
+  
   // Filter states - changed to arrays for multi-select
   const [selectedYears, setSelectedYears] = useState<string[]>([]);
   const [selectedMonths, setSelectedMonths] = useState<string[]>([]);
@@ -64,6 +68,7 @@ function TechTransactionContent() {
   useEffect(() => {
     fetchAllData();
     fetchFilterOptions();
+    fetchDBCounts();
   }, []);
 
   // Reset to page 1 when filters change
@@ -159,6 +164,79 @@ function TechTransactionContent() {
       supabase.removeChannel(channel);
     };
   }, []);
+
+  const fetchDBCounts = async () => {
+    try {
+      console.log('📊 Fetching DB counts for statistics...');
+      
+      const supabase = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      );
+
+      // Count "ช่างใหม่" - fetch all records and count unique ones
+      let newTechsData: any[] = [];
+      let newFrom = 0;
+      let newHasMore = true;
+
+      while (newHasMore) {
+        const { data, error } = await supabase
+          .from('transaction')
+          .select('Register')
+          .ilike('Register', '%างใหม่%')
+          .range(newFrom, newFrom + 999);
+
+        if (error) {
+          console.error('Error fetching new techs:', error);
+          break;
+        }
+
+        if (data && data.length > 0) {
+          newTechsData = [...newTechsData, ...data];
+          newFrom += 1000;
+          newHasMore = data.length === 1000;
+        } else {
+          newHasMore = false;
+        }
+      }
+
+      // Count "ช่างลาออก"
+      let resignedTechsData: any[] = [];
+      let resignedFrom = 0;
+      let resignedHasMore = true;
+
+      while (resignedHasMore) {
+        const { data, error } = await supabase
+          .from('transaction')
+          .select('Register')
+          .ilike('Register', '%ช่างลาออก%')
+          .range(resignedFrom, resignedFrom + 999);
+
+        if (error) {
+          console.error('Error fetching resigned techs:', error);
+          break;
+        }
+
+        if (data && data.length > 0) {
+          resignedTechsData = [...resignedTechsData, ...data];
+          resignedFrom += 1000;
+          resignedHasMore = data.length === 1000;
+        } else {
+          resignedHasMore = false;
+        }
+      }
+
+      const newTechsCount = newTechsData.length;
+      const resignedTechsCount = resignedTechsData.length;
+
+      console.log(`✅ DB Counts: New Techs = ${newTechsCount}, Resigned Techs = ${resignedTechsCount}`);
+      
+      setDbNewTechs(newTechsCount);
+      setDbResignedTechs(resignedTechsCount);
+    } catch (err) {
+      console.error('❌ Error fetching DB counts:', err);
+    }
+  };
 
   const fetchTransactions = async () => {
     try {
@@ -315,28 +393,48 @@ function TechTransactionContent() {
     return filtered;
   }, [allData, searchTerm, selectedYears, selectedMonths, selectedWeeks, selectedDates]);
 
-  // Calculate statistics from filtered data
+  // Calculate statistics - use DB counts if no filters, otherwise use filtered data
   const statistics = useMemo(() => {
-    // Use exact match or includes to catch variations
-    const newTechs = filteredAllData.filter(item => {
-      const register = String(item.Register || '');
-      // Match "ช่างใหม่" or corrupted "��่างใหม่"
-      return register.includes('างใหม่');
-    }).length;
-    
-    const resignedTechs = filteredAllData.filter(item => {
-      const register = String(item.Register || '');
-      return register.includes('ช่างลาออก');
-    }).length;
+    const hasFilters = selectedYears.length > 0 || selectedMonths.length > 0 || 
+                       selectedWeeks.length > 0 || selectedDates.length > 0 || 
+                       searchTerm.trim() !== '';
+
+    let newTechs, resignedTechs;
+
+    if (hasFilters) {
+      // If filters are applied, count from filtered data
+      newTechs = filteredAllData.filter(item => {
+        const register = String(item.Register || '');
+        return register.includes('างใหม่');
+      }).length;
+      
+      resignedTechs = filteredAllData.filter(item => {
+        const register = String(item.Register || '');
+        return register.includes('ช่างลาออก');
+      }).length;
+    } else {
+      // No filters - use DB counts for accuracy
+      newTechs = dbNewTechs;
+      resignedTechs = dbResignedTechs;
+    }
     
     const netChange = newTechs - resignedTechs;
+    
+    console.log('📊 Statistics calculated:', { 
+      newTechs, 
+      resignedTechs, 
+      netChange, 
+      hasFilters,
+      dbNewTechs,
+      dbResignedTechs
+    });
     
     return {
       newTechs,
       resignedTechs,
       netChange
     };
-  }, [filteredAllData]);
+  }, [filteredAllData, dbNewTechs, dbResignedTechs, selectedYears, selectedMonths, selectedWeeks, selectedDates, searchTerm]);
 
   // Paginate the filtered data
   const filteredData = useMemo(() => {
