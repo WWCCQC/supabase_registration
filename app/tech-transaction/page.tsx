@@ -1817,11 +1817,6 @@ function TechTransactionContent() {
                     <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                     <XAxis dataKey="name" />
                     <YAxis yAxisId="left" label={{ value: 'จำนวน (คน)', angle: -90, position: 'insideLeft' }} />
-                    <YAxis
-                      yAxisId="right"
-                      orientation="right"
-                      label={{ value: 'Net Change', angle: 90, position: 'insideRight' }}
-                    />
                     <Tooltip
                       content={({ active, payload }: any) => {
                         if (active && payload && payload.length) {
@@ -1887,7 +1882,7 @@ function TechTransactionContent() {
                     />
 
                     <Line
-                      yAxisId="right"
+                      yAxisId="left"
                       type="monotone"
                       dataKey="netChange"
                       stroke="#a855f7"
