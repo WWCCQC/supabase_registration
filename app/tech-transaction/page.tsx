@@ -2068,8 +2068,10 @@ function TechTransactionContent() {
                           labelLine={false}
                           label={(entry) => `${entry.value} (${entry.percent}%)`}
                           outerRadius={120}
+                          innerRadius={70}
                           fill="#8884d8"
                           dataKey="value"
+                          paddingAngle={2}
                         >
                           {pieData.map((entry, index) => (
                             <Cell key={`cell-${index}`} fill={COLORS[entry.name as keyof typeof COLORS] || '#9ca3af'} />
