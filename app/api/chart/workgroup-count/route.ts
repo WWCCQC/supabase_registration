@@ -1,10 +1,14 @@
 export const dynamic = "force-dynamic";
+export const revalidate = 0; // Disable caching completely
+
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 
+const API_VERSION = "5.0"; // Updated: Removed provider totals to fix double-counting
+
 export async function GET(req: Request) {
   try {
-    console.log('🔧 Workgroup Count API Environment check:');
+    console.log(`🔧 Workgroup Count API v${API_VERSION} - Environment check:`);
     console.log('NEXT_PUBLIC_SUPABASE_URL:', process.env.NEXT_PUBLIC_SUPABASE_URL ? '✅' : '❌');
     console.log('SUPABASE_SERVICE_ROLE:', process.env.SUPABASE_SERVICE_ROLE ? '✅' : '❌');
     
@@ -172,14 +176,15 @@ export async function GET(req: Request) {
     }
     
     console.log('📊 Timestamp:', new Date().toISOString());
-    console.log('📊 Version: 4.0 - Count all workgroup head records');
+    console.log(`📊 API Version: ${API_VERSION} - NO provider totals (fixed double-counting)`);
 
     return NextResponse.json(
       { 
         data: result, 
         grandTotal: totalHeadsCount || grandTotal, // Use DB count as primary source
         timestamp: new Date().toISOString(),
-        message: 'Workgroup count calculated from all records (not unique)',
+        version: API_VERSION,
+        message: 'Workgroup count - NO provider totals to prevent double-counting',
         _debug: {
           dbCount: totalHeadsCount,
           calculatedCount: grandTotal,
