@@ -91,49 +91,39 @@ export async function GET(req: Request) {
 
     console.log('📊 Total technicians count:', allData.length);
 
-    // Process data into pivot format - Count unique national_id
-    const result: Record<string, Record<string, Set<string>>> = {};
+    // Process data into pivot format - Count all records (not unique national_id)
+    const result: Record<string, Record<string, number>> = {};
 
     allData.forEach((row: any) => {
       const rsm = row.rsm || "Unknown";
       const provider = row.provider || "Unknown";
       const workType = row.work_type || "Unknown";
-      const nationalId = row.national_id;
 
-      if (!nationalId) return; // Skip rows without national_id
+      if (!rsm || !provider || !workType) return; // Skip rows with missing data
 
       if (!result[rsm]) {
         result[rsm] = {};
       }
 
-      // Count unique national_id by provider_worktype combination
+      // Count all records by provider_worktype combination
       if (workType === "Installation") {
         const key = `${provider}_Installation`;
-        if (!result[rsm][key]) result[rsm][key] = new Set();
-        result[rsm][key].add(nationalId);
+        if (!result[rsm][key]) result[rsm][key] = 0;
+        result[rsm][key]++;
       } else if (workType === "Repair") {
         const key = `${provider}_Repair`;
-        if (!result[rsm][key]) result[rsm][key] = new Set();
-        result[rsm][key].add(nationalId);
+        if (!result[rsm][key]) result[rsm][key] = 0;
+        result[rsm][key]++;
       }
 
-      // Count unique national_id by provider totals
-      if (!result[rsm][provider]) result[rsm][provider] = new Set();
-      result[rsm][provider].add(nationalId);
+      // Count all records by provider totals
+      if (!result[rsm][provider]) result[rsm][provider] = 0;
+      result[rsm][provider]++;
     });
 
-    // Convert Sets to counts
-    const finalResult: Record<string, Record<string, number>> = {};
-    Object.keys(result).forEach(rsm => {
-      finalResult[rsm] = {};
-      Object.keys(result[rsm]).forEach(key => {
-        finalResult[rsm][key] = result[rsm][key].size;
-      });
-    });
+    console.log('📊 Technician count result:', result);
 
-    console.log('📊 Technician count result:', finalResult);
-
-    return NextResponse.json(finalResult);
+    return NextResponse.json(result);
 
   } catch (e: any) {
     console.error('❌ Technician count API error:', e);

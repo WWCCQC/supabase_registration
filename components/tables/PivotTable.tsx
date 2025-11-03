@@ -37,17 +37,9 @@ export default function PivotTable({ data, workgroupData = {}, workgroupGrandTot
   const formatCountWithWorkgroup = (pivotCount: number, rsm: string, key: string) => {
     if (pivotCount === 0) return '';
     
-    const totalTechnicianCount = technicianData[rsm]?.[key] || 0;
     const workgroupCount = workgroupData[rsm]?.[key] || 0;
-    const countStr = totalTechnicianCount.toLocaleString();
-    
-    // Debug logging
-    if (totalTechnicianCount > 0) {
-      console.log(`🔍 RSM: ${rsm}, Key: ${key}, TotalTechs: ${totalTechnicianCount}, WorkgroupCount: ${workgroupCount}`, {
-        technicianData: technicianData[rsm],
-        workgroupData: workgroupData[rsm]
-      });
-    }
+    // Use pivotCount (from actual data) instead of technicianData
+    const countStr = pivotCount.toLocaleString();
     
     if (workgroupCount > 0) {
       return (
@@ -178,21 +170,18 @@ export default function PivotTable({ data, workgroupData = {}, workgroupGrandTot
   const formatGrandTotalWithWorkgroup = (pivotCount: number, provider: string, workType?: string) => {
     if (pivotCount === 0) return '';
     
-    let totalTechnicianCount = 0;
     let workgroupCount = 0;
     
     if (workType) {
-      totalTechnicianCount = technicianProviderTotals[provider]?.[workType] || 0;
       workgroupCount = workgroupProviderTotals[provider]?.[workType] || 0;
     } else {
       // Provider total
-      totalTechnicianCount = (technicianProviderTotals[provider]?.Installation || 0) + 
-                            (technicianProviderTotals[provider]?.Repair || 0);
       workgroupCount = (workgroupProviderTotals[provider]?.Installation || 0) + 
                       (workgroupProviderTotals[provider]?.Repair || 0);
     }
     
-    const countStr = totalTechnicianCount.toLocaleString();
+    // Use pivotCount (from actual data) instead of technicianData
+    const countStr = pivotCount.toLocaleString();
     
     if (workgroupCount > 0) {
       return (
