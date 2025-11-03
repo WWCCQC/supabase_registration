@@ -128,55 +128,35 @@ export async function GET(req: Request) {
     console.log('📊 Expected from Supabase query: 1787');
     console.log('📊 Difference:', headsOnly.length - 1787);
 
-    // Process data into pivot format - Count UNIQUE national_id (not rows)
-    // Use Set to track unique national_id per RSM x Provider x WorkType
+    // Process data into pivot format - Count ALL records (not unique national_id)
     const result: Record<string, Record<string, number>> = {};
-    const uniqueSets: Record<string, Record<string, Set<string>>> = {};
 
     headsOnly.forEach((row: any) => {
       const rsm = row.rsm || "Unknown";
       const provider = row.provider || "Unknown";
       const workType = row.work_type || "Unknown";
-      const nationalId = row.national_id || row.tech_id || ""; // Fallback to tech_id if no national_id
 
-      // Skip only if both national_id and tech_id are missing
-      if (!nationalId || nationalId === "null" || nationalId === "undefined") {
-        console.warn('⚠️  Skipping row without ID:', row.tech_id);
-        return;
-      }
-
-      if (!uniqueSets[rsm]) {
-        uniqueSets[rsm] = {};
-      }
-
-      // Track unique national_id by provider_worktype combination
-      if (workType === "Installation") {
-        const key = `${provider}_Installation`;
-        if (!uniqueSets[rsm][key]) {
-          uniqueSets[rsm][key] = new Set<string>();
-        }
-        uniqueSets[rsm][key].add(nationalId);
-      } else if (workType === "Repair") {
-        const key = `${provider}_Repair`;
-        if (!uniqueSets[rsm][key]) {
-          uniqueSets[rsm][key] = new Set<string>();
-        }
-        uniqueSets[rsm][key].add(nationalId);
-      }
-    });
-
-    // Convert Sets to counts
-    Object.keys(uniqueSets).forEach(rsm => {
       if (!result[rsm]) {
         result[rsm] = {};
       }
-      Object.keys(uniqueSets[rsm]).forEach(key => {
-        result[rsm][key] = uniqueSets[rsm][key].size;
-      });
+
+      // Count all records by provider_worktype combination
+      if (workType === "Installation") {
+        const key = `${provider}_Installation`;
+        if (!result[rsm][key]) {
+          result[rsm][key] = 0;
+        }
+        result[rsm][key]++;
+      } else if (workType === "Repair") {
+        const key = `${provider}_Repair`;
+        if (!result[rsm][key]) {
+          result[rsm][key] = 0;
+        }
+        result[rsm][key]++;
+      }
     });
 
-    // Calculate provider totals AFTER counting unique national_ids
-    // Provider Total = Installation + Repair (still counting unique people)
+    // Calculate provider totals by summing Installation + Repair
     Object.keys(result).forEach(rsm => {
       const providers = ['WW-Provider', 'True Tech', 'เถ้าแก่เทค'];
       providers.forEach(provider => {
@@ -186,15 +166,8 @@ export async function GET(req: Request) {
       });
     });
 
-    // Calculate REAL Grand Total (unique national_id across ALL RSMs)
-    const grandTotalSet = new Set<string>();
-    headsOnly.forEach((row: any) => {
-      const nationalId = row.national_id || row.tech_id || "";
-      if (nationalId && nationalId !== "null" && nationalId !== "undefined") {
-        grandTotalSet.add(nationalId);
-      }
-    });
-    const grandTotal = grandTotalSet.size;
+    // Calculate Grand Total from all records
+    const grandTotal = headsOnly.length;
 
     console.log('📊 Workgroup result:', result);
     console.log('📊 Workgroup Grand Total (calculated from fetched data):', grandTotal);
@@ -206,14 +179,14 @@ export async function GET(req: Request) {
     }
     
     console.log('📊 Timestamp:', new Date().toISOString());
-    console.log('📊 Version: 3.0 - Use DB count for accurate grand total');
+    console.log('📊 Version: 4.0 - Count all workgroup head records');
 
     return NextResponse.json(
       { 
         data: result, 
         grandTotal: totalHeadsCount || grandTotal, // Use DB count as primary source
         timestamp: new Date().toISOString(),
-        message: 'Workgroup count calculated from unique national_id',
+        message: 'Workgroup count calculated from all records (not unique)',
         _debug: {
           dbCount: totalHeadsCount,
           calculatedCount: grandTotal,
