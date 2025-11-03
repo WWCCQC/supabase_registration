@@ -1949,7 +1949,8 @@ function TechTransactionContent() {
             { month: 'June', total: 3147 },
             { month: 'July', total: 2987 },
             { month: 'August', total: 2971 },
-            { month: 'September', total: 2932 }
+            { month: 'September', total: 2932 },
+            { month: 'October', total: 2938 }
           ];
 
           // คำนวณจำนวนช่างลาออกจาก monthlyChartData
@@ -1971,8 +1972,8 @@ function TechTransactionContent() {
             };
           });
 
-          // คำนวณข้อมูล Pie Chart สำหรับช่างลาออกแยกตาม Provider (ถึง September)
-          const monthsToInclude = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September'];
+          // คำนวณข้อมูล Pie Chart สำหรับช่างลาออกแยกตาม Provider (ถึง October)
+          const monthsToInclude = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October'];
           
           // ใช้ filteredAllData เพื่อแสดงข้อมูลทั้งหมดที่ผ่าน filter (ไม่ใช่แค่หน้าปัจจุบัน)
           const dataForPieChart = (selectedYears.length > 0 || selectedMonths.length > 0 || selectedWeeks.length > 0 || selectedDates.length > 0 || searchTerm) 
@@ -2031,7 +2032,7 @@ function TechTransactionContent() {
                   color: '#374151',
                   marginBottom: '16px'
                 }}>
-                  จำนวนช่างทั้งหมด vs ช่างลาออก รายเดือน (as of September)
+                  จำนวนช่างทั้งหมด vs ช่างลาออก รายเดือน (as of October)
                 </h2>
                 <ResponsiveContainer width="100%" height={450}>
                   <BarChart
@@ -2132,7 +2133,7 @@ function TechTransactionContent() {
                   color: '#374151',
                   marginBottom: '16px'
                 }}>
-                  สัดส่วนช่างลาออกตาม Provider (as of September)
+                  สัดส่วนช่างลาออกตาม Provider (as of October)
                 </h2>
                 {pieData.length > 0 ? (
                   <>
