@@ -23,64 +23,26 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: countError.message }, { status: 400 });
     }
     
-    // Get power_authority counts from DB with pagination (for accurate Yes/No counts)
-    // Fetch all records with Yes/Y power_authority
-    let yesData: any[] = [];
-    let yesFrom = 0;
-    let yesHasMore = true;
+    // Get power_authority counts from DB using count query (more accurate)
+    const { count: dbYesCount, error: yesError } = await supabase
+      .from("technicians")
+      .select("*", { count: "exact", head: true })
+      .eq("power_authority", "Yes");
     
-    while (yesHasMore) {
-      const { data, error } = await supabase
-        .from("technicians")
-        .select("national_id")
-        .or('power_authority.ilike.Yes,power_authority.ilike.Y')
-        .range(yesFrom, yesFrom + 999);
-      
-      if (error) {
-        console.error("RSM Workgroup Chart Yes count error:", error);
-        break;
-      }
-      
-      if (data && data.length > 0) {
-        yesData = [...yesData, ...data];
-        yesFrom += 1000;
-        yesHasMore = data.length === 1000;
-      } else {
-        yesHasMore = false;
-      }
+    if (yesError) {
+      console.error("RSM Workgroup Chart Yes count error:", yesError);
     }
     
-    // Fetch all records with No/N power_authority
-    let noData: any[] = [];
-    let noFrom = 0;
-    let noHasMore = true;
+    const { count: dbNoCount, error: noError } = await supabase
+      .from("technicians")
+      .select("*", { count: "exact", head: true })
+      .eq("power_authority", "No");
     
-    while (noHasMore) {
-      const { data, error } = await supabase
-        .from("technicians")
-        .select("national_id")
-        .or('power_authority.ilike.No,power_authority.ilike.N')
-        .range(noFrom, noFrom + 999);
-      
-      if (error) {
-        console.error("RSM Workgroup Chart No count error:", error);
-        break;
-      }
-      
-      if (data && data.length > 0) {
-        noData = [...noData, ...data];
-        noFrom += 1000;
-        noHasMore = data.length === 1000;
-      } else {
-        noHasMore = false;
-      }
+    if (noError) {
+      console.error("RSM Workgroup Chart No count error:", noError);
     }
     
-    // Count unique national_ids for Yes and No
-    const dbYesCount = yesData ? new Set(yesData.map(r => String(r.national_id).trim())).size : 0;
-    const dbNoCount = noData ? new Set(noData.map(r => String(r.national_id).trim())).size : 0;
-    
-    console.log(`📊 Power Authority counts from DB: Yes=${dbYesCount} (fetched ${yesData.length}), No=${dbNoCount} (fetched ${noData.length}), Total=${dbYesCount + dbNoCount}`);
+    console.log(`📊 Power Authority counts from DB (exact): Yes=${dbYesCount || 0}, No=${dbNoCount || 0}, Total=${(dbYesCount || 0) + (dbNoCount || 0)}`);
     
     // Fetch all data with proper pagination including national_id for unique counting
     let allData: any[] = [];
@@ -218,20 +180,22 @@ export async function GET(request: Request) {
       .slice(0, 20); // แสดงแค่ top 20 RSM
     
     // คำนวณ summary - ใช้ค่าจาก DB แทนค่าที่นับจาก fetched data
-    const totalYes = dbYesCount || allYesNationalIds.size;  // ใช้ค่าจาก DB แทน
-    const totalNo = dbNoCount || allNoNationalIds.size;     // ใช้ค่าจาก DB แทน
+    const totalYes = dbYesCount ?? allYesNationalIds.size;  // ใช้ค่าจาก DB แทน (ถ้า null ใช้ค่า fetched)
+    const totalNo = dbNoCount ?? allNoNationalIds.size;     // ใช้ค่าจาก DB แทน (ถ้า null ใช้ค่า fetched)
     const totalTechniciansWithRsm = nationalIdsWithRsm.size;
     
     console.log(`📊 Chart Summary: Total Records: ${allNationalIds.size}, Records with RSM: ${nationalIdsWithRsm.size}, Records without RSM: ${nationalIdsWithoutRsm.size}`);
     console.log(`📊 Chart Summary: Records with Authority: ${nationalIdsWithAuthority.size}, Records without Authority: ${nationalIdsWithoutAuthority.size}`);
     console.log(`📊 Chart Summary: Total RSM: ${Object.keys(groupedData).length}, Total Technicians with RSM: ${totalTechniciansWithRsm}`);
-    console.log(`📊 Chart Summary: Total Yes (DB): ${dbYesCount}, Total No (DB): ${dbNoCount}, Sum: ${dbYesCount + dbNoCount}`);
+    console.log(`📊 Chart Summary: Total Yes (DB): ${dbYesCount ?? 0}, Total No (DB): ${dbNoCount ?? 0}, Sum: ${(dbYesCount ?? 0) + (dbNoCount ?? 0)}`);
     console.log(`📊 Chart Summary: Total Yes (fetched): ${allYesNationalIds.size}, Total No (fetched): ${allNoNationalIds.size}, Sum: ${allYesNationalIds.size + allNoNationalIds.size}`);
     
     // ⚠️ Warning if DB counts don't match fetched counts
-    if (dbYesCount !== allYesNationalIds.size || dbNoCount !== allNoNationalIds.size) {
+    const safeDbYesCount = dbYesCount ?? 0;
+    const safeDbNoCount = dbNoCount ?? 0;
+    if (safeDbYesCount !== allYesNationalIds.size || safeDbNoCount !== allNoNationalIds.size) {
       console.warn(`⚠️  Warning: Power Authority counts mismatch!`);
-      console.warn(`   DB: Yes=${dbYesCount}, No=${dbNoCount}`);
+      console.warn(`   DB: Yes=${safeDbYesCount}, No=${safeDbNoCount}`);
       console.warn(`   Fetched: Yes=${allYesNationalIds.size}, No=${allNoNationalIds.size}`);
       console.warn(`   Using DB counts for accuracy`);
     }
@@ -255,12 +219,12 @@ export async function GET(request: Request) {
             uniqueNationalIds: allNationalIds.size,
             discrepancy: totalCount ? totalCount - allData.length : 0,
             powerAuthority: {
-              dbYes: dbYesCount,
-              dbNo: dbNoCount,
+              dbYes: dbYesCount ?? 0,
+              dbNo: dbNoCount ?? 0,
               fetchedYes: allYesNationalIds.size,
               fetchedNo: allNoNationalIds.size,
-              yesDiff: dbYesCount - allYesNationalIds.size,
-              noDiff: dbNoCount - allNoNationalIds.size
+              yesDiff: (dbYesCount ?? 0) - allYesNationalIds.size,
+              noDiff: (dbNoCount ?? 0) - allNoNationalIds.size
             }
           }
         }
