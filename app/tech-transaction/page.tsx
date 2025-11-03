@@ -28,6 +28,7 @@ function TechTransactionContent() {
   const [searchTerm, setSearchTerm] = useState('');
   
   // DB counts for accurate statistics
+  const [dbTotalTransactions, setDbTotalTransactions] = useState<number>(0);
   const [dbNewTechs, setDbNewTechs] = useState<number>(0);
   const [dbResignedTechs, setDbResignedTechs] = useState<number>(0);
   
@@ -174,65 +175,46 @@ function TechTransactionContent() {
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
       );
 
-      // Count "ช่างใหม่" - fetch all records and count unique ones
-      let newTechsData: any[] = [];
-      let newFrom = 0;
-      let newHasMore = true;
+      // Count total transactions using exact count
+      const { count: totalTransCount, error: totalError } = await supabase
+        .from('transaction')
+        .select('*', { count: 'exact', head: true });
 
-      while (newHasMore) {
-        const { data, error } = await supabase
-          .from('transaction')
-          .select('Register')
-          .ilike('Register', '%างใหม่%')
-          .range(newFrom, newFrom + 999);
-
-        if (error) {
-          console.error('Error fetching new techs:', error);
-          break;
-        }
-
-        if (data && data.length > 0) {
-          newTechsData = [...newTechsData, ...data];
-          newFrom += 1000;
-          newHasMore = data.length === 1000;
-        } else {
-          newHasMore = false;
-        }
+      if (totalError) {
+        console.error('Error fetching total transactions:', totalError);
+      } else {
+        console.log(`✅ Total Transactions = ${totalTransCount}`);
+        setDbTotalTransactions(totalTransCount || 0);
       }
 
-      // Count "ช่างลาออก"
-      let resignedTechsData: any[] = [];
-      let resignedFrom = 0;
-      let resignedHasMore = true;
+      // Count "ช่างใหม่" - use OR condition to catch both normal and encoding-issue records
+      const { count: newTechsCount, error: newError } = await supabase
+        .from('transaction')
+        .select('*', { count: 'exact', head: true })
+        .or('Register.ilike.%างใหม่%,Register.ilike.%ช่า%ใหม่%');
 
-      while (resignedHasMore) {
-        const { data, error } = await supabase
-          .from('transaction')
-          .select('Register')
-          .ilike('Register', '%ช่างลาออก%')
-          .range(resignedFrom, resignedFrom + 999);
-
-        if (error) {
-          console.error('Error fetching resigned techs:', error);
-          break;
-        }
-
-        if (data && data.length > 0) {
-          resignedTechsData = [...resignedTechsData, ...data];
-          resignedFrom += 1000;
-          resignedHasMore = data.length === 1000;
-        } else {
-          resignedHasMore = false;
-        }
+      if (newError) {
+        console.error('Error fetching new techs:', newError);
+      } else {
+        console.log(`✅ New Techs = ${newTechsCount}`);
+        setDbNewTechs(newTechsCount || 0);
       }
 
-      const newTechsCount = newTechsData.length;
-      const resignedTechsCount = resignedTechsData.length;
+      // Count "ช่างลาออก" using exact count
+      const { count: resignedTechsCount, error: resignedError } = await supabase
+        .from('transaction')
+        .select('*', { count: 'exact', head: true })
+        .ilike('Register', '%ช่างลาออก%');
 
-      console.log(`✅ DB Counts: New Techs = ${newTechsCount}, Resigned Techs = ${resignedTechsCount}`);
+      if (resignedError) {
+        console.error('Error fetching resigned techs:', resignedError);
+      } else {
+        console.log(`✅ Resigned Techs = ${resignedTechsCount}`);
+        setDbResignedTechs(resignedTechsCount || 0);
+      }
+
+      console.log(`✅ DB Counts: Total = ${totalTransCount}, New = ${newTechsCount}, Resigned = ${resignedTechsCount}, Net = ${(newTechsCount || 0) - (resignedTechsCount || 0)}`);
       
-      setDbNewTechs(newTechsCount);
-      setDbResignedTechs(resignedTechsCount);
     } catch (err) {
       console.error('❌ Error fetching DB counts:', err);
     }
@@ -506,13 +488,16 @@ function TechTransactionContent() {
                        selectedWeeks.length > 0 || selectedDates.length > 0 || 
                        searchTerm.trim() !== '';
 
-    let newTechs, resignedTechs;
+    let totalTransactions, newTechs, resignedTechs;
 
     if (hasFilters) {
       // If filters are applied, count from filtered data
+      totalTransactions = filteredAllData.length;
+      
       newTechs = filteredAllData.filter(item => {
         const register = String(item.Register || '');
-        return register.includes('างใหม่');
+        // Check for both normal and encoding-issue patterns
+        return register.includes('างใหม่') || register.includes('ช่า') && register.includes('ใหม่');
       }).length;
       
       resignedTechs = filteredAllData.filter(item => {
@@ -521,6 +506,7 @@ function TechTransactionContent() {
       }).length;
     } else {
       // No filters - use DB counts for accuracy
+      totalTransactions = dbTotalTransactions;
       newTechs = dbNewTechs;
       resignedTechs = dbResignedTechs;
     }
@@ -528,20 +514,23 @@ function TechTransactionContent() {
     const netChange = newTechs - resignedTechs;
     
     console.log('📊 Statistics calculated:', { 
+      totalTransactions,
       newTechs, 
       resignedTechs, 
       netChange, 
       hasFilters,
+      dbTotalTransactions,
       dbNewTechs,
       dbResignedTechs
     });
     
     return {
+      totalTransactions,
       newTechs,
       resignedTechs,
       netChange
     };
-  }, [filteredAllData, dbNewTechs, dbResignedTechs, selectedYears, selectedMonths, selectedWeeks, selectedDates, searchTerm]);
+  }, [filteredAllData, dbTotalTransactions, dbNewTechs, dbResignedTechs, selectedYears, selectedMonths, selectedWeeks, selectedDates, searchTerm]);
 
   // Paginate the filtered data
   const filteredData = useMemo(() => {
@@ -1042,7 +1031,7 @@ function TechTransactionContent() {
               fontWeight: 'bold',
               marginBottom: '4px'
             }}>
-              {(statistics.newTechs + statistics.resignedTechs).toLocaleString()}
+              {statistics.totalTransactions.toLocaleString()}
             </div>
             <div style={{
               fontSize: '12px',
