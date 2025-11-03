@@ -357,7 +357,14 @@ export default function PivotTable({ data, workgroupData = {}, workgroupGrandTot
                 
                 {/* WW-Provider - Total first, then data */}
                 <td style={totalCellStyle}>
-                  {formatCountWithWorkgroup(rsmTotals[rsm]['WW-Provider'] || 0, rsm, 'WW-Provider')}
+                  {rsmTotals[rsm]['WW-Provider'] > 0 ? (
+                    <span>
+                      {rsmTotals[rsm]['WW-Provider'].toLocaleString()}
+                      {workgroupRsmTotals[rsm]?.['WW-Provider'] > 0 && (
+                        <span style={{ color: 'red' }}>({workgroupRsmTotals[rsm]['WW-Provider'].toLocaleString()})</span>
+                      )}
+                    </span>
+                  ) : ''}
                 </td>
                 <td style={cellStyle}>
                   {formatCountWithWorkgroup(pivotData[rsm]['WW-Provider_Installation'] || 0, rsm, 'WW-Provider_Installation')}
@@ -368,7 +375,14 @@ export default function PivotTable({ data, workgroupData = {}, workgroupGrandTot
                 
                 {/* True Tech - Total first, then data */}
                 <td style={totalCellStyle}>
-                  {formatCountWithWorkgroup(rsmTotals[rsm]['True Tech'] || 0, rsm, 'True Tech')}
+                  {rsmTotals[rsm]['True Tech'] > 0 ? (
+                    <span>
+                      {rsmTotals[rsm]['True Tech'].toLocaleString()}
+                      {workgroupRsmTotals[rsm]?.['True Tech'] > 0 && (
+                        <span style={{ color: 'red' }}>({workgroupRsmTotals[rsm]['True Tech'].toLocaleString()})</span>
+                      )}
+                    </span>
+                  ) : ''}
                 </td>
                 <td style={cellStyle}>
                   {formatCountWithWorkgroup(pivotData[rsm]['True Tech_Installation'] || 0, rsm, 'True Tech_Installation')}
@@ -379,7 +393,14 @@ export default function PivotTable({ data, workgroupData = {}, workgroupGrandTot
                 
                 {/* เถ้าแก่เทค - Total first, then data */}
                 <td style={totalCellStyle}>
-                  {formatCountWithWorkgroup(rsmTotals[rsm]['เถ้าแก่เทค'] || 0, rsm, 'เถ้าแก่เทค')}
+                  {rsmTotals[rsm]['เถ้าแก่เทค'] > 0 ? (
+                    <span>
+                      {rsmTotals[rsm]['เถ้าแก่เทค'].toLocaleString()}
+                      {workgroupRsmTotals[rsm]?.['เถ้าแก่เทค'] > 0 && (
+                        <span style={{ color: 'red' }}>({workgroupRsmTotals[rsm]['เถ้าแก่เทค'].toLocaleString()})</span>
+                      )}
+                    </span>
+                  ) : ''}
                 </td>
                 <td style={cellStyle}>
                   {formatCountWithWorkgroup(pivotData[rsm]['เถ้าแก่เทค_Installation'] || 0, rsm, 'เถ้าแก่เทค_Installation')}
