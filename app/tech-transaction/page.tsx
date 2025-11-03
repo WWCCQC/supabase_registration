@@ -1723,10 +1723,10 @@ function TechTransactionContent() {
               }}>
                 ช่างใหม่ vs ช่างลาออก รายวัน
               </h2>
-              <ResponsiveContainer width="100%" height={400}>
+              <ResponsiveContainer width="100%" height={500}>
                 <LineChart
                   data={chartData}
-                  margin={{ top: 5, right: 30, left: 20, bottom: 80 }}
+                  margin={{ top: 160, right: 30, left: 20, bottom: 80 }}
                 >
                   <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                   <XAxis 
@@ -1791,7 +1791,7 @@ function TechTransactionContent() {
             {/* Monthly Bar Chart */}
             {monthlyChartData.length > 0 && (
               <div style={{
-                backgroundColor: 'white',
+                backgroundColor: '#f9fafb',
                 borderRadius: '12px',
                 padding: '24px',
                 boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
@@ -1814,7 +1814,7 @@ function TechTransactionContent() {
                       resignation: item['ช่างลาออก'],
                       netChange: item['ช่างใหม่'] - item['ช่างลาออก']
                     }))}
-                    margin={{ top: 160, right: 30, left: 0, bottom: 20 }}
+                    margin={{ top: 5, right: 30, left: 20, bottom: 20 }}
                   >
                     <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                     <XAxis dataKey="name" />
