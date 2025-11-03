@@ -2358,6 +2358,38 @@ export default function TechBrowser() {
                 </div>
               </div>
             )}
+
+            {/* Watermark Footer */}
+            <div style={{
+              marginTop: 24,
+              paddingTop: 16,
+              paddingBottom: 12,
+              borderTop: '2px solid #e5e7eb',
+              background: 'linear-gradient(to bottom, #f9fafb, #f3f4f6)',
+              borderRadius: '0 0 12px 12px',
+              marginLeft: -24,
+              marginRight: -24,
+              marginBottom: -24,
+              paddingLeft: 24,
+              paddingRight: 24,
+              textAlign: 'center'
+            }}>
+              <div style={{
+                fontSize: 13,
+                color: '#6b7280',
+                fontWeight: 500,
+                letterSpacing: '0.3px'
+              }}>
+                © 2025 WW-Provider - For Internal Use Only
+              </div>
+              <div style={{
+                fontSize: 11,
+                color: '#9ca3af',
+                marginTop: 4
+              }}>
+                ข้อมูลนี้เป็นความลับและใช้เพื่อการทำงานภายในเท่านั้น
+              </div>
+            </div>
           </div>
         </div>
       )}
