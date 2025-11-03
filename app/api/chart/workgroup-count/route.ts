@@ -156,15 +156,8 @@ export async function GET(req: Request) {
       }
     });
 
-    // Calculate provider totals by summing Installation + Repair
-    Object.keys(result).forEach(rsm => {
-      const providers = ['WW-Provider', 'True Tech', 'เถ้าแก่เทค'];
-      providers.forEach(provider => {
-        const installCount = result[rsm][`${provider}_Installation`] || 0;
-        const repairCount = result[rsm][`${provider}_Repair`] || 0;
-        result[rsm][provider] = installCount + repairCount;
-      });
-    });
+    // Note: Provider totals (e.g., "WW-Provider") are NOT included in the result
+    // to avoid double-counting in frontend. Frontend calculates these from Installation + Repair.
 
     // Calculate Grand Total from all records
     const grandTotal = headsOnly.length;
