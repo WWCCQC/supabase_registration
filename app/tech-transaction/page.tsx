@@ -32,6 +32,9 @@ function TechTransactionContent() {
   const [dbNewTechs, setDbNewTechs] = useState<number>(0);
   const [dbResignedTechs, setDbResignedTechs] = useState<number>(0);
   
+  // Current technician count for November chart
+  const [currentTechnicianCount, setCurrentTechnicianCount] = useState<number>(0);
+  
   // Filter states - changed to arrays for multi-select
   const [selectedYears, setSelectedYears] = useState<string[]>([]);
   const [selectedMonths, setSelectedMonths] = useState<string[]>([]);
@@ -211,6 +214,18 @@ function TechTransactionContent() {
       } else {
         console.log(`✅ Resigned Techs = ${resignedTechsCount}`);
         setDbResignedTechs(resignedTechsCount || 0);
+      }
+
+      // Count current total technicians from technicians table
+      const { count: currentTechCount, error: techError } = await supabase
+        .from('technicians')
+        .select('*', { count: 'exact', head: true });
+
+      if (techError) {
+        console.error('Error fetching current technician count:', techError);
+      } else {
+        console.log(`✅ Current Technicians = ${currentTechCount}`);
+        setCurrentTechnicianCount(currentTechCount || 0);
       }
 
       console.log(`✅ DB Counts: Total = ${totalTransCount}, New = ${newTechsCount}, Resigned = ${resignedTechsCount}, Net = ${(newTechsCount || 0) - (resignedTechsCount || 0)}`);
@@ -1928,7 +1943,7 @@ function TechTransactionContent() {
 
         {/* Monthly Technician Comparison Chart (Total vs Resigned) + Provider Pie Chart */}
         {(() => {
-          // ข้อมูลจำนวนช่างทั้งหมดแต่ละเดือน
+          // ข้อมูลจำนวนช่างทั้งหมดแต่ละเดือน (hard-coded สำหรับ Jan-Oct, real-time สำหรับ Nov)
           const monthlyTechnicianData = [
             { month: 'January', total: 2632 },
             { month: 'February', total: 2660 },
@@ -1939,7 +1954,8 @@ function TechTransactionContent() {
             { month: 'July', total: 2987 },
             { month: 'August', total: 2971 },
             { month: 'September', total: 2932 },
-            { month: 'October', total: 2938 }
+            { month: 'October', total: 2938 },
+            { month: 'November', total: currentTechnicianCount } // ใช้จำนวนจริงจากตาราง technicians
           ];
 
           // คำนวณจำนวนช่างลาออกจาก monthlyChartData
@@ -1961,8 +1977,8 @@ function TechTransactionContent() {
             };
           });
 
-          // คำนวณข้อมูล Pie Chart สำหรับช่างลาออกแยกตาม Provider (ถึง October)
-          const monthsToInclude = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October'];
+          // คำนวณข้อมูล Pie Chart สำหรับช่างลาออกแยกตาม Provider (ถึง November)
+          const monthsToInclude = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November'];
           
           // ใช้ filteredAllData เพื่อแสดงข้อมูลทั้งหมดที่ผ่าน filter (ไม่ใช่แค่หน้าปัจจุบัน)
           const dataForPieChart = (selectedYears.length > 0 || selectedMonths.length > 0 || selectedWeeks.length > 0 || selectedDates.length > 0 || searchTerm) 
@@ -2021,7 +2037,7 @@ function TechTransactionContent() {
                   color: '#374151',
                   marginBottom: '16px'
                 }}>
-                  จำนวนช่างทั้งหมด vs ช่างลาออก รายเดือน (as of October)
+                  จำนวนช่างทั้งหมด vs ช่างลาออก รายเดือน (as of November)
                 </h2>
                 <ResponsiveContainer width="100%" height={450}>
                   <BarChart
@@ -2122,7 +2138,7 @@ function TechTransactionContent() {
                   color: '#374151',
                   marginBottom: '16px'
                 }}>
-                  สัดส่วนช่างลาออกตาม Provider (as of October)
+                  สัดส่วนช่างลาออกตาม Provider (as of November)
                 </h2>
                 {pieData.length > 0 ? (
                   <>
