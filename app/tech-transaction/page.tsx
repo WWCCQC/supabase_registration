@@ -1094,20 +1094,20 @@ function TechTransactionContent() {
             borderRadius: '12px',
             padding: '24px',
             color: 'white',
-            boxShadow: selectedCard === 'all' ? '0 0 0 3px #3b82f6' : '0 8px 15px rgba(5, 109, 141, 0.3)',
+            boxShadow: '0 8px 15px rgba(5, 109, 141, 0.3)',
             cursor: 'pointer',
             transform: 'translateY(0)',
             transition: 'all 0.3s ease',
-            opacity: selectedCard === 'all' ? 1 : (selectedCard === 'all' ? 1 : 0.6),
+            opacity: 1,
           }}
-          onClick={() => setSelectedCard(selectedCard === 'all' ? 'all' : 'all')}
+          onClick={() => setSelectedCard('all')}
           onMouseEnter={(e) => {
             e.currentTarget.style.transform = 'translateY(-5px)';
-            e.currentTarget.style.boxShadow = selectedCard === 'all' ? '0 0 0 3px #3b82f6, 0 15px 25px rgba(5, 109, 141, 0.4)' : '0 15px 25px rgba(5, 109, 141, 0.4)';
+            e.currentTarget.style.boxShadow = '0 15px 25px rgba(5, 109, 141, 0.4)';
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.transform = 'translateY(0)';
-            e.currentTarget.style.boxShadow = selectedCard === 'all' ? '0 0 0 3px #3b82f6' : '0 8px 15px rgba(5, 109, 141, 0.3)';
+            e.currentTarget.style.boxShadow = '0 8px 15px rgba(5, 109, 141, 0.3)';
           }}
           onMouseDown={(e) => {
             e.currentTarget.style.transform = 'translateY(-2px)';
