@@ -1,4 +1,5 @@
 export const dynamic = "force-dynamic";
+export const revalidate = 0; // Disable caching completely
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 
@@ -149,6 +150,7 @@ export async function GET(request: Request) {
     const totalNo = allNoNationalIds.size;     // ใช้ค่า fetched ที่ถูกต้อง
     const totalTechniciansWithRsm = nationalIdsWithRsm.size;
     
+    console.log(`📊 RSM Workgroup API v2.0 - Using fetched data only (no count query)`);
     console.log(`📊 Chart Summary: Total Records: ${allNationalIds.size}, Records with RSM: ${nationalIdsWithRsm.size}, Records without RSM: ${nationalIdsWithoutRsm.size}`);
     console.log(`📊 Chart Summary: Records with Authority: ${nationalIdsWithAuthority.size}, Records without Authority: ${nationalIdsWithoutAuthority.size}`);
     console.log(`📊 Chart Summary: Total RSM: ${Object.keys(groupedData).length}, Total Technicians with RSM: ${totalTechniciansWithRsm}`);
@@ -159,6 +161,7 @@ export async function GET(request: Request) {
         chartData,
         forceRefresh: forceRefresh,
         timestamp: new Date().toISOString(),
+        version: "2.0.0", // v2.0: ใช้ fetched data เท่านั้น ไม่ใช้ count query
         summary: {
           totalRsm: Object.keys(groupedData).length,           // จำนวน RSM ทั้งหมด
           totalTechnicians: allNationalIds.size,               // นับจาก fetched data จริง ๆ
