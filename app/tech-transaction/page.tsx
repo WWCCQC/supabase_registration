@@ -943,7 +943,8 @@ function TechTransactionContent() {
         pivotData[rsm][provider][workType] = { new: 0, resigned: 0 };
       }
 
-      if (register.includes('างใหม่')) {
+      // Check for both normal and encoding-issue patterns for "ช่างใหม่"
+      if (register.includes('างใหม่') || (register.includes('ช่า') && register.includes('ใหม่'))) {
         pivotData[rsm][provider][workType].new += 1;
       } else if (register.includes('ช่างลาออก')) {
         pivotData[rsm][provider][workType].resigned += 1;
