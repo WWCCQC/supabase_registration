@@ -122,15 +122,14 @@ export async function GET(req: Request) {
     });
     console.log('📊 Status counts:', statusCounts);
     
-    // Filter for หัวหน้า (heads) - exact match only (not startsWith to avoid encoding issues)
+    // Filter for หัวหน้า (heads) - any status starting with "ห" counts as หัวหน้า
     const headsOnly = allData.filter((row: any) => {
       const status = row.workgroup_status || "";
-      // Exact match to exclude encoding issues like "หัวหน้��" or "ห���วหน้า"
-      return status === "หัวหน้า";
+      // Match any status that starts with "ห" (includes "หัวหน้า", "หัวหน้��", "ห���วหน้า")
+      return status.startsWith("ห");
     });
     console.log('📊 Total workgroup heads after filtering:', headsOnly.length);
-    console.log('📊 Expected from Supabase: 1787');
-    console.log('📊 Match:', headsOnly.length === 1787 ? '✅ Correct' : `❌ Diff: ${headsOnly.length - 1787}`);
+    console.log('📊 Note: Counting all statuses starting with "ห" as heads');
 
     // Process data into pivot format - Count ALL records (not unique national_id)
     const result: Record<string, Record<string, number>> = {};
