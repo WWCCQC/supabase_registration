@@ -56,6 +56,9 @@ function TechTransactionContent() {
   // Top 10 Depot month filter
   const [selectedDepotMonths, setSelectedDepotMonths] = useState<string[]>([]);
   
+  // Card selection state for interactive filtering
+  const [selectedCard, setSelectedCard] = useState<'all' | 'new' | 'resigned' | 'net'>('all');
+  
   const itemsPerPage = 50;
   
   // Auto-close dropdown function
@@ -501,6 +504,17 @@ function TechTransactionContent() {
       });
       console.log(`🔍 Search filter: ${beforeFilter} → ${filtered.length}`);
     }
+    
+    // Filter by selected card
+    if (selectedCard === 'new') {
+      const beforeFilter = filtered.length;
+      filtered = filtered.filter(item => item.Register?.includes('างใหม่'));
+      console.log(`🎯 Card filter (ช่างใหม่): ${beforeFilter} → ${filtered.length}`);
+    } else if (selectedCard === 'resigned') {
+      const beforeFilter = filtered.length;
+      filtered = filtered.filter(item => item.Register?.includes('ช่างลาออก'));
+      console.log(`🎯 Card filter (ช่างลาออก): ${beforeFilter} → ${filtered.length}`);
+    }
 
     // Sort by Date (newest to oldest)
     filtered.sort((a, b) => {
@@ -512,13 +526,13 @@ function TechTransactionContent() {
     console.log(`✅ Final filtered count: ${filtered.length}`);
 
     return filtered;
-  }, [allData, searchTerm, selectedYears, selectedMonths, selectedWeeks, selectedDates]);
+  }, [allData, searchTerm, selectedYears, selectedMonths, selectedWeeks, selectedDates, selectedCard]);
 
   // Calculate statistics - use DB counts if no filters, otherwise use filtered data
   const statistics = useMemo(() => {
     const hasFilters = selectedYears.length > 0 || selectedMonths.length > 0 || 
                        selectedWeeks.length > 0 || selectedDates.length > 0 || 
-                       searchTerm.trim() !== '';
+                       searchTerm.trim() !== '' || selectedCard !== 'all';
 
     let totalTransactions, newTechs, resignedTechs;
 
@@ -562,7 +576,7 @@ function TechTransactionContent() {
       resignedTechs,
       netChange
     };
-  }, [filteredAllData, dbTotalTransactions, dbNewTechs, dbResignedTechs, selectedYears, selectedMonths, selectedWeeks, selectedDates, searchTerm]);
+  }, [filteredAllData, dbTotalTransactions, dbNewTechs, dbResignedTechs, selectedYears, selectedMonths, selectedWeeks, selectedDates, searchTerm, selectedCard]);
 
   // Paginate the filtered data
   const filteredData = useMemo(() => {
@@ -647,7 +661,8 @@ function TechTransactionContent() {
   const chartData = useMemo(() => {
     console.log('🎯 Preparing chart data...', {
       allDataLength: allData?.length,
-      filters: { selectedYears, selectedMonths, selectedWeeks, selectedDates }
+      filters: { selectedYears, selectedMonths, selectedWeeks, selectedDates },
+      selectedCard
     });
 
     if (!allData || allData.length === 0) {
@@ -674,6 +689,15 @@ function TechTransactionContent() {
     if (selectedDates.length > 0) {
       chartSourceData = chartSourceData.filter(item => selectedDates.includes(String(item.Date)));
       console.log('🔽 After Date filter:', chartSourceData.length);
+    }
+    
+    // Filter by selected card
+    if (selectedCard === 'new') {
+      chartSourceData = chartSourceData.filter(item => item.Register?.includes('างใหม่'));
+      console.log('🔽 After card filter (ช่างใหม่):', chartSourceData.length);
+    } else if (selectedCard === 'resigned') {
+      chartSourceData = chartSourceData.filter(item => item.Register?.includes('ช่างลาออก'));
+      console.log('🔽 After card filter (ช่างลาออก):', chartSourceData.length);
     }
 
     // Group by Date and count Register types
@@ -713,7 +737,7 @@ function TechTransactionContent() {
 
     console.log('📈 Chart data prepared:', finalChartArray.length, 'dates', isFiltered ? '(filtered)' : '(last 30 days)');
     return finalChartArray;
-  }, [allData, selectedYears, selectedMonths, selectedWeeks, selectedDates]);
+  }, [allData, selectedYears, selectedMonths, selectedWeeks, selectedDates, selectedCard]);
 
   // Prepare monthly chart data
   const monthlyChartData = useMemo(() => {
@@ -735,6 +759,13 @@ function TechTransactionContent() {
     }
     if (selectedDates.length > 0) {
       chartSourceData = chartSourceData.filter(item => selectedDates.includes(String(item.Date)));
+    }
+    
+    // Filter by selected card
+    if (selectedCard === 'new') {
+      chartSourceData = chartSourceData.filter(item => item.Register?.includes('างใหม่'));
+    } else if (selectedCard === 'resigned') {
+      chartSourceData = chartSourceData.filter(item => item.Register?.includes('ช่างลาออก'));
     }
 
     // Group by Month
@@ -772,7 +803,7 @@ function TechTransactionContent() {
 
     console.log('📊 Monthly chart data prepared:', chartArray.length, 'months');
     return chartArray;
-  }, [allData, selectedYears, selectedMonths, selectedWeeks, selectedDates]);
+  }, [allData, selectedYears, selectedMonths, selectedWeeks, selectedDates, selectedCard]);
 
   // Prepare RSM chart data
   const rsmChartData = useMemo(() => {
@@ -794,6 +825,13 @@ function TechTransactionContent() {
     }
     if (selectedDates.length > 0) {
       chartSourceData = chartSourceData.filter(item => selectedDates.includes(String(item.Date)));
+    }
+    
+    // Filter by selected card
+    if (selectedCard === 'new') {
+      chartSourceData = chartSourceData.filter(item => item.Register?.includes('างใหม่'));
+    } else if (selectedCard === 'resigned') {
+      chartSourceData = chartSourceData.filter(item => item.Register?.includes('ช่างลาออก'));
     }
 
     // Group by RSM
@@ -825,7 +863,7 @@ function TechTransactionContent() {
 
     console.log('📊 RSM chart data prepared:', chartArray.length, 'RSMs');
     return chartArray;
-  }, [allData, selectedYears, selectedMonths, selectedWeeks, selectedDates]);
+  }, [allData, selectedYears, selectedMonths, selectedWeeks, selectedDates, selectedCard]);
 
   // Prepare Top 10 Depot - New Technicians
   const top10NewDepots = useMemo(() => {
@@ -944,6 +982,13 @@ function TechTransactionContent() {
     if (selectedDates.length > 0) {
       sourceData = sourceData.filter(item => selectedDates.includes(String(item.Date)));
     }
+    
+    // Filter by selected card
+    if (selectedCard === 'new') {
+      sourceData = sourceData.filter(item => item.Register?.includes('างใหม่') || (item.Register?.includes('ช่า') && item.Register?.includes('ใหม่')));
+    } else if (selectedCard === 'resigned') {
+      sourceData = sourceData.filter(item => item.Register?.includes('ช่างลาออก'));
+    }
 
     // Create nested structure: RSM -> Provider -> WorkType -> {new, resigned}
     const pivotData: { [rsm: string]: { [provider: string]: { [workType: string]: { new: number; resigned: number } } } } = {};
@@ -970,7 +1015,7 @@ function TechTransactionContent() {
 
     console.log('📊 Pivot table data prepared');
     return pivotData;
-  }, [allData, selectedYears, selectedMonths, selectedWeeks, selectedDates]);
+  }, [allData, selectedYears, selectedMonths, selectedWeeks, selectedDates, selectedCard]);
 
   if (loading && currentPage === 1) {
     return (
@@ -1049,18 +1094,20 @@ function TechTransactionContent() {
             borderRadius: '12px',
             padding: '24px',
             color: 'white',
-            boxShadow: '0 8px 15px rgba(5, 109, 141, 0.3)',
+            boxShadow: selectedCard === 'all' ? '0 0 0 3px #3b82f6' : '0 8px 15px rgba(5, 109, 141, 0.3)',
             cursor: 'pointer',
             transform: 'translateY(0)',
             transition: 'all 0.3s ease',
+            opacity: selectedCard === 'all' ? 1 : (selectedCard === 'all' ? 1 : 0.6),
           }}
+          onClick={() => setSelectedCard(selectedCard === 'all' ? 'all' : 'all')}
           onMouseEnter={(e) => {
             e.currentTarget.style.transform = 'translateY(-5px)';
-            e.currentTarget.style.boxShadow = '0 15px 25px rgba(5, 109, 141, 0.4)';
+            e.currentTarget.style.boxShadow = selectedCard === 'all' ? '0 0 0 3px #3b82f6, 0 15px 25px rgba(5, 109, 141, 0.4)' : '0 15px 25px rgba(5, 109, 141, 0.4)';
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.transform = 'translateY(0)';
-            e.currentTarget.style.boxShadow = '0 8px 15px rgba(5, 109, 141, 0.3)';
+            e.currentTarget.style.boxShadow = selectedCard === 'all' ? '0 0 0 3px #3b82f6' : '0 8px 15px rgba(5, 109, 141, 0.3)';
           }}
           onMouseDown={(e) => {
             e.currentTarget.style.transform = 'translateY(-2px)';
@@ -1068,7 +1115,7 @@ function TechTransactionContent() {
           }}
           onMouseUp={(e) => {
             e.currentTarget.style.transform = 'translateY(-5px)';
-            e.currentTarget.style.boxShadow = '0 15px 25px rgba(5, 109, 141, 0.4)';
+            e.currentTarget.style.boxShadow = selectedCard === 'all' ? '0 0 0 3px #3b82f6, 0 15px 25px rgba(5, 109, 141, 0.4)' : '0 15px 25px rgba(5, 109, 141, 0.4)';
           }}
           >
             <div style={{
@@ -1098,20 +1145,22 @@ function TechTransactionContent() {
             borderRadius: '12px',
             padding: '24px',
             color: 'white',
-            boxShadow: '0 8px 15px rgba(16, 185, 129, 0.3)',
+            boxShadow: selectedCard === 'new' ? '0 0 0 3px #3b82f6' : '0 8px 15px rgba(16, 185, 129, 0.3)',
             position: 'relative',
             overflow: 'hidden',
             cursor: 'pointer',
             transform: 'translateY(0)',
             transition: 'all 0.3s ease',
+            opacity: selectedCard === 'all' || selectedCard === 'new' ? 1 : 0.6,
           }}
+          onClick={() => setSelectedCard(selectedCard === 'new' ? 'all' : 'new')}
           onMouseEnter={(e) => {
             e.currentTarget.style.transform = 'translateY(-5px)';
-            e.currentTarget.style.boxShadow = '0 15px 25px rgba(16, 185, 129, 0.4)';
+            e.currentTarget.style.boxShadow = selectedCard === 'new' ? '0 0 0 3px #3b82f6, 0 15px 25px rgba(16, 185, 129, 0.4)' : '0 15px 25px rgba(16, 185, 129, 0.4)';
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.transform = 'translateY(0)';
-            e.currentTarget.style.boxShadow = '0 8px 15px rgba(16, 185, 129, 0.3)';
+            e.currentTarget.style.boxShadow = selectedCard === 'new' ? '0 0 0 3px #3b82f6' : '0 8px 15px rgba(16, 185, 129, 0.3)';
           }}
           onMouseDown={(e) => {
             e.currentTarget.style.transform = 'translateY(-2px)';
@@ -1119,7 +1168,7 @@ function TechTransactionContent() {
           }}
           onMouseUp={(e) => {
             e.currentTarget.style.transform = 'translateY(-5px)';
-            e.currentTarget.style.boxShadow = '0 15px 25px rgba(16, 185, 129, 0.4)';
+            e.currentTarget.style.boxShadow = selectedCard === 'new' ? '0 0 0 3px #3b82f6, 0 15px 25px rgba(16, 185, 129, 0.4)' : '0 15px 25px rgba(16, 185, 129, 0.4)';
           }}
           >
             {/* Background Area Chart */}
@@ -1180,20 +1229,22 @@ function TechTransactionContent() {
             borderRadius: '12px',
             padding: '24px',
             color: 'white',
-            boxShadow: '0 8px 15px rgba(239, 68, 68, 0.3)',
+            boxShadow: selectedCard === 'resigned' ? '0 0 0 3px #3b82f6' : '0 8px 15px rgba(239, 68, 68, 0.3)',
             position: 'relative',
             overflow: 'hidden',
             cursor: 'pointer',
             transform: 'translateY(0)',
             transition: 'all 0.3s ease',
+            opacity: selectedCard === 'all' || selectedCard === 'resigned' ? 1 : 0.6,
           }}
+          onClick={() => setSelectedCard(selectedCard === 'resigned' ? 'all' : 'resigned')}
           onMouseEnter={(e) => {
             e.currentTarget.style.transform = 'translateY(-5px)';
-            e.currentTarget.style.boxShadow = '0 15px 25px rgba(239, 68, 68, 0.4)';
+            e.currentTarget.style.boxShadow = selectedCard === 'resigned' ? '0 0 0 3px #3b82f6, 0 15px 25px rgba(239, 68, 68, 0.4)' : '0 15px 25px rgba(239, 68, 68, 0.4)';
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.transform = 'translateY(0)';
-            e.currentTarget.style.boxShadow = '0 8px 15px rgba(239, 68, 68, 0.3)';
+            e.currentTarget.style.boxShadow = selectedCard === 'resigned' ? '0 0 0 3px #3b82f6' : '0 8px 15px rgba(239, 68, 68, 0.3)';
           }}
           onMouseDown={(e) => {
             e.currentTarget.style.transform = 'translateY(-2px)';
@@ -1201,7 +1252,7 @@ function TechTransactionContent() {
           }}
           onMouseUp={(e) => {
             e.currentTarget.style.transform = 'translateY(-5px)';
-            e.currentTarget.style.boxShadow = '0 15px 25px rgba(239, 68, 68, 0.4)';
+            e.currentTarget.style.boxShadow = selectedCard === 'resigned' ? '0 0 0 3px #3b82f6, 0 15px 25px rgba(239, 68, 68, 0.4)' : '0 15px 25px rgba(239, 68, 68, 0.4)';
           }}
           >
             {/* Background Area Chart */}
@@ -1264,26 +1315,36 @@ function TechTransactionContent() {
             borderRadius: '12px',
             padding: '24px',
             color: 'white',
-            boxShadow: statistics.netChange >= 0
-              ? '0 8px 15px rgba(16, 185, 129, 0.3)'
-              : '0 8px 15px rgba(239, 68, 68, 0.3)',
+            boxShadow: selectedCard === 'net' 
+              ? '0 0 0 3px #3b82f6'
+              : (statistics.netChange >= 0
+                ? '0 8px 15px rgba(16, 185, 129, 0.3)'
+                : '0 8px 15px rgba(239, 68, 68, 0.3)'),
             position: 'relative',
             overflow: 'hidden',
             cursor: 'pointer',
             transform: 'translateY(0)',
             transition: 'all 0.3s ease',
+            opacity: selectedCard === 'all' || selectedCard === 'net' ? 1 : 0.6,
           }}
+          onClick={() => setSelectedCard(selectedCard === 'net' ? 'all' : 'net')}
           onMouseEnter={(e) => {
             e.currentTarget.style.transform = 'translateY(-5px)';
-            e.currentTarget.style.boxShadow = statistics.netChange >= 0
-              ? '0 15px 25px rgba(16, 185, 129, 0.4)'
-              : '0 15px 25px rgba(239, 68, 68, 0.4)';
+            e.currentTarget.style.boxShadow = selectedCard === 'net'
+              ? (statistics.netChange >= 0
+                ? '0 0 0 3px #3b82f6, 0 15px 25px rgba(16, 185, 129, 0.4)'
+                : '0 0 0 3px #3b82f6, 0 15px 25px rgba(239, 68, 68, 0.4)')
+              : (statistics.netChange >= 0
+                ? '0 15px 25px rgba(16, 185, 129, 0.4)'
+                : '0 15px 25px rgba(239, 68, 68, 0.4)');
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.transform = 'translateY(0)';
-            e.currentTarget.style.boxShadow = statistics.netChange >= 0
-              ? '0 8px 15px rgba(16, 185, 129, 0.3)'
-              : '0 8px 15px rgba(239, 68, 68, 0.3)';
+            e.currentTarget.style.boxShadow = selectedCard === 'net'
+              ? '0 0 0 3px #3b82f6'
+              : (statistics.netChange >= 0
+                ? '0 8px 15px rgba(16, 185, 129, 0.3)'
+                : '0 8px 15px rgba(239, 68, 68, 0.3)');
           }}
           onMouseDown={(e) => {
             e.currentTarget.style.transform = 'translateY(-2px)';
@@ -1293,9 +1354,13 @@ function TechTransactionContent() {
           }}
           onMouseUp={(e) => {
             e.currentTarget.style.transform = 'translateY(-5px)';
-            e.currentTarget.style.boxShadow = statistics.netChange >= 0
-              ? '0 15px 25px rgba(16, 185, 129, 0.4)'
-              : '0 15px 25px rgba(239, 68, 68, 0.4)';
+            e.currentTarget.style.boxShadow = selectedCard === 'net'
+              ? (statistics.netChange >= 0
+                ? '0 0 0 3px #3b82f6, 0 15px 25px rgba(16, 185, 129, 0.4)'
+                : '0 0 0 3px #3b82f6, 0 15px 25px rgba(239, 68, 68, 0.4)')
+              : (statistics.netChange >= 0
+                ? '0 15px 25px rgba(16, 185, 129, 0.4)'
+                : '0 15px 25px rgba(239, 68, 68, 0.4)');
           }}
           >
             {/* Background Area Chart */}
@@ -1356,6 +1421,50 @@ function TechTransactionContent() {
             </div>
           </div>
         </div>
+        
+        {/* Card Selection Indicator */}
+        {selectedCard !== 'all' && (
+          <div style={{
+            backgroundColor: '#eff6ff',
+            borderRadius: '8px',
+            padding: '12px 16px',
+            marginBottom: '16px',
+            border: '1px solid #3b82f6',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between'
+          }}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}>
+              <span style={{ fontSize: '18px' }}>🔍</span>
+              <span style={{ color: '#1e40af', fontWeight: '500' }}>
+                กำลังแสดงข้อมูล: {
+                  selectedCard === 'new' ? 'ช่างใหม่' :
+                  selectedCard === 'resigned' ? 'ช่างลาออก' :
+                  'สุทธิ'
+                }
+              </span>
+            </div>
+            <button
+              onClick={() => setSelectedCard('all')}
+              style={{
+                backgroundColor: '#3b82f6',
+                color: 'white',
+                border: 'none',
+                borderRadius: '6px',
+                padding: '6px 12px',
+                fontSize: '12px',
+                cursor: 'pointer',
+                fontWeight: '500'
+              }}
+            >
+              ล้างการเลือก
+            </button>
+          </div>
+        )}
 
         {/* Filter Section */}
         <div style={{
@@ -2066,7 +2175,7 @@ function TechTransactionContent() {
                   >
                     <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                     <XAxis dataKey="name" />
-                    <YAxis yAxisId="left" label={{ value: 'จำนวน (คน)', angle: -90, position: 'insideLeft' }} />
+                    <YAxis yAxisId="left" />
                     <YAxis yAxisId="right" orientation="right" tick={false} />
                     <Tooltip
                       content={({ active, payload }: any) => {
