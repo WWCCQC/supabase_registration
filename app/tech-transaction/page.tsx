@@ -369,17 +369,34 @@ function TechTransactionContent() {
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
       );
 
-      // Get all unique values by fetching all data
-      const { data: allTransactions, error } = await supabase
-        .from('transaction')
-        .select('Year, Month, Week, Date');
+      // Fetch all transactions with pagination
+      let allTransactions: any[] = [];
+      let from = 0;
+      const batchSize = 1000;
+      let hasMore = true;
 
-      if (error) {
-        console.error('❌ Error fetching filter data:', error);
-        throw error;
+      while (hasMore) {
+        const { data: batch, error } = await supabase
+          .from('transaction')
+          .select('Year, Month, Week, Date')
+          .range(from, from + batchSize - 1);
+
+        if (error) {
+          console.error('❌ Error fetching filter data:', error);
+          throw error;
+        }
+
+        if (batch && batch.length > 0) {
+          allTransactions = [...allTransactions, ...batch];
+          from += batchSize;
+          hasMore = batch.length === batchSize;
+          console.log(`📥 Fetched batch: ${batch.length} records, total: ${allTransactions.length}`);
+        } else {
+          hasMore = false;
+        }
       }
 
-      console.log('📥 Fetched transactions for filters:', allTransactions?.length);
+      console.log('📥 Total transactions for filters:', allTransactions.length);
 
       // Month order for sorting
       const monthOrder = [
@@ -388,17 +405,17 @@ function TechTransactionContent() {
       ];
 
       // Extract unique values and sort
-      const years = [...new Set(allTransactions?.map((item: any) => item.Year).filter(Boolean))].sort();
+      const years = [...new Set(allTransactions.map((item: any) => item.Year).filter(Boolean))].sort();
       
       // Sort months by calendar order
-      const uniqueMonths = [...new Set(allTransactions?.map((item: any) => item.Month).filter(Boolean))];
+      const uniqueMonths = [...new Set(allTransactions.map((item: any) => item.Month).filter(Boolean))];
       const months = uniqueMonths.sort((a: any, b: any) => {
         return monthOrder.indexOf(a) - monthOrder.indexOf(b);
       });
       
       // Convert weeks to strings for consistent comparison
-      const weeks = [...new Set(allTransactions?.map((item: any) => String(item.Week)).filter(Boolean))].sort((a: any, b: any) => Number(a) - Number(b));
-      const dates = [...new Set(allTransactions?.map((item: any) => item.Date).filter(Boolean))].sort();
+      const weeks = [...new Set(allTransactions.map((item: any) => String(item.Week)).filter(Boolean))].sort((a: any, b: any) => Number(a) - Number(b));
+      const dates = [...new Set(allTransactions.map((item: any) => item.Date).filter(Boolean))].sort();
 
       const options = { years, months, weeks, dates };
       setFilterOptions(options);
