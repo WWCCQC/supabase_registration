@@ -5,7 +5,7 @@ import { createClient } from '@supabase/supabase-js';
 import ProtectedRoute from '@/components/common/ProtectedRoute';
 import Navbar from '@/components/common/Navbar';
 import * as XLSX from 'xlsx';
-import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell, LabelList, PieChart, Pie, ComposedChart } from 'recharts';
+import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell, LabelList, PieChart, Pie, ComposedChart, AreaChart, Area } from 'recharts';
 
 interface TransactionItem {
   Year?: number;
@@ -1032,28 +1032,46 @@ function TechTransactionContent() {
             borderRadius: '12px',
             padding: '24px',
             color: 'white',
-            boxShadow: '0 4px 6px rgba(5, 109, 141, 0.2)'
-          }}>
+            boxShadow: '0 8px 15px rgba(5, 109, 141, 0.3)',
+            cursor: 'pointer',
+            transform: 'translateY(0)',
+            transition: 'all 0.3s ease',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = 'translateY(-5px)';
+            e.currentTarget.style.boxShadow = '0 15px 25px rgba(5, 109, 141, 0.4)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = 'translateY(0)';
+            e.currentTarget.style.boxShadow = '0 8px 15px rgba(5, 109, 141, 0.3)';
+          }}
+          onMouseDown={(e) => {
+            e.currentTarget.style.transform = 'translateY(-2px)';
+            e.currentTarget.style.boxShadow = '0 5px 10px rgba(5, 109, 141, 0.2)';
+          }}
+          onMouseUp={(e) => {
+            e.currentTarget.style.transform = 'translateY(-5px)';
+            e.currentTarget.style.boxShadow = '0 15px 25px rgba(5, 109, 141, 0.4)';
+          }}
+          >
             <div style={{
-              fontSize: '14px',
-              fontWeight: '500',
-              marginBottom: '8px',
-              opacity: 0.9
+              display: 'flex',
+              alignItems: 'baseline',
+              gap: '12px'
             }}>
-              จำนวน Transaction
-            </div>
-            <div style={{
-              fontSize: '42px',
-              fontWeight: 'bold',
-              marginBottom: '4px'
-            }}>
-              {statistics.totalTransactions.toLocaleString()}
-            </div>
-            <div style={{
-              fontSize: '12px',
-              opacity: 0.8
-            }}>
-              Total Transactions
+              <div style={{
+                fontSize: '14px',
+                fontWeight: '500',
+                opacity: 0.9
+              }}>
+                จำนวน(คน)
+              </div>
+              <div style={{
+                fontSize: '42px',
+                fontWeight: 'bold'
+              }}>
+                {statistics.totalTransactions.toLocaleString()}
+              </div>
             </div>
           </div>
 
@@ -1063,28 +1081,79 @@ function TechTransactionContent() {
             borderRadius: '12px',
             padding: '24px',
             color: 'white',
-            boxShadow: '0 4px 6px rgba(16, 185, 129, 0.2)'
-          }}>
+            boxShadow: '0 8px 15px rgba(16, 185, 129, 0.3)',
+            position: 'relative',
+            overflow: 'hidden',
+            cursor: 'pointer',
+            transform: 'translateY(0)',
+            transition: 'all 0.3s ease',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = 'translateY(-5px)';
+            e.currentTarget.style.boxShadow = '0 15px 25px rgba(16, 185, 129, 0.4)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = 'translateY(0)';
+            e.currentTarget.style.boxShadow = '0 8px 15px rgba(16, 185, 129, 0.3)';
+          }}
+          onMouseDown={(e) => {
+            e.currentTarget.style.transform = 'translateY(-2px)';
+            e.currentTarget.style.boxShadow = '0 5px 10px rgba(16, 185, 129, 0.2)';
+          }}
+          onMouseUp={(e) => {
+            e.currentTarget.style.transform = 'translateY(-5px)';
+            e.currentTarget.style.boxShadow = '0 15px 25px rgba(16, 185, 129, 0.4)';
+          }}
+          >
+            {/* Background Area Chart */}
             <div style={{
-              fontSize: '14px',
-              fontWeight: '500',
-              marginBottom: '8px',
-              opacity: 0.9
+              position: 'absolute',
+              bottom: 0,
+              left: 0,
+              right: 0,
+              height: '100%',
+              opacity: 0.3
             }}>
-              ช่างใหม่
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={monthlyChartData} margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
+                  <defs>
+                    <linearGradient id="colorNewTechs" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#ffffff" stopOpacity={0.6}/>
+                      <stop offset="95%" stopColor="#ffffff" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <Area 
+                    type="monotone" 
+                    dataKey="ช่างใหม่" 
+                    stroke="#ffffff" 
+                    strokeWidth={2}
+                    fill="url(#colorNewTechs)"
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
             </div>
+            
+            {/* Content on top */}
             <div style={{
-              fontSize: '42px',
-              fontWeight: 'bold',
-              marginBottom: '4px'
+              position: 'relative',
+              zIndex: 1,
+              display: 'flex',
+              alignItems: 'baseline',
+              gap: '12px'
             }}>
-              {statistics.newTechs.toLocaleString()}
-            </div>
-            <div style={{
-              fontSize: '12px',
-              opacity: 0.8
-            }}>
-              New Technicians
+              <div style={{
+                fontSize: '14px',
+                fontWeight: '500',
+                opacity: 0.9
+              }}>
+                ช่างใหม่
+              </div>
+              <div style={{
+                fontSize: '42px',
+                fontWeight: 'bold'
+              }}>
+                {statistics.newTechs.toLocaleString()}
+              </div>
             </div>
           </div>
 
@@ -1094,63 +1163,179 @@ function TechTransactionContent() {
             borderRadius: '12px',
             padding: '24px',
             color: 'white',
-            boxShadow: '0 4px 6px rgba(239, 68, 68, 0.2)'
-          }}>
+            boxShadow: '0 8px 15px rgba(239, 68, 68, 0.3)',
+            position: 'relative',
+            overflow: 'hidden',
+            cursor: 'pointer',
+            transform: 'translateY(0)',
+            transition: 'all 0.3s ease',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = 'translateY(-5px)';
+            e.currentTarget.style.boxShadow = '0 15px 25px rgba(239, 68, 68, 0.4)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = 'translateY(0)';
+            e.currentTarget.style.boxShadow = '0 8px 15px rgba(239, 68, 68, 0.3)';
+          }}
+          onMouseDown={(e) => {
+            e.currentTarget.style.transform = 'translateY(-2px)';
+            e.currentTarget.style.boxShadow = '0 5px 10px rgba(239, 68, 68, 0.2)';
+          }}
+          onMouseUp={(e) => {
+            e.currentTarget.style.transform = 'translateY(-5px)';
+            e.currentTarget.style.boxShadow = '0 15px 25px rgba(239, 68, 68, 0.4)';
+          }}
+          >
+            {/* Background Area Chart */}
             <div style={{
-              fontSize: '14px',
-              fontWeight: '500',
-              marginBottom: '8px',
-              opacity: 0.9
+              position: 'absolute',
+              bottom: 0,
+              left: 0,
+              right: 0,
+              height: '100%',
+              opacity: 0.3
             }}>
-              ช่างลาออก
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={monthlyChartData} margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
+                  <defs>
+                    <linearGradient id="colorResignedTechs" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#ffffff" stopOpacity={0.6}/>
+                      <stop offset="95%" stopColor="#ffffff" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <Area 
+                    type="monotone" 
+                    dataKey="ช่างลาออก" 
+                    stroke="#ffffff" 
+                    strokeWidth={2}
+                    fill="url(#colorResignedTechs)"
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
             </div>
+            
+            {/* Content on top */}
             <div style={{
-              fontSize: '42px',
-              fontWeight: 'bold',
-              marginBottom: '4px'
+              position: 'relative',
+              zIndex: 1,
+              display: 'flex',
+              alignItems: 'baseline',
+              gap: '12px'
             }}>
-              {statistics.resignedTechs.toLocaleString()}
-            </div>
-            <div style={{
-              fontSize: '12px',
-              opacity: 0.8
-            }}>
-              Resigned Technicians
+              <div style={{
+                fontSize: '14px',
+                fontWeight: '500',
+                opacity: 0.9
+              }}>
+                ช่างลาออก
+              </div>
+              <div style={{
+                fontSize: '42px',
+                fontWeight: 'bold'
+              }}>
+                {statistics.resignedTechs.toLocaleString()}
+              </div>
             </div>
           </div>
 
           {/* Card 3: การเปลี่ยนแปลงสุทธิ */}
           <div style={{
             background: statistics.netChange >= 0 
-              ? 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)'
-              : 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+              ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
+              : 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
             borderRadius: '12px',
             padding: '24px',
             color: 'white',
             boxShadow: statistics.netChange >= 0
-              ? '0 4px 6px rgba(59, 130, 246, 0.2)'
-              : '0 4px 6px rgba(245, 158, 11, 0.2)'
-          }}>
+              ? '0 8px 15px rgba(16, 185, 129, 0.3)'
+              : '0 8px 15px rgba(239, 68, 68, 0.3)',
+            position: 'relative',
+            overflow: 'hidden',
+            cursor: 'pointer',
+            transform: 'translateY(0)',
+            transition: 'all 0.3s ease',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = 'translateY(-5px)';
+            e.currentTarget.style.boxShadow = statistics.netChange >= 0
+              ? '0 15px 25px rgba(16, 185, 129, 0.4)'
+              : '0 15px 25px rgba(239, 68, 68, 0.4)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = 'translateY(0)';
+            e.currentTarget.style.boxShadow = statistics.netChange >= 0
+              ? '0 8px 15px rgba(16, 185, 129, 0.3)'
+              : '0 8px 15px rgba(239, 68, 68, 0.3)';
+          }}
+          onMouseDown={(e) => {
+            e.currentTarget.style.transform = 'translateY(-2px)';
+            e.currentTarget.style.boxShadow = statistics.netChange >= 0
+              ? '0 5px 10px rgba(16, 185, 129, 0.2)'
+              : '0 5px 10px rgba(239, 68, 68, 0.2)';
+          }}
+          onMouseUp={(e) => {
+            e.currentTarget.style.transform = 'translateY(-5px)';
+            e.currentTarget.style.boxShadow = statistics.netChange >= 0
+              ? '0 15px 25px rgba(16, 185, 129, 0.4)'
+              : '0 15px 25px rgba(239, 68, 68, 0.4)';
+          }}
+          >
+            {/* Background Area Chart */}
             <div style={{
-              fontSize: '14px',
-              fontWeight: '500',
-              marginBottom: '8px',
-              opacity: 0.9
+              position: 'absolute',
+              bottom: 0,
+              left: 0,
+              right: 0,
+              height: '100%',
+              opacity: 0.3
             }}>
-              การเปลี่ยนแปลงสุทธิ
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart 
+                  data={monthlyChartData.map(item => ({
+                    month: item.month,
+                    net: item['ช่างใหม่'] - item['ช่างลาออก']
+                  }))} 
+                  margin={{ top: 0, right: 0, bottom: 0, left: 0 }}
+                >
+                  <defs>
+                    <linearGradient id="colorNetChange" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#ffffff" stopOpacity={0.6}/>
+                      <stop offset="95%" stopColor="#ffffff" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <Area 
+                    type="monotone" 
+                    dataKey="net" 
+                    stroke="#ffffff" 
+                    strokeWidth={2}
+                    fill="url(#colorNetChange)"
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
             </div>
+            
+            {/* Content on top */}
             <div style={{
-              fontSize: '42px',
-              fontWeight: 'bold',
-              marginBottom: '4px'
+              position: 'relative',
+              zIndex: 1,
+              display: 'flex',
+              alignItems: 'baseline',
+              gap: '12px'
             }}>
-              {statistics.netChange >= 0 ? '+' : ''}{statistics.netChange.toLocaleString()}
-            </div>
-            <div style={{
-              fontSize: '12px',
-              opacity: 0.8
-            }}>
-              Net Change ({statistics.newTechs} - {statistics.resignedTechs})
+              <div style={{
+                fontSize: '14px',
+                fontWeight: '500',
+                opacity: 0.9
+              }}>
+                สุทธิ
+              </div>
+              <div style={{
+                fontSize: '42px',
+                fontWeight: 'bold'
+              }}>
+                {statistics.netChange >= 0 ? '+' : ''}{statistics.netChange.toLocaleString()}
+              </div>
             </div>
           </div>
         </div>
