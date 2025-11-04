@@ -2037,7 +2037,7 @@ function TechTransactionContent() {
                   color: '#374151',
                   marginBottom: '16px'
                 }}>
-                  จำนวนช่างทั้งหมด vs ช่างลาออก รายเดือน (as of November)
+                  จำนวนช่างทั้งหมด vs ช่างลาออก รายเดือน
                 </h2>
                 <ResponsiveContainer width="100%" height={450}>
                   <BarChart
@@ -2138,7 +2138,7 @@ function TechTransactionContent() {
                   color: '#374151',
                   marginBottom: '16px'
                 }}>
-                  สัดส่วนช่างลาออกตาม Provider (as of November)
+                  สัดส่วนช่างลาออกตาม Provider
                 </h2>
                 {pieData.length > 0 ? (
                   <>
