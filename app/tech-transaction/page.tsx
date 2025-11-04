@@ -707,11 +707,11 @@ function TechTransactionContent() {
         return a.date.localeCompare(b.date);
       });
 
-    // Show last 60 days only if no filters applied, otherwise show all filtered dates
+    // Show last 30 days only if no filters applied, otherwise show all filtered dates
     const isFiltered = selectedYears.length > 0 || selectedMonths.length > 0 || selectedWeeks.length > 0 || selectedDates.length > 0;
-    const finalChartArray = isFiltered ? chartArray : chartArray.slice(-60);
+    const finalChartArray = isFiltered ? chartArray : chartArray.slice(-30);
 
-    console.log('📈 Chart data prepared:', finalChartArray.length, 'dates', isFiltered ? '(filtered)' : '(last 60 days)');
+    console.log('📈 Chart data prepared:', finalChartArray.length, 'dates', isFiltered ? '(filtered)' : '(last 30 days)');
     return finalChartArray;
   }, [allData, selectedYears, selectedMonths, selectedWeeks, selectedDates]);
 
@@ -1377,8 +1377,8 @@ function TechTransactionContent() {
           
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-            gap: '12px',
+            gridTemplateColumns: '1fr 1fr 1fr 1fr',
+            gap: '40px',
             marginBottom: '16px'
           }}>
             {/* Year Filter */}
@@ -1407,10 +1407,18 @@ function TechTransactionContent() {
                   alignItems: 'center'
                 }}
               >
-                <span style={{ color: selectedYears.length > 0 ? '#000' : '#9ca3af' }}>
-                  {selectedYears.length > 0 
-                    ? `${selectedYears.length} selected`
-                    : 'ทั้งหมด'}
+                <span style={{ 
+                  color: selectedYears.length > 0 ? '#000' : '#9ca3af',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px'
+                }}>
+                  <span>📅</span>
+                  <span>
+                    {selectedYears.length > 0 
+                      ? `${selectedYears.length} selected`
+                      : 'ทั้งหมด'}
+                  </span>
                 </span>
                 <span style={{ fontSize: '12px' }}>▼</span>
               </div>
@@ -1530,10 +1538,18 @@ function TechTransactionContent() {
                   alignItems: 'center'
                 }}
               >
-                <span style={{ color: selectedMonths.length > 0 ? '#000' : '#9ca3af' }}>
-                  {selectedMonths.length > 0 
-                    ? `${selectedMonths.length} selected`
-                    : 'ทั้งหมด'}
+                <span style={{ 
+                  color: selectedMonths.length > 0 ? '#000' : '#9ca3af',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px'
+                }}>
+                  <span>📅</span>
+                  <span>
+                    {selectedMonths.length > 0 
+                      ? `${selectedMonths.length} selected`
+                      : 'ทั้งหมด'}
+                  </span>
                 </span>
                 <span style={{ fontSize: '12px' }}>▼</span>
               </div>
@@ -1653,10 +1669,18 @@ function TechTransactionContent() {
                   alignItems: 'center'
                 }}
               >
-                <span style={{ color: selectedWeeks.length > 0 ? '#000' : '#9ca3af' }}>
-                  {selectedWeeks.length > 0 
-                    ? `${selectedWeeks.length} selected`
-                    : 'ทั้งหมด'}
+                <span style={{ 
+                  color: selectedWeeks.length > 0 ? '#000' : '#9ca3af',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px'
+                }}>
+                  <span>📅</span>
+                  <span>
+                    {selectedWeeks.length > 0 
+                      ? `${selectedWeeks.length} selected`
+                      : 'ทั้งหมด'}
+                  </span>
                 </span>
                 <span style={{ fontSize: '12px' }}>▼</span>
               </div>
@@ -1776,10 +1800,18 @@ function TechTransactionContent() {
                   alignItems: 'center'
                 }}
               >
-                <span style={{ color: selectedDates.length > 0 ? '#000' : '#9ca3af' }}>
-                  {selectedDates.length > 0 
-                    ? `${selectedDates.length} selected`
-                    : 'ทั้งหมด'}
+                <span style={{ 
+                  color: selectedDates.length > 0 ? '#000' : '#9ca3af',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px'
+                }}>
+                  <span>📅</span>
+                  <span>
+                    {selectedDates.length > 0 
+                      ? `${selectedDates.length} selected`
+                      : 'ทั้งหมด'}
+                  </span>
                 </span>
                 <span style={{ fontSize: '12px' }}>▼</span>
               </div>
@@ -1922,14 +1954,23 @@ function TechTransactionContent() {
               padding: '24px',
               boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
             }}>
-              <h2 style={{
-                fontSize: '18px',
-                fontWeight: '600',
-                color: '#374151',
-                marginBottom: '16px'
-              }}>
-                ช่างใหม่ vs ช่างลาออก รายวัน
-              </h2>
+              <div style={{ marginBottom: '16px' }}>
+                <h2 style={{
+                  fontSize: '18px',
+                  fontWeight: '600',
+                  color: '#374151',
+                  marginBottom: '4px'
+                }}>
+                  ช่างใหม่ vs ช่างลาออก รายวัน
+                </h2>
+                <p style={{
+                  fontSize: '12px',
+                  color: '#1e3a8a',
+                  margin: 0
+                }}>
+                  (แสดงข้อมูล 30 วัน ล่าสุด)
+                </p>
+              </div>
               <ResponsiveContainer width="100%" height={500}>
                 <LineChart
                   data={chartData}
