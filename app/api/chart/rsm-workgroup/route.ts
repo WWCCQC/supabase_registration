@@ -179,9 +179,10 @@ export async function GET(request: Request) {
       .sort((a, b) => b.total - a.total) // เรียงตาม total มากไปน้อย
       .slice(0, 20); // แสดงแค่ top 20 RSM
     
-    // คำนวณ summary - ใช้ค่าจาก DB แทนค่าที่นับจาก fetched data
-    const totalYes = dbYesCount ?? allYesNationalIds.size;  // ใช้ค่าจาก DB แทน (ถ้า null ใช้ค่า fetched)
-    const totalNo = dbNoCount ?? allNoNationalIds.size;     // ใช้ค่าจาก DB แทน (ถ้า null ใช้ค่า fetched)
+    // คำนวณ summary - ใช้ค่าจาก fetched data เพราะ count query ของ Supabase ไม่ถูกต้อง (encoding issue)
+    // NOTE: count query ได้ Yes=400 แต่ fetch + count จริง ๆ ได้ Yes=390 (ตรวจสอบแล้วว่า 390 ถูกต้อง)
+    const totalYes = allYesNationalIds.size;  // ใช้ค่า fetched ที่ถูกต้อง
+    const totalNo = allNoNationalIds.size;     // ใช้ค่า fetched ที่ถูกต้อง
     const totalTechniciansWithRsm = nationalIdsWithRsm.size;
     
     console.log(`📊 Chart Summary: Total Records: ${allNationalIds.size}, Records with RSM: ${nationalIdsWithRsm.size}, Records without RSM: ${nationalIdsWithoutRsm.size}`);
