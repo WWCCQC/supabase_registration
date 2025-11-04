@@ -4,7 +4,8 @@ export const revalidate = 0; // Disable caching completely
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 
-const API_VERSION = "5.0"; // Updated: Removed provider totals to fix double-counting
+// API version for cache busting
+const API_VERSION = '5.1';
 
 export async function GET(req: Request) {
   try {
@@ -180,7 +181,7 @@ export async function GET(req: Request) {
     return NextResponse.json(
       { 
         data: result, 
-        grandTotal: totalHeadsCount || grandTotal, // Use DB count as primary source
+        grandTotal: grandTotal, // Use calculated count from fetched data (includes encoding issues)
         timestamp: new Date().toISOString(),
         version: API_VERSION,
         message: 'Workgroup count - NO provider totals to prevent double-counting',
@@ -189,7 +190,7 @@ export async function GET(req: Request) {
           calculatedCount: grandTotal,
           fetchedRows: allData.length,
           headsOnlyRows: headsOnly.length,
-          discrepancy: totalHeadsCount ? totalHeadsCount - grandTotal : 0
+          discrepancy: totalHeadsCount ? grandTotal - totalHeadsCount : 0
         }
       },
       {
