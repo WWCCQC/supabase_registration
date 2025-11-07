@@ -88,6 +88,7 @@ export async function GET(req: Request) {
       }
       
       providerExactCounts[provider] = count || 0;
+      console.log(`📊 Exact count for ${provider}: ${count}`);
     }
     
     console.log("Provider exact counts from database:", providerExactCounts);
@@ -176,6 +177,17 @@ export async function GET(req: Request) {
       }
       // Note: Other providers are not counted
     });
+    
+    // Sample True Tech records for debugging
+    const trueTechSample = allData.filter((row: any) => {
+      const provider = String(row.provider || "").trim();
+      return provider === "True Tech";
+    }).slice(0, 5);
+    console.log(`📊 Sample True Tech records (${trueTechSample.length}):`, trueTechSample.map((r: any) => ({
+      provider: r.provider,
+      rsm: r.rsm,
+      national_id: r.national_id
+    })));
 
     // Calculate provider counts from Sets (for chart display)
     const providerSetCounts = {
@@ -198,22 +210,23 @@ export async function GET(req: Request) {
       }))
       .sort((a, b) => b.total - a.total);
 
-    // Calculate summary using exact provider counts (like KPI API and CTM Provider Chart)
-    const totalMainProviders = Object.values(providerExactCounts).reduce((sum, count) => sum + count, 0);
+    // Calculate summary using exact database counts (like CTM Provider API)
+    // This counts ALL technicians with each provider, not just those with RSM
+    const totalFromExactCounts = Object.values(providerExactCounts).reduce((sum, count) => sum + count, 0);
     
     const summary = {
       totalRsm: Object.keys(groupedData).length,
       totalTechnicians: totalCount || 0,
       providerBreakdown: providers.map((provider) => {
-        // Use exact counts from database query (like KPI API)
+        // Use exact database counts (same method as CTM Provider chart)
         const count = providerExactCounts[provider] || 0;
         return {
           provider,
           count,
-          percentage: totalMainProviders > 0 ? Math.round((count / totalMainProviders) * 100) : 0
+          percentage: totalFromExactCounts > 0 ? Math.round((count / totalFromExactCounts) * 100) : 0
         };
       }),
-      // Keep old format for backward compatibility
+      // Keep old format for backward compatibility - use exact counts
       providers: providerExactCounts
     };
 
