@@ -72,15 +72,13 @@ export async function GET(req: Request) {
     const providers = ["WW-Provider", "True Tech", "เถ้าแก่เทค"];
     const providerExactCounts: Record<string, number> = {};
     
-    // Count each provider with exact match (like KPI API)
+    // Count each provider with exact match WITHOUT filters (like KPI API and CTM Provider API)
+    // This ensures legend shows total count from database, not filtered count
     for (const provider of providers) {
-      let exactQuery = supabase
+      const { count, error } = await supabase
         .from("technicians")
         .select("*", { count: "exact", head: true })
         .eq("provider", provider);
-      
-      exactQuery = applyFilters(exactQuery, params);
-      const { count, error } = await exactQuery;
       
       if (error) {
         console.error(`RSM Provider count error for ${provider}:`, error);
@@ -88,10 +86,10 @@ export async function GET(req: Request) {
       }
       
       providerExactCounts[provider] = count || 0;
-      console.log(`📊 Exact count for ${provider}: ${count}`);
+      console.log(`📊 Exact count for ${provider} (NO FILTERS): ${count}`);
     }
     
-    console.log("Provider exact counts from database:", providerExactCounts);
+    console.log("Provider exact counts from database (unfiltered):", providerExactCounts);
     
     // Fetch all data with proper pagination for chart grouping - include national_id for unique counting
     let allData: any[] = [];
