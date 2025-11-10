@@ -194,8 +194,10 @@ export async function GET(req: Request) {
       "เถ้าแก่เทค": providerSets["เถ้าแก่เทค"].size
     };
 
-    console.log("Provider counts from Sets (chart data):", providerSetCounts);
-    console.log("Provider exact counts (for legend):", providerExactCounts);
+    console.log("🔍 Provider counts from Sets (chart data):", providerSetCounts);
+    console.log("🎯 Provider exact counts (for legend):", providerExactCounts);
+    console.log(`🔍 Set count for True Tech: ${providerSetCounts["True Tech"]}`);
+    console.log(`🎯 Exact count for True Tech: ${providerExactCounts["True Tech"]}`);
 
     // Convert to array format for Recharts
     const chartData = Object.entries(groupedData)
@@ -218,6 +220,7 @@ export async function GET(req: Request) {
       providerBreakdown: providers.map((provider) => {
         // Use exact database counts (same method as CTM Provider chart)
         const count = providerExactCounts[provider] || 0;
+        console.log(`📊 Building summary for ${provider}: count = ${count} (from providerExactCounts)`);
         return {
           provider,
           count,
@@ -230,7 +233,7 @@ export async function GET(req: Request) {
 
     console.log(`RSM Provider Chart Summary: Total RSM: ${Object.keys(groupedData).length}`);
     console.log(`✅ Provider totals from exact counts: WW-Provider: ${providerExactCounts["WW-Provider"]}, True Tech: ${providerExactCounts["True Tech"]}, เถ้าแก่เทค: ${providerExactCounts["เถ้าแก่เทค"]}`);
-
+    console.log(`📤 Final summary.providerBreakdown:`, JSON.stringify(summary.providerBreakdown, null, 2));
     return NextResponse.json(
       { 
         chartData,
