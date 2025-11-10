@@ -1,4 +1,5 @@
 export const dynamic = "force-dynamic";
+// Version: 2.0 - Fixed to use exact database counts without filters
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 
