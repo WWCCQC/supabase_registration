@@ -50,13 +50,20 @@ export default function RsmProviderChart() {
       setLoading(true);
       setError(null);
       
-  const res = await fetch("/api/chart/rsm-provider", { cache: 'no-store' });
+      console.log('🔄 RSM Provider Chart: Fetching data from /api/chart/rsm-provider');
+      const res = await fetch("/api/chart/rsm-provider", { cache: 'no-store' });
       const json = await res.json();
+      
+      console.log('📦 RSM Provider Chart: API Response received');
+      console.log('📊 Summary data:', json.summary);
+      console.log('🎯 True Tech count from API:', json.summary?.providerBreakdown?.find((p: any) => p.provider === "True Tech")?.count);
       
       if (!res.ok) throw new Error(json?.error || "Failed to fetch provider chart data");
       
       setChartData(json.chartData || []);
       setSummary(json.summary || null);
+      
+      console.log('✅ RSM Provider Chart: State updated');
     } catch (e: any) {
       console.error("Provider Chart fetch error:", e);
       setError(e.message);
@@ -131,6 +138,11 @@ export default function RsmProviderChart() {
       </div>
     );
   }
+
+  // Log legend data before rendering
+  const trueTechCount = summary?.providerBreakdown?.find((p: any) => p.provider === "True Tech")?.count;
+  console.log('🎨 RSM Provider Chart: Rendering legend with True Tech count:', trueTechCount);
+  console.log('📋 Full providerBreakdown:', summary?.providerBreakdown);
 
   return (
     <div>
