@@ -75,6 +75,7 @@ export async function GET(req: Request) {
     
     // Count each provider with exact match WITHOUT filters (like KPI API and CTM Provider API)
     // This ensures legend shows total count from database, not filtered count
+    console.log('🔍 STARTING PROVIDER COUNT (WITHOUT FILTERS)...');
     for (const provider of providers) {
       const { count, error } = await supabase
         .from("technicians")
@@ -87,10 +88,15 @@ export async function GET(req: Request) {
       }
       
       providerExactCounts[provider] = count || 0;
-      console.log(`📊 Exact count for ${provider} (NO FILTERS): ${count}`);
+      console.log(`📊 ${provider}: ${count} records in database`);
     }
     
-    console.log("Provider exact counts from database (unfiltered):", providerExactCounts);
+    console.log("=" .repeat(60));
+    console.log("🎯 PROVIDER EXACT COUNTS (UNFILTERED):");
+    console.log("   WW-Provider:", providerExactCounts["WW-Provider"]);
+    console.log("   True Tech:", providerExactCounts["True Tech"]);
+    console.log("   เถ้าแก่เทค:", providerExactCounts["เถ้าแก่เทค"]);
+    console.log("=" .repeat(60));
     
     // Fetch all data with proper pagination for chart grouping - include national_id for unique counting
     let allData: any[] = [];
@@ -232,9 +238,14 @@ export async function GET(req: Request) {
       providers: providerExactCounts
     };
 
-    console.log(`RSM Provider Chart Summary: Total RSM: ${Object.keys(groupedData).length}`);
-    console.log(`✅ Provider totals from exact counts: WW-Provider: ${providerExactCounts["WW-Provider"]}, True Tech: ${providerExactCounts["True Tech"]}, เถ้าแก่เทค: ${providerExactCounts["เถ้าแก่เทค"]}`);
-    console.log(`📤 Final summary.providerBreakdown:`, JSON.stringify(summary.providerBreakdown, null, 2));
+    console.log("=" .repeat(60));
+    console.log("📊 FINAL SUMMARY TO BE SENT:");
+    console.log("=" .repeat(60));
+    summary.providerBreakdown.forEach(p => {
+      console.log(`   ${p.provider}: ${p.count} (${p.percentage}%)`);
+    });
+    console.log("=" .repeat(60));
+    
     return NextResponse.json(
       { 
         chartData,
