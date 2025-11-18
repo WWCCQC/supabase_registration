@@ -810,28 +810,29 @@ export default function TechBrowser() {
     try {
       setLoading(true);
       const XLSX = await import("xlsx");
-      const pageSize = 200;
-      let p = 1;
-      const all: Row[] = [];
-      while (true) {
-        // ❌ DON'T USE FILTERS - Export ALL data like the "Technicians (คน)" card
-        // const params = buildParams(p, pageSize);
-        const params = new URLSearchParams({
-          page: String(p),
-          pageSize: String(pageSize),
-          sort,
-          dir,
-        });
-        // NO FILTERS - export all technicians
-        const res = await fetch(`/api/technicians?${params.toString()}`, {
-          cache: "no-store",
-        });
-        const json = await res.json();
-        if (!res.ok) throw new Error(json?.error || "Export fetch failed");
-        all.push(...(json.rows || []));
-        if (p >= (json.totalPages || 1)) break;
-        p++;
+      
+      // ❌ DON'T USE PAGINATION - Fetch ALL data at once to avoid missing records
+      // Pagination with duplicate national_id can cause records to be skipped
+      const params = new URLSearchParams({
+        page: "1",
+        pageSize: "10000", // Large enough to get all records in one request
+        sort,
+        dir,
+      });
+      // NO FILTERS - export all technicians
+      const res = await fetch(`/api/technicians?${params.toString()}`, {
+        cache: "no-store",
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json?.error || "Export fetch failed");
+      
+      const all = json.rows || [];
+      console.log(`📊 Exported ${all.length} records (API total: ${json.total})`);
+      
+      if (all.length !== json.total) {
+        console.warn(`⚠️ Mismatch: Exported ${all.length} but API says ${json.total} total`);
       }
+      
       const ws = XLSX.utils.json_to_sheet(all);
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, "technicians");
