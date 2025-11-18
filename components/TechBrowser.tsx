@@ -814,7 +814,15 @@ export default function TechBrowser() {
       let p = 1;
       const all: Row[] = [];
       while (true) {
-        const params = buildParams(p, pageSize);
+        // ❌ DON'T USE FILTERS - Export ALL data like the "Technicians (คน)" card
+        // const params = buildParams(p, pageSize);
+        const params = new URLSearchParams({
+          page: String(p),
+          pageSize: String(pageSize),
+          sort,
+          dir,
+        });
+        // NO FILTERS - export all technicians
         const res = await fetch(`/api/technicians?${params.toString()}`, {
           cache: "no-store",
         });
