@@ -811,27 +811,20 @@ export default function TechBrowser() {
       setLoading(true);
       const XLSX = await import("xlsx");
       
-      // ✅ Fetch ALL data in single request with large pageSize
-      const params = new URLSearchParams({
-        page: "1",
-        pageSize: "5000", // API now supports up to 5000
-        sort: "tech_id", // Use tech_id for stable sorting (unique)
-        dir: "asc",
-      });
-      // NO FILTERS - export all technicians
+      // ✅ Use dedicated export API that fetches ALL records without pagination limits
       console.log('📥 Starting Excel export...');
-      const res = await fetch(`/api/technicians?${params.toString()}`, {
+      const res = await fetch(`/api/technicians/export`, {
         cache: "no-store",
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json?.error || "Export fetch failed");
       
       const all = json.rows || [];
-      console.log(`✅ Exported ${all.length} records (API total: ${json.total})`);
+      console.log(`✅ Exported ${all.length} records`);
       
-      if (all.length !== json.total) {
-        console.warn(`⚠️ Mismatch: Exported ${all.length} but API says ${json.total} total`);
-        alert(`คำเตือน: Export ได้ ${all.length} records แต่มีทั้งหมด ${json.total} records`);
+      if (all.length === 0) {
+        alert('ไม่พบข้อมูลสำหรับ Export');
+        return;
       }
       
       const ws = XLSX.utils.json_to_sheet(all);
@@ -839,10 +832,11 @@ export default function TechBrowser() {
       XLSX.utils.book_append_sheet(wb, ws, "technicians");
       const date = new Date().toISOString().slice(0, 10);
       XLSX.writeFile(wb, `technicians_${date}.xlsx`);
-      console.log(`💾 Saved: technicians_${date}.xlsx`);
+      console.log(`💾 Saved: technicians_${date}.xlsx (${all.length} records)`);
+      alert(`✅ Export สำเร็จ: ${all.length.toLocaleString()} records`);
     } catch (e) {
       console.error('❌ Export error:', e);
-      alert((e as Error).message);
+      alert(`Export ล้มเหลว: ${(e as Error).message}`);
     } finally {
       setLoading(false);
     }
