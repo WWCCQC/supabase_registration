@@ -81,11 +81,10 @@ export async function GET(request: NextRequest) {
         providers.add(provider);
       }
 
-      // Skip if CTM is empty, null, or contains only whitespace (for grouping only)
-      if (!originalCtm || originalCtm === "null" || originalCtm === "undefined") return;
-
-      // Map CTM code to Thai name
-      const ctm = mapCtmToThaiName(originalCtm);
+      // Map CTM code to Thai name (use "No CTM" for missing values)
+      const ctm = (!originalCtm || originalCtm === "null" || originalCtm === "undefined") 
+        ? "No CTM" 
+        : mapCtmToThaiName(originalCtm);
 
       if (!groupedData[ctm]) {
         groupedData[ctm] = {};
