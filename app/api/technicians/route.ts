@@ -16,7 +16,9 @@ export async function GET(req: Request) {
     
     const url = new URL(req.url);
     const page = Math.max(1, Number(url.searchParams.get("page") ?? "1"));
-    const pageSize = Math.min(200, Math.max(1, Number(url.searchParams.get("pageSize") ?? "50")));
+    // Allow larger pageSize for export (up to 5000)
+    const requestedPageSize = Number(url.searchParams.get("pageSize") ?? "50");
+    const pageSize = Math.min(5000, Math.max(1, requestedPageSize));
 
     const f_national_id = url.searchParams.get("national_id") || "";
     const f_tech_id     = url.searchParams.get("tech_id") || "";

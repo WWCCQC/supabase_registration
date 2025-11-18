@@ -811,15 +811,15 @@ export default function TechBrowser() {
       setLoading(true);
       const XLSX = await import("xlsx");
       
-      // ❌ DON'T USE PAGINATION - Fetch ALL data at once to avoid missing records
-      // Pagination with duplicate national_id can cause records to be skipped
+      // ✅ Fetch ALL data in single request with large pageSize
       const params = new URLSearchParams({
         page: "1",
-        pageSize: "10000", // Large enough to get all records in one request
-        sort,
-        dir,
+        pageSize: "5000", // API now supports up to 5000
+        sort: "tech_id", // Use tech_id for stable sorting (unique)
+        dir: "asc",
       });
       // NO FILTERS - export all technicians
+      console.log('📥 Starting Excel export...');
       const res = await fetch(`/api/technicians?${params.toString()}`, {
         cache: "no-store",
       });
@@ -827,10 +827,11 @@ export default function TechBrowser() {
       if (!res.ok) throw new Error(json?.error || "Export fetch failed");
       
       const all = json.rows || [];
-      console.log(`📊 Exported ${all.length} records (API total: ${json.total})`);
+      console.log(`✅ Exported ${all.length} records (API total: ${json.total})`);
       
       if (all.length !== json.total) {
         console.warn(`⚠️ Mismatch: Exported ${all.length} but API says ${json.total} total`);
+        alert(`คำเตือน: Export ได้ ${all.length} records แต่มีทั้งหมด ${json.total} records`);
       }
       
       const ws = XLSX.utils.json_to_sheet(all);
@@ -838,8 +839,9 @@ export default function TechBrowser() {
       XLSX.utils.book_append_sheet(wb, ws, "technicians");
       const date = new Date().toISOString().slice(0, 10);
       XLSX.writeFile(wb, `technicians_${date}.xlsx`);
+      console.log(`💾 Saved: technicians_${date}.xlsx`);
     } catch (e) {
-      console.error(e);
+      console.error('❌ Export error:', e);
       alert((e as Error).message);
     } finally {
       setLoading(false);
