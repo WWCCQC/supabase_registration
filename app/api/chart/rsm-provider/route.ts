@@ -59,10 +59,11 @@ export async function GET(req: Request) {
     const params = url.searchParams;
     const supabase = supabaseAdmin();
     
-    // Get total count first with filters applied to match KPI API
-    let countQuery = supabase.from("technicians").select("*", { count: "exact", head: true });
-    countQuery = applyFilters(countQuery, params);
-    const { count: totalCount, error: countError } = await countQuery;
+    // Get total count WITHOUT filters (same as CTM Provider API)
+    // The legend should show total counts, not filtered counts
+    const { count: totalCount, error: countError } = await supabase
+      .from("technicians")
+      .select("*", { count: "exact", head: true });
     
     if (countError) {
       console.error("RSM Provider Chart count error:", countError);
@@ -98,21 +99,21 @@ export async function GET(req: Request) {
     console.log("   เถ้าแก่เทค:", providerExactCounts["เถ้าแก่เทค"]);
     console.log("=" .repeat(60));
     
-    // Fetch all data with proper pagination for chart grouping - include national_id for unique counting
+    // Fetch all data WITHOUT filters for accurate provider counting
+    // Filters should not affect the legend numbers (same as CTM Provider API)
     let allData: any[] = [];
     let from = 0;
     const pageSize = 1000;
     let hasMore = true;
     
     while (hasMore) {
-      let query = supabase
+      const { data, error } = await supabase
         .from("technicians")
         .select("rsm, provider, workgroup_status, national_id")
         .order("tech_id", { ascending: true })
         .range(from, from + pageSize - 1);
-        
-      query = applyFilters(query, params);
-      const { data, error } = await query;
+      
+      // NO FILTERS - We want all data for accurate counting
       
       if (error) {
         console.error("RSM Provider Chart data fetch error:", error);
