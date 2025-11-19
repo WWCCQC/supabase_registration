@@ -116,19 +116,30 @@ export async function GET(request: NextRequest) {
       })
       .sort((a, b) => b.total - a.total); // Sort by total descending (มากไปน้อย)
 
-    // Calculate summary using exact counts from database (not from grouped chart data)
-    const totalFromExactCounts = Object.values(providerExactCounts).reduce((sum, count) => sum + count, 0);
+    // Calculate summary from grouped data (unique national_id counts - same as chart)
+    // This ensures summary and chart show the same numbers
+    const providerCountsFromGroupedData: Record<string, number> = {};
+    
+    mainProviders.forEach(provider => {
+      let totalForProvider = 0;
+      Object.keys(groupedData).forEach(ctm => {
+        totalForProvider += groupedData[ctm][provider]?.size || 0;
+      });
+      providerCountsFromGroupedData[provider] = totalForProvider;
+    });
+    
+    const totalFromGroupedData = Object.values(providerCountsFromGroupedData).reduce((sum, count) => sum + count, 0);
     
     const summary = {
       totalCtms: Object.keys(groupedData).length,
-      totalTechnicians: totalFromExactCounts,  // Use exact counts from database
+      totalTechnicians: totalFromGroupedData,  // Use counts from grouped data (unique national_id)
       providerBreakdown: mainProviders.map((provider) => {
-        // Use exact counts from database query
-        const count = providerExactCounts[provider] || 0;
+        // Use counts from grouped data (same as chart)
+        const count = providerCountsFromGroupedData[provider] || 0;
         return {
           provider,
           count,
-          percentage: totalFromExactCounts > 0 ? Math.round((count / totalFromExactCounts) * 100) : 0
+          percentage: totalFromGroupedData > 0 ? Math.round((count / totalFromGroupedData) * 100) : 0
         };
       })
     };
@@ -136,7 +147,13 @@ export async function GET(request: NextRequest) {
     console.log('🔍 CTM Provider API Debug:');
     console.log('Total techs:', techs?.length);
     console.log('All data length:', allData.length);
-    console.log('Provider exact counts:', providerExactCounts);
+    console.log('Provider exact counts (direct DB count):', providerExactCounts);
+    console.log('Provider counts from grouped data (unique national_id):', providerCountsFromGroupedData);
+    console.log('Difference (records without national_id or duplicates):', {
+      'WW-Provider': (providerExactCounts['WW-Provider'] || 0) - (providerCountsFromGroupedData['WW-Provider'] || 0),
+      'True Tech': (providerExactCounts['True Tech'] || 0) - (providerCountsFromGroupedData['True Tech'] || 0),
+      'เถ้าแก่เทค': (providerExactCounts['เถ้าแก่เทค'] || 0) - (providerCountsFromGroupedData['เถ้าแก่เทค'] || 0),
+    });
     console.log('Grouped CTMs:', Object.keys(groupedData).length);
     console.log('Chart data length:', chartData.length);
     console.log('Summary provider breakdown:', summary.providerBreakdown);

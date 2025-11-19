@@ -217,25 +217,25 @@ export async function GET(req: Request) {
       }))
       .sort((a, b) => b.total - a.total);
 
-    // Calculate summary using exact database counts (like CTM Provider API)
-    // This counts ALL technicians with each provider, not just those with RSM
-    const totalFromExactCounts = Object.values(providerExactCounts).reduce((sum, count) => sum + count, 0);
+    // Calculate summary from grouped data (unique national_id counts - same as chart)
+    // This ensures summary and chart show the same numbers
+    const totalFromSetCounts = Object.values(providerSetCounts).reduce((sum, count) => sum + count, 0);
     
     const summary = {
       totalRsm: Object.keys(groupedData).length,
       totalTechnicians: totalCount || 0,
       providerBreakdown: providers.map((provider) => {
-        // Use exact database counts (same method as CTM Provider chart)
-        const count = providerExactCounts[provider] || 0;
-        console.log(`📊 Building summary for ${provider}: count = ${count} (from providerExactCounts)`);
+        // Use counts from Sets (same as chart) instead of exact database counts
+        const count = (providerSetCounts as any)[provider] || 0;
+        console.log(`📊 Building summary for ${provider}: count = ${count} (from providerSetCounts - unique national_id)`);
         return {
           provider,
           count,
-          percentage: totalFromExactCounts > 0 ? Math.round((count / totalFromExactCounts) * 100) : 0
+          percentage: totalFromSetCounts > 0 ? Math.round((count / totalFromSetCounts) * 100) : 0
         };
       }),
-      // Keep old format for backward compatibility - use exact counts
-      providers: providerExactCounts
+      // Keep old format for backward compatibility - use Set counts
+      providers: providerSetCounts
     };
 
     console.log("=" .repeat(60));
@@ -244,6 +244,10 @@ export async function GET(req: Request) {
     summary.providerBreakdown.forEach(p => {
       console.log(`   ${p.provider}: ${p.count} (${p.percentage}%)`);
     });
+    console.log("Difference (direct DB count vs unique national_id):");
+    console.log(`   WW-Provider: ${(providerExactCounts['WW-Provider'] || 0) - (providerSetCounts['WW-Provider'] || 0)}`);
+    console.log(`   True Tech: ${(providerExactCounts['True Tech'] || 0) - (providerSetCounts['True Tech'] || 0)}`);
+    console.log(`   เถ้าแก่เทค: ${(providerExactCounts['เถ้าแก่เทค'] || 0) - (providerSetCounts['เถ้าแก่เทค'] || 0)}`);
     console.log("=" .repeat(60));
     
     return NextResponse.json(
