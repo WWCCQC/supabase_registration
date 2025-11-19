@@ -154,15 +154,17 @@ export async function GET(req: Request) {
       const provider = String(row.provider || "").trim();
       const nationalId = String(row.national_id || "").trim();
       
-      // Skip records without RSM or national_id
-      if (!rsm || rsm === "null" || rsm === "undefined") return;
+      // Skip records without national_id
       if (!nationalId || nationalId === "null" || nationalId === "undefined") return;
       
       // Skip records without provider
       if (!provider || provider === "null" || provider === "undefined") return;
       
-      if (!groupedData[rsm]) {
-        groupedData[rsm] = { 
+      // Use "No RSM" for records without RSM (same logic as CTM chart using "No CTM")
+      const rsmKey = (!rsm || rsm === "null" || rsm === "undefined") ? "No RSM" : rsm;
+      
+      if (!groupedData[rsmKey]) {
+        groupedData[rsmKey] = { 
           "WW-Provider": new Set<string>(), 
           "True Tech": new Set<string>(), 
           "เถ้าแก่เทค": new Set<string>() 
@@ -171,13 +173,13 @@ export async function GET(req: Request) {
       
       // Categorize Provider using exact string comparison and unique national_id counting
       if (provider === "WW-Provider") {
-        groupedData[rsm]["WW-Provider"].add(nationalId);
+        groupedData[rsmKey]["WW-Provider"].add(nationalId);
         providerSets["WW-Provider"].add(nationalId);
       } else if (provider === "True Tech") {
-        groupedData[rsm]["True Tech"].add(nationalId);
+        groupedData[rsmKey]["True Tech"].add(nationalId);
         providerSets["True Tech"].add(nationalId);
       } else if (provider === "เถ้าแก่เทค") {
-        groupedData[rsm]["เถ้าแก่เทค"].add(nationalId);
+        groupedData[rsmKey]["เถ้าแก่เทค"].add(nationalId);
         providerSets["เถ้าแก่เทค"].add(nationalId);
       }
       // Note: Other providers are not counted
