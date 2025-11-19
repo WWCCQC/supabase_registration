@@ -109,11 +109,11 @@ export async function GET(req: Request) {
     while (hasMore) {
       const { data, error } = await supabase
         .from("technicians")
-        .select("rsm, provider, workgroup_status, national_id")
+        .select("tech_id, rsm, provider, workgroup_status, national_id")
         .order("tech_id", { ascending: true })
         .range(from, from + pageSize - 1);
       
-      // NO FILTERS - We want all data for accurate counting
+      // NO FILTERS - We want all data for accurate counting (including records with null values)
       
       if (error) {
         console.error("RSM Provider Chart data fetch error:", error);
@@ -130,6 +130,13 @@ export async function GET(req: Request) {
     }
 
     console.log(`RSM Provider Chart API: Fetched ${allData?.length || 0} records from database (DB count: ${totalCount || 0}) - Updated: ${new Date().toISOString()}`);
+    
+    // Debug: Count True Tech in fetched data
+    const trueTechInData = allData.filter((r: any) => {
+      const provider = String(r.provider || "").trim();
+      return provider === "True Tech";
+    }).length;
+    console.log(`🔍 Debug: True Tech records in fetched data: ${trueTechInData} (Expected from DB: ${providerExactCounts["True Tech"] || 0})`);
 
     if (!allData || allData.length === 0) {
       return NextResponse.json({ 
