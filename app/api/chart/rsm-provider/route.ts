@@ -155,9 +155,6 @@ export async function GET(req: Request) {
       const provider = String(row.provider || "").trim();
       const nationalId = String(row.national_id || "").trim();
       
-      // Skip records without national_id
-      if (!nationalId || nationalId === "null" || nationalId === "undefined") return;
-      
       // Skip records without provider
       if (!provider || provider === "null" || provider === "undefined") return;
       
@@ -172,16 +169,21 @@ export async function GET(req: Request) {
         };
       }
       
+      // Use national_id if available, otherwise use row.id to ensure every record is counted
+      const uniqueKey = (nationalId && nationalId !== "null" && nationalId !== "undefined") 
+        ? nationalId 
+        : `id_${row.id}`;
+      
       // Categorize Provider using exact string comparison and unique national_id counting
       if (provider === "WW-Provider") {
-        groupedData[rsmKey]["WW-Provider"].add(nationalId);
-        providerSets["WW-Provider"].add(nationalId);
+        groupedData[rsmKey]["WW-Provider"].add(uniqueKey);
+        providerSets["WW-Provider"].add(uniqueKey);
       } else if (provider === "True Tech") {
-        groupedData[rsmKey]["True Tech"].add(nationalId);
-        providerSets["True Tech"].add(nationalId);
+        groupedData[rsmKey]["True Tech"].add(uniqueKey);
+        providerSets["True Tech"].add(uniqueKey);
       } else if (provider === "เถ้าแก่เทค") {
-        groupedData[rsmKey]["เถ้าแก่เทค"].add(nationalId);
-        providerSets["เถ้าแก่เทค"].add(nationalId);
+        groupedData[rsmKey]["เถ้าแก่เทค"].add(uniqueKey);
+        providerSets["เถ้าแก่เทค"].add(uniqueKey);
       }
       // Note: Other providers are not counted
     });
