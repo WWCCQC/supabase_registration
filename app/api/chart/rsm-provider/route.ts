@@ -17,11 +17,13 @@ export async function GET(req: Request) {
     
     for (const provider of providers) {
       // Fetch only national_id column to count unique values
+      // Use high limit to get all records (Supabase default is 1000)
       const { data: ids } = await supabase
         .from("technicians")
         .select("national_id")
         .eq("provider", provider)
-        .not("national_id", "is", null);
+        .not("national_id", "is", null)
+        .limit(100000);
       
       const uniqueIds = new Set(ids?.map(r => r.national_id) || []);
       providerTotals[provider] = uniqueIds.size;
@@ -30,11 +32,13 @@ export async function GET(req: Request) {
     
     // Get RSM distribution using same method
     console.log("📊 Grouping by RSM...");
+    // Use high limit to get all records (Supabase default is 1000)
     const { data: rsmDataRaw } = await supabase
       .from("technicians")
       .select("rsm, provider, national_id")
       .not("national_id", "is", null)
-      .in("provider", providers);
+      .in("provider", providers)
+      .limit(100000);
     
     const groupedData: Record<string, Record<string, number>> = {};
     const tempSets: Record<string, Record<string, Set<string>>> = {};
