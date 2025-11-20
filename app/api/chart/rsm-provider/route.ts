@@ -1,5 +1,6 @@
 export const dynamic = "force-dynamic";
-// Version: 3.0 - Use direct SQL COUNT instead of fetching data
+export const revalidate = 0;
+// Version: 3.1 - Fixed limit issue + force no cache
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 
@@ -108,17 +109,21 @@ export async function GET(req: Request) {
       console.log(`   ${p.provider}: ${p.count} (${p.percentage}%)`);
     });
     console.log("=" .repeat(60));
+    console.log(`⏰ Response generated at: ${new Date().toISOString()}`);
     
     return NextResponse.json(
       { 
         chartData,
-        summary
+        summary,
+        _timestamp: new Date().toISOString(),
+        _version: "3.1-fixed-limit"
       },
       {
         headers: {
-          "cache-control": "no-store, no-cache, must-revalidate",
+          "cache-control": "no-store, no-cache, must-revalidate, max-age=0",
           "pragma": "no-cache",
           "expires": "0",
+          "x-timestamp": new Date().toISOString(),
         },
       }
     );
