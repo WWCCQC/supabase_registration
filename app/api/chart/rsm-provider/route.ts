@@ -137,6 +137,17 @@ export async function GET(req: Request) {
       return provider === "True Tech";
     }).length;
     console.log(`🔍 Debug: True Tech records in fetched data: ${trueTechInData} (Expected from DB: ${providerExactCounts["True Tech"] || 0})`);
+    
+    // Debug: Count WW-Provider in fetched data
+    const wwInData = allData.filter((r: any) => {
+      const provider = String(r.provider || "").trim();
+      return provider === "WW-Provider";
+    }).length;
+    console.log(`🔍 Debug: WW-Provider records in fetched data: ${wwInData} (Expected from DB: ${providerExactCounts["WW-Provider"] || 0})`);
+    
+    // Debug: Count records with national_id
+    const withNationalId = allData.filter((r: any) => r.national_id).length;
+    console.log(`🔍 Debug: Records with national_id: ${withNationalId} out of ${allData.length} total`);
 
     if (!allData || allData.length === 0) {
       return NextResponse.json({ 
