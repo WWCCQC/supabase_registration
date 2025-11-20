@@ -12,39 +12,69 @@ export async function GET(req: Request) {
     
     const providers = ["WW-Provider", "True Tech", "เถ้าแก่เทค"];
     
-    // Get total counts using COUNT(DISTINCT national_id) from DB
-    console.log("📊 Counting providers with COUNT(DISTINCT national_id)...");
+    // Get total counts using pagination to avoid timeout
+    console.log("📊 Counting providers with pagination...");
     const providerTotals: Record<string, number> = {};
     
     for (const provider of providers) {
-      // Fetch only national_id column to count unique values
-      // Use high limit to get all records (Supabase default is 1000)
-      const { data: ids } = await supabase
-        .from("technicians")
-        .select("national_id")
-        .eq("provider", provider)
-        .not("national_id", "is", null)
-        .limit(100000);
+      // Use pagination to fetch all records without timeout
+      const allIds = new Set<string>();
+      let from = 0;
+      const pageSize = 1000;
+      let hasMore = true;
       
-      const uniqueIds = new Set(ids?.map(r => r.national_id) || []);
-      providerTotals[provider] = uniqueIds.size;
-      console.log(`   ${provider}: ${providerTotals[provider]} (COUNT DISTINCT)`);
+      while (hasMore) {
+        const { data: ids } = await supabase
+          .from("technicians")
+          .select("national_id")
+          .eq("provider", provider)
+          .not("national_id", "is", null)
+          .range(from, from + pageSize - 1);
+        
+        if (ids && ids.length > 0) {
+          ids.forEach(r => allIds.add(r.national_id));
+          from += pageSize;
+          hasMore = ids.length === pageSize;
+        } else {
+          hasMore = false;
+        }
+      }
+      
+      providerTotals[provider] = allIds.size;
+      console.log(`   ${provider}: ${providerTotals[provider]} (paginated COUNT DISTINCT)`);
     }
     
-    // Get RSM distribution using same method
-    console.log("📊 Grouping by RSM...");
-    // Use high limit to get all records (Supabase default is 1000)
-    const { data: rsmDataRaw } = await supabase
-      .from("technicians")
-      .select("rsm, provider, national_id")
-      .not("national_id", "is", null)
-      .in("provider", providers)
-      .limit(100000);
+    // Get RSM distribution using pagination
+    console.log("📊 Grouping by RSM with pagination...");
+    const allRsmData: any[] = [];
+    let from = 0;
+    const pageSize = 1000;
+    let hasMore = true;
+    
+    while (hasMore) {
+      const { data: rsmDataRaw } = await supabase
+        .from("technicians")
+        .select("rsm, provider, national_id")
+        .not("national_id", "is", null)
+        .in("provider", providers)
+        .range(from, from + pageSize - 1);
+      
+      if (rsmDataRaw && rsmDataRaw.length > 0) {
+        allRsmData.push(...rsmDataRaw);
+        from += pageSize;
+        hasMore = rsmDataRaw.length === pageSize;
+      } else {
+        hasMore = false;
+      }
+    }
+    
+    console.log(`📊 Fetched ${allRsmData.length} records total`);
+    console.log(`📊 Fetched ${allRsmData.length} records total`);
     
     const groupedData: Record<string, Record<string, number>> = {};
     const tempSets: Record<string, Record<string, Set<string>>> = {};
     
-    rsmDataRaw?.forEach((row: any) => {
+    allRsmData.forEach((row: any) => {
       const rsm = row.rsm || "No RSM";
       const provider = row.provider;
       const nationalId = row.national_id;
