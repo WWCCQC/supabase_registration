@@ -230,25 +230,36 @@ export async function GET(req: Request) {
       }))
       .sort((a, b) => b.total - a.total);
 
-    // Calculate summary from grouped data (unique national_id counting)
-    const totalFromCounts = providerSets["WW-Provider"].size + providerSets["True Tech"].size + providerSets["เถ้าแก่เทค"].size;
+    // Calculate summary from grouped data (same as CTM Provider API)
+    // This ensures summary matches chart data exactly
+    const providerCountsFromGroupedData: Record<string, number> = {};
+    
+    providers.forEach(provider => {
+      let totalForProvider = 0;
+      Object.keys(groupedData).forEach(rsm => {
+        totalForProvider += (groupedData[rsm] as any)[provider]?.size || 0;
+      });
+      providerCountsFromGroupedData[provider] = totalForProvider;
+    });
+    
+    const totalFromGroupedData = Object.values(providerCountsFromGroupedData).reduce((sum, count) => sum + count, 0);
     
     const summary = {
       totalRsm: Object.keys(groupedData).length,
-      totalTechnicians: totalCount || 0,
+      totalTechnicians: totalFromGroupedData,  // Use counts from grouped data (same as CTM)
       providerBreakdown: providers.map((provider) => {
-        const count = (providerSets as any)[provider]?.size || 0;
+        const count = providerCountsFromGroupedData[provider] || 0;
         console.log(`📊 Building summary for ${provider}: count = ${count}`);
         return {
           provider,
           count,
-          percentage: totalFromCounts > 0 ? Math.round((count / totalFromCounts) * 100) : 0
+          percentage: totalFromGroupedData > 0 ? Math.round((count / totalFromGroupedData) * 100) : 0
         };
       }),
       providers: {
-        "WW-Provider": providerSets["WW-Provider"].size,
-        "True Tech": providerSets["True Tech"].size,
-        "เถ้าแก่เทค": providerSets["เถ้าแก่เทค"].size
+        "WW-Provider": providerCountsFromGroupedData["WW-Provider"] || 0,
+        "True Tech": providerCountsFromGroupedData["True Tech"] || 0,
+        "เถ้าแก่เทค": providerCountsFromGroupedData["เถ้าแก่เทค"] || 0
       }
     };
 
