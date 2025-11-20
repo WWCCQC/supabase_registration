@@ -149,7 +149,7 @@ export async function GET(req: Request) {
       });
     }
 
-    // Group data by RSM and Provider - Direct row counting (no national_id filtering)
+    // Group data by RSM and Provider - Count unique national_id (same as CTM Provider API)
     const groupedData: Record<string, { "WW-Provider": number; "True Tech": number; "เถ้าแก่เทค": number }> = {};
     const providerCounts = {
       "WW-Provider": 0,
@@ -163,6 +163,10 @@ export async function GET(req: Request) {
     allData.forEach((row: any) => {
       const rsm = String(row.rsm || "").trim();
       const provider = String(row.provider || "").trim();
+      const nationalId = row.national_id;
+      
+      // Skip records without national_id (same as CTM Provider API)
+      if (!nationalId) return;
       
       // Track all providers for debugging
       const providerKey = provider || "(empty/null)";
@@ -182,7 +186,7 @@ export async function GET(req: Request) {
         };
       }
       
-      // Categorize Provider using exact string comparison - direct row counting
+      // Categorize Provider using exact string comparison - count rows with valid national_id
       if (provider === "WW-Provider") {
         groupedData[rsmKey]["WW-Provider"]++;
         providerCounts["WW-Provider"]++;
@@ -196,8 +200,8 @@ export async function GET(req: Request) {
       // Note: Other providers are not counted
     });
 
-    console.log("🔍 All unique providers in data:", allProvidersInData);
-    console.log("🔍 Provider counts (direct row counting):", providerCounts);
+    console.log("🔍 All unique providers in data (with national_id):", allProvidersInData);
+    console.log("🔍 Provider counts (direct row counting with national_id):", providerCounts);
     console.log("🎯 Provider exact counts (from DB):", providerExactCounts);
 
     // Convert to array format for Recharts
