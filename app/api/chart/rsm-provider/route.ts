@@ -157,9 +157,16 @@ export async function GET(req: Request) {
       "เถ้าแก่เทค": 0
     };
     
+    // Debug: count all unique providers
+    const allProvidersInData: Record<string, number> = {};
+    
     allData.forEach((row: any) => {
       const rsm = String(row.rsm || "").trim();
       const provider = String(row.provider || "").trim();
+      
+      // Track all providers for debugging
+      const providerKey = provider || "(empty/null)";
+      allProvidersInData[providerKey] = (allProvidersInData[providerKey] || 0) + 1;
       
       // Skip records without provider
       if (!provider || provider === "null" || provider === "undefined") return;
@@ -189,6 +196,7 @@ export async function GET(req: Request) {
       // Note: Other providers are not counted
     });
 
+    console.log("🔍 All unique providers in data:", allProvidersInData);
     console.log("🔍 Provider counts (direct row counting):", providerCounts);
     console.log("🎯 Provider exact counts (from DB):", providerExactCounts);
 
