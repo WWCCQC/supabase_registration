@@ -161,11 +161,11 @@ export async function GET(req: Request) {
     }
 
     // Group data by RSM and Provider - Count unique national_id (same as CTM Provider API)
-    const groupedData: Record<string, { "WW-Provider": number; "True Tech": number; "เถ้าแก่เทค": number }> = {};
-    const providerCounts = {
-      "WW-Provider": 0,
-      "True Tech": 0,
-      "เถ้าแก่เทค": 0
+    const groupedData: Record<string, { "WW-Provider": Set<string>; "True Tech": Set<string>; "เถ้าแก่เทค": Set<string> }> = {};
+    const providerSets = {
+      "WW-Provider": new Set<string>(),
+      "True Tech": new Set<string>(),
+      "เถ้าแก่เทค": new Set<string>()
     };
     
     // Debug: count all unique providers
@@ -191,49 +191,53 @@ export async function GET(req: Request) {
       
       if (!groupedData[rsmKey]) {
         groupedData[rsmKey] = { 
-          "WW-Provider": 0, 
-          "True Tech": 0, 
-          "เถ้าแก่เทค": 0
+          "WW-Provider": new Set<string>(), 
+          "True Tech": new Set<string>(), 
+          "เถ้าแก่เทค": new Set<string>() 
         };
       }
       
-      // Categorize Provider using exact string comparison - count rows with valid national_id
+      // Categorize Provider using exact string comparison - add unique national_id to Set
       if (provider === "WW-Provider") {
-        groupedData[rsmKey]["WW-Provider"]++;
-        providerCounts["WW-Provider"]++;
+        groupedData[rsmKey]["WW-Provider"].add(nationalId);
+        providerSets["WW-Provider"].add(nationalId);
       } else if (provider === "True Tech") {
-        groupedData[rsmKey]["True Tech"]++;
-        providerCounts["True Tech"]++;
+        groupedData[rsmKey]["True Tech"].add(nationalId);
+        providerSets["True Tech"].add(nationalId);
       } else if (provider === "เถ้าแก่เทค") {
-        groupedData[rsmKey]["เถ้าแก่เทค"]++;
-        providerCounts["เถ้าแก่เทค"]++;
+        groupedData[rsmKey]["เถ้าแก่เทค"].add(nationalId);
+        providerSets["เถ้าแก่เทค"].add(nationalId);
       }
       // Note: Other providers are not counted
     });
 
     console.log("🔍 All unique providers in data (with national_id):", allProvidersInData);
-    console.log("🔍 Provider counts (direct row counting with national_id):", providerCounts);
+    console.log("🔍 Provider counts (unique national_id using Set):", {
+      "WW-Provider": providerSets["WW-Provider"].size,
+      "True Tech": providerSets["True Tech"].size,
+      "เถ้าแก่เทค": providerSets["เถ้าแก่เทค"].size
+    });
     console.log("🎯 Provider exact counts (from DB):", providerExactCounts);
 
     // Convert to array format for Recharts
     const chartData = Object.entries(groupedData)
       .map(([rsm, counts]) => ({
         rsm,
-        "WW-Provider": counts["WW-Provider"],
-        "True Tech": counts["True Tech"],
-        "เถ้าแก่เทค": counts["เถ้าแก่เทค"],
-        total: counts["WW-Provider"] + counts["True Tech"] + counts["เถ้าแก่เทค"]
+        "WW-Provider": counts["WW-Provider"].size,
+        "True Tech": counts["True Tech"].size,
+        "เถ้าแก่เทค": counts["เถ้าแก่เทค"].size,
+        total: counts["WW-Provider"].size + counts["True Tech"].size + counts["เถ้าแก่เทค"].size
       }))
       .sort((a, b) => b.total - a.total);
 
-    // Calculate summary from grouped data (direct row counting)
-    const totalFromCounts = providerCounts["WW-Provider"] + providerCounts["True Tech"] + providerCounts["เถ้าแก่เทค"];
+    // Calculate summary from grouped data (unique national_id counting)
+    const totalFromCounts = providerSets["WW-Provider"].size + providerSets["True Tech"].size + providerSets["เถ้าแก่เทค"].size;
     
     const summary = {
       totalRsm: Object.keys(groupedData).length,
       totalTechnicians: totalCount || 0,
       providerBreakdown: providers.map((provider) => {
-        const count = (providerCounts as any)[provider] || 0;
+        const count = (providerSets as any)[provider]?.size || 0;
         console.log(`📊 Building summary for ${provider}: count = ${count}`);
         return {
           provider,
@@ -241,7 +245,11 @@ export async function GET(req: Request) {
           percentage: totalFromCounts > 0 ? Math.round((count / totalFromCounts) * 100) : 0
         };
       }),
-      providers: providerCounts
+      providers: {
+        "WW-Provider": providerSets["WW-Provider"].size,
+        "True Tech": providerSets["True Tech"].size,
+        "เถ้าแก่เทค": providerSets["เถ้าแก่เทค"].size
+      }
     };
 
     console.log("=" .repeat(60));
