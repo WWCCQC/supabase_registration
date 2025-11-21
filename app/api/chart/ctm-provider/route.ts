@@ -11,26 +11,41 @@ export async function GET(request: NextRequest) {
   try {
     const supabase = supabaseAdmin();
     
-    // Count each provider separately using exact matching (like KPI API)
+    // Count each provider using unique national_id (like RSM Provider API)
     const mainProviders = ["WW-Provider", "True Tech", "เถ้าแก่เทค"];
     const providerExactCounts: Record<string, number> = {};
     
-    // Count each provider with exact match
+    console.log("📊 CTM Provider: Counting with pagination...");
+    
+    // Count unique national_id for each provider using pagination
     for (const provider of mainProviders) {
-      const { count, error } = await supabase
-        .from("technicians")
-        .select("*", { count: "exact", head: true })
-        .eq("provider", provider);
+      const allIds = new Set<string>();
+      let from = 0;
+      const pageSize = 1000;
+      let hasMore = true;
       
-      if (error) {
-        console.error(`CTM Provider count error for ${provider}:`, error);
-        return NextResponse.json({ error: error.message }, { status: 500 });
+      while (hasMore) {
+        const { data: ids } = await supabase
+          .from("technicians")
+          .select("national_id")
+          .eq("provider", provider)
+          .not("national_id", "is", null)
+          .range(from, from + pageSize - 1);
+        
+        if (ids && ids.length > 0) {
+          ids.forEach(r => allIds.add(r.national_id));
+          from += pageSize;
+          hasMore = ids.length === pageSize;
+        } else {
+          hasMore = false;
+        }
       }
       
-      providerExactCounts[provider] = count || 0;
+      providerExactCounts[provider] = allIds.size;
+      console.log(`   ${provider}: ${allIds.size} (unique national_id)`);
     }
     
-    console.log("Provider exact counts:", providerExactCounts);
+    console.log("Provider exact counts (unique national_id):", providerExactCounts);
     
     // Get all technicians data with pagination to avoid 1000 record limit
     let allData: any[] = [];
