@@ -811,30 +811,47 @@ export default function TechBrowser() {
       setLoading(true);
       const XLSX = await import("xlsx");
       
-      // ✅ Fetch ALL data in single request with large pageSize
-      const params = new URLSearchParams({
-        page: "1",
-        pageSize: "5000", // API now supports up to 5000
-        sort: "tech_id", // Use tech_id for stable sorting (unique)
-        dir: "asc",
-      });
-      // NO FILTERS - export all technicians
-      console.log('📥 Starting Excel export...');
-      const res = await fetch(`/api/technicians?${params.toString()}`, {
-        cache: "no-store",
-      });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json?.error || "Export fetch failed");
+      // ✅ Fetch ALL data using pagination to avoid Supabase 1000 limit
+      console.log('📥 Starting Excel export with pagination...');
       
-      const all = json.rows || [];
-      console.log(`✅ Exported ${all.length} records (API total: ${json.total})`);
+      let allRecords: any[] = [];
+      let currentPage = 1;
+      const pageSize = 1000; // Safe batch size
+      let hasMore = true;
       
-      if (all.length !== json.total) {
-        console.warn(`⚠️ Mismatch: Exported ${all.length} but API says ${json.total} total`);
-        alert(`คำเตือน: Export ได้ ${all.length} records แต่มีทั้งหมด ${json.total} records`);
+      while (hasMore) {
+        const params = new URLSearchParams({
+          page: currentPage.toString(),
+          pageSize: pageSize.toString(),
+          sort: "tech_id",
+          dir: "asc",
+        });
+        
+        const res = await fetch(`/api/technicians?${params.toString()}`, {
+          cache: "no-store",
+        });
+        const json = await res.json();
+        
+        if (!res.ok) throw new Error(json?.error || "Export fetch failed");
+        
+        const rows = json.rows || [];
+        allRecords = [...allRecords, ...rows];
+        
+        console.log(`📦 Page ${currentPage}: ${rows.length} records (total: ${allRecords.length}/${json.total})`);
+        
+        hasMore = rows.length === pageSize && allRecords.length < json.total;
+        currentPage++;
+        
+        // Safety limit
+        if (currentPage > 10) {
+          console.warn('⚠️ Reached page limit');
+          break;
+        }
       }
       
-      const ws = XLSX.utils.json_to_sheet(all);
+      console.log(`✅ Exported ${allRecords.length} records total`);
+      
+      const ws = XLSX.utils.json_to_sheet(allRecords);
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, "technicians");
       const date = new Date().toISOString().slice(0, 10);
