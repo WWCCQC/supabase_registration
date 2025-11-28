@@ -1,6 +1,7 @@
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
-// Version: 3.1 - Fixed limit issue + force no cache
+export const fetchCache = 'force-no-store';
+// Version: 3.2 - Added fetchCache for complete cache prevention
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 
