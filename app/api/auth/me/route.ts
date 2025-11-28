@@ -8,9 +8,6 @@ import { cookies } from 'next/headers';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-in-production';
 
-// Force dynamic rendering for this route
-export const dynamic = 'force-dynamic';
-
 export async function GET() {
   try {
     const cookieStore = cookies();
