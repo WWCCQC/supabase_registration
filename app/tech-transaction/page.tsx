@@ -652,9 +652,15 @@ function TechTransactionContent() {
 
   const columns = useMemo(() => {
     if (filteredData.length === 0) return [];
-    return Object.keys(filteredData[0]).filter(key => 
-      !['id', 'NATIONAL ID', 'national_id', 'Year', 'Month', 'Week', 'Register_Ref', 'area', 'AREA', 'ctm', 'CTM', 'province', 'PROVINCE'].includes(key)
-    );
+    // Hide these columns from display
+    const hiddenColumns = [
+      'id', 'NATIONAL ID', 'national_id', 'Year', 'Month', 'Week',
+      'Register_Ref', 'register_ref', 'REGISTER_REF',
+      'area', 'Area', 'AREA',
+      'ctm', 'Ctm', 'CTM',
+      'province', 'Province', 'PROVINCE'
+    ];
+    return Object.keys(filteredData[0]).filter(key => !hiddenColumns.includes(key));
   }, [filteredData]);
 
   // Prepare chart data (use filtered allData based on filter selections)
