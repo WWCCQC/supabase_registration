@@ -94,35 +94,70 @@ function BlacklistContent() {
   // Fetch Blacklist data from transaction table for chart
   const fetchTransactionBlacklist = async () => {
     try {
-      const response = await fetch('/api/transaction?limit=10000');
-      if (response.ok) {
+      // Fetch ALL transaction data with pagination
+      let allTransactions: any[] = [];
+      let currentPage = 1;
+      const batchSize = 1000;
+      let hasMore = true;
+
+      while (hasMore) {
+        const response = await fetch(`/api/transaction?page=${currentPage}&limit=${batchSize}`);
+        if (!response.ok) break;
+        
         const result = await response.json();
         const transactions = result.data || [];
         
-        // Filter only Blacklist records and group by Month
-        const monthOrder = [
-          'January', 'February', 'March', 'April', 'May', 'June',
-          'July', 'August', 'September', 'October', 'November', 'December'
-        ];
-        
-        const monthCounts: { [key: string]: number } = {};
-        
-        transactions.forEach((item: any) => {
-          const register = String(item.Register || '');
-          if (register.toLowerCase().includes('blacklist')) {
-            const month = item.Month || 'Unknown';
-            monthCounts[month] = (monthCounts[month] || 0) + 1;
+        if (transactions.length === 0) {
+          hasMore = false;
+        } else {
+          allTransactions = [...allTransactions, ...transactions];
+          console.log(`📦 Fetched page ${currentPage}: ${transactions.length} records (total: ${allTransactions.length})`);
+          
+          if (transactions.length < batchSize) {
+            hasMore = false;
+          } else {
+            currentPage++;
           }
-        });
-        
-        // Convert to array and sort by month order
-        const chartData = Object.entries(monthCounts)
-          .map(([month, count]) => ({ month, count }))
-          .sort((a, b) => monthOrder.indexOf(a.month) - monthOrder.indexOf(b.month));
-        
-        console.log('📊 Blacklist by Month:', chartData);
-        setTransactionBlacklistData(chartData);
+        }
       }
+
+      console.log(`✅ Total transactions fetched: ${allTransactions.length}`);
+        
+      // All months in order
+      const monthOrder = [
+        'January', 'February', 'March', 'April', 'May', 'June',
+        'July', 'August', 'September', 'October', 'November', 'December'
+      ];
+      
+      // Initialize all months with 0
+      const monthCounts: { [key: string]: number } = {};
+      monthOrder.forEach(month => {
+        monthCounts[month] = 0;
+      });
+      
+      // Count Blacklist records by month
+      let blacklistTotal = 0;
+      allTransactions.forEach((item: any) => {
+        const register = String(item.Register || '');
+        if (register.toLowerCase().includes('blacklist')) {
+          const month = item.Month || 'Unknown';
+          if (monthCounts.hasOwnProperty(month)) {
+            monthCounts[month] = monthCounts[month] + 1;
+            blacklistTotal++;
+          }
+        }
+      });
+      
+      console.log(`🔴 Total Blacklist found: ${blacklistTotal}`);
+      console.log('📊 Blacklist by Month:', monthCounts);
+      
+      // Convert to array in month order (all 12 months)
+      const chartData = monthOrder.map(month => ({
+        month,
+        count: monthCounts[month]
+      }));
+      
+      setTransactionBlacklistData(chartData);
     } catch (err) {
       console.error('Error fetching transaction blacklist:', err);
     }
@@ -245,7 +280,7 @@ function BlacklistContent() {
               alignItems: 'center',
               gap: '8px'
             }}>
-              📊 จำนวน Blacklist รายเดือน (จากตาราง Transaction)
+              📊 จำนวนช่าง Blacklist รายเดือน
             </h2>
             <div style={{ height: '350px' }}>
               <ResponsiveContainer width="100%" height="100%">
@@ -270,7 +305,6 @@ function BlacklistContent() {
                     }}
                     formatter={(value: number) => [`${value} คน`, 'จำนวน Blacklist']}
                   />
-                  <Legend />
                   <Bar 
                     dataKey="count" 
                     name="Blacklist" 
