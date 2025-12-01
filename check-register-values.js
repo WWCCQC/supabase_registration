@@ -8,63 +8,78 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 async function checkRegisterValues() {
   console.log('Fetching all unique Register values from transaction table...\n');
   
-  // Fetch all Register values with pagination
-  let allData = [];
-  let from = 0;
-  const batchSize = 1000;
-  
-  while (true) {
-    const { data, error } = await supabase
-      .from('transaction')
-      .select('Register')
-      .range(from, from + batchSize - 1);
+  try {
+    // Fetch all Register values with pagination
+    let allData = [];
+    let from = 0;
+    const batchSize = 1000;
     
-    if (error) {
-      console.log('Error:', error);
-      return;
+    while (true) {
+      const { data, error } = await supabase
+        .from('transaction')
+        .select('Register')
+        .range(from, from + batchSize - 1);
+      
+      if (error) {
+        console.log('Error:', error);
+        return;
+      }
+      
+      if (!data || data.length === 0) break;
+      
+      allData = allData.concat(data);
+      console.log(`Fetched ${allData.length} records...`);
+      
+      if (data.length < batchSize) break;
+      from += batchSize;
     }
     
-    if (!data || data.length === 0) break;
+    // Get unique values
+    const unique = [...new Set(allData.map(d => d.Register))].sort();
     
-    allData = allData.concat(data);
-    console.log(`Fetched ${allData.length} records...`);
+    console.log('\n========================================');
+    console.log('All unique Register values:');
+    console.log('========================================\n');
     
-    if (data.length < batchSize) break;
-    from += batchSize;
+    unique.forEach((v, i) => {
+      console.log(`${i + 1}. "${v}"`);
+    });
+    
+    console.log('\n========================================');
+    console.log(`Total unique Register values: ${unique.length}`);
+    console.log(`Total records: ${allData.length}`);
+    console.log('========================================');
+    
+    // Count each value
+    console.log('\n========================================');
+    console.log('Count per Register value:');
+    console.log('========================================\n');
+    
+    const counts = {};
+    allData.forEach(d => {
+      const val = d.Register || '(null)';
+      counts[val] = (counts[val] || 0) + 1;
+    });
+    
+    // Sort by count desc
+    const sortedCounts = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+    sortedCounts.forEach(([val, count], i) => {
+      console.log(`${i + 1}. "${val}": ${count} records`);
+    });
+
+    // Check specifically for Blacklist
+    console.log('\n========================================');
+    console.log('Checking for Blacklist:');
+    console.log('========================================\n');
+    
+    const blacklistCount = allData.filter(d => 
+      d.Register && d.Register.toLowerCase().includes('blacklist')
+    ).length;
+    console.log(`Records containing "Blacklist": ${blacklistCount}`);
+
+  } catch (err) {
+    console.error('Error:', err);
   }
-  
-  // Get unique values
-  const unique = [...new Set(allData.map(d => d.Register))].sort();
-  
-  console.log('\n========================================');
-  console.log('All unique Register values:');
-  console.log('========================================\n');
-  
-  unique.forEach((v, i) => {
-    console.log(`${i + 1}. "${v}"`);
-  });
-  
-  console.log('\n========================================');
-  console.log(`Total unique Register values: ${unique.length}`);
-  console.log(`Total records: ${allData.length}`);
-  console.log('========================================');
-  
-  // Count each value
-  console.log('\n========================================');
-  console.log('Count per Register value:');
-  console.log('========================================\n');
-  
-  const counts = {};
-  allData.forEach(d => {
-    const val = d.Register || '(null)';
-    counts[val] = (counts[val] || 0) + 1;
-  });
-  
-  // Sort by count desc
-  const sortedCounts = Object.entries(counts).sort((a, b) => b[1] - a[1]);
-  sortedCounts.forEach(([val, count], i) => {
-    console.log(`${i + 1}. "${val}": ${count} records`);
-  });
 }
 
 checkRegisterValues();
