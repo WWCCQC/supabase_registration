@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import ProtectedRoute from '@/components/common/ProtectedRoute';
 import Navbar from '@/components/common/Navbar';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell, LabelList } from 'recharts';
 
 interface BlacklistItem {
   id: number;
@@ -27,6 +28,9 @@ function BlacklistContent() {
   const [searchId, setSearchId] = useState('');
   const [searchName, setSearchName] = useState('');
   const [searchSurename, setSearchSurename] = useState('');
+
+  // Transaction Blacklist data for chart
+  const [transactionBlacklistData, setTransactionBlacklistData] = useState<any[]>([]);
 
   useEffect(() => {
     fetchBlacklist();
@@ -86,6 +90,47 @@ function BlacklistContent() {
       console.error('Error fetching all data:', err);
     }
   };
+
+  // Fetch Blacklist data from transaction table for chart
+  const fetchTransactionBlacklist = async () => {
+    try {
+      const response = await fetch('/api/transaction?limit=10000');
+      if (response.ok) {
+        const result = await response.json();
+        const transactions = result.data || [];
+        
+        // Filter only Blacklist records and group by Month
+        const monthOrder = [
+          'January', 'February', 'March', 'April', 'May', 'June',
+          'July', 'August', 'September', 'October', 'November', 'December'
+        ];
+        
+        const monthCounts: { [key: string]: number } = {};
+        
+        transactions.forEach((item: any) => {
+          const register = String(item.Register || '');
+          if (register.toLowerCase().includes('blacklist')) {
+            const month = item.Month || 'Unknown';
+            monthCounts[month] = (monthCounts[month] || 0) + 1;
+          }
+        });
+        
+        // Convert to array and sort by month order
+        const chartData = Object.entries(monthCounts)
+          .map(([month, count]) => ({ month, count }))
+          .sort((a, b) => monthOrder.indexOf(a.month) - monthOrder.indexOf(b.month));
+        
+        console.log('📊 Blacklist by Month:', chartData);
+        setTransactionBlacklistData(chartData);
+      }
+    } catch (err) {
+      console.error('Error fetching transaction blacklist:', err);
+    }
+  };
+
+  useEffect(() => {
+    fetchTransactionBlacklist();
+  }, []);
 
   const filteredData = useMemo(() => {
     // Always filter from allData instead of current page data
@@ -181,6 +226,75 @@ function BlacklistContent() {
         }}>
           รายชื่อช่างที่ถูก Blacklist : update ทุกวันเวลา 8.00 น
         </h1>
+
+        {/* Blacklist Monthly Chart */}
+        {transactionBlacklistData.length > 0 && (
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '12px',
+            padding: '24px',
+            marginBottom: '24px',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+          }}>
+            <h2 style={{
+              fontSize: '18px',
+              fontWeight: '600',
+              color: '#1f2937',
+              marginBottom: '16px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}>
+              📊 จำนวน Blacklist รายเดือน (จากตาราง Transaction)
+            </h2>
+            <div style={{ height: '350px' }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={transactionBlacklistData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                  <XAxis 
+                    dataKey="month" 
+                    tick={{ fill: '#6b7280', fontSize: 12 }}
+                    axisLine={{ stroke: '#e5e7eb' }}
+                  />
+                  <YAxis 
+                    tick={{ fill: '#6b7280', fontSize: 12 }}
+                    axisLine={{ stroke: '#e5e7eb' }}
+                    allowDecimals={false}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: 'white',
+                      border: '1px solid #e5e7eb',
+                      borderRadius: '8px',
+                      boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+                    }}
+                    formatter={(value: number) => [`${value} คน`, 'จำนวน Blacklist']}
+                  />
+                  <Legend />
+                  <Bar 
+                    dataKey="count" 
+                    name="Blacklist" 
+                    fill="#ef4444"
+                    radius={[4, 4, 0, 0]}
+                  >
+                    <LabelList dataKey="count" position="top" fill="#374151" fontSize={12} />
+                    {transactionBlacklistData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={index % 2 === 0 ? '#ef4444' : '#dc2626'} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+            <div style={{
+              marginTop: '12px',
+              textAlign: 'center',
+              color: '#6b7280',
+              fontSize: '14px'
+            }}>
+              รวมทั้งหมด: <strong style={{ color: '#ef4444' }}>{transactionBlacklistData.reduce((sum, item) => sum + item.count, 0)}</strong> คน
+            </div>
+          </div>
+        )}
         
         {/* Advanced Search Filters */}
         <div style={{
