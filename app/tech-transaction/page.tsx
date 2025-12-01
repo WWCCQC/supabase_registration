@@ -206,11 +206,11 @@ function TechTransactionContent() {
         setDbNewTechs(newTechsCount || 0);
       }
 
-      // Count "ช่างลาออก" using exact count
+      // Count "ช่างลาออก" + "Blacklist" using OR condition
       const { count: resignedTechsCount, error: resignedError } = await supabase
         .from('transaction')
         .select('*', { count: 'exact', head: true })
-        .ilike('Register', '%ช่างลาออก%');
+        .or('Register.ilike.%ช่างลาออก%,Register.ilike.%Blacklist%');
 
       if (resignedError) {
         console.error('Error fetching resigned techs:', resignedError);
@@ -512,8 +512,8 @@ function TechTransactionContent() {
       console.log(`🎯 Card filter (ช่างใหม่): ${beforeFilter} → ${filtered.length}`);
     } else if (selectedCard === 'resigned') {
       const beforeFilter = filtered.length;
-      filtered = filtered.filter(item => item.Register?.includes('ช่างลาออก'));
-      console.log(`🎯 Card filter (ช่างลาออก): ${beforeFilter} → ${filtered.length}`);
+      filtered = filtered.filter(item => item.Register?.includes('ช่างลาออก') || item.Register?.toLowerCase().includes('blacklist'));
+      console.log(`🎯 Card filter (ช่างลาออก+Blacklist): ${beforeFilter} → ${filtered.length}`);
     }
 
     // Sort by Date (newest to oldest)
@@ -548,7 +548,7 @@ function TechTransactionContent() {
       
       resignedTechs = filteredAllData.filter(item => {
         const register = String(item.Register || '');
-        return register.includes('ช่างลาออก');
+        return register.includes('ช่างลาออก') || register.toLowerCase().includes('blacklist');
       }).length;
     } else {
       // No filters - use DB counts for accuracy
@@ -696,8 +696,8 @@ function TechTransactionContent() {
       chartSourceData = chartSourceData.filter(item => item.Register?.includes('างใหม่'));
       console.log('🔽 After card filter (ช่างใหม่):', chartSourceData.length);
     } else if (selectedCard === 'resigned') {
-      chartSourceData = chartSourceData.filter(item => item.Register?.includes('ช่างลาออก'));
-      console.log('🔽 After card filter (ช่างลาออก):', chartSourceData.length);
+      chartSourceData = chartSourceData.filter(item => item.Register?.includes('ช่างลาออก') || item.Register?.toLowerCase().includes('blacklist'));
+      console.log('🔽 After card filter (ช่างลาออก+Blacklist):', chartSourceData.length);
     }
 
     // Group by Date and count Register types
@@ -714,7 +714,7 @@ function TechTransactionContent() {
       // Count based on Register value
       if (register.includes('างใหม่')) {
         dateGroups[date].new += 1;
-      } else if (register.includes('ช่างลาออก')) {
+      } else if (register.includes('ช่างลาออก') || register.toLowerCase().includes('blacklist')) {
         dateGroups[date].resigned += 1;
       }
     });
@@ -765,7 +765,7 @@ function TechTransactionContent() {
     if (selectedCard === 'new') {
       chartSourceData = chartSourceData.filter(item => item.Register?.includes('างใหม่'));
     } else if (selectedCard === 'resigned') {
-      chartSourceData = chartSourceData.filter(item => item.Register?.includes('ช่างลาออก'));
+      chartSourceData = chartSourceData.filter(item => item.Register?.includes('ช่างลาออก') || item.Register?.toLowerCase().includes('blacklist'));
     }
 
     // Group by Month
@@ -781,7 +781,7 @@ function TechTransactionContent() {
 
       if (register.includes('างใหม่')) {
         monthGroups[month].new += 1;
-      } else if (register.includes('ช่างลาออก')) {
+      } else if (register.includes('ช่างลาออก') || register.toLowerCase().includes('blacklist')) {
         monthGroups[month].resigned += 1;
       }
     });
@@ -831,7 +831,7 @@ function TechTransactionContent() {
     if (selectedCard === 'new') {
       chartSourceData = chartSourceData.filter(item => item.Register?.includes('างใหม่'));
     } else if (selectedCard === 'resigned') {
-      chartSourceData = chartSourceData.filter(item => item.Register?.includes('ช่างลาออก'));
+      chartSourceData = chartSourceData.filter(item => item.Register?.includes('ช่างลาออก') || item.Register?.toLowerCase().includes('blacklist'));
     }
 
     // Group by RSM
@@ -847,7 +847,7 @@ function TechTransactionContent() {
 
       if (register.includes('างใหม่')) {
         rsmGroups[rsm].new += 1;
-      } else if (register.includes('ช่างลาออก')) {
+      } else if (register.includes('ช่างลาออก') || register.toLowerCase().includes('blacklist')) {
         rsmGroups[rsm].resigned += 1;
       }
     });
@@ -946,7 +946,7 @@ function TechTransactionContent() {
       const depot = item.depot_name || 'N/A';
       const register = item.Register || '';
 
-      if (register.includes('ช่างลาออก')) {
+      if (register.includes('ช่างลาออก') || register.toLowerCase().includes('blacklist')) {
         depotCounts[depot] = (depotCounts[depot] || 0) + 1;
       }
     });
@@ -987,7 +987,7 @@ function TechTransactionContent() {
     if (selectedCard === 'new') {
       sourceData = sourceData.filter(item => item.Register?.includes('างใหม่') || (item.Register?.includes('ช่า') && item.Register?.includes('ใหม่')));
     } else if (selectedCard === 'resigned') {
-      sourceData = sourceData.filter(item => item.Register?.includes('ช่างลาออก'));
+      sourceData = sourceData.filter(item => item.Register?.includes('ช่างลาออก') || item.Register?.toLowerCase().includes('blacklist'));
     }
 
     // Create nested structure: RSM -> Provider -> WorkType -> {new, resigned}
@@ -1008,7 +1008,7 @@ function TechTransactionContent() {
       // Check for both normal and encoding-issue patterns for "ช่างใหม่"
       if (register.includes('างใหม่') || (register.includes('ช่า') && register.includes('ใหม่'))) {
         pivotData[rsm][provider][workType].new += 1;
-      } else if (register.includes('ช่างลาออก')) {
+      } else if (register.includes('ช่างลาออก') || register.toLowerCase().includes('blacklist')) {
         pivotData[rsm][provider][workType].resigned += 1;
       }
     });
@@ -2340,8 +2340,9 @@ function TechTransactionContent() {
           
           const providerResignedData = dataForPieChart
             .filter((item: any) => {
-              // กรองเฉพาะ Register = "ช่างลาออก"
-              if (item.Register !== 'ช่างลาออก') return false;
+              // กรองเฉพาะ Register = "ช่างลาออก" หรือ "Blacklist"
+              const register = String(item.Register || '');
+              if (!register.includes('ช่างลาออก') && !register.toLowerCase().includes('blacklist')) return false;
               
               // กรองเฉพาะเดือนถึง September
               if (item.Month && !monthsToInclude.includes(item.Month)) return false;
