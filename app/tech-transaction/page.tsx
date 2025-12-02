@@ -2302,7 +2302,7 @@ function TechTransactionContent() {
 
         {/* Monthly Technician Comparison Chart (Total vs Resigned) + Provider Pie Chart */}
         {(() => {
-          // ข้อมูลจำนวนช่างทั้งหมดแต่ละเดือน (hard-coded สำหรับ Jan-Oct, real-time สำหรับ Nov)
+          // ข้อมูลจำนวนช่างทั้งหมดแต่ละเดือน (hard-coded สำหรับ Jan-Nov, real-time สำหรับ Dec)
           const monthlyTechnicianData = [
             { month: 'January', total: 2632 },
             { month: 'February', total: 2660 },
@@ -2314,7 +2314,8 @@ function TechTransactionContent() {
             { month: 'August', total: 2971 },
             { month: 'September', total: 2932 },
             { month: 'October', total: 2938 },
-            { month: 'November', total: currentTechnicianCount } // ใช้จำนวนจริงจากตาราง technicians
+            { month: 'November', total: 2963 },
+            { month: 'December', total: currentTechnicianCount } // ใช้จำนวนจริงจากตาราง technicians
           ];
 
           // คำนวณจำนวนช่างลาออกจาก monthlyChartData
@@ -2336,8 +2337,8 @@ function TechTransactionContent() {
             };
           });
 
-          // คำนวณข้อมูล Pie Chart สำหรับช่างลาออกแยกตาม Provider (ถึง November)
-          const monthsToInclude = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November'];
+          // คำนวณข้อมูล Pie Chart สำหรับช่างลาออกแยกตาม Provider (ถึง December)
+          const monthsToInclude = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
           
           // ใช้ filteredAllData เพื่อแสดงข้อมูลทั้งหมดที่ผ่าน filter (ไม่ใช่แค่หน้าปัจจุบัน)
           const dataForPieChart = (selectedYears.length > 0 || selectedMonths.length > 0 || selectedWeeks.length > 0 || selectedDates.length > 0 || searchTerm) 
