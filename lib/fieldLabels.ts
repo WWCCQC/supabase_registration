@@ -97,7 +97,7 @@ export const FIELD_LABELS: Record<string, string> = {
   __imported_at: "__imported_at",
   id: "id",
   uuid: "uuid",
-  card_expire_date: "card_expire_date",
+  card_expire_date: "บัตรช่างหมดอายุ",
 };
 
 /**

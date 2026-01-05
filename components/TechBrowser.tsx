@@ -140,6 +140,7 @@ function calculateWorkExperience(cardRegisterDate: string): string {
 const COLS = [
   "national_id",
   "tech_id",
+  "card_expire_date",
   "full_name",
   "doc_tech_card_url",
   "workgroup_status",
@@ -152,7 +153,6 @@ const COLS = [
   "depot_name",
   "province",
   "power_authority",
-  "card_expire_date",
 ] as const;
 
 /** ความกว้างต่อคอลัมน์ (px) */
