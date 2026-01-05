@@ -172,6 +172,7 @@ export async function GET(req: Request) {
       depot_name:         r.depot_name         ?? null,
       province:           r.province           ?? r.ctm_province ?? null,
       power_authority:    r.power_authority    ?? null,
+      card_expire_date:   r.card_expire_date   ?? null,
       // Service columns
       svc_install:        r.svc_install        ?? null,
       svc_repair:         r.svc_repair         ?? null,
