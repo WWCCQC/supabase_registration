@@ -853,7 +853,25 @@ export default function TechBrowser() {
       
       console.log(`✅ Exported ${allRecords.length} records total`);
       
-      const ws = XLSX.utils.json_to_sheet(allRecords);
+      // ✅ Map ข้อมูลให้ตรงกับคอลัมน์ที่แสดงในตารางหน้าเว็บ (ใช้ชื่อภาษาไทย)
+      const exportData = allRecords.map((r) => ({
+        [getFieldLabel("national_id")]: r.national_id ?? "",
+        [getFieldLabel("tech_id")]: r.tech_id ?? "",
+        [getFieldLabel("card_expire_date")]: r.card_expire_date ?? "",
+        [getFieldLabel("full_name")]: r.full_name ?? "",
+        [getFieldLabel("workgroup_status")]: r.workgroup_status ?? "",
+        [getFieldLabel("work_type")]: r.work_type ?? "",
+        [getFieldLabel("provider")]: r.provider ?? "",
+        [getFieldLabel("area")]: r.area ?? "",
+        [getFieldLabel("rsm")]: r.rsm ?? "",
+        [getFieldLabel("ctm")]: r.ctm ?? "",
+        [getFieldLabel("depot_code")]: r.depot_code ?? "",
+        [getFieldLabel("depot_name")]: r.depot_name ?? "",
+        [getFieldLabel("province")]: r.province ?? "",
+        [getFieldLabel("power_authority")]: r.power_authority ?? "",
+      }));
+      
+      const ws = XLSX.utils.json_to_sheet(exportData);
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, "technicians");
       const date = new Date().toISOString().slice(0, 10);
