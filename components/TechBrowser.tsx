@@ -152,6 +152,7 @@ const COLS = [
   "depot_name",
   "province",
   "power_authority",
+  "card_expire_date",
 ] as const;
 
 /** ความกว้างต่อคอลัมน์ (px) */
@@ -170,6 +171,7 @@ const WIDTHS: Partial<Record<(typeof COLS)[number], number>> = {
   depot_name: 200,
   province: 160,
   power_authority: 140,
+  card_expire_date: 130,
 };
 
 /* ---------- Component ---------- */
@@ -1892,7 +1894,7 @@ export default function TechBrowser() {
           gridTemplateColumns: "repeat(5, minmax(0, 1fr))",
           gap: 8,
           marginBottom: 12,
-          backgroundColor: "#7F7F7F",
+          backgroundColor: "#1e3a5f",
           padding: "12px",
           borderRadius: "8px"
         }}
@@ -1944,13 +1946,49 @@ export default function TechBrowser() {
           marginBottom: 12,
         }}
       >
-        <button onClick={() => fetchData(1)} disabled={loading}>
+        <button 
+          onClick={() => fetchData(1)} 
+          disabled={loading}
+          style={{
+            backgroundColor: "#1e3a5f",
+            color: "white",
+            border: "none",
+            padding: "8px 16px",
+            borderRadius: "4px",
+            cursor: loading ? "not-allowed" : "pointer",
+            opacity: loading ? 0.6 : 1
+          }}
+        >
           ค้นหา
         </button>
-        <button onClick={clearFilters} disabled={loading}>
+        <button 
+          onClick={clearFilters} 
+          disabled={loading}
+          style={{
+            backgroundColor: "#1e3a5f",
+            color: "white",
+            border: "none",
+            padding: "8px 16px",
+            borderRadius: "4px",
+            cursor: loading ? "not-allowed" : "pointer",
+            opacity: loading ? 0.6 : 1
+          }}
+        >
           ล้างตัวกรอง
         </button>
-        <button onClick={exportExcel} disabled={loading}>
+        <button 
+          onClick={exportExcel} 
+          disabled={loading}
+          style={{
+            backgroundColor: "#1e3a5f",
+            color: "white",
+            border: "none",
+            padding: "8px 16px",
+            borderRadius: "4px",
+            cursor: loading ? "not-allowed" : "pointer",
+            opacity: loading ? 0.6 : 1
+          }}
+        >
           Export Excel
         </button>
         <div style={{ marginLeft: "auto", fontSize: 12, color: "#555" }}>
