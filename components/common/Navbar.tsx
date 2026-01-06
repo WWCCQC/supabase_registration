@@ -126,7 +126,7 @@ const Navbar = () => {
         {/* อบรมช่างใหม่ - Admin เท่านั้น */}
         {isAdmin() && (
           <a 
-            href="https://wwccqc.github.io/SLATrainingDashboard/"
+            href="https://sla-training-dashboard.vercel.app/"
             target="_blank"
             rel="noopener noreferrer"
             style={navItemStyle(false)}
