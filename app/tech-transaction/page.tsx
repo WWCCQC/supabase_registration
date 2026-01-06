@@ -774,21 +774,23 @@ function TechTransactionContent() {
       chartSourceData = chartSourceData.filter(item => item.Register?.includes('ช่างลาออก') || item.Register?.toLowerCase().includes('blacklist'));
     }
 
-    // Group by Month
-    const monthGroups: { [key: string]: { new: number; resigned: number } } = {};
+    // Group by Month and Year
+    const monthGroups: { [key: string]: { new: number; resigned: number; year: string } } = {};
 
     chartSourceData.forEach(item => {
       const month = item.Month || '';
+      const year = String(item.Year || '');
+      const monthYearKey = `${month} ${year}`;
       const register = item.Register || '';
 
-      if (!monthGroups[month]) {
-        monthGroups[month] = { new: 0, resigned: 0 };
+      if (!monthGroups[monthYearKey]) {
+        monthGroups[monthYearKey] = { new: 0, resigned: 0, year };
       }
 
       if (register.includes('างใหม่')) {
-        monthGroups[month].new += 1;
+        monthGroups[monthYearKey].new += 1;
       } else if (register.includes('ช่างลาออก') || register.toLowerCase().includes('blacklist')) {
-        monthGroups[month].resigned += 1;
+        monthGroups[monthYearKey].resigned += 1;
       }
     });
 
@@ -798,14 +800,27 @@ function TechTransactionContent() {
       'July', 'August', 'September', 'October', 'November', 'December'
     ];
 
-    // Convert to array and sort by month order
+    // Convert to array and sort by year then month order
     const chartArray = Object.entries(monthGroups)
-      .map(([month, counts]) => ({
-        month,
-        'ช่างลาออก': counts.resigned,
-        'ช่างใหม่': counts.new
-      }))
-      .sort((a, b) => monthOrder.indexOf(a.month) - monthOrder.indexOf(b.month));
+      .map(([monthYear, counts]) => {
+        const parts = monthYear.split(' ');
+        const month = parts[0];
+        const year = parts[1] || '';
+        return {
+          month: monthYear,
+          monthOnly: month,
+          year,
+          'ช่างลาออก': counts.resigned,
+          'ช่างใหม่': counts.new
+        };
+      })
+      .sort((a, b) => {
+        // Sort by year first, then by month
+        if (a.year !== b.year) {
+          return Number(a.year) - Number(b.year);
+        }
+        return monthOrder.indexOf(a.monthOnly) - monthOrder.indexOf(b.monthOnly);
+      });
 
     console.log('📊 Monthly chart data prepared:', chartArray.length, 'months');
     return chartArray;
@@ -2171,7 +2186,7 @@ function TechTransactionContent() {
                 <ResponsiveContainer width="100%" height={500}>
                   <ComposedChart
                     data={monthlyChartData.map(item => ({
-                      name: item.month.substring(0, 3),
+                      name: `${item.monthOnly?.substring(0, 3) || item.month.substring(0, 3)} ${item.year?.slice(-2) || ''}`.trim(),
                       month: item.month,
                       newTech: item['ช่างใหม่'],
                       resignation: item['ช่างลาออก'],
