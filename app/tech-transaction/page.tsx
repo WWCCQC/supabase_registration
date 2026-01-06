@@ -2302,20 +2302,21 @@ function TechTransactionContent() {
 
         {/* Monthly Technician Comparison Chart (Total vs Resigned) + Provider Pie Chart */}
         {(() => {
-          // ข้อมูลจำนวนช่างทั้งหมดแต่ละเดือน (hard-coded สำหรับ Jan-Nov, real-time สำหรับ Dec)
+          // ข้อมูลจำนวนช่างทั้งหมดแต่ละเดือน (hard-coded สำหรับ 2025, real-time สำหรับ Jan 2026)
           const monthlyTechnicianData = [
-            { month: 'January', total: 2632 },
-            { month: 'February', total: 2660 },
-            { month: 'March', total: 2704 },
-            { month: 'April', total: 2679 },
-            { month: 'May', total: 3154 },
-            { month: 'June', total: 3147 },
-            { month: 'July', total: 2987 },
-            { month: 'August', total: 2971 },
-            { month: 'September', total: 2932 },
-            { month: 'October', total: 2938 },
-            { month: 'November', total: 2963 },
-            { month: 'December', total: currentTechnicianCount } // ใช้จำนวนจริงจากตาราง technicians
+            { month: 'January 2025', total: 2632 },
+            { month: 'February 2025', total: 2660 },
+            { month: 'March 2025', total: 2704 },
+            { month: 'April 2025', total: 2679 },
+            { month: 'May 2025', total: 3154 },
+            { month: 'June 2025', total: 3147 },
+            { month: 'July 2025', total: 2987 },
+            { month: 'August 2025', total: 2971 },
+            { month: 'September 2025', total: 2932 },
+            { month: 'October 2025', total: 2938 },
+            { month: 'November 2025', total: 2963 },
+            { month: 'December 2025', total: 2896 },
+            { month: 'January 2026', total: currentTechnicianCount } // ใช้จำนวนจริงจากตาราง technicians
           ];
 
           // คำนวณจำนวนช่างลาออกจาก monthlyChartData
