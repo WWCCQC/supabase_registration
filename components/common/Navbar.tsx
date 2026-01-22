@@ -111,7 +111,7 @@ const Navbar = () => {
         {/* ลงทะเบียนอบรมช่าง - Admin เท่านั้น */}
         {isAdmin() && (
           <a 
-            href="https://script.google.com/macros/s/AKfycbwstFfRSlgVSGa1PLJmZbpSSX91J0kkADXmExoaC-NTMyamhvqTg2flsNDAmmy0jfKIKg/exec"
+            href="https://trainingtech.vercel.app/"
             target="_blank"
             rel="noopener noreferrer"
             style={navItemStyle(false)}
