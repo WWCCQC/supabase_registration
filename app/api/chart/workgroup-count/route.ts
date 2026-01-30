@@ -33,7 +33,7 @@ export async function GET(req: Request) {
     let countQuery = supabase
       .from("technicians")
       .select("*", { count: "exact", head: true })
-      .not("rsm", "is", null)
+      .not("RBM", "is", null)
       .not("provider", "is", null)
       .not("work_type", "is", null)
       .eq("workgroup_status", "หัวหน้า");
@@ -45,20 +45,20 @@ export async function GET(req: Request) {
     // WHERE rsm IS NOT NULL AND provider IS NOT NULL AND work_type IS NOT NULL
     let query = supabase
       .from("technicians")
-      .select("rsm, provider, work_type, workgroup_status, national_id, tech_id")
-      .not("rsm", "is", null)
+      .select("RBM, provider, work_type, workgroup_status, national_id, tech_id")
+      .not("RBM", "is", null)
       .not("provider", "is", null)
       .not("work_type", "is", null);
 
-    console.log('📊 Querying Supabase with WHERE conditions: rsm, provider, work_type NOT NULL...');
+    console.log('📊 Querying Supabase with WHERE conditions: RBM, provider, work_type NOT NULL...');
 
     // Apply filters to Supabase query
     if (f_national_id) query = query.ilike("national_id", `%${f_national_id}%`);
     if (f_tech_id) query = query.ilike("tech_id", `%${f_tech_id}%`);
-    if (f_rsm) query = query.ilike("rsm", `%${f_rsm}%`);
+    if (f_rsm) query = query.ilike("RBM", `%${f_rsm}%`);
     if (f_ctm) query = query.ilike("ctm", `%${f_ctm}%`);
     if (f_depot_code) query = query.ilike("depot_code", `%${f_depot_code}%`);
-    if (selectedRsm) query = query.ilike("rsm", `%${selectedRsm}%`);
+    if (selectedRsm) query = query.ilike("RBM", `%${selectedRsm}%`);
     if (selectedCtm) query = query.ilike("ctm", `%${selectedCtm}%`);
     
     // Apply training type filter
@@ -80,7 +80,7 @@ export async function GET(req: Request) {
       const cols = [
         "national_id", "tech_id", "full_name", "gender", "age", "degree",
         "phone", "email", "workgroup_status", "work_type", "provider", 
-        "area", "rsm", "ctm", "depot_code", "depot_name", "province"
+        "area", "RBM", "ctm", "depot_code", "depot_name", "province"
       ];
       const pattern = `%${q}%`;
       const ors = cols.map(c => `${c}.ilike.${pattern}`).join(",");
@@ -137,7 +137,7 @@ export async function GET(req: Request) {
     const result: Record<string, Record<string, number>> = {};
 
     headsOnly.forEach((row: any) => {
-      const rsm = row.rsm || "Unknown";
+      const rsm = row.RBM || "Unknown";
       const provider = row.provider || "Unknown";
       const workType = row.work_type || "Unknown";
 
