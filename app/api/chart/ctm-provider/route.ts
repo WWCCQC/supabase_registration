@@ -61,7 +61,7 @@ export async function GET(request: NextRequest) {
       const to = from + pageSize - 1;
       const { data: pageData, error: pageError } = await supabase
         .from("technicians")
-        .select("ctm, provider, national_id")  // เพิ่ม national_id
+        .select("CBM, provider, national_id")  // เพิ่ม national_id
         .range(from, to);
         
       if (pageError) {
@@ -85,7 +85,7 @@ export async function GET(request: NextRequest) {
     const providers = new Set<string>();
 
     (techs as any[]).forEach((tech) => {
-      const originalCtm = String(tech.ctm || "").trim();
+      const originalCtm = String(tech.CBM || "").trim();
       const provider = String(tech.provider || "").trim();
       const nationalId = tech.national_id;
 

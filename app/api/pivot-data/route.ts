@@ -17,7 +17,7 @@ function applyFilters(query: any, params: URLSearchParams) {
   const filters: Record<string, string> = {
     provider: get('provider'),
     work_type: get('work_type'),
-    rsm: get('rsm'),
+    RBM: get('rsm'),
   };
 
   for (const [k, v] of Object.entries(filters)) {
@@ -56,11 +56,11 @@ export async function GET(request: Request) {
     while (hasMore) {
       let query = supabase
         .from('technicians')
-        .select('rsm, provider, work_type, national_id')
-        .not('rsm', 'is', null)
+        .select('RBM, provider, work_type, national_id')
+        .not('RBM', 'is', null)
         .not('provider', 'is', null)
         .not('work_type', 'is', null)
-        .neq('rsm', '')
+        .neq('RBM', '')
         .neq('provider', '')
         .neq('work_type', '');
 
@@ -99,7 +99,7 @@ export async function GET(request: Request) {
     const pivotMap = new Map<string, number>();
     
     allData.forEach(row => {
-      const key = `${row.rsm}|${row.provider}|${row.work_type}`;
+      const key = `${row.RBM}|${row.provider}|${row.work_type}`;
       pivotMap.set(key, (pivotMap.get(key) || 0) + 1);
     });
 

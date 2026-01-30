@@ -45,8 +45,8 @@ export async function GET(req: Request) {
       console.log(`   ${provider}: ${providerTotals[provider]} (paginated COUNT DISTINCT)`);
     }
     
-    // Get RSM distribution using pagination
-    console.log("📊 Grouping by RSM with pagination...");
+    // Get RBM distribution using pagination
+    console.log("📊 Grouping by RBM with pagination...");
     const allRsmData: any[] = [];
     let from = 0;
     const pageSize = 1000;
@@ -55,7 +55,7 @@ export async function GET(req: Request) {
     while (hasMore) {
       const { data: rsmDataRaw } = await supabase
         .from("technicians")
-        .select("rsm, provider, national_id")
+        .select("RBM, provider, national_id")
         .not("national_id", "is", null)
         .in("provider", providers)
         .range(from, from + pageSize - 1);
@@ -76,7 +76,7 @@ export async function GET(req: Request) {
     const tempSets: Record<string, Record<string, Set<string>>> = {};
     
     allRsmData.forEach((row: any) => {
-      const rsm = row.rsm || "No RSM";
+      const rsm = row.RBM || "No RBM";
       const provider = row.provider;
       const nationalId = row.national_id;
       

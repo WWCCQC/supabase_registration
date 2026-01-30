@@ -1102,6 +1102,41 @@ function TechTransactionContent() {
           Tech-Transaction (2025) : update ทุกวันเวลา 8.00 น.
         </h1>
 
+        {/* Marquee Text */}
+        <div style={{
+          overflow: 'hidden',
+          backgroundColor: 'linear-gradient(90deg, #1e3a5f 0%, #2d5a87 50%, #1e3a5f 100%)',
+          background: 'linear-gradient(90deg, #1e3a5f 0%, #2d5a87 50%, #1e3a5f 100%)',
+          borderRadius: '8px',
+          padding: '12px 0',
+          marginBottom: '20px',
+          boxShadow: '0 2px 8px rgba(30, 58, 95, 0.3)'
+        }}>
+          <div style={{
+            display: 'inline-block',
+            whiteSpace: 'nowrap',
+            animation: 'marquee 20s linear infinite',
+          }}>
+            <span style={{
+              fontSize: '18px',
+              fontWeight: '600',
+              color: '#ffffff',
+              letterSpacing: '1px',
+              textShadow: '0 1px 2px rgba(0,0,0,0.3)'
+            }}>
+              🏢 Prime Business &nbsp;&nbsp;/&nbsp;&nbsp; 🤝 Customer Connected Business &nbsp;&nbsp;/&nbsp;&nbsp; 🔧 Installation & Maintenance &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+              🏢 Prime Business &nbsp;&nbsp;/&nbsp;&nbsp; 🤝 Customer Connected Business &nbsp;&nbsp;/&nbsp;&nbsp; 🔧 Installation & Maintenance &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+            </span>
+          </div>
+        </div>
+
+        <style>{`
+          @keyframes marquee {
+            0% { transform: translateX(0%); }
+            100% { transform: translateX(-50%); }
+          }
+        `}</style>
+
         {/* Statistics Cards */}
         <div style={{
           display: 'grid',

@@ -25,7 +25,7 @@ export async function GET(request: Request) {
     while (hasMore) {
       let query = supabase
         .from("technicians")
-        .select("rsm, provider, power_authority, national_id")
+        .select("RBM, provider, power_authority, national_id")
         .order("tech_id", { ascending: true })
         .range(from, from + pageSize - 1);
       
@@ -82,7 +82,7 @@ export async function GET(request: Request) {
     const allNoNationalIds = new Set<string>();
     
     allData.forEach((row: any) => {
-      const rsm = String(row.rsm || "").trim();
+      const rsm = String(row.RBM || "").trim();
       const powerAuthority = String(row.power_authority || "").trim();
       const nationalId = String(row.national_id || "").trim();
       
