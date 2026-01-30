@@ -263,7 +263,7 @@ export default function PivotTable({ data, workgroupData = {}, workgroupGrandTot
       }}>
         <thead>
           <tr>
-            <th style={headerStyle} rowSpan={2}>RSM</th>
+            <th style={headerStyle} rowSpan={2}>RBM</th>
             <th style={headerStyle} rowSpan={2}>Grand Total</th>
             {/* WW-Provider - Total first, then data */}
             <th style={headerStyle} rowSpan={2}>WW-Provider Total</th>
