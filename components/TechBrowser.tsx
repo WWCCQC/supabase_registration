@@ -1601,7 +1601,7 @@ export default function TechBrowser() {
               fontWeight: 600,
               color: "#1f2937"
             }}>
-              🏪 RSM Provider Distribution
+              🏪 RBM Provider Distribution
             </h3>
             <RsmProviderChart />
           </div>
@@ -1621,7 +1621,7 @@ export default function TechBrowser() {
               fontWeight: 600,
               color: "#1f2937"
             }}>
-              🏪 CTM Provider Distribution
+              🏪 CBM Provider Distribution
             </h3>
             <CtmProviderChart 
               selectedCtm={selectedCtm}
@@ -1652,7 +1652,7 @@ export default function TechBrowser() {
               fontWeight: 600,
               color: "#1f2937"
             }}>
-              ⚡ RSM Power Authority Status
+              ⚡ RBM Power Authority Status
             </h3>
 
           {chartLoading ? (
