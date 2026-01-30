@@ -1928,15 +1928,15 @@ export default function TechBrowser() {
           onChange={(e) => setTechId(e.target.value)}
         />
 
-        {/* RSM → select */}
+        {/* RBM → select */}
         <select
           value={rsm}
           onChange={(e) => setRsm(e.target.value)}
           disabled={rsmLoading}
-          title="เลือก RSM"
+          title="เลือก RBM"
           style={{ height: 28 }}
         >
-          <option value="">{rsmLoading ? "กำลังโหลด..." : "— RSM ทั้งหมด —"}</option>
+          <option value="">{rsmLoading ? "กำลังโหลด..." : "— RBM ทั้งหมด —"}</option>
           {rsmOptions.map((opt) => (
             <option key={opt} value={opt}>
               {opt}
