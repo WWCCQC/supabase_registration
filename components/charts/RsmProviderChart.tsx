@@ -13,7 +13,7 @@ import {
 } from "recharts";
 
 type ProviderChartData = {
-  rsm: string;
+  RBM: string;
   "WW-Provider": number;
   "True Tech": number;
   "เถ้าแก่เทค": number;
@@ -21,7 +21,7 @@ type ProviderChartData = {
 };
 
 type ProviderSummary = {
-  totalRsm: number;
+  totalRBM: number;
   totalTechnicians: number;
   providerBreakdown?: Array<{
     provider: string;
@@ -50,11 +50,11 @@ export default function RsmProviderChart() {
       setLoading(true);
       setError(null);
       
-      console.log('🔄 RSM Provider Chart: Fetching data from /api/chart/rsm-provider');
+      console.log('🔄 RBM Provider Chart: Fetching data from /api/chart/rsm-provider');
       const res = await fetch("/api/chart/rsm-provider", { cache: 'no-store' });
       const json = await res.json();
       
-      console.log('📦 RSM Provider Chart: API Response received');
+      console.log('📦 RBM Provider Chart: API Response received');
       console.log('📊 Summary data:', json.summary);
       console.log('🎯 True Tech count from API:', json.summary?.providerBreakdown?.find((p: any) => p.provider === "True Tech")?.count);
       
@@ -63,7 +63,7 @@ export default function RsmProviderChart() {
       setChartData(json.chartData || []);
       setSummary(json.summary || null);
       
-      console.log('✅ RSM Provider Chart: State updated');
+      console.log('✅ RBM Provider Chart: State updated');
     } catch (e: any) {
       console.error("Provider Chart fetch error:", e);
       setError(e.message);
@@ -141,7 +141,7 @@ export default function RsmProviderChart() {
 
   // Log legend data before rendering
   const trueTechCount = summary?.providerBreakdown?.find((p: any) => p.provider === "True Tech")?.count;
-  console.log('🎨 RSM Provider Chart: Rendering legend with True Tech count:', trueTechCount);
+  console.log('🎨 RBM Provider Chart: Rendering legend with True Tech count:', trueTechCount);
   console.log('📋 Full providerBreakdown:', summary?.providerBreakdown);
 
   return (
@@ -197,7 +197,7 @@ export default function RsmProviderChart() {
         >
           <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
           <XAxis 
-            dataKey="rsm" 
+            dataKey="RBM" 
             angle={-45}
             textAnchor="end"
             height={80}

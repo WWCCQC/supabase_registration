@@ -10,12 +10,12 @@ export async function GET() {
   try {
     const supabase = supabaseAdmin();
 
-    // ดึงเฉพาะคอลัมน์ rsm ทั้งหมด แล้วมาคัดกรองซ้ำฝั่ง server
+    // ดึงเฉพาะคอลัมน์ RBM ทั้งหมด แล้วมาคัดกรองซ้ำฝั่ง server
     const { data, error } = await supabase
       .from("technicians")
-      .select("rsm")
-      .not("rsm", "is", null)
-      .neq("rsm", "")
+      .select("RBM")
+      .not("RBM", "is", null)
+      .neq("RBM", "")
       .limit(10000); // กันเหนียว (พอสำหรับลิสต์ค่า)
 
     if (error) throw error;
@@ -23,7 +23,7 @@ export async function GET() {
     const options = Array.from(
       new Set(
         (data || [])
-          .map((x: any) => String(x.rsm || "").trim())
+          .map((x: any) => String(x.RBM || "").trim())
           .filter(Boolean)
       )
     ).sort((a, b) => a.localeCompare(b));

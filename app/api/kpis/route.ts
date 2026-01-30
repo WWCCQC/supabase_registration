@@ -51,8 +51,8 @@ function applyFilters(query: any, params: URLSearchParams) {
   const filters: Record<string, string> = {
     provider: get('provider'),
     area: get('area'),
-    rsm: get('rsm'),
-    ctm: get('ctm'),
+    RBM: get('rsm'),
+    CBM: get('ctm'),
     depot_code: get('depot_code'),
     work_type: get('work_type'),
     workgroup_status: get('workgroup_status'),
@@ -73,8 +73,8 @@ function applyFilters(query: any, params: URLSearchParams) {
 
   if (fNat) query = (query as any).ilike('national_id', `%${fNat}%`);
   if (fTech) query = (query as any).ilike('tech_id', `%${fTech}%`);
-  if (fRsm) query = (query as any).ilike('rsm', `%${fRsm}%`);
-  if (fCtm) query = (query as any).ilike('ctm', `%${fCtm}%`);
+  if (fRsm) query = (query as any).ilike('RBM', `%${fRsm}%`);
+  if (fCtm) query = (query as any).ilike('CBM', `%${fCtm}%`);
   if (fDepot) query = (query as any).ilike('depot_code', `%${fDepot}%`);
   
   // กรองตามประเภทการอบรม
@@ -106,8 +106,8 @@ function applyFilters(query: any, params: URLSearchParams) {
       'work_type',
       'provider',
       'area',
-      'rsm',
-      'ctm',
+      'RBM',
+      'CBM',
       'depot_code',
       'depot_name',
       'province',

@@ -136,13 +136,13 @@ export async function GET(request: Request) {
     // แปลงเป็น array format สำหรับ Recharts
     const chartData = Object.entries(groupedData)
       .map(([rsm, counts]) => ({
-        rsm,
+        RBM: rsm,
         Yes: counts.Yes.size,
         No: counts.No.size,
         total: counts.Yes.size + counts.No.size
       }))
       .sort((a, b) => b.total - a.total) // เรียงตาม total มากไปน้อย
-      .slice(0, 20); // แสดงแค่ top 20 RSM
+      .slice(0, 20); // แสดงแค่ top 20 RBM
     
     // คำนวณ summary - ใช้ค่าจาก fetched data เพราะ count query ของ Supabase ไม่ถูกต้อง (encoding issue)
     // NOTE: count query ได้ Yes=400 แต่ fetch + count จริง ๆ ได้ Yes=390 (ตรวจสอบแล้วว่า 390 ถูกต้อง)
@@ -163,12 +163,12 @@ export async function GET(request: Request) {
         timestamp: new Date().toISOString(),
         version: "2.0.0", // v2.0: ใช้ fetched data เท่านั้น ไม่ใช้ count query
         summary: {
-          totalRsm: Object.keys(groupedData).length,           // จำนวน RSM ทั้งหมด
+          totalRBM: Object.keys(groupedData).length,           // จำนวน RBM ทั้งหมด
           totalTechnicians: allNationalIds.size,               // นับจาก fetched data จริง ๆ
-          totalTechniciansWithRsm: totalTechniciansWithRsm,    // จำนวนช่างที่มี RSM
+          totalTechniciansWithRBM: totalTechniciansWithRsm,    // จำนวนช่างที่มี RBM
           totalYes: totalYes,                                  // จำนวนช่างที่มี power_authority = Yes (นับจาก fetched)
           totalNo: totalNo,                                    // จำนวนช่างที่มี power_authority = No (นับจาก fetched)
-          recordsWithoutRsm: nationalIdsWithoutRsm.size,       // จำนวนช่างที่ไม่มี RSM (unique)
+          recordsWithoutRBM: nationalIdsWithoutRsm.size,       // จำนวนช่างที่ไม่มี RBM (unique)
           recordsWithoutAuthority: nationalIdsWithoutAuthority.size  // จำนวนช่างที่ไม่มี power_authority (unique)
         }
       },

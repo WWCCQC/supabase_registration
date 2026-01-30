@@ -105,9 +105,9 @@ export async function GET(request: Request) {
 
     // แปลงเป็น array format สำหรับ component
     const pivotData = Array.from(pivotMap.entries()).map(([key, count]) => {
-      const [rsm, provider, work_type] = key.split('|');
+      const [RBM, provider, work_type] = key.split('|');
       return {
-        rsm,
+        RBM,
         provider,
         work_type,
         count

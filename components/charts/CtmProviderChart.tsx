@@ -15,7 +15,7 @@ import {
 
 type CtmProviderChartProps = {
   selectedCtm?: string | null;
-  onCtmClick?: (ctm: string | null) => void;
+  onCtmClick?: (CBM: string | null) => void;
 };
 
 export default function CtmProviderChart({ selectedCtm, onCtmClick }: CtmProviderChartProps) {
@@ -61,15 +61,15 @@ export default function CtmProviderChart({ selectedCtm, onCtmClick }: CtmProvide
 
   function handleChartClick(data: any) {
     if (data && data.activePayload && data.activePayload[0]) {
-      const clickedCtm = data.activePayload[0].payload.ctm;
-      console.log('📊 CTM Chart clicked:', clickedCtm);
+      const clickedCtm = data.activePayload[0].payload.CBM;
+      console.log('📊 CBM Chart clicked:', clickedCtm);
       
       // Toggle selection
       if (selectedCtm === clickedCtm) {
-        console.log('📊 Deselecting CTM');
+        console.log('📊 Deselecting CBM');
         onCtmClick?.(null);
       } else {
-        console.log('📊 Selecting CTM:', clickedCtm);
+        console.log('📊 Selecting CBM:', clickedCtm);
         onCtmClick?.(clickedCtm);
       }
     }
@@ -82,7 +82,7 @@ export default function CtmProviderChart({ selectedCtm, onCtmClick }: CtmProvide
   if (loading) {
     return (
       <div style={{ textAlign: "center", padding: 40 }}>
-        <div style={{ fontSize: 16, color: "#666" }}>กำลังโหลด CTM Chart...</div>
+        <div style={{ fontSize: 16, color: "#666" }}>กำลังโหลด CBM Chart...</div>
       </div>
     );
   }
@@ -90,7 +90,7 @@ export default function CtmProviderChart({ selectedCtm, onCtmClick }: CtmProvide
   if (chartData.length === 0) {
     return (
       <div style={{ textAlign: "center", padding: 40 }}>
-        <div style={{ fontSize: 16, color: "#999" }}>ไม่มีข้อมูล CTM Chart</div>
+        <div style={{ fontSize: 16, color: "#999" }}>ไม่มีข้อมูล CBM Chart</div>
       </div>
     );
   }
@@ -164,7 +164,7 @@ export default function CtmProviderChart({ selectedCtm, onCtmClick }: CtmProvide
           color: '#374151',
           marginBottom: '5px'
         }}>
-          แสดง CTM {startIndex + 1} - {Math.min(startIndex + itemsPerPage, chartData.length)} จากทั้งหมด {chartData.length} CTM
+          แสดง CBM {startIndex + 1} - {Math.min(startIndex + itemsPerPage, chartData.length)} จากทั้งหมด {chartData.length} CBM
         </div>
         
         <div style={{
@@ -211,7 +211,7 @@ export default function CtmProviderChart({ selectedCtm, onCtmClick }: CtmProvide
       >
         <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
         <XAxis 
-          dataKey="ctm" 
+          dataKey="CBM" 
           angle={-45}
           textAnchor="end"
           height={120}
@@ -242,7 +242,7 @@ export default function CtmProviderChart({ selectedCtm, onCtmClick }: CtmProvide
                   fontFamily: 'system-ui, -apple-system, "Segoe UI", "Noto Sans Thai", sans-serif'
                 }}>
                   <p style={{ fontWeight: "bold", marginBottom: "8px", fontSize: "14px" }}>
-                    CTM: {label}
+                    CBM: {label}
                   </p>
                   {payload
                     .filter((entry: any) => entry.value > 0)
@@ -278,8 +278,8 @@ export default function CtmProviderChart({ selectedCtm, onCtmClick }: CtmProvide
           {displayedData.map((entry, entryIndex) => (
             <Cell 
               key={`cell-WW-Provider-${entryIndex}`} 
-              fill={selectedCtm === entry.ctm ? "#2563eb" : "#3b82f6"}
-              opacity={selectedCtm && selectedCtm !== entry.ctm ? 0.5 : 1}
+              fill={selectedCtm === entry.CBM ? "#2563eb" : "#3b82f6"}
+              opacity={selectedCtm && selectedCtm !== entry.CBM ? 0.5 : 1}
             />
           ))}
           <LabelList 
@@ -305,8 +305,8 @@ export default function CtmProviderChart({ selectedCtm, onCtmClick }: CtmProvide
           {displayedData.map((entry, entryIndex) => (
             <Cell 
               key={`cell-True Tech-${entryIndex}`} 
-              fill={selectedCtm === entry.ctm ? "#059669" : "#10b981"}
-              opacity={selectedCtm && selectedCtm !== entry.ctm ? 0.5 : 1}
+              fill={selectedCtm === entry.CBM ? "#059669" : "#10b981"}
+              opacity={selectedCtm && selectedCtm !== entry.CBM ? 0.5 : 1}
             />
           ))}
           <LabelList 
@@ -332,8 +332,8 @@ export default function CtmProviderChart({ selectedCtm, onCtmClick }: CtmProvide
           {displayedData.map((entry, entryIndex) => (
             <Cell 
               key={`cell-เถ้าแก่เทค-${entryIndex}`} 
-              fill={selectedCtm === entry.ctm ? "#d97706" : "#f59e0b"}
-              opacity={selectedCtm && selectedCtm !== entry.ctm ? 0.5 : 1}
+              fill={selectedCtm === entry.CBM ? "#d97706" : "#f59e0b"}
+              opacity={selectedCtm && selectedCtm !== entry.CBM ? 0.5 : 1}
             />
           ))}
           <LabelList 

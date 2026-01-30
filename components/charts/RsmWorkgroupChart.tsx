@@ -16,19 +16,19 @@ import { supabaseBrowser } from "@/lib/supabase-browser";
 import ForceRefreshButton from "@/components/common/ForceRefreshButton";
 
 type ChartData = {
-  rsm: string;
+  RBM: string;
   Yes: number;
   No: number;
   total: number;
 };
 
 type Summary = {
-  totalRsm: number;
+  totalRBM: number;
   totalTechnicians: number;
   totalYes: number;
   totalNo: number;
-  totalTechniciansWithRsm: number;
-  recordsWithoutRsm: number;
+  totalTechniciansWithRBM: number;
+  recordsWithoutRBM: number;
   recordsWithoutAuthority: number;
 };
 
@@ -206,7 +206,7 @@ export default function RsmWorkgroupChart() {
       <div style={{ marginBottom: 20 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
           <h2 style={{ fontSize: 22, fontWeight: 700, margin: 0 }}>
-            ⚡ Stacked Column Chart: RSM by Power Authority
+            ⚡ Stacked Column Chart: RBM by Power Authority
           </h2>
           <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
             {lastUpdated && (
@@ -230,8 +230,8 @@ export default function RsmWorkgroupChart() {
             marginBottom: 20
           }}>
             <div style={summaryCardStyle}>
-              <div style={summaryLabelStyle}>RSM ทั้งหมด</div>
-              <div style={summaryValueStyle}>{summary.totalRsm}</div>
+              <div style={summaryLabelStyle}>RBM ทั้งหมด</div>
+              <div style={summaryValueStyle}>{summary.totalRBM}</div>
             </div>
             <div style={summaryCardStyle}>
               <div style={summaryLabelStyle}>ช่างทั้งหมด</div>
@@ -261,12 +261,12 @@ export default function RsmWorkgroupChart() {
             border: "1px solid #e2e8f0"
           }}>
             <div style={{ textAlign: "center" }}>
-              <div style={{ fontSize: 12, color: "#64748b", marginBottom: 4 }}>ช่างที่มี RSM</div>
-              <div style={{ fontSize: 16, fontWeight: 600, color: "#1e293b" }}>{summary.totalTechniciansWithRsm.toLocaleString()}</div>
+              <div style={{ fontSize: 12, color: "#64748b", marginBottom: 4 }}>ช่างที่มี RBM</div>
+              <div style={{ fontSize: 16, fontWeight: 600, color: "#1e293b" }}>{summary.totalTechniciansWithRBM.toLocaleString()}</div>
             </div>
             <div style={{ textAlign: "center" }}>
-              <div style={{ fontSize: 12, color: "#64748b", marginBottom: 4 }}>ช่างที่ไม่มี RSM</div>
-              <div style={{ fontSize: 16, fontWeight: 600, color: "#ef4444" }}>{summary.recordsWithoutRsm.toLocaleString()}</div>
+              <div style={{ fontSize: 12, color: "#64748b", marginBottom: 4 }}>ช่างที่ไม่มี RBM</div>
+              <div style={{ fontSize: 16, fontWeight: 600, color: "#ef4444" }}>{summary.recordsWithoutRBM.toLocaleString()}</div>
             </div>
             <div style={{ textAlign: "center" }}>
               <div style={{ fontSize: 12, color: "#64748b", marginBottom: 4 }}>ช่างที่ไม่มี Power Authority</div>
@@ -290,7 +290,7 @@ export default function RsmWorkgroupChart() {
             >
               <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
               <XAxis 
-                dataKey="rsm" 
+                dataKey="RBM" 
                 angle={-45}
                 textAnchor="end"
                 height={100}

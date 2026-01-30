@@ -29,8 +29,8 @@ export const FIELD_LABELS: Record<string, string> = {
   
   // พื้นที่และตำแหน่ง
   area: "พื้นที่",
-  rsm: "RSM",
-  ctm: "CTM",
+  rsm: "RBM",
+  ctm: "CBM",
   depot_code: "depot_code",
   depot_name: "depot_name",
   province: "จังหวัด",

@@ -56,10 +56,10 @@ export async function GET(req: Request) {
     if (f_national_id) query = query.ilike("national_id", `%${f_national_id}%`);
     if (f_tech_id) query = query.ilike("tech_id", `%${f_tech_id}%`);
     if (f_rsm) query = query.ilike("RBM", `%${f_rsm}%`);
-    if (f_ctm) query = query.ilike("ctm", `%${f_ctm}%`);
+    if (f_ctm) query = query.ilike("CBM", `%${f_ctm}%`);
     if (f_depot_code) query = query.ilike("depot_code", `%${f_depot_code}%`);
     if (selectedRsm) query = query.ilike("RBM", `%${selectedRsm}%`);
-    if (selectedCtm) query = query.ilike("ctm", `%${selectedCtm}%`);
+    if (selectedCtm) query = query.ilike("CBM", `%${selectedCtm}%`);
     
     // Apply training type filter
     if (f_training_type) {
@@ -80,7 +80,7 @@ export async function GET(req: Request) {
       const cols = [
         "national_id", "tech_id", "full_name", "gender", "age", "degree",
         "phone", "email", "workgroup_status", "work_type", "provider", 
-        "area", "RBM", "ctm", "depot_code", "depot_name", "province"
+        "area", "RBM", "CBM", "depot_code", "depot_name", "province"
       ];
       const pattern = `%${q}%`;
       const ors = cols.map(c => `${c}.ilike.${pattern}`).join(",");

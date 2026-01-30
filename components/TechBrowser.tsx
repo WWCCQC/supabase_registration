@@ -778,7 +778,7 @@ export default function TechBrowser() {
   // Handle general chart click (fallback)
   function handleChartClick(data: any) {
     if (data && data.activePayload && data.activePayload[0]) {
-      const clickedRsm = data.activePayload[0].payload.rsm;
+      const clickedRsm = data.activePayload[0].payload.RBM;
       console.log('📊 General chart clicked:', clickedRsm);
       
       // Only handle RSM selection without power authority filter
@@ -1529,7 +1529,7 @@ export default function TechBrowser() {
                   fontSize: 13,
                   fontWeight: 500
                 }}>
-                  กำลังกรอง RSM: {selectedRsm}
+                  กำลังกรอง RBM: {selectedRsm}
                 </span>
                 <button
                   onClick={() => {
@@ -1667,7 +1667,7 @@ export default function TechBrowser() {
                 >
                 <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                 <XAxis 
-                  dataKey="rsm" 
+                  dataKey="RBM" 
                   angle={-45}
                   textAnchor="end"
                   height={100}
@@ -1745,14 +1745,14 @@ export default function TechBrowser() {
                   fill="#0EAD69"
                   name="Yes"
                   onClick={(data: any) => {
-                    if (data && data.rsm) {
-                      handlePowerAuthorityClick(data.rsm, "Yes");
+                    if (data && data.RBM) {
+                      handlePowerAuthorityClick(data.RBM, "Yes");
                     }
                   }}
                   style={{ cursor: "pointer" }}
                 >
                   {chartData.map((entry, index) => {
-                    const isRsmSelected = selectedRsm === entry.rsm;
+                    const isRsmSelected = selectedRsm === entry.RBM;
                     const isPowerAuthoritySelected = selectedPowerAuthority === "Yes";
                     const isFullySelected = isRsmSelected && isPowerAuthoritySelected;
                     
@@ -1768,7 +1768,7 @@ export default function TechBrowser() {
                         style={{ cursor: "pointer" }}
                         onMouseDown={(e: any) => {
                           e.stopPropagation();
-                          handlePowerAuthorityClick(entry.rsm, "Yes");
+                          handlePowerAuthorityClick(entry.RBM, "Yes");
                         }}
                       />
                     );
@@ -1807,14 +1807,14 @@ export default function TechBrowser() {
                   fill="#D90429"
                   name="No"
                   onClick={(data: any) => {
-                    if (data && data.rsm) {
-                      handlePowerAuthorityClick(data.rsm, "No");
+                    if (data && data.RBM) {
+                      handlePowerAuthorityClick(data.RBM, "No");
                     }
                   }}
                   style={{ cursor: "pointer" }}
                 >
                   {chartData.map((entry, index) => {
-                    const isRsmSelected = selectedRsm === entry.rsm;
+                    const isRsmSelected = selectedRsm === entry.RBM;
                     const isPowerAuthoritySelected = selectedPowerAuthority === "No";
                     const isFullySelected = isRsmSelected && isPowerAuthoritySelected;
                     
@@ -1830,7 +1830,7 @@ export default function TechBrowser() {
                         style={{ cursor: "pointer" }}
                         onMouseDown={(e: any) => {
                           e.stopPropagation();
-                          handlePowerAuthorityClick(entry.rsm, "No");
+                          handlePowerAuthorityClick(entry.RBM, "No");
                         }}
                       />
                     );

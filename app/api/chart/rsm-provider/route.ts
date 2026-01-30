@@ -104,7 +104,7 @@ export async function GET(req: Request) {
     // Convert to array format for Recharts
     const chartData = Object.entries(groupedData)
       .map(([rsm, counts]) => ({
-        rsm,
+        RBM: rsm,
         "WW-Provider": counts["WW-Provider"],
         "True Tech": counts["True Tech"],
         "เถ้าแก่เทค": counts["เถ้าแก่เทค"],
@@ -116,7 +116,7 @@ export async function GET(req: Request) {
     const totalFromCounts = providerTotals["WW-Provider"] + providerTotals["True Tech"] + providerTotals["เถ้าแก่เทค"];
     
     const summary = {
-      totalRsm: Object.keys(groupedData).length,
+      totalRBM: Object.keys(groupedData).length,
       totalTechnicians: totalFromCounts,
       providerBreakdown: providers.map((provider) => {
         const count = providerTotals[provider] || 0;

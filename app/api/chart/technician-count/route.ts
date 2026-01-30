@@ -30,18 +30,18 @@ export async function GET(req: Request) {
     // Note: ไม่กรอง workgroup_status เพราะต้องการนับทุกคน
     let query = supabase
       .from("technicians")
-      .select("rsm, provider, work_type, workgroup_status, national_id");
+      .select("RBM, provider, work_type, workgroup_status, national_id");
 
     console.log('📊 Querying Supabase for all technicians...');
 
     // Apply filters to Supabase query
     if (f_national_id) query = query.ilike("national_id", `%${f_national_id}%`);
     if (f_tech_id) query = query.ilike("tech_id", `%${f_tech_id}%`);
-    if (f_rsm) query = query.ilike("rsm", `%${f_rsm}%`);
-    if (f_ctm) query = query.ilike("ctm", `%${f_ctm}%`);
+    if (f_rsm) query = query.ilike("RBM", `%${f_rsm}%`);
+    if (f_ctm) query = query.ilike("CBM", `%${f_ctm}%`);
     if (f_depot_code) query = query.ilike("depot_code", `%${f_depot_code}%`);
-    if (selectedRsm) query = query.ilike("rsm", `%${selectedRsm}%`);
-    if (selectedCtm) query = query.ilike("ctm", `%${selectedCtm}%`);
+    if (selectedRsm) query = query.ilike("RBM", `%${selectedRsm}%`);
+    if (selectedCtm) query = query.ilike("CBM", `%${selectedCtm}%`);
     
     // Apply training type filter
     if (f_training_type) {
@@ -62,7 +62,7 @@ export async function GET(req: Request) {
       const cols = [
         "national_id", "tech_id", "full_name", "gender", "age", "degree",
         "phone", "email", "workgroup_status", "work_type", "provider", 
-        "area", "rsm", "ctm", "depot_code", "depot_name", "province"
+        "area", "RBM", "CBM", "depot_code", "depot_name", "province"
       ];
       const pattern = `%${q}%`;
       const ors = cols.map(c => `${c}.ilike.${pattern}`).join(",");
@@ -98,7 +98,7 @@ export async function GET(req: Request) {
     const result: Record<string, Record<string, number>> = {};
 
     allData.forEach((row: any) => {
-      const rsm = row.rsm || "Unknown";
+      const rsm = row.RBM || "Unknown";
       const provider = row.provider || "Unknown";
       const workType = row.work_type || "Unknown";
 

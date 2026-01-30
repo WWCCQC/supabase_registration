@@ -4,7 +4,7 @@
 import React from 'react';
 
 interface PivotData {
-  rsm: string;
+  RBM: string;
   provider: string;
   work_type: string;
   count: number;
@@ -53,8 +53,8 @@ export default function PivotTable({ data, workgroupData = {}, workgroupGrandTot
     return countStr;
   };
 
-  // Get unique RSMs and sort them
-  const rsms = Array.from(new Set(data.map(d => d.rsm))).sort();
+  // Get unique RBMs and sort them
+  const rsms = Array.from(new Set(data.map(d => d.RBM))).sort();
   
   // Get unique providers
   const providers = ['True Tech', 'WW-Provider', 'เถ้าแก่เทค'];
@@ -77,8 +77,8 @@ export default function PivotTable({ data, workgroupData = {}, workgroupGrandTot
   // Fill data
   data.forEach(item => {
     const key = `${item.provider}_${item.work_type}`;
-    if (pivotData[item.rsm] && pivotData[item.rsm][key] !== undefined) {
-      pivotData[item.rsm][key] = item.count;
+    if (pivotData[item.RBM] && pivotData[item.RBM][key] !== undefined) {
+      pivotData[item.RBM][key] = item.count;
     }
   });
 

@@ -120,7 +120,7 @@ export async function GET(request: NextRequest) {
     // Convert to chart format and sort by total descending
     const chartData = Object.keys(groupedData)
       .map((ctm) => {
-        const item: any = { ctm };
+        const item: any = { CBM: ctm };
         let total = 0;
 
         // Add each provider as a property - convert Set to count
@@ -150,7 +150,7 @@ export async function GET(request: NextRequest) {
     const totalFromGroupedData = Object.values(providerCountsFromGroupedData).reduce((sum, count) => sum + count, 0);
     
     const summary = {
-      totalCtms: Object.keys(groupedData).length,
+      totalCBMs: Object.keys(groupedData).length,
       totalTechnicians: totalFromGroupedData,  // Use counts from grouped data (unique national_id)
       providerBreakdown: mainProviders.map((provider) => {
         // Use counts from grouped data (same as chart)
