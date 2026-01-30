@@ -62,7 +62,7 @@ export async function GET(req: Request) {
 
     if (f_national_id) countQuery = countQuery.ilike("national_id", `%${f_national_id}%`);
     if (f_tech_id)     countQuery = countQuery.ilike("tech_id",     `%${f_tech_id}%`);
-    if (f_rsm)         countQuery = countQuery.ilike("rsm",         `%${f_rsm}%`);
+    if (f_rsm)         countQuery = countQuery.ilike("RBM",         `%${f_rsm}%`);
     if (f_ctm)         countQuery = countQuery.ilike("ctm",         `%${f_ctm}%`);
     if (f_depot_code)  countQuery = countQuery.ilike("depot_code",  `%${f_depot_code}%`);
     if (f_power_authority) countQuery = countQuery.eq("power_authority", f_power_authority);
@@ -106,7 +106,7 @@ export async function GET(req: Request) {
     
     if (f_national_id) dataQuery = dataQuery.ilike("national_id", `%${f_national_id}%`);
     if (f_tech_id)     dataQuery = dataQuery.ilike("tech_id",     `%${f_tech_id}%`);
-    if (f_rsm)         dataQuery = dataQuery.ilike("rsm",         `%${f_rsm}%`);
+    if (f_rsm)         dataQuery = dataQuery.ilike("RBM",         `%${f_rsm}%`);
     if (f_ctm)         dataQuery = dataQuery.ilike("ctm",         `%${f_ctm}%`);
     if (f_depot_code)  dataQuery = dataQuery.ilike("depot_code",  `%${f_depot_code}%`);
     if (f_power_authority) dataQuery = dataQuery.eq("power_authority", f_power_authority);
@@ -166,7 +166,7 @@ export async function GET(req: Request) {
       work_type:          r.work_type          ?? r.team_type ?? null,
       provider:           r.provider           ?? null,
       area:               r.area               ?? null,
-      rsm:                r.rsm                ?? null,
+      rsm:                r.RBM                ?? null,
       ctm:                r.ctm                ?? null,
       depot_code:         r.depot_code         ?? null,
       depot_name:         r.depot_name         ?? null,
