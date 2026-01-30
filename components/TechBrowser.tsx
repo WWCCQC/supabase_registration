@@ -2372,8 +2372,8 @@ export default function TechBrowser() {
                   <Section title={`Section 2: ${SECTION_LABELS.area_service}`}>
                     <Field row={detailRow!} label={getFieldLabel("area")} keys={["area"]} />
                     <Field row={detailRow!} label={getFieldLabel("province")} keys={["province","ctm_province"]} />
-                    <Field row={detailRow!} label={getFieldLabel("rsm")} keys={["rsm"]} />
-                    <Field row={detailRow!} label={getFieldLabel("ctm")} keys={["ctm"]} />
+                    <Field row={detailRow!} label={getFieldLabel("rsm")} keys={["RBM","rsm"]} />
+                    <Field row={detailRow!} label={getFieldLabel("ctm")} keys={["CBM","ctm"]} />
                     <Field row={detailRow!} label={getFieldLabel("depot_code")} keys={["depot_code"]} />
                     <Field row={detailRow!} label={getFieldLabel("depot_name")} keys={["depot_name"]} />
                   </Section>
