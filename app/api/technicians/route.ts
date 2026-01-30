@@ -45,14 +45,23 @@ export async function GET(req: Request) {
     const cols = [
       "national_id","tech_id","full_name","gender","age","degree",
       "doc_tech_card_url","phone","email","workgroup_status","work_type",
-      "provider","area","rsm","ctm","depot_code","depot_name","province",
+      "provider","area","RBM","CBM","depot_code","depot_name","province",
       "power_authority",...serviceColumns
     ] as const;
 
-    // sort params
+    // sort params - map rsm/ctm to RBM/CBM
     const sortParam = (url.searchParams.get("sort") || "national_id").toLowerCase();
     const dirParam  = (url.searchParams.get("dir")  || "asc").toLowerCase();
-    const sort = cols.includes(sortParam as any) ? sortParam : "national_id";
+    
+    // Map lowercase column names to actual database column names
+    let sort: string;
+    if (sortParam === "rsm") {
+      sort = "RBM";
+    } else if (sortParam === "ctm") {
+      sort = "CBM";
+    } else {
+      sort = cols.includes(sortParam as any) ? sortParam : "national_id";
+    }
     const ascending = dirParam !== "desc";
 
     const supabase = supabaseAdmin();
