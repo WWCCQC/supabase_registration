@@ -29,6 +29,8 @@ export const CTM_MAPPING: { [key: string]: string } = {
 const CORRUPTED_TEXT_PATTERNS: { pattern: RegExp; correctName: string }[] = [
   // B056 - ลาดกระบัง_หนองจอก_คลองสามวา
   { pattern: /ดกระบัง.*หนองจอก|หนองจอก.*คลองสามวา|ดกระบัง.*คลองสามวา|ล.*ดกระบัง/i, correctName: "ลาดกระบัง_หนองจอก_คลองสามวา" },
+  // BKK : พระนคร_ดุสิต_บางรัก_สาทร_ป้อมปราบศัตรูพ่าย... (fix สาท�� → สาทร)
+  { pattern: /พระนคร.*ดุสิต.*บางรัก.*สาท.*ป้อมปราบ/i, correctName: "BKK : พระนคร_ดุสิต_บางรัก_สาทร_ป้อมปราบศัตรูพ่าย_สัมพันธวงศ์_ยานนาวา_บางคอแหลม" },
 ];
 
 export function mapCtmToThaiName(ctmCode: string): string {
