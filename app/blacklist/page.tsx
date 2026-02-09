@@ -49,11 +49,11 @@ function BlacklistContent() {
     try {
       setLoading(true);
       setError(null);
-      
+
       console.log('🔍 Fetching Blacklist via API...', { page: currentPage, limit: itemsPerPage });
 
       const response = await fetch(`/api/blacklist?page=${currentPage}&limit=${itemsPerPage}`);
-      
+
       if (!response.ok) {
         const errorData = await response.json();
         console.error('❌ API Error:', errorData);
@@ -61,7 +61,7 @@ function BlacklistContent() {
       }
 
       const result = await response.json();
-      
+
       console.log('✅ API Response:', {
         dataLength: result.data?.length,
         totalCount: result.totalCount,
@@ -103,16 +103,16 @@ function BlacklistContent() {
       while (hasMore) {
         const response = await fetch(`/api/transaction?page=${currentPage}&limit=${batchSize}`);
         if (!response.ok) break;
-        
+
         const result = await response.json();
         const transactions = result.data || [];
-        
+
         if (transactions.length === 0) {
           hasMore = false;
         } else {
           allTransactions = [...allTransactions, ...transactions];
           console.log(`📦 Fetched page ${currentPage}: ${transactions.length} records (total: ${allTransactions.length})`);
-          
+
           if (transactions.length < batchSize) {
             hasMore = false;
           } else {
@@ -122,41 +122,53 @@ function BlacklistContent() {
       }
 
       console.log(`✅ Total transactions fetched: ${allTransactions.length}`);
-        
-      // All months in order
+
+      // Month order for sorting
       const monthOrder = [
         'January', 'February', 'March', 'April', 'May', 'June',
         'July', 'August', 'September', 'October', 'November', 'December'
       ];
-      
-      // Initialize all months with 0
-      const monthCounts: { [key: string]: number } = {};
-      monthOrder.forEach(month => {
-        monthCounts[month] = 0;
-      });
-      
-      // Count Blacklist records by month
+
+      // Count Blacklist records by Year + Month
+      const yearMonthCounts: { [key: string]: number } = {};
       let blacklistTotal = 0;
+
       allTransactions.forEach((item: any) => {
         const register = String(item.Register || '');
         if (register.toLowerCase().includes('blacklist')) {
           const month = item.Month || 'Unknown';
-          if (monthCounts.hasOwnProperty(month)) {
-            monthCounts[month] = monthCounts[month] + 1;
+          const year = item.Year || 'Unknown';
+          if (month !== 'Unknown' && year !== 'Unknown') {
+            const key = `${month} ${year}`;
+            yearMonthCounts[key] = (yearMonthCounts[key] || 0) + 1;
             blacklistTotal++;
           }
         }
       });
-      
+
       console.log(`🔴 Total Blacklist found: ${blacklistTotal}`);
-      console.log('📊 Blacklist by Month:', monthCounts);
-      
-      // Convert to array in month order (all 12 months)
-      const chartData = monthOrder.map(month => ({
-        month,
-        count: monthCounts[month]
-      }));
-      
+      console.log('📊 Blacklist by Year-Month:', yearMonthCounts);
+
+      // Convert to array and sort by Year then Month
+      const chartData = Object.entries(yearMonthCounts)
+        .map(([key, count]) => {
+          const parts = key.split(' ');
+          const month = parts[0];
+          const year = parseInt(parts[1]) || 0;
+          return {
+            month: key,
+            count,
+            year,
+            monthIndex: monthOrder.indexOf(month)
+          };
+        })
+        .sort((a, b) => {
+          // Sort by year first, then by month
+          if (a.year !== b.year) return a.year - b.year;
+          return a.monthIndex - b.monthIndex;
+        })
+        .map(({ month, count }) => ({ month, count }));
+
       setTransactionBlacklistData(chartData);
     } catch (err) {
       console.error('Error fetching transaction blacklist:', err);
@@ -170,36 +182,36 @@ function BlacklistContent() {
   const filteredData = useMemo(() => {
     // Always filter from allData instead of current page data
     let filtered = allData;
-    
+
     // Apply advanced filters
     if (searchCompany) {
       const searchLower = searchCompany.toLowerCase();
-      filtered = filtered.filter(row => 
+      filtered = filtered.filter(row =>
         row.Company?.toString().toLowerCase().includes(searchLower)
       );
     }
-    
+
     if (searchId) {
       const searchLower = searchId.toLowerCase();
-      filtered = filtered.filter(row => 
+      filtered = filtered.filter(row =>
         row.ID?.toString().toLowerCase().includes(searchLower)
       );
     }
-    
+
     if (searchName) {
       const searchLower = searchName.toLowerCase();
-      filtered = filtered.filter(row => 
+      filtered = filtered.filter(row =>
         row.Name?.toString().toLowerCase().includes(searchLower)
       );
     }
-    
+
     if (searchSurename) {
       const searchLower = searchSurename.toLowerCase();
-      filtered = filtered.filter(row => 
+      filtered = filtered.filter(row =>
         row.Surename?.toString().toLowerCase().includes(searchLower)
       );
     }
-    
+
     return filtered;
   }, [allData, searchCompany, searchId, searchName, searchSurename]);
 
@@ -211,12 +223,12 @@ function BlacklistContent() {
   }, [filteredData, currentPage, itemsPerPage]);
 
   const totalPages = Math.ceil(filteredData.length / itemsPerPage);
-  
+
   // Get columns from allData instead (so we always have column structure)
-  const columns = allData.length > 0 
-    ? Object.keys(allData[0]).filter(col => col !== 'วันที่ Update') 
+  const columns = allData.length > 0
+    ? Object.keys(allData[0]).filter(col => col !== 'วันที่ Update')
     : [];
-  
+
   // Check if user has searched
   const hasSearched = searchCompany || searchId || searchName || searchSurename;
 
@@ -232,7 +244,7 @@ function BlacklistContent() {
     return (
       <div style={{ padding: '40px 24px', textAlign: 'center' }}>
         <p style={{ fontSize: '18px', color: '#dc2626' }}>เกิดข้อผิดพลาด: {error}</p>
-        <button 
+        <button
           onClick={fetchBlacklist}
           style={{
             marginTop: '20px',
@@ -286,12 +298,12 @@ function BlacklistContent() {
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={transactionBlacklistData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                  <XAxis 
-                    dataKey="month" 
+                  <XAxis
+                    dataKey="month"
                     tick={{ fill: '#6b7280', fontSize: 12 }}
                     axisLine={{ stroke: '#e5e7eb' }}
                   />
-                  <YAxis 
+                  <YAxis
                     tick={{ fill: '#6b7280', fontSize: 12 }}
                     axisLine={{ stroke: '#e5e7eb' }}
                     allowDecimals={false}
@@ -305,9 +317,9 @@ function BlacklistContent() {
                     }}
                     formatter={(value: number) => [`${value} คน`, 'จำนวน Blacklist']}
                   />
-                  <Bar 
-                    dataKey="count" 
-                    name="Blacklist" 
+                  <Bar
+                    dataKey="count"
+                    name="Blacklist"
                     fill="#ef4444"
                     radius={[4, 4, 0, 0]}
                   >
@@ -329,7 +341,7 @@ function BlacklistContent() {
             </div>
           </div>
         )}
-        
+
         {/* Advanced Search Filters */}
         <div style={{
           background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
@@ -549,7 +561,7 @@ function BlacklistContent() {
             </div>
           )}
         </div>
-        
+
         {hasSearched && (
           <div style={{ marginTop: '12px', fontSize: '14px', color: '#6b7280' }}>
             พบ {filteredData.length} รายการจากการค้นหา
@@ -558,7 +570,7 @@ function BlacklistContent() {
       </div>
 
       {/* แสดงตารางเสมอ */}
-      <div style={{ 
+      <div style={{
         overflowX: 'auto',
         backgroundColor: 'white',
         borderRadius: '8px',
@@ -591,7 +603,7 @@ function BlacklistContent() {
           <tbody>
             {!hasSearched ? (
               <tr>
-                <td 
+                <td
                   colSpan={columns.length}
                   style={{
                     padding: '60px 20px',
@@ -606,7 +618,7 @@ function BlacklistContent() {
               </tr>
             ) : filteredData.length === 0 ? (
               <tr>
-                <td 
+                <td
                   colSpan={columns.length}
                   style={{
                     padding: '60px 20px',
@@ -660,77 +672,77 @@ function BlacklistContent() {
           <div style={{ color: '#6b7280', fontSize: '14px' }}>
             แสดง {((currentPage - 1) * itemsPerPage) + 1} - {Math.min(currentPage * itemsPerPage, filteredData.length)} จาก {filteredData.length} รายการ
           </div>
-            
-            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-              <button
-                onClick={() => setCurrentPage(1)}
-                disabled={currentPage === 1}
-                style={{
-                  padding: '8px 12px',
-                  backgroundColor: currentPage === 1 ? '#e5e7eb' : '#3b82f6',
-                  color: currentPage === 1 ? '#9ca3af' : 'white',
-                  border: 'none',
-                  borderRadius: '6px',
-                  cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
-                  fontSize: '14px'
-                }}
-              >
-                แรกสุด
-              </button>
-              
-              <button
-                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                disabled={currentPage === 1}
-                style={{
-                  padding: '8px 12px',
-                  backgroundColor: currentPage === 1 ? '#e5e7eb' : '#3b82f6',
-                  color: currentPage === 1 ? '#9ca3af' : 'white',
-                  border: 'none',
-                  borderRadius: '6px',
-                  cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
-                  fontSize: '14px'
-                }}
-              >
-                ก่อนหน้า
-              </button>
-              
-              <span style={{ color: '#374151', fontSize: '14px', padding: '0 8px' }}>
-                หน้า {currentPage} / {totalPages}
-              </span>
-              
-              <button
-                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                disabled={currentPage === totalPages}
-                style={{
-                  padding: '8px 12px',
-                  backgroundColor: currentPage === totalPages ? '#e5e7eb' : '#3b82f6',
-                  color: currentPage === totalPages ? '#9ca3af' : 'white',
-                  border: 'none',
-                  borderRadius: '6px',
-                  cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
-                  fontSize: '14px'
-                }}
-              >
-                ถัดไป
-              </button>
-              
-              <button
-                onClick={() => setCurrentPage(totalPages)}
-                disabled={currentPage === totalPages}
-                style={{
-                  padding: '8px 12px',
-                  backgroundColor: currentPage === totalPages ? '#e5e7eb' : '#3b82f6',
-                  color: currentPage === totalPages ? '#9ca3af' : 'white',
-                  border: 'none',
-                  borderRadius: '6px',
-                  cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
-                  fontSize: '14px'
-                }}
-              >
-                ท้ายสุด
-              </button>
-            </div>
+
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            <button
+              onClick={() => setCurrentPage(1)}
+              disabled={currentPage === 1}
+              style={{
+                padding: '8px 12px',
+                backgroundColor: currentPage === 1 ? '#e5e7eb' : '#3b82f6',
+                color: currentPage === 1 ? '#9ca3af' : 'white',
+                border: 'none',
+                borderRadius: '6px',
+                cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+                fontSize: '14px'
+              }}
+            >
+              แรกสุด
+            </button>
+
+            <button
+              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+              disabled={currentPage === 1}
+              style={{
+                padding: '8px 12px',
+                backgroundColor: currentPage === 1 ? '#e5e7eb' : '#3b82f6',
+                color: currentPage === 1 ? '#9ca3af' : 'white',
+                border: 'none',
+                borderRadius: '6px',
+                cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+                fontSize: '14px'
+              }}
+            >
+              ก่อนหน้า
+            </button>
+
+            <span style={{ color: '#374151', fontSize: '14px', padding: '0 8px' }}>
+              หน้า {currentPage} / {totalPages}
+            </span>
+
+            <button
+              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+              disabled={currentPage === totalPages}
+              style={{
+                padding: '8px 12px',
+                backgroundColor: currentPage === totalPages ? '#e5e7eb' : '#3b82f6',
+                color: currentPage === totalPages ? '#9ca3af' : 'white',
+                border: 'none',
+                borderRadius: '6px',
+                cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+                fontSize: '14px'
+              }}
+            >
+              ถัดไป
+            </button>
+
+            <button
+              onClick={() => setCurrentPage(totalPages)}
+              disabled={currentPage === totalPages}
+              style={{
+                padding: '8px 12px',
+                backgroundColor: currentPage === totalPages ? '#e5e7eb' : '#3b82f6',
+                color: currentPage === totalPages ? '#9ca3af' : 'white',
+                border: 'none',
+                borderRadius: '6px',
+                cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+                fontSize: '14px'
+              }}
+            >
+              ท้ายสุด
+            </button>
           </div>
+        </div>
       )}
     </div>
   );

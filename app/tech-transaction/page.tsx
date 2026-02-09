@@ -26,15 +26,15 @@ function TechTransactionContent() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
-  
+
   // DB counts for accurate statistics
   const [dbTotalTransactions, setDbTotalTransactions] = useState<number>(0);
   const [dbNewTechs, setDbNewTechs] = useState<number>(0);
   const [dbResignedTechs, setDbResignedTechs] = useState<number>(0);
-  
+
   // Current technician count for November chart
   const [currentTechnicianCount, setCurrentTechnicianCount] = useState<number>(0);
-  
+
   // Filter states - changed to arrays for multi-select
   const [selectedYears, setSelectedYears] = useState<string[]>([]);
   const [selectedMonths, setSelectedMonths] = useState<string[]>([]);
@@ -46,21 +46,22 @@ function TechTransactionContent() {
     weeks: any[];
     dates: any[];
   }>({ years: [], months: [], weeks: [], dates: [] });
-  
+
   // Dropdown open/close states
   const [yearDropdownOpen, setYearDropdownOpen] = useState(false);
   const [monthDropdownOpen, setMonthDropdownOpen] = useState(false);
   const [weekDropdownOpen, setWeekDropdownOpen] = useState(false);
   const [dateDropdownOpen, setDateDropdownOpen] = useState(false);
-  
+
   // Top 10 Depot month filter
   const [selectedDepotMonths, setSelectedDepotMonths] = useState<string[]>([]);
-  
+  const [selectedDepotYears, setSelectedDepotYears] = useState<string[]>([]);
+
   // Card selection state for interactive filtering
   const [selectedCard, setSelectedCard] = useState<'all' | 'new' | 'resigned' | 'net'>('all');
-  
+
   const itemsPerPage = 50;
-  
+
   // Auto-close dropdown function
   const autoCloseDropdown = (closeFunction: () => void) => {
     setTimeout(() => {
@@ -125,10 +126,10 @@ function TechTransactionContent() {
 
           const eventType = payload.eventType;
           const message = eventType === 'INSERT' ? '✅ มีข้อมูล Transaction ใหม่' :
-                         eventType === 'UPDATE' ? '🔄 ข้อมูล Transaction ถูกอัพเดท' :
-                         eventType === 'DELETE' ? '🗑️ ข้อมูล Transaction ถูกลบ' :
-                         '🔄 ข้อมูลมีการเปลี่ยนแปลง';
-          
+            eventType === 'UPDATE' ? '🔄 ข้อมูล Transaction ถูกอัพเดท' :
+              eventType === 'DELETE' ? '🗑️ ข้อมูล Transaction ถูกลบ' :
+                '🔄 ข้อมูลมีการเปลี่ยนแปลง';
+
           // แสดง notification
           if (typeof window !== 'undefined') {
             const notification = document.createElement('div');
@@ -175,7 +176,7 @@ function TechTransactionContent() {
   const fetchDBCounts = async () => {
     try {
       console.log('📊 Fetching DB counts for statistics...');
-      
+
       const supabase = createClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
@@ -232,7 +233,7 @@ function TechTransactionContent() {
       }
 
       console.log(`✅ DB Counts: Total = ${totalTransCount}, New = ${newTechsCount}, Resigned = ${resignedTechsCount}, Net = ${(newTechsCount || 0) - (resignedTechsCount || 0)}`);
-      
+
     } catch (err) {
       console.error('❌ Error fetching DB counts:', err);
     }
@@ -242,7 +243,7 @@ function TechTransactionContent() {
     try {
       setLoading(true);
       setError(null);
-      
+
       console.log('🔍 Fetching Transactions directly from DB...', { page: currentPage, limit: itemsPerPage });
 
       const supabase = createClient(
@@ -282,7 +283,7 @@ function TechTransactionContent() {
 
       setData(fetchedData || []);
       setTotalCount(totalRecords || 0);
-      
+
     } catch (err: any) {
       console.error('❌ Error fetching transactions:', err);
       setError(err.message || 'An error occurred while fetching data');
@@ -294,7 +295,7 @@ function TechTransactionContent() {
   const fetchAllData = async () => {
     try {
       console.log('📥 Fetching all transaction data directly from DB...');
-      
+
       const supabase = createClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
@@ -304,9 +305,9 @@ function TechTransactionContent() {
       const { count: totalCount } = await supabase
         .from('transaction')
         .select('*', { count: 'exact', head: true });
-      
+
       console.log('📊 Total records in database:', totalCount);
-      
+
       // Fetch in batches (1000 per batch) using pagination
       let allRecords: any[] = [];
       const batchSize = 1000;
@@ -333,7 +334,7 @@ function TechTransactionContent() {
         if (batchData && batchData.length > 0) {
           allRecords = [...allRecords, ...batchData];
           console.log(`📦 Batch ${currentBatch + 1}: ${batchData.length} records (total: ${allRecords.length}/${totalCount})`);
-          
+
           // Debug register types in each batch
           const registerTypes = [...new Set(batchData.map((item: any) => item.Register))];
           console.log(`📋 Batch ${currentBatch + 1} register types:`, registerTypes);
@@ -352,7 +353,7 @@ function TechTransactionContent() {
       }
 
       setAllData(allRecords);
-      
+
       // Debug: Check what months are in the data
       const monthsInData = [...new Set(allRecords.map((item: any) => item.Month).filter(Boolean))];
       console.log('✅ All transaction data loaded:', allRecords.length, '/', totalCount, 'records');
@@ -366,7 +367,7 @@ function TechTransactionContent() {
   const fetchFilterOptions = async () => {
     try {
       console.log('🔽 Fetching filter options directly from DB...');
-      
+
       const supabase = createClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
@@ -409,20 +410,20 @@ function TechTransactionContent() {
 
       // Extract unique values and sort
       const years = [...new Set(allTransactions.map((item: any) => item.Year).filter(Boolean))].sort();
-      
+
       // Sort months by calendar order
       const uniqueMonths = [...new Set(allTransactions.map((item: any) => item.Month).filter(Boolean))];
       const months = uniqueMonths.sort((a: any, b: any) => {
         return monthOrder.indexOf(a) - monthOrder.indexOf(b);
       });
-      
+
       // Convert weeks to strings for consistent comparison
       const weeks = [...new Set(allTransactions.map((item: any) => String(item.Week)).filter(Boolean))].sort((a: any, b: any) => Number(a) - Number(b));
       const dates = [...new Set(allTransactions.map((item: any) => item.Date).filter(Boolean))].sort();
 
       const options = { years, months, weeks, dates };
       setFilterOptions(options);
-      
+
       console.log('✅ Filter options loaded from DB:', {
         years: years.length,
         months: months.length,
@@ -458,7 +459,7 @@ function TechTransactionContent() {
       });
       console.log(`📅 Year filter: ${beforeFilter} → ${filtered.length}`);
     }
-    
+
     if (selectedMonths.length > 0) {
       const beforeFilter = filtered.length;
       filtered = filtered.filter(item => {
@@ -466,12 +467,12 @@ function TechTransactionContent() {
         const match = selectedMonths.includes(itemMonth);
         return match;
       });
-      console.log(`📅 Month filter: ${beforeFilter} → ${filtered.length}`, { 
-        selectedMonths, 
-        sampleMonth: filtered[0]?.Month 
+      console.log(`📅 Month filter: ${beforeFilter} → ${filtered.length}`, {
+        selectedMonths,
+        sampleMonth: filtered[0]?.Month
       });
     }
-    
+
     if (selectedWeeks.length > 0) {
       const beforeFilter = filtered.length;
       // Week in database is number, but selectedWeeks is string array
@@ -482,7 +483,7 @@ function TechTransactionContent() {
       });
       console.log(`📅 Week filter: ${beforeFilter} → ${filtered.length}`);
     }
-    
+
     if (selectedDates.length > 0) {
       const beforeFilter = filtered.length;
       filtered = filtered.filter(item => {
@@ -504,7 +505,7 @@ function TechTransactionContent() {
       });
       console.log(`🔍 Search filter: ${beforeFilter} → ${filtered.length}`);
     }
-    
+
     // Filter by selected card
     if (selectedCard === 'new') {
       const beforeFilter = filtered.length;
@@ -530,22 +531,22 @@ function TechTransactionContent() {
 
   // Calculate statistics - use DB counts if no filters, otherwise use filtered data
   const statistics = useMemo(() => {
-    const hasFilters = selectedYears.length > 0 || selectedMonths.length > 0 || 
-                       selectedWeeks.length > 0 || selectedDates.length > 0 || 
-                       searchTerm.trim() !== '' || selectedCard !== 'all';
+    const hasFilters = selectedYears.length > 0 || selectedMonths.length > 0 ||
+      selectedWeeks.length > 0 || selectedDates.length > 0 ||
+      searchTerm.trim() !== '' || selectedCard !== 'all';
 
     let totalTransactions, newTechs, resignedTechs;
 
     if (hasFilters) {
       // If filters are applied, count from filtered data
       totalTransactions = filteredAllData.length;
-      
+
       newTechs = filteredAllData.filter(item => {
         const register = String(item.Register || '');
         // Check for both normal and encoding-issue patterns
         return register.includes('างใหม่') || register.includes('ช่า') && register.includes('ใหม่');
       }).length;
-      
+
       resignedTechs = filteredAllData.filter(item => {
         const register = String(item.Register || '');
         return register.includes('ช่างลาออก') || register.toLowerCase().includes('blacklist');
@@ -556,20 +557,20 @@ function TechTransactionContent() {
       newTechs = dbNewTechs;
       resignedTechs = dbResignedTechs;
     }
-    
+
     const netChange = newTechs - resignedTechs;
-    
-    console.log('📊 Statistics calculated:', { 
+
+    console.log('📊 Statistics calculated:', {
       totalTransactions,
-      newTechs, 
-      resignedTechs, 
-      netChange, 
+      newTechs,
+      resignedTechs,
+      netChange,
       hasFilters,
       dbTotalTransactions,
       dbNewTechs,
       dbResignedTechs
     });
-    
+
     return {
       totalTransactions,
       newTechs,
@@ -620,12 +621,12 @@ function TechTransactionContent() {
 
       const exportData = allData.map((item, index) => {
         const row: any = { 'ลำดับ': index + 1 };
-        
+
         // Add all columns dynamically
         allColumns.forEach(col => {
           row[col] = item[col] !== null && item[col] !== undefined ? String(item[col]) : '';
         });
-        
+
         return row;
       });
 
@@ -696,7 +697,7 @@ function TechTransactionContent() {
       chartSourceData = chartSourceData.filter(item => selectedDates.includes(String(item.Date)));
       console.log('🔽 After Date filter:', chartSourceData.length);
     }
-    
+
     // Filter by selected card
     if (selectedCard === 'new') {
       chartSourceData = chartSourceData.filter(item => item.Register?.includes('างใหม่'));
@@ -753,7 +754,7 @@ function TechTransactionContent() {
 
     // Filter data based on selections
     let chartSourceData = allData;
-    
+
     if (selectedYears.length > 0) {
       chartSourceData = chartSourceData.filter(item => selectedYears.includes(String(item.Year)));
     }
@@ -766,7 +767,7 @@ function TechTransactionContent() {
     if (selectedDates.length > 0) {
       chartSourceData = chartSourceData.filter(item => selectedDates.includes(String(item.Date)));
     }
-    
+
     // Filter by selected card
     if (selectedCard === 'new') {
       chartSourceData = chartSourceData.filter(item => item.Register?.includes('างใหม่'));
@@ -834,7 +835,7 @@ function TechTransactionContent() {
 
     // Filter data based on selections
     let chartSourceData = allData;
-    
+
     if (selectedYears.length > 0) {
       chartSourceData = chartSourceData.filter(item => selectedYears.includes(String(item.Year)));
     }
@@ -847,7 +848,7 @@ function TechTransactionContent() {
     if (selectedDates.length > 0) {
       chartSourceData = chartSourceData.filter(item => selectedDates.includes(String(item.Date)));
     }
-    
+
     // Filter by selected card
     if (selectedCard === 'new') {
       chartSourceData = chartSourceData.filter(item => item.Register?.includes('างใหม่'));
@@ -892,19 +893,21 @@ function TechTransactionContent() {
       return [];
     }
 
-    // Filter data based on selections (use depot-specific month filter if set, otherwise use main filters)
+    // Filter data based on selections (use depot-specific filters if set, otherwise use main filters)
     let chartSourceData = allData;
-    
-    if (selectedYears.length > 0) {
-      chartSourceData = chartSourceData.filter(item => selectedYears.includes(String(item.Year)));
+
+    // Use depot years filter if selected, otherwise use main years filter
+    const yearsToFilter = selectedDepotYears.length > 0 ? selectedDepotYears : selectedYears;
+    if (yearsToFilter.length > 0) {
+      chartSourceData = chartSourceData.filter(item => yearsToFilter.includes(String(item.Year)));
     }
-    
+
     // Use depot months filter if selected, otherwise use main months filter
     const monthsToFilter = selectedDepotMonths.length > 0 ? selectedDepotMonths : selectedMonths;
     if (monthsToFilter.length > 0) {
       chartSourceData = chartSourceData.filter(item => monthsToFilter.includes(String(item.Month)));
     }
-    
+
     if (selectedWeeks.length > 0) {
       chartSourceData = chartSourceData.filter(item => selectedWeeks.includes(String(item.Week)));
     }
@@ -932,7 +935,7 @@ function TechTransactionContent() {
 
     console.log('📊 Top 10 New Depots prepared:', topDepots.length);
     return topDepots;
-  }, [allData, selectedYears, selectedMonths, selectedWeeks, selectedDates, selectedDepotMonths]);
+  }, [allData, selectedYears, selectedMonths, selectedWeeks, selectedDates, selectedDepotMonths, selectedDepotYears]);
 
   // Prepare Top 10 Depot - Resigned Technicians
   const top10ResignedDepots = useMemo(() => {
@@ -940,19 +943,21 @@ function TechTransactionContent() {
       return [];
     }
 
-    // Filter data based on selections (use depot-specific month filter if set, otherwise use main filters)
+    // Filter data based on selections (use depot-specific filters if set, otherwise use main filters)
     let chartSourceData = allData;
-    
-    if (selectedYears.length > 0) {
-      chartSourceData = chartSourceData.filter(item => selectedYears.includes(String(item.Year)));
+
+    // Use depot years filter if selected, otherwise use main years filter
+    const yearsToFilter = selectedDepotYears.length > 0 ? selectedDepotYears : selectedYears;
+    if (yearsToFilter.length > 0) {
+      chartSourceData = chartSourceData.filter(item => yearsToFilter.includes(String(item.Year)));
     }
-    
+
     // Use depot months filter if selected, otherwise use main months filter
     const monthsToFilter = selectedDepotMonths.length > 0 ? selectedDepotMonths : selectedMonths;
     if (monthsToFilter.length > 0) {
       chartSourceData = chartSourceData.filter(item => monthsToFilter.includes(String(item.Month)));
     }
-    
+
     if (selectedWeeks.length > 0) {
       chartSourceData = chartSourceData.filter(item => selectedWeeks.includes(String(item.Week)));
     }
@@ -980,7 +985,7 @@ function TechTransactionContent() {
 
     console.log('📊 Top 10 Resigned Depots prepared:', topDepots.length);
     return topDepots;
-  }, [allData, selectedYears, selectedMonths, selectedWeeks, selectedDates, selectedDepotMonths]);
+  }, [allData, selectedYears, selectedMonths, selectedWeeks, selectedDates, selectedDepotMonths, selectedDepotYears]);
 
   // Prepare Pivot Table Data (RSM x Provider x Work Type)
   const pivotTableData = useMemo(() => {
@@ -990,7 +995,7 @@ function TechTransactionContent() {
 
     // Filter data based on selections
     let sourceData = allData;
-    
+
     if (selectedYears.length > 0) {
       sourceData = sourceData.filter(item => selectedYears.includes(String(item.Year)));
     }
@@ -1003,7 +1008,7 @@ function TechTransactionContent() {
     if (selectedDates.length > 0) {
       sourceData = sourceData.filter(item => selectedDates.includes(String(item.Date)));
     }
-    
+
     // Filter by selected card
     if (selectedCard === 'new') {
       sourceData = sourceData.filter(item => item.Register?.includes('างใหม่') || (item.Register?.includes('ช่า') && item.Register?.includes('ใหม่')));
@@ -1013,7 +1018,7 @@ function TechTransactionContent() {
 
     // Create nested structure: RSM -> Provider -> WorkType -> {new, resigned}
     const pivotData: { [rsm: string]: { [provider: string]: { [workType: string]: { new: number; resigned: number } } } } = {};
-    
+
     sourceData.forEach(item => {
       const rsm = item.rsm || 'N/A';
       const provider = item.provider || 'N/A';
@@ -1102,40 +1107,6 @@ function TechTransactionContent() {
           Tech-Transaction (2025) : update ทุกวันเวลา 8.00 น.
         </h1>
 
-        {/* Marquee Text */}
-        <div style={{
-          overflow: 'hidden',
-          backgroundColor: 'linear-gradient(90deg, #1e3a5f 0%, #2d5a87 50%, #1e3a5f 100%)',
-          background: 'linear-gradient(90deg, #1e3a5f 0%, #2d5a87 50%, #1e3a5f 100%)',
-          borderRadius: '8px',
-          padding: '12px 0',
-          marginBottom: '20px',
-          boxShadow: '0 2px 8px rgba(30, 58, 95, 0.3)'
-        }}>
-          <div style={{
-            display: 'inline-block',
-            whiteSpace: 'nowrap',
-            animation: 'marquee 20s linear infinite',
-          }}>
-            <span style={{
-              fontSize: '18px',
-              fontWeight: '600',
-              color: '#ffffff',
-              letterSpacing: '1px',
-              textShadow: '0 1px 2px rgba(0,0,0,0.3)'
-            }}>
-              🏢 Prime Business &nbsp;&nbsp;/&nbsp;&nbsp; 🤝 Customer Connected Business &nbsp;&nbsp;/&nbsp;&nbsp; 🔧 Installation & Maintenance &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-              🏢 Prime Business &nbsp;&nbsp;/&nbsp;&nbsp; 🤝 Customer Connected Business &nbsp;&nbsp;/&nbsp;&nbsp; 🔧 Installation & Maintenance &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-            </span>
-          </div>
-        </div>
-
-        <style>{`
-          @keyframes marquee {
-            0% { transform: translateX(0%); }
-            100% { transform: translateX(-50%); }
-          }
-        `}</style>
 
         {/* Statistics Cards */}
         <div style={{
@@ -1156,23 +1127,23 @@ function TechTransactionContent() {
             transition: 'all 0.3s ease',
             opacity: 1,
           }}
-          onClick={() => setSelectedCard('all')}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.transform = 'translateY(-5px)';
-            e.currentTarget.style.boxShadow = '0 15px 25px rgba(5, 109, 141, 0.4)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.transform = 'translateY(0)';
-            e.currentTarget.style.boxShadow = '0 8px 15px rgba(5, 109, 141, 0.3)';
-          }}
-          onMouseDown={(e) => {
-            e.currentTarget.style.transform = 'translateY(-2px)';
-            e.currentTarget.style.boxShadow = '0 5px 10px rgba(5, 109, 141, 0.2)';
-          }}
-          onMouseUp={(e) => {
-            e.currentTarget.style.transform = 'translateY(-5px)';
-            e.currentTarget.style.boxShadow = selectedCard === 'all' ? '0 0 0 3px #3b82f6, 0 15px 25px rgba(5, 109, 141, 0.4)' : '0 15px 25px rgba(5, 109, 141, 0.4)';
-          }}
+            onClick={() => setSelectedCard('all')}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'translateY(-5px)';
+              e.currentTarget.style.boxShadow = '0 15px 25px rgba(5, 109, 141, 0.4)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.boxShadow = '0 8px 15px rgba(5, 109, 141, 0.3)';
+            }}
+            onMouseDown={(e) => {
+              e.currentTarget.style.transform = 'translateY(-2px)';
+              e.currentTarget.style.boxShadow = '0 5px 10px rgba(5, 109, 141, 0.2)';
+            }}
+            onMouseUp={(e) => {
+              e.currentTarget.style.transform = 'translateY(-5px)';
+              e.currentTarget.style.boxShadow = selectedCard === 'all' ? '0 0 0 3px #3b82f6, 0 15px 25px rgba(5, 109, 141, 0.4)' : '0 15px 25px rgba(5, 109, 141, 0.4)';
+            }}
           >
             <div style={{
               display: 'flex',
@@ -1209,23 +1180,23 @@ function TechTransactionContent() {
             transition: 'all 0.3s ease',
             opacity: selectedCard === 'all' || selectedCard === 'new' ? 1 : 0.6,
           }}
-          onClick={() => setSelectedCard(selectedCard === 'new' ? 'all' : 'new')}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.transform = 'translateY(-5px)';
-            e.currentTarget.style.boxShadow = selectedCard === 'new' ? '0 0 0 3px #3b82f6, 0 15px 25px rgba(16, 185, 129, 0.4)' : '0 15px 25px rgba(16, 185, 129, 0.4)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.transform = 'translateY(0)';
-            e.currentTarget.style.boxShadow = selectedCard === 'new' ? '0 0 0 3px #3b82f6' : '0 8px 15px rgba(16, 185, 129, 0.3)';
-          }}
-          onMouseDown={(e) => {
-            e.currentTarget.style.transform = 'translateY(-2px)';
-            e.currentTarget.style.boxShadow = '0 5px 10px rgba(16, 185, 129, 0.2)';
-          }}
-          onMouseUp={(e) => {
-            e.currentTarget.style.transform = 'translateY(-5px)';
-            e.currentTarget.style.boxShadow = selectedCard === 'new' ? '0 0 0 3px #3b82f6, 0 15px 25px rgba(16, 185, 129, 0.4)' : '0 15px 25px rgba(16, 185, 129, 0.4)';
-          }}
+            onClick={() => setSelectedCard(selectedCard === 'new' ? 'all' : 'new')}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'translateY(-5px)';
+              e.currentTarget.style.boxShadow = selectedCard === 'new' ? '0 0 0 3px #3b82f6, 0 15px 25px rgba(16, 185, 129, 0.4)' : '0 15px 25px rgba(16, 185, 129, 0.4)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.boxShadow = selectedCard === 'new' ? '0 0 0 3px #3b82f6' : '0 8px 15px rgba(16, 185, 129, 0.3)';
+            }}
+            onMouseDown={(e) => {
+              e.currentTarget.style.transform = 'translateY(-2px)';
+              e.currentTarget.style.boxShadow = '0 5px 10px rgba(16, 185, 129, 0.2)';
+            }}
+            onMouseUp={(e) => {
+              e.currentTarget.style.transform = 'translateY(-5px)';
+              e.currentTarget.style.boxShadow = selectedCard === 'new' ? '0 0 0 3px #3b82f6, 0 15px 25px rgba(16, 185, 129, 0.4)' : '0 15px 25px rgba(16, 185, 129, 0.4)';
+            }}
           >
             {/* Background Area Chart */}
             <div style={{
@@ -1240,21 +1211,21 @@ function TechTransactionContent() {
                 <AreaChart data={monthlyChartData} margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
                   <defs>
                     <linearGradient id="colorNewTechs" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#ffffff" stopOpacity={0.6}/>
-                      <stop offset="95%" stopColor="#ffffff" stopOpacity={0}/>
+                      <stop offset="5%" stopColor="#ffffff" stopOpacity={0.6} />
+                      <stop offset="95%" stopColor="#ffffff" stopOpacity={0} />
                     </linearGradient>
                   </defs>
-                  <Area 
-                    type="monotone" 
-                    dataKey="ช่างใหม่" 
-                    stroke="#ffffff" 
+                  <Area
+                    type="monotone"
+                    dataKey="ช่างใหม่"
+                    stroke="#ffffff"
                     strokeWidth={2}
                     fill="url(#colorNewTechs)"
                   />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
-            
+
             {/* Content on top */}
             <div style={{
               position: 'relative',
@@ -1293,23 +1264,23 @@ function TechTransactionContent() {
             transition: 'all 0.3s ease',
             opacity: selectedCard === 'all' || selectedCard === 'resigned' ? 1 : 0.6,
           }}
-          onClick={() => setSelectedCard(selectedCard === 'resigned' ? 'all' : 'resigned')}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.transform = 'translateY(-5px)';
-            e.currentTarget.style.boxShadow = selectedCard === 'resigned' ? '0 0 0 3px #3b82f6, 0 15px 25px rgba(239, 68, 68, 0.4)' : '0 15px 25px rgba(239, 68, 68, 0.4)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.transform = 'translateY(0)';
-            e.currentTarget.style.boxShadow = selectedCard === 'resigned' ? '0 0 0 3px #3b82f6' : '0 8px 15px rgba(239, 68, 68, 0.3)';
-          }}
-          onMouseDown={(e) => {
-            e.currentTarget.style.transform = 'translateY(-2px)';
-            e.currentTarget.style.boxShadow = '0 5px 10px rgba(239, 68, 68, 0.2)';
-          }}
-          onMouseUp={(e) => {
-            e.currentTarget.style.transform = 'translateY(-5px)';
-            e.currentTarget.style.boxShadow = selectedCard === 'resigned' ? '0 0 0 3px #3b82f6, 0 15px 25px rgba(239, 68, 68, 0.4)' : '0 15px 25px rgba(239, 68, 68, 0.4)';
-          }}
+            onClick={() => setSelectedCard(selectedCard === 'resigned' ? 'all' : 'resigned')}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'translateY(-5px)';
+              e.currentTarget.style.boxShadow = selectedCard === 'resigned' ? '0 0 0 3px #3b82f6, 0 15px 25px rgba(239, 68, 68, 0.4)' : '0 15px 25px rgba(239, 68, 68, 0.4)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.boxShadow = selectedCard === 'resigned' ? '0 0 0 3px #3b82f6' : '0 8px 15px rgba(239, 68, 68, 0.3)';
+            }}
+            onMouseDown={(e) => {
+              e.currentTarget.style.transform = 'translateY(-2px)';
+              e.currentTarget.style.boxShadow = '0 5px 10px rgba(239, 68, 68, 0.2)';
+            }}
+            onMouseUp={(e) => {
+              e.currentTarget.style.transform = 'translateY(-5px)';
+              e.currentTarget.style.boxShadow = selectedCard === 'resigned' ? '0 0 0 3px #3b82f6, 0 15px 25px rgba(239, 68, 68, 0.4)' : '0 15px 25px rgba(239, 68, 68, 0.4)';
+            }}
           >
             {/* Background Area Chart */}
             <div style={{
@@ -1324,21 +1295,21 @@ function TechTransactionContent() {
                 <AreaChart data={monthlyChartData} margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
                   <defs>
                     <linearGradient id="colorResignedTechs" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#ffffff" stopOpacity={0.6}/>
-                      <stop offset="95%" stopColor="#ffffff" stopOpacity={0}/>
+                      <stop offset="5%" stopColor="#ffffff" stopOpacity={0.6} />
+                      <stop offset="95%" stopColor="#ffffff" stopOpacity={0} />
                     </linearGradient>
                   </defs>
-                  <Area 
-                    type="monotone" 
-                    dataKey="ช่างลาออก" 
-                    stroke="#ffffff" 
+                  <Area
+                    type="monotone"
+                    dataKey="ช่างลาออก"
+                    stroke="#ffffff"
                     strokeWidth={2}
                     fill="url(#colorResignedTechs)"
                   />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
-            
+
             {/* Content on top */}
             <div style={{
               position: 'relative',
@@ -1365,13 +1336,13 @@ function TechTransactionContent() {
 
           {/* Card 3: การเปลี่ยนแปลงสุทธิ */}
           <div style={{
-            background: statistics.netChange >= 0 
+            background: statistics.netChange >= 0
               ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
               : 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
             borderRadius: '12px',
             padding: '24px',
             color: 'white',
-            boxShadow: selectedCard === 'net' 
+            boxShadow: selectedCard === 'net'
               ? '0 0 0 3px #3b82f6'
               : (statistics.netChange >= 0
                 ? '0 8px 15px rgba(16, 185, 129, 0.3)'
@@ -1383,41 +1354,41 @@ function TechTransactionContent() {
             transition: 'all 0.3s ease',
             opacity: selectedCard === 'all' || selectedCard === 'net' ? 1 : 0.6,
           }}
-          onClick={() => setSelectedCard(selectedCard === 'net' ? 'all' : 'net')}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.transform = 'translateY(-5px)';
-            e.currentTarget.style.boxShadow = selectedCard === 'net'
-              ? (statistics.netChange >= 0
-                ? '0 0 0 3px #3b82f6, 0 15px 25px rgba(16, 185, 129, 0.4)'
-                : '0 0 0 3px #3b82f6, 0 15px 25px rgba(239, 68, 68, 0.4)')
-              : (statistics.netChange >= 0
-                ? '0 15px 25px rgba(16, 185, 129, 0.4)'
-                : '0 15px 25px rgba(239, 68, 68, 0.4)');
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.transform = 'translateY(0)';
-            e.currentTarget.style.boxShadow = selectedCard === 'net'
-              ? '0 0 0 3px #3b82f6'
-              : (statistics.netChange >= 0
-                ? '0 8px 15px rgba(16, 185, 129, 0.3)'
-                : '0 8px 15px rgba(239, 68, 68, 0.3)');
-          }}
-          onMouseDown={(e) => {
-            e.currentTarget.style.transform = 'translateY(-2px)';
-            e.currentTarget.style.boxShadow = statistics.netChange >= 0
-              ? '0 5px 10px rgba(16, 185, 129, 0.2)'
-              : '0 5px 10px rgba(239, 68, 68, 0.2)';
-          }}
-          onMouseUp={(e) => {
-            e.currentTarget.style.transform = 'translateY(-5px)';
-            e.currentTarget.style.boxShadow = selectedCard === 'net'
-              ? (statistics.netChange >= 0
-                ? '0 0 0 3px #3b82f6, 0 15px 25px rgba(16, 185, 129, 0.4)'
-                : '0 0 0 3px #3b82f6, 0 15px 25px rgba(239, 68, 68, 0.4)')
-              : (statistics.netChange >= 0
-                ? '0 15px 25px rgba(16, 185, 129, 0.4)'
-                : '0 15px 25px rgba(239, 68, 68, 0.4)');
-          }}
+            onClick={() => setSelectedCard(selectedCard === 'net' ? 'all' : 'net')}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'translateY(-5px)';
+              e.currentTarget.style.boxShadow = selectedCard === 'net'
+                ? (statistics.netChange >= 0
+                  ? '0 0 0 3px #3b82f6, 0 15px 25px rgba(16, 185, 129, 0.4)'
+                  : '0 0 0 3px #3b82f6, 0 15px 25px rgba(239, 68, 68, 0.4)')
+                : (statistics.netChange >= 0
+                  ? '0 15px 25px rgba(16, 185, 129, 0.4)'
+                  : '0 15px 25px rgba(239, 68, 68, 0.4)');
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.boxShadow = selectedCard === 'net'
+                ? '0 0 0 3px #3b82f6'
+                : (statistics.netChange >= 0
+                  ? '0 8px 15px rgba(16, 185, 129, 0.3)'
+                  : '0 8px 15px rgba(239, 68, 68, 0.3)');
+            }}
+            onMouseDown={(e) => {
+              e.currentTarget.style.transform = 'translateY(-2px)';
+              e.currentTarget.style.boxShadow = statistics.netChange >= 0
+                ? '0 5px 10px rgba(16, 185, 129, 0.2)'
+                : '0 5px 10px rgba(239, 68, 68, 0.2)';
+            }}
+            onMouseUp={(e) => {
+              e.currentTarget.style.transform = 'translateY(-5px)';
+              e.currentTarget.style.boxShadow = selectedCard === 'net'
+                ? (statistics.netChange >= 0
+                  ? '0 0 0 3px #3b82f6, 0 15px 25px rgba(16, 185, 129, 0.4)'
+                  : '0 0 0 3px #3b82f6, 0 15px 25px rgba(239, 68, 68, 0.4)')
+                : (statistics.netChange >= 0
+                  ? '0 15px 25px rgba(16, 185, 129, 0.4)'
+                  : '0 15px 25px rgba(239, 68, 68, 0.4)');
+            }}
           >
             {/* Background Area Chart */}
             <div style={{
@@ -1429,30 +1400,30 @@ function TechTransactionContent() {
               opacity: 0.3
             }}>
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart 
+                <AreaChart
                   data={monthlyChartData.map(item => ({
                     month: item.month,
                     net: item['ช่างใหม่'] - item['ช่างลาออก']
-                  }))} 
+                  }))}
                   margin={{ top: 0, right: 0, bottom: 0, left: 0 }}
                 >
                   <defs>
                     <linearGradient id="colorNetChange" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#ffffff" stopOpacity={0.6}/>
-                      <stop offset="95%" stopColor="#ffffff" stopOpacity={0}/>
+                      <stop offset="5%" stopColor="#ffffff" stopOpacity={0.6} />
+                      <stop offset="95%" stopColor="#ffffff" stopOpacity={0} />
                     </linearGradient>
                   </defs>
-                  <Area 
-                    type="monotone" 
-                    dataKey="net" 
-                    stroke="#ffffff" 
+                  <Area
+                    type="monotone"
+                    dataKey="net"
+                    stroke="#ffffff"
                     strokeWidth={2}
                     fill="url(#colorNetChange)"
                   />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
-            
+
             {/* Content on top */}
             <div style={{
               position: 'relative',
@@ -1477,7 +1448,7 @@ function TechTransactionContent() {
             </div>
           </div>
         </div>
-        
+
         {/* Card Selection Indicator */}
         {selectedCard !== 'all' && (
           <div style={{
@@ -1499,8 +1470,8 @@ function TechTransactionContent() {
               <span style={{ color: '#1e40af', fontWeight: '500' }}>
                 กำลังแสดงข้อมูล: {
                   selectedCard === 'new' ? 'ช่างใหม่' :
-                  selectedCard === 'resigned' ? 'ช่างลาออก' :
-                  'สุทธิ'
+                    selectedCard === 'resigned' ? 'ช่างลาออก' :
+                      'สุทธิ'
                 }
               </span>
             </div>
@@ -1539,7 +1510,7 @@ function TechTransactionContent() {
           }}>
             🔍 ตัวกรองข้อมูล
           </h3>
-          
+
           <div style={{
             display: 'grid',
             gridTemplateColumns: '1fr 1fr 1fr 1fr',
@@ -1548,9 +1519,9 @@ function TechTransactionContent() {
           }}>
             {/* Year Filter */}
             <div className="dropdown-container" style={{ position: 'relative' }}>
-              <label style={{ 
-                fontSize: '14px', 
-                fontWeight: '500', 
+              <label style={{
+                fontSize: '14px',
+                fontWeight: '500',
                 color: '#374151',
                 display: 'block',
                 marginBottom: '4px'
@@ -1572,7 +1543,7 @@ function TechTransactionContent() {
                   alignItems: 'center'
                 }}
               >
-                <span style={{ 
+                <span style={{
                   color: selectedYears.length > 0 ? '#000' : '#9ca3af',
                   display: 'flex',
                   alignItems: 'center',
@@ -1580,14 +1551,14 @@ function TechTransactionContent() {
                 }}>
                   <span>📅</span>
                   <span>
-                    {selectedYears.length > 0 
+                    {selectedYears.length > 0
                       ? `${selectedYears.length} selected`
                       : 'ทั้งหมด'}
                   </span>
                 </span>
                 <span style={{ fontSize: '12px' }}>▼</span>
               </div>
-              
+
               {yearDropdownOpen && (
                 <div style={{
                   position: 'absolute',
@@ -1603,7 +1574,7 @@ function TechTransactionContent() {
                   zIndex: 1000,
                   boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
                 }}>
-                  <div style={{ 
+                  <div style={{
                     padding: '8px',
                     borderBottom: '1px solid #e5e7eb',
                     display: 'flex',
@@ -1653,8 +1624,8 @@ function TechTransactionContent() {
                       cursor: 'pointer',
                       fontSize: '14px'
                     }}
-                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f3f4f6'}
-                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f3f4f6'}
+                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                     >
                       <input
                         type="checkbox"
@@ -1679,9 +1650,9 @@ function TechTransactionContent() {
 
             {/* Month Filter */}
             <div className="dropdown-container" style={{ position: 'relative' }}>
-              <label style={{ 
-                fontSize: '14px', 
-                fontWeight: '500', 
+              <label style={{
+                fontSize: '14px',
+                fontWeight: '500',
                 color: '#374151',
                 display: 'block',
                 marginBottom: '4px'
@@ -1703,7 +1674,7 @@ function TechTransactionContent() {
                   alignItems: 'center'
                 }}
               >
-                <span style={{ 
+                <span style={{
                   color: selectedMonths.length > 0 ? '#000' : '#9ca3af',
                   display: 'flex',
                   alignItems: 'center',
@@ -1711,14 +1682,14 @@ function TechTransactionContent() {
                 }}>
                   <span>📅</span>
                   <span>
-                    {selectedMonths.length > 0 
+                    {selectedMonths.length > 0
                       ? `${selectedMonths.length} selected`
                       : 'ทั้งหมด'}
                   </span>
                 </span>
                 <span style={{ fontSize: '12px' }}>▼</span>
               </div>
-              
+
               {monthDropdownOpen && (
                 <div style={{
                   position: 'absolute',
@@ -1734,7 +1705,7 @@ function TechTransactionContent() {
                   zIndex: 1000,
                   boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
                 }}>
-                  <div style={{ 
+                  <div style={{
                     padding: '8px',
                     borderBottom: '1px solid #e5e7eb',
                     display: 'flex',
@@ -1784,8 +1755,8 @@ function TechTransactionContent() {
                       cursor: 'pointer',
                       fontSize: '14px'
                     }}
-                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f3f4f6'}
-                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f3f4f6'}
+                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                     >
                       <input
                         type="checkbox"
@@ -1810,9 +1781,9 @@ function TechTransactionContent() {
 
             {/* Week Filter */}
             <div className="dropdown-container" style={{ position: 'relative' }}>
-              <label style={{ 
-                fontSize: '14px', 
-                fontWeight: '500', 
+              <label style={{
+                fontSize: '14px',
+                fontWeight: '500',
                 color: '#374151',
                 display: 'block',
                 marginBottom: '4px'
@@ -1834,7 +1805,7 @@ function TechTransactionContent() {
                   alignItems: 'center'
                 }}
               >
-                <span style={{ 
+                <span style={{
                   color: selectedWeeks.length > 0 ? '#000' : '#9ca3af',
                   display: 'flex',
                   alignItems: 'center',
@@ -1842,14 +1813,14 @@ function TechTransactionContent() {
                 }}>
                   <span>📅</span>
                   <span>
-                    {selectedWeeks.length > 0 
+                    {selectedWeeks.length > 0
                       ? `${selectedWeeks.length} selected`
                       : 'ทั้งหมด'}
                   </span>
                 </span>
                 <span style={{ fontSize: '12px' }}>▼</span>
               </div>
-              
+
               {weekDropdownOpen && (
                 <div style={{
                   position: 'absolute',
@@ -1865,7 +1836,7 @@ function TechTransactionContent() {
                   zIndex: 1000,
                   boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
                 }}>
-                  <div style={{ 
+                  <div style={{
                     padding: '8px',
                     borderBottom: '1px solid #e5e7eb',
                     display: 'flex',
@@ -1915,8 +1886,8 @@ function TechTransactionContent() {
                       cursor: 'pointer',
                       fontSize: '14px'
                     }}
-                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f3f4f6'}
-                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f3f4f6'}
+                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                     >
                       <input
                         type="checkbox"
@@ -1941,9 +1912,9 @@ function TechTransactionContent() {
 
             {/* Date Filter */}
             <div className="dropdown-container" style={{ position: 'relative' }}>
-              <label style={{ 
-                fontSize: '14px', 
-                fontWeight: '500', 
+              <label style={{
+                fontSize: '14px',
+                fontWeight: '500',
                 color: '#374151',
                 display: 'block',
                 marginBottom: '4px'
@@ -1965,7 +1936,7 @@ function TechTransactionContent() {
                   alignItems: 'center'
                 }}
               >
-                <span style={{ 
+                <span style={{
                   color: selectedDates.length > 0 ? '#000' : '#9ca3af',
                   display: 'flex',
                   alignItems: 'center',
@@ -1973,14 +1944,14 @@ function TechTransactionContent() {
                 }}>
                   <span>📅</span>
                   <span>
-                    {selectedDates.length > 0 
+                    {selectedDates.length > 0
                       ? `${selectedDates.length} selected`
                       : 'ทั้งหมด'}
                   </span>
                 </span>
                 <span style={{ fontSize: '12px' }}>▼</span>
               </div>
-              
+
               {dateDropdownOpen && (
                 <div style={{
                   position: 'absolute',
@@ -1996,7 +1967,7 @@ function TechTransactionContent() {
                   zIndex: 1000,
                   boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
                 }}>
-                  <div style={{ 
+                  <div style={{
                     padding: '8px',
                     borderBottom: '1px solid #e5e7eb',
                     display: 'flex',
@@ -2046,8 +2017,8 @@ function TechTransactionContent() {
                       cursor: 'pointer',
                       fontSize: '14px'
                     }}
-                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f3f4f6'}
-                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f3f4f6'}
+                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                     >
                       <input
                         type="checkbox"
@@ -2142,21 +2113,21 @@ function TechTransactionContent() {
                   margin={{ top: 160, right: 30, left: 20, bottom: 80 }}
                 >
                   <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                  <XAxis 
-                    dataKey="date" 
+                  <XAxis
+                    dataKey="date"
                     stroke="#6b7280"
                     style={{ fontSize: '11px' }}
                     angle={-45}
                     textAnchor="end"
                     height={80}
                   />
-                  <YAxis 
+                  <YAxis
                     stroke="#6b7280"
                     style={{ fontSize: '12px' }}
                     domain={[0, 'auto']}
                     ticks={[0, 5, 10, 15, 20]}
                   />
-                  <Tooltip 
+                  <Tooltip
                     contentStyle={{
                       backgroundColor: 'white',
                       border: '1px solid #e5e7eb',
@@ -2164,35 +2135,35 @@ function TechTransactionContent() {
                       padding: '12px'
                     }}
                   />
-                  <Legend 
+                  <Legend
                     wrapperStyle={{
                       paddingTop: '20px'
                     }}
                   />
-                  <Line 
-                    type="monotone" 
-                    dataKey="ช่างใหม่" 
-                    stroke="#10b981" 
+                  <Line
+                    type="monotone"
+                    dataKey="ช่างใหม่"
+                    stroke="#10b981"
                     strokeWidth={2}
                     dot={{ fill: '#10b981', r: 2 }}
                     activeDot={{ r: 4 }}
-                    label={{ 
-                      position: 'top', 
-                      fill: '#10b981', 
+                    label={{
+                      position: 'top',
+                      fill: '#10b981',
                       fontSize: 11,
                       formatter: (value: any) => (value && value > 0) ? value : ''
                     }}
                   />
-                  <Line 
-                    type="monotone" 
-                    dataKey="ช่างลาออก" 
-                    stroke="#ef4444" 
+                  <Line
+                    type="monotone"
+                    dataKey="ช่างลาออก"
+                    stroke="#ef4444"
                     strokeWidth={2}
                     dot={{ fill: '#ef4444', r: 2 }}
                     activeDot={{ r: 4 }}
-                    label={{ 
-                      position: 'top', 
-                      fill: '#ef4444', 
+                    label={{
+                      position: 'top',
+                      fill: '#ef4444',
                       fontSize: 11,
                       formatter: (value: any) => (value && value > 0) ? value : ''
                     }}
@@ -2310,10 +2281,10 @@ function TechTransactionContent() {
                         const { x, y, value, index } = props;
                         const data = monthlyChartData[index];
                         if (!data) return null;
-                        
+
                         const netChange = data['ช่างใหม่'] - data['ช่างลาออก'];
                         const color = netChange >= 0 ? '#10b981' : '#ef4444';
-                        
+
                         return (
                           <g>
                             <text
@@ -2366,7 +2337,7 @@ function TechTransactionContent() {
             { month: 'October 2025', total: 2938 },
             { month: 'November 2025', total: 2963 },
             { month: 'December 2025', total: 2896 },
-            { month: 'January 2026', total: currentTechnicianCount } // ใช้จำนวนจริงจากตาราง technicians
+            { month: 'January 2026', total: 2944 } // เปลี่ยนเป็น hard-coded
           ];
 
           // คำนวณจำนวนช่างลาออกจาก monthlyChartData
@@ -2379,7 +2350,7 @@ function TechTransactionContent() {
           const comparisonData = monthlyTechnicianData.map(item => {
             const resigned = resignedByMonth[item.month] || 0;
             const resignedPercent = item.total > 0 ? ((resigned / item.total) * 100).toFixed(1) : '0';
-            
+
             return {
               month: item.month,
               'ช่างทั้งหมด': item.total,
@@ -2390,21 +2361,21 @@ function TechTransactionContent() {
 
           // คำนวณข้อมูล Pie Chart สำหรับช่างลาออกแยกตาม Provider (ถึง December)
           const monthsToInclude = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-          
+
           // ใช้ filteredAllData เพื่อแสดงข้อมูลทั้งหมดที่ผ่าน filter (ไม่ใช่แค่หน้าปัจจุบัน)
-          const dataForPieChart = (selectedYears.length > 0 || selectedMonths.length > 0 || selectedWeeks.length > 0 || selectedDates.length > 0 || searchTerm) 
-            ? filteredAllData 
+          const dataForPieChart = (selectedYears.length > 0 || selectedMonths.length > 0 || selectedWeeks.length > 0 || selectedDates.length > 0 || searchTerm)
+            ? filteredAllData
             : allData;
-          
+
           const providerResignedData = dataForPieChart
             .filter((item: any) => {
               // กรองเฉพาะ Register = "ช่างลาออก" หรือ "Blacklist"
               const register = String(item.Register || '');
               if (!register.includes('ช่างลาออก') && !register.toLowerCase().includes('blacklist')) return false;
-              
+
               // กรองเฉพาะเดือนถึง September
               if (item.Month && !monthsToInclude.includes(item.Month)) return false;
-              
+
               // กรอง Provider ที่ต้องการ
               const provider = item.provider || item.Provider || '';
               return provider === 'WW-Provider' || provider === 'truetech' || provider === 'เถ้าแก่เทค';
@@ -2416,7 +2387,7 @@ function TechTransactionContent() {
             }, {});
 
           const totalResigned = Object.values(providerResignedData).reduce((sum: number, count: any) => sum + count, 0);
-          
+
           const pieData = Object.entries(providerResignedData).map(([provider, count]: [string, any]) => ({
             name: provider,
             value: count,
@@ -2457,19 +2428,19 @@ function TechTransactionContent() {
                     margin={{ top: 40, right: 30, left: 20, bottom: 80 }}
                   >
                     <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                    <XAxis 
-                      dataKey="month" 
+                    <XAxis
+                      dataKey="month"
                       stroke="#6b7280"
                       style={{ fontSize: '12px' }}
                       angle={-45}
                       textAnchor="end"
                       height={80}
                     />
-                    <YAxis 
+                    <YAxis
                       stroke="#6b7280"
                       style={{ fontSize: '12px' }}
                     />
-                    <Tooltip 
+                    <Tooltip
                       contentStyle={{
                         backgroundColor: 'white',
                         border: '1px solid #e5e7eb',
@@ -2483,31 +2454,31 @@ function TechTransactionContent() {
                         return [value.toLocaleString(), name];
                       }}
                     />
-                    <Legend 
+                    <Legend
                       wrapperStyle={{
                         paddingTop: '20px'
                       }}
                     />
-                    <Bar 
-                      dataKey="ช่างทั้งหมด" 
+                    <Bar
+                      dataKey="ช่างทั้งหมด"
                       fill="#10b981"
                       radius={[8, 8, 0, 0]}
                     >
-                      <LabelList 
-                        dataKey="ช่างทั้งหมด" 
-                        position="top" 
+                      <LabelList
+                        dataKey="ช่างทั้งหมด"
+                        position="top"
                         fill="#10b981"
                         fontSize={11}
                         fontWeight="600"
                         formatter={(value: any) => value.toLocaleString()}
                       />
                     </Bar>
-                    <Bar 
-                      dataKey="ช่างลาออก" 
+                    <Bar
+                      dataKey="ช่างลาออก"
                       fill="#ef4444"
                       radius={[8, 8, 0, 0]}
                     >
-                      <LabelList 
+                      <LabelList
                         dataKey="ช่างลาออก"
                         position="center"
                         fill="white"
@@ -2517,7 +2488,7 @@ function TechTransactionContent() {
                           const { x, y, width, value, index } = props;
                           const item = comparisonData[index];
                           if (!item || !value) return null;
-                          
+
                           return (
                             <text
                               x={x + width / 2}
@@ -2572,7 +2543,7 @@ function TechTransactionContent() {
                             <Cell key={`cell-${index}`} fill={COLORS[entry.name as keyof typeof COLORS] || '#9ca3af'} />
                           ))}
                         </Pie>
-                        <Tooltip 
+                        <Tooltip
                           formatter={(value: any, name: string, props: any) => {
                             return [`${value.toLocaleString()} คน (${props.payload.percent}%)`, name];
                           }}
@@ -2583,7 +2554,7 @@ function TechTransactionContent() {
                             padding: '12px'
                           }}
                         />
-                        <Legend 
+                        <Legend
                           verticalAlign="bottom"
                           height={36}
                         />
@@ -2634,53 +2605,53 @@ function TechTransactionContent() {
                   margin={{ top: 5, right: 30, left: 20, bottom: 80 }}
                 >
                   <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                  <XAxis 
-                    dataKey="rsm" 
+                  <XAxis
+                    dataKey="rsm"
                     stroke="#6b7280"
                     style={{ fontSize: '11px' }}
                     angle={-45}
                     textAnchor="end"
                     height={80}
                   />
-                <YAxis 
-                  stroke="#6b7280"
-                  style={{ fontSize: '12px' }}
-                />
-                <Tooltip 
-                  contentStyle={{
-                    backgroundColor: 'white',
-                    border: '1px solid #e5e7eb',
-                    borderRadius: '8px',
-                    padding: '12px'
-                  }}
-                />
-                <Legend 
-                  wrapperStyle={{
-                    paddingTop: '20px'
-                  }}
-                />
-                <Bar 
-                  dataKey="ช่างลาออก" 
-                  fill="#dc2626"
-                  label={{ 
-                    position: 'top', 
-                    fill: '#dc2626', 
-                    fontSize: 11,
-                    formatter: (value: any) => (value && value > 0) ? value : ''
-                  }}
-                />
-                <Bar 
-                  dataKey="ช่างใหม่" 
-                  fill="#059669"
-                  label={{ 
-                    position: 'top', 
-                    fill: '#059669', 
-                    fontSize: 11,
-                    formatter: (value: any) => (value && value > 0) ? value : ''
-                  }}
-                />
-              </BarChart>
-            </ResponsiveContainer>
+                  <YAxis
+                    stroke="#6b7280"
+                    style={{ fontSize: '12px' }}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: 'white',
+                      border: '1px solid #e5e7eb',
+                      borderRadius: '8px',
+                      padding: '12px'
+                    }}
+                  />
+                  <Legend
+                    wrapperStyle={{
+                      paddingTop: '20px'
+                    }}
+                  />
+                  <Bar
+                    dataKey="ช่างลาออก"
+                    fill="#dc2626"
+                    label={{
+                      position: 'top',
+                      fill: '#dc2626',
+                      fontSize: 11,
+                      formatter: (value: any) => (value && value > 0) ? value : ''
+                    }}
+                  />
+                  <Bar
+                    dataKey="ช่างใหม่"
+                    fill="#059669"
+                    label={{
+                      position: 'top',
+                      fill: '#059669',
+                      fontSize: 11,
+                      formatter: (value: any) => (value && value > 0) ? value : ''
+                    }}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
             </div>
 
             {/* Pivot Table */}
@@ -2763,55 +2734,55 @@ function TechTransactionContent() {
                         }}>เถ้าแก่เทค</th>
                       </tr>
                       <tr>
-                        <th style={{ 
-                          padding: '4px 2px', 
-                          border: '1px solid #2c5aa0', 
-                          backgroundColor: '#4472C4', 
+                        <th style={{
+                          padding: '4px 2px',
+                          border: '1px solid #2c5aa0',
+                          backgroundColor: '#4472C4',
                           color: 'white',
                           fontSize: '10px',
                           lineHeight: '1.2',
                           fontWeight: 'bold'
                         }}>ช่างใหม่</th>
-                        <th style={{ 
-                          padding: '4px 2px', 
-                          border: '1px solid #2c5aa0', 
-                          backgroundColor: '#4472C4', 
+                        <th style={{
+                          padding: '4px 2px',
+                          border: '1px solid #2c5aa0',
+                          backgroundColor: '#4472C4',
                           color: 'white',
                           fontSize: '10px',
                           lineHeight: '1.2',
                           fontWeight: 'bold'
                         }}>ช่างลาออก</th>
-                        <th style={{ 
-                          padding: '4px 2px', 
-                          border: '1px solid #2c5aa0', 
-                          backgroundColor: '#4472C4', 
+                        <th style={{
+                          padding: '4px 2px',
+                          border: '1px solid #2c5aa0',
+                          backgroundColor: '#4472C4',
                           color: 'white',
                           fontSize: '10px',
                           lineHeight: '1.2',
                           fontWeight: 'bold'
                         }}>ช่างใหม่</th>
-                        <th style={{ 
-                          padding: '4px 2px', 
-                          border: '1px solid #2c5aa0', 
-                          backgroundColor: '#4472C4', 
+                        <th style={{
+                          padding: '4px 2px',
+                          border: '1px solid #2c5aa0',
+                          backgroundColor: '#4472C4',
                           color: 'white',
                           fontSize: '10px',
                           lineHeight: '1.2',
                           fontWeight: 'bold'
                         }}>ช่างลาออก</th>
-                        <th style={{ 
-                          padding: '4px 2px', 
-                          border: '1px solid #2c5aa0', 
-                          backgroundColor: '#4472C4', 
+                        <th style={{
+                          padding: '4px 2px',
+                          border: '1px solid #2c5aa0',
+                          backgroundColor: '#4472C4',
                           color: 'white',
                           fontSize: '10px',
                           lineHeight: '1.2',
                           fontWeight: 'bold'
                         }}>ช่างใหม่</th>
-                        <th style={{ 
-                          padding: '4px 2px', 
-                          border: '1px solid #2c5aa0', 
-                          backgroundColor: '#4472C4', 
+                        <th style={{
+                          padding: '4px 2px',
+                          border: '1px solid #2c5aa0',
+                          backgroundColor: '#4472C4',
                           color: 'white',
                           fontSize: '10px',
                           lineHeight: '1.2',
@@ -2822,23 +2793,23 @@ function TechTransactionContent() {
                     <tbody>
                       {/* Grand Total Row */}
                       <tr style={{ backgroundColor: '#f9fafb', fontWeight: 'bold' }}>
-                        <td style={{ 
-                          padding: '2px 3px', 
+                        <td style={{
+                          padding: '2px 3px',
                           border: '1px solid #d1d5db',
                           fontSize: '10px',
                           lineHeight: '1.2'
                         }}>Grand Total</td>
-                        <td style={{ 
-                          padding: '2px 3px', 
-                          border: '1px solid #d1d5db', 
+                        <td style={{
+                          padding: '2px 3px',
+                          border: '1px solid #d1d5db',
                           textAlign: 'right',
                           fontSize: '10px',
                           lineHeight: '1.2'
                         }}>
                           {(() => {
-                            const netTotal = Object.values(pivotTableData).reduce((sum, providers) => 
-                              sum + Object.values(providers).reduce((pSum, workTypes) => 
-                                pSum + Object.values(workTypes).reduce((wSum, counts) => 
+                            const netTotal = Object.values(pivotTableData).reduce((sum, providers) =>
+                              sum + Object.values(providers).reduce((pSum, workTypes) =>
+                                pSum + Object.values(workTypes).reduce((wSum, counts) =>
                                   wSum + counts.new - counts.resigned, 0), 0), 0);
                             return (
                               <span style={{ color: netTotal < 0 ? '#dc2626' : 'inherit' }}>
@@ -2859,9 +2830,9 @@ function TechTransactionContent() {
                           });
                           return (
                             <>
-                              <td key={`${provider}-new`} style={{ 
-                                padding: '2px 3px', 
-                                border: '1px solid #d1d5db', 
+                              <td key={`${provider}-new`} style={{
+                                padding: '2px 3px',
+                                border: '1px solid #d1d5db',
                                 textAlign: 'right',
                                 fontSize: '10px',
                                 lineHeight: '1.2'
@@ -2870,9 +2841,9 @@ function TechTransactionContent() {
                                   {newTotal || ''}
                                 </span>
                               </td>
-                              <td key={`${provider}-resigned`} style={{ 
-                                padding: '2px 3px', 
-                                border: '1px solid #d1d5db', 
+                              <td key={`${provider}-resigned`} style={{
+                                padding: '2px 3px',
+                                border: '1px solid #d1d5db',
                                 textAlign: 'right',
                                 fontSize: '10px',
                                 lineHeight: '1.2',
@@ -2884,7 +2855,7 @@ function TechTransactionContent() {
                           );
                         })}
                       </tr>
-                      
+
                       {/* RSM Rows */}
                       {Object.keys(pivotTableData).sort().map(rsm => {
                         const providers = pivotTableData[rsm];
@@ -2897,15 +2868,15 @@ function TechTransactionContent() {
 
                         return (
                           <tr key={rsm}>
-                            <td style={{ 
-                              padding: '2px 3px', 
+                            <td style={{
+                              padding: '2px 3px',
                               border: '1px solid #d1d5db',
                               fontSize: '10px',
                               lineHeight: '1.2'
                             }}>{rsm}</td>
-                            <td style={{ 
-                              padding: '2px 3px', 
-                              border: '1px solid #d1d5db', 
+                            <td style={{
+                              padding: '2px 3px',
+                              border: '1px solid #d1d5db',
                               textAlign: 'right',
                               fontSize: '10px',
                               lineHeight: '1.2'
@@ -2924,9 +2895,9 @@ function TechTransactionContent() {
                               }
                               return (
                                 <>
-                                  <td key={`${rsm}-${provider}-new`} style={{ 
-                                    padding: '2px 3px', 
-                                    border: '1px solid #d1d5db', 
+                                  <td key={`${rsm}-${provider}-new`} style={{
+                                    padding: '2px 3px',
+                                    border: '1px solid #d1d5db',
                                     textAlign: 'right',
                                     fontSize: '10px',
                                     lineHeight: '1.2'
@@ -2935,9 +2906,9 @@ function TechTransactionContent() {
                                       {newCount || ''}
                                     </span>
                                   </td>
-                                  <td key={`${rsm}-${provider}-resigned`} style={{ 
-                                    padding: '2px 3px', 
-                                    border: '1px solid #d1d5db', 
+                                  <td key={`${rsm}-${provider}-resigned`} style={{
+                                    padding: '2px 3px',
+                                    border: '1px solid #d1d5db',
                                     textAlign: 'right',
                                     fontSize: '10px',
                                     lineHeight: '1.2',
@@ -2962,7 +2933,7 @@ function TechTransactionContent() {
         {/* Top 10 Depot Tables - Side by Side */}
         {(top10NewDepots.length > 0 || top10ResignedDepots.length > 0) && (
           <div>
-            {/* Month Filter for Top 10 Depot */}
+            {/* Year and Month Filter for Top 10 Depot */}
             <div style={{
               backgroundColor: '#203864',
               borderRadius: '12px',
@@ -2979,40 +2950,90 @@ function TechTransactionContent() {
               }}>
                 Ranking : จำนวน<span style={{ color: '#10b981' }}>ช่างใหม่</span>/<span style={{ color: '#ef4444' }}>ช่างลาออก</span> รายเดือน
               </h3>
-              <div style={{
-                display: 'flex',
-                flexWrap: 'wrap',
-                gap: '8px'
-              }}>
-                {['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'].map(month => (
-                  <button
-                    key={month}
-                    onClick={() => {
-                      if (selectedDepotMonths.includes(month)) {
-                        setSelectedDepotMonths(selectedDepotMonths.filter(m => m !== month));
-                      } else {
-                        setSelectedDepotMonths([...selectedDepotMonths, month]);
-                      }
-                    }}
-                    style={{
-                      padding: '8px 16px',
-                      borderRadius: '8px',
-                      border: 'none',
-                      fontSize: '14px',
-                      fontWeight: '500',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s',
-                      backgroundColor: selectedDepotMonths.includes(month) ? '#ffffff' : 'rgba(255,255,255,0.2)',
-                      color: selectedDepotMonths.includes(month) ? '#203864' : 'white'
-                    }}
-                  >
-                    {month}
-                  </button>
-                ))}
+
+              {/* Year Filter */}
+              <div style={{ marginBottom: '12px' }}>
+                <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: '12px', marginBottom: '6px' }}>
+                  📅 เลือกปี
+                </div>
+                <div style={{
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  gap: '8px'
+                }}>
+                  {['2025', '2026'].map(year => (
+                    <button
+                      key={year}
+                      onClick={() => {
+                        if (selectedDepotYears.includes(year)) {
+                          setSelectedDepotYears(selectedDepotYears.filter(y => y !== year));
+                        } else {
+                          setSelectedDepotYears([...selectedDepotYears, year]);
+                        }
+                      }}
+                      style={{
+                        padding: '8px 20px',
+                        borderRadius: '8px',
+                        border: 'none',
+                        fontSize: '14px',
+                        fontWeight: '600',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s',
+                        backgroundColor: selectedDepotYears.includes(year) ? '#10b981' : 'rgba(255,255,255,0.2)',
+                        color: selectedDepotYears.includes(year) ? 'white' : 'white'
+                      }}
+                    >
+                      {year}
+                    </button>
+                  ))}
+                </div>
               </div>
-              {selectedDepotMonths.length > 0 && (
+
+              {/* Month Filter */}
+              <div>
+                <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: '12px', marginBottom: '6px' }}>
+                  📆 เลือกเดือน
+                </div>
+                <div style={{
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  gap: '8px'
+                }}>
+                  {['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'].map(month => (
+                    <button
+                      key={month}
+                      onClick={() => {
+                        if (selectedDepotMonths.includes(month)) {
+                          setSelectedDepotMonths(selectedDepotMonths.filter(m => m !== month));
+                        } else {
+                          setSelectedDepotMonths([...selectedDepotMonths, month]);
+                        }
+                      }}
+                      style={{
+                        padding: '8px 16px',
+                        borderRadius: '8px',
+                        border: 'none',
+                        fontSize: '14px',
+                        fontWeight: '500',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s',
+                        backgroundColor: selectedDepotMonths.includes(month) ? '#ffffff' : 'rgba(255,255,255,0.2)',
+                        color: selectedDepotMonths.includes(month) ? '#203864' : 'white'
+                      }}
+                    >
+                      {month}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Clear Button */}
+              {(selectedDepotMonths.length > 0 || selectedDepotYears.length > 0) && (
                 <button
-                  onClick={() => setSelectedDepotMonths([])}
+                  onClick={() => {
+                    setSelectedDepotMonths([]);
+                    setSelectedDepotYears([]);
+                  }}
                   style={{
                     padding: '6px 12px',
                     borderRadius: '6px',
@@ -3021,10 +3042,12 @@ function TechTransactionContent() {
                     cursor: 'pointer',
                     backgroundColor: 'transparent',
                     color: 'white',
-                    marginTop: '8px'
+                    marginTop: '12px'
                   }}
                 >
-                  ล้างการเลือก ({selectedDepotMonths.length} เดือน)
+                  ล้างการเลือก
+                  {selectedDepotYears.length > 0 && ` (${selectedDepotYears.length} ปี)`}
+                  {selectedDepotMonths.length > 0 && ` (${selectedDepotMonths.length} เดือน)`}
                 </button>
               )}
             </div>
@@ -3035,228 +3058,228 @@ function TechTransactionContent() {
               gap: '24px',
               marginBottom: '32px'
             }}>
-            {/* Top 10 Depot - New Technicians */}
-            {top10NewDepots.length > 0 && (
-              <div style={{
-                backgroundColor: '#f9fafb',
-                borderRadius: '12px',
-                padding: '10px',
-                boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
-              }}>
-                <h2 style={{
-                  fontSize: '18px',
-                  fontWeight: '600',
-                  color: '#374151',
-                  marginBottom: '16px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px'
+              {/* Top 10 Depot - New Technicians */}
+              {top10NewDepots.length > 0 && (
+                <div style={{
+                  backgroundColor: '#f9fafb',
+                  borderRadius: '12px',
+                  padding: '10px',
+                  boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
                 }}>
-                  <span style={{
-                    display: 'inline-block',
-                    width: '4px',
-                    height: '20px',
-                    backgroundColor: '#059669',
-                    borderRadius: '2px'
-                  }}></span>
-                  Top 10 Depot - ช่างใหม่
-                </h2>
-                <div style={{ overflowX: 'auto' }}>
-                  <table style={{
-                    width: '100%',
-                    borderCollapse: 'collapse',
-                    fontSize: '14px',
-                    backgroundColor: 'white',
-                    borderRadius: '8px',
-                    overflow: 'hidden'
+                  <h2 style={{
+                    fontSize: '18px',
+                    fontWeight: '600',
+                    color: '#374151',
+                    marginBottom: '16px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px'
                   }}>
-                    <thead>
-                      <tr style={{ backgroundColor: '#f0fdf4' }}>
-                        <th style={{
-                          padding: '12px 16px',
-                          textAlign: 'center',
-                          fontWeight: '600',
-                          color: '#059669',
-                          borderBottom: '2px solid #059669',
-                          width: '60px'
-                        }}>
-                          อันดับ
-                        </th>
-                        <th style={{
-                          padding: '12px 16px',
-                          textAlign: 'left',
-                          fontWeight: '600',
-                          color: '#059669',
-                          borderBottom: '2px solid #059669'
-                        }}>
-                          Depot Name
-                        </th>
-                        <th style={{
-                          padding: '12px 16px',
-                          textAlign: 'center',
-                          fontWeight: '600',
-                          color: '#059669',
-                          borderBottom: '2px solid #059669',
-                          width: '100px'
-                        }}>
-                          จำนวน
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {top10NewDepots.map((item, index) => (
-                        <tr key={index} style={{
-                          borderBottom: '1px solid #e5e7eb',
-                          transition: 'background-color 0.2s'
-                        }}
-                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f0fdf4'}
-                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                        >
-                          <td style={{
-                            padding: '12px 16px',
-                            textAlign: 'center',
-                            fontWeight: '600',
-                            color: index < 3 ? '#059669' : '#6b7280'
-                          }}>
-                            {index === 0 && '🥇'}
-                            {index === 1 && '🥈'}
-                            {index === 2 && '🥉'}
-                            {index > 2 && (index + 1)}
-                          </td>
-                          <td style={{
-                            padding: '12px 16px',
-                            color: '#374151'
-                          }}>
-                            {item.depot}
-                          </td>
-                          <td style={{
+                    <span style={{
+                      display: 'inline-block',
+                      width: '4px',
+                      height: '20px',
+                      backgroundColor: '#059669',
+                      borderRadius: '2px'
+                    }}></span>
+                    Top 10 Depot - ช่างใหม่
+                  </h2>
+                  <div style={{ overflowX: 'auto' }}>
+                    <table style={{
+                      width: '100%',
+                      borderCollapse: 'collapse',
+                      fontSize: '14px',
+                      backgroundColor: 'white',
+                      borderRadius: '8px',
+                      overflow: 'hidden'
+                    }}>
+                      <thead>
+                        <tr style={{ backgroundColor: '#f0fdf4' }}>
+                          <th style={{
                             padding: '12px 16px',
                             textAlign: 'center',
                             fontWeight: '600',
                             color: '#059669',
-                            fontSize: '16px'
+                            borderBottom: '2px solid #059669',
+                            width: '60px'
                           }}>
-                            {item.count.toLocaleString()}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
-
-            {/* Top 10 Depot - Resigned Technicians */}
-            {top10ResignedDepots.length > 0 && (
-              <div style={{
-                backgroundColor: '#f9fafb',
-                borderRadius: '12px',
-                padding: '10px',
-                boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
-              }}>
-                <h2 style={{
-                  fontSize: '18px',
-                  fontWeight: '600',
-                  color: '#374151',
-                  marginBottom: '16px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px'
-                }}>
-                  <span style={{
-                    display: 'inline-block',
-                    width: '4px',
-                    height: '20px',
-                    backgroundColor: '#dc2626',
-                    borderRadius: '2px'
-                  }}></span>
-                  Top 10 Depot - ช่างลาออก
-                </h2>
-                <div style={{ overflowX: 'auto' }}>
-                  <table style={{
-                    width: '100%',
-                    borderCollapse: 'collapse',
-                    fontSize: '14px',
-                    backgroundColor: 'white',
-                    borderRadius: '8px',
-                    overflow: 'hidden'
-                  }}>
-                    <thead>
-                      <tr style={{ backgroundColor: '#fef2f2' }}>
-                        <th style={{
-                          padding: '12px 16px',
-                          textAlign: 'center',
-                          fontWeight: '600',
-                          color: '#dc2626',
-                          borderBottom: '2px solid #dc2626',
-                          width: '60px'
-                        }}>
-                          อันดับ
-                        </th>
-                        <th style={{
-                          padding: '12px 16px',
-                          textAlign: 'left',
-                          fontWeight: '600',
-                          color: '#dc2626',
-                          borderBottom: '2px solid #dc2626'
-                        }}>
-                          Depot Name
-                        </th>
-                        <th style={{
-                          padding: '12px 16px',
-                          textAlign: 'center',
-                          fontWeight: '600',
-                          color: '#dc2626',
-                          borderBottom: '2px solid #dc2626',
-                          width: '100px'
-                        }}>
-                          จำนวน
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {top10ResignedDepots.map((item, index) => (
-                        <tr key={index} style={{
-                          borderBottom: '1px solid #e5e7eb',
-                          transition: 'background-color 0.2s'
-                        }}
-                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#fef2f2'}
-                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                        >
-                          <td style={{
+                            อันดับ
+                          </th>
+                          <th style={{
+                            padding: '12px 16px',
+                            textAlign: 'left',
+                            fontWeight: '600',
+                            color: '#059669',
+                            borderBottom: '2px solid #059669'
+                          }}>
+                            Depot Name
+                          </th>
+                          <th style={{
                             padding: '12px 16px',
                             textAlign: 'center',
                             fontWeight: '600',
-                            color: index < 3 ? '#dc2626' : '#6b7280'
+                            color: '#059669',
+                            borderBottom: '2px solid #059669',
+                            width: '100px'
                           }}>
-                            {index === 0 && '🥇'}
-                            {index === 1 && '🥈'}
-                            {index === 2 && '🥉'}
-                            {index > 2 && (index + 1)}
-                          </td>
-                          <td style={{
-                            padding: '12px 16px',
-                            color: '#374151'
-                          }}>
-                            {item.depot}
-                          </td>
-                          <td style={{
+                            จำนวน
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {top10NewDepots.map((item, index) => (
+                          <tr key={index} style={{
+                            borderBottom: '1px solid #e5e7eb',
+                            transition: 'background-color 0.2s'
+                          }}
+                            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f0fdf4'}
+                            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                          >
+                            <td style={{
+                              padding: '12px 16px',
+                              textAlign: 'center',
+                              fontWeight: '600',
+                              color: index < 3 ? '#059669' : '#6b7280'
+                            }}>
+                              {index === 0 && '🥇'}
+                              {index === 1 && '🥈'}
+                              {index === 2 && '🥉'}
+                              {index > 2 && (index + 1)}
+                            </td>
+                            <td style={{
+                              padding: '12px 16px',
+                              color: '#374151'
+                            }}>
+                              {item.depot}
+                            </td>
+                            <td style={{
+                              padding: '12px 16px',
+                              textAlign: 'center',
+                              fontWeight: '600',
+                              color: '#059669',
+                              fontSize: '16px'
+                            }}>
+                              {item.count.toLocaleString()}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              {/* Top 10 Depot - Resigned Technicians */}
+              {top10ResignedDepots.length > 0 && (
+                <div style={{
+                  backgroundColor: '#f9fafb',
+                  borderRadius: '12px',
+                  padding: '10px',
+                  boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
+                }}>
+                  <h2 style={{
+                    fontSize: '18px',
+                    fontWeight: '600',
+                    color: '#374151',
+                    marginBottom: '16px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px'
+                  }}>
+                    <span style={{
+                      display: 'inline-block',
+                      width: '4px',
+                      height: '20px',
+                      backgroundColor: '#dc2626',
+                      borderRadius: '2px'
+                    }}></span>
+                    Top 10 Depot - ช่างลาออก
+                  </h2>
+                  <div style={{ overflowX: 'auto' }}>
+                    <table style={{
+                      width: '100%',
+                      borderCollapse: 'collapse',
+                      fontSize: '14px',
+                      backgroundColor: 'white',
+                      borderRadius: '8px',
+                      overflow: 'hidden'
+                    }}>
+                      <thead>
+                        <tr style={{ backgroundColor: '#fef2f2' }}>
+                          <th style={{
                             padding: '12px 16px',
                             textAlign: 'center',
                             fontWeight: '600',
                             color: '#dc2626',
-                            fontSize: '16px'
+                            borderBottom: '2px solid #dc2626',
+                            width: '60px'
                           }}>
-                            {item.count.toLocaleString()}
-                          </td>
+                            อันดับ
+                          </th>
+                          <th style={{
+                            padding: '12px 16px',
+                            textAlign: 'left',
+                            fontWeight: '600',
+                            color: '#dc2626',
+                            borderBottom: '2px solid #dc2626'
+                          }}>
+                            Depot Name
+                          </th>
+                          <th style={{
+                            padding: '12px 16px',
+                            textAlign: 'center',
+                            fontWeight: '600',
+                            color: '#dc2626',
+                            borderBottom: '2px solid #dc2626',
+                            width: '100px'
+                          }}>
+                            จำนวน
+                          </th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody>
+                        {top10ResignedDepots.map((item, index) => (
+                          <tr key={index} style={{
+                            borderBottom: '1px solid #e5e7eb',
+                            transition: 'background-color 0.2s'
+                          }}
+                            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#fef2f2'}
+                            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                          >
+                            <td style={{
+                              padding: '12px 16px',
+                              textAlign: 'center',
+                              fontWeight: '600',
+                              color: index < 3 ? '#dc2626' : '#6b7280'
+                            }}>
+                              {index === 0 && '🥇'}
+                              {index === 1 && '🥈'}
+                              {index === 2 && '🥉'}
+                              {index > 2 && (index + 1)}
+                            </td>
+                            <td style={{
+                              padding: '12px 16px',
+                              color: '#374151'
+                            }}>
+                              {item.depot}
+                            </td>
+                            <td style={{
+                              padding: '12px 16px',
+                              textAlign: 'center',
+                              fontWeight: '600',
+                              color: '#dc2626',
+                              fontSize: '16px'
+                            }}>
+                              {item.count.toLocaleString()}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
-              </div>
-            )}
-          </div>
+              )}
+            </div>
           </div>
         )}
 
@@ -3326,7 +3349,7 @@ function TechTransactionContent() {
           marginBottom: '16px'
         }}>
           แสดง {filteredData.length} รายการ จากทั้งหมด {filteredTotalCount.toLocaleString()} รายการ
-          {(selectedYears.length > 0 || selectedMonths.length > 0 || selectedWeeks.length > 0 || selectedDates.length > 0 || searchTerm) && 
+          {(selectedYears.length > 0 || selectedMonths.length > 0 || selectedWeeks.length > 0 || selectedDates.length > 0 || searchTerm) &&
             ` (${(selectedYears.length > 0 || selectedMonths.length > 0 || selectedWeeks.length > 0 || selectedDates.length > 0) ? 'กรองตาม Filter' : ''}${searchTerm ? ` ค้นหา "${searchTerm}"` : ''})`
           }
         </div>
@@ -3391,8 +3414,8 @@ function TechTransactionContent() {
                     borderBottom: '1px solid #e5e7eb',
                     transition: 'background-color 0.2s'
                   }}
-                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f9fafb'}
-                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'white'}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f9fafb'}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'white'}
                   >
                     <td style={{ padding: '16px', color: '#6b7280' }}>
                       {(currentPage - 1) * itemsPerPage + index + 1}
