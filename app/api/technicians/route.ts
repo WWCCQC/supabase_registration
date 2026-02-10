@@ -15,7 +15,7 @@ export async function GET(req: Request) {
     console.log('🔧 API Environment check:');
     console.log('NEXT_PUBLIC_SUPABASE_URL:', process.env.NEXT_PUBLIC_SUPABASE_URL ? '✅' : '❌');
     console.log('SUPABASE_SERVICE_ROLE:', process.env.SUPABASE_SERVICE_ROLE ? '✅' : '❌');
-    
+
     const url = new URL(req.url);
     const page = Math.max(1, Number(url.searchParams.get("page") ?? "1"));
     // Allow larger pageSize for export (up to 5000)
@@ -23,36 +23,37 @@ export async function GET(req: Request) {
     const pageSize = Math.min(5000, Math.max(1, requestedPageSize));
 
     const f_national_id = url.searchParams.get("national_id") || "";
-    const f_tech_id     = url.searchParams.get("tech_id") || "";
-    const f_rsm         = url.searchParams.get("rsm") || "";
-    const f_ctm         = url.searchParams.get("ctm") || "";
-    const f_depot_code  = url.searchParams.get("depot_code") || "";
+    const f_tech_id = url.searchParams.get("tech_id") || "";
+    const f_rsm = url.searchParams.get("rsm") || "";
+    const f_ctm = url.searchParams.get("ctm") || "";
+    const f_depot_code = url.searchParams.get("depot_code") || "";
     const f_power_authority = url.searchParams.get("power_authority") || "";
     const f_training_type = url.searchParams.get("training_type") || "";
-    const q             = sanitizeQ(url.searchParams.get("q"));
+    const q = sanitizeQ(url.searchParams.get("q"));
 
     const from = (page - 1) * pageSize;
-    const to   = from + pageSize - 1;
+    const to = from + pageSize - 1;
 
     // Define service/training columns
     const serviceColumns = [
-      "svc_install","svc_repair","svc_ojt","svc_safety","svc_softskill","svc_5p",
-      "svc_nonstandard","svc_corporate","svc_solar","svc_fttr","svc_2g","svc_cctv",
-      "svc_cyod","svc_dongle","svc_iot","svc_gigatex","svc_wifi","svc_smarthome",
-      "svc_catv_settop_box","svc_true_id","svc_true_inno","svc_l3"
+      "svc_install", "svc_repair", "svc_ojt", "svc_safety", "svc_softskill", "svc_5p",
+      "svc_nonstandard", "svc_corporate", "svc_solar", "svc_fttr", "svc_2g", "svc_cctv",
+      "svc_cyod", "svc_dongle", "svc_iot", "svc_gigatex", "svc_wifi", "svc_smarthome",
+      "svc_catv_settop_box", "svc_true_id", "svc_true_inno", "svc_l3",
+      "Course_G", "Course_EC", "Course_H"
     ];
 
     const cols = [
-      "national_id","tech_id","full_name","gender","age","degree",
-      "doc_tech_card_url","phone","email","workgroup_status","work_type",
-      "provider","area","RBM","CBM","depot_code","depot_name","province",
-      "power_authority",...serviceColumns
+      "national_id", "tech_id", "full_name", "gender", "age", "degree",
+      "doc_tech_card_url", "phone", "email", "workgroup_status", "work_type",
+      "provider", "area", "RBM", "CBM", "depot_code", "depot_name", "province",
+      "power_authority", ...serviceColumns
     ] as const;
 
     // sort params - map rsm/ctm to RBM/CBM
     const sortParam = (url.searchParams.get("sort") || "national_id").toLowerCase();
-    const dirParam  = (url.searchParams.get("dir")  || "asc").toLowerCase();
-    
+    const dirParam = (url.searchParams.get("dir") || "asc").toLowerCase();
+
     // Map lowercase column names to actual database column names
     let sort: string;
     if (sortParam === "rsm") {
@@ -65,17 +66,17 @@ export async function GET(req: Request) {
     const ascending = dirParam !== "desc";
 
     const supabase = supabaseAdmin();
-    
+
     // Query สำหรับนับจำนวนทั้งหมด (ไม่ใช้ range)
     let countQuery = supabase.from("technicians").select("*", { count: "exact", head: true });
 
     if (f_national_id) countQuery = countQuery.ilike("national_id", `%${f_national_id}%`);
-    if (f_tech_id)     countQuery = countQuery.ilike("tech_id",     `%${f_tech_id}%`);
-    if (f_rsm)         countQuery = countQuery.ilike("RBM",         `%${f_rsm}%`);
-    if (f_ctm)         countQuery = countQuery.ilike("CBM",         `%${f_ctm}%`);
-    if (f_depot_code)  countQuery = countQuery.ilike("depot_code",  `%${f_depot_code}%`);
+    if (f_tech_id) countQuery = countQuery.ilike("tech_id", `%${f_tech_id}%`);
+    if (f_rsm) countQuery = countQuery.ilike("RBM", `%${f_rsm}%`);
+    if (f_ctm) countQuery = countQuery.ilike("CBM", `%${f_ctm}%`);
+    if (f_depot_code) countQuery = countQuery.ilike("depot_code", `%${f_depot_code}%`);
     if (f_power_authority) countQuery = countQuery.eq("power_authority", f_power_authority);
-    
+
     // กรองตามประเภทการอบรม - ค้นหาคอลัมน์ที่มีค่า "Pass"
     if (f_training_type) {
       // ตรวจสอบว่าค่าที่เลือกอยู่ในรายการที่รองรับ
@@ -87,7 +88,7 @@ export async function GET(req: Request) {
     if (q) {
       // Check if query matches a service column name (e.g., "iot" -> "svc_iot")
       const qLower = q.toLowerCase();
-      const matchedServiceCol = serviceColumns.find(col => 
+      const matchedServiceCol = serviceColumns.find(col =>
         col.toLowerCase().includes(qLower) || col.replace('svc_', '').toLowerCase() === qLower
       );
 
@@ -104,7 +105,7 @@ export async function GET(req: Request) {
     }
 
     const { count, error: countError } = await countQuery;
-    
+
     if (countError) {
       console.error('❌ Count error:', countError);
       return NextResponse.json({ error: countError.message }, { status: 400 });
@@ -112,14 +113,14 @@ export async function GET(req: Request) {
 
     // Query สำหรับดึงข้อมูลหน้าปัจจุบัน (ใช้ range)
     let dataQuery = supabase.from("technicians").select("*");
-    
+
     if (f_national_id) dataQuery = dataQuery.ilike("national_id", `%${f_national_id}%`);
-    if (f_tech_id)     dataQuery = dataQuery.ilike("tech_id",     `%${f_tech_id}%`);
-    if (f_rsm)         dataQuery = dataQuery.ilike("RBM",         `%${f_rsm}%`);
-    if (f_ctm)         dataQuery = dataQuery.ilike("CBM",         `%${f_ctm}%`);
-    if (f_depot_code)  dataQuery = dataQuery.ilike("depot_code",  `%${f_depot_code}%`);
+    if (f_tech_id) dataQuery = dataQuery.ilike("tech_id", `%${f_tech_id}%`);
+    if (f_rsm) dataQuery = dataQuery.ilike("RBM", `%${f_rsm}%`);
+    if (f_ctm) dataQuery = dataQuery.ilike("CBM", `%${f_ctm}%`);
+    if (f_depot_code) dataQuery = dataQuery.ilike("depot_code", `%${f_depot_code}%`);
     if (f_power_authority) dataQuery = dataQuery.eq("power_authority", f_power_authority);
-    
+
     // กรองตามประเภทการอบรม - ค้นหาคอลัมน์ที่มีค่า "Pass"
     if (f_training_type) {
       // ตรวจสอบว่าค่าที่เลือกอยู่ในรายการที่รองรับ
@@ -131,7 +132,7 @@ export async function GET(req: Request) {
     if (q) {
       // Check if query matches a service column name (e.g., "iot" -> "svc_iot")
       const qLower = q.toLowerCase();
-      const matchedServiceCol = serviceColumns.find(col => 
+      const matchedServiceCol = serviceColumns.find(col =>
         col.toLowerCase().includes(qLower) || col.replace('svc_', '').toLowerCase() === qLower
       );
 
@@ -151,56 +152,59 @@ export async function GET(req: Request) {
     dataQuery = dataQuery.order(sort, { ascending, nullsFirst: true }).range(from, to);
 
     const { data, error } = await dataQuery;
-    
+
     console.log('📊 Query result - Total matching records:', count, '| Displaying:', data?.length, 'records (page', page, ')');
-    
+
     if (error) {
       console.error('❌ Supabase error:', error);
       return NextResponse.json({ error: error.message }, { status: 400 });
     }
 
     const rows = (data ?? []).map((r: any) => ({
-      national_id:        r.national_id        ?? null,
-      tech_id:            r.tech_id            ?? null,
-      full_name:          r.full_name          ?? (r.tech_first_name && r.tech_last_name
-                               ? `${r.tech_first_name} ${r.tech_last_name}`
-                               : (r.tech_first_name ?? r.tech_last_name ?? null)),
-      gender:             r.gender             ?? null,
-      age:                r.age                ?? null,
-      degree:             r.degree             ?? null,
-      doc_tech_card_url:  r.doc_tech_card_url  ?? r.tech_card_url ?? null,
-      phone:              r.phone              ?? r.tel ?? null,
-      email:              r.email              ?? null,
-      workgroup_status:   r.workgroup_status   ?? r.status ?? null,
-      work_type:          r.work_type          ?? r.team_type ?? null,
-      provider:           r.provider           ?? null,
-      area:               r.area               ?? null,
-      rsm:                r.RBM                ?? null,
-      ctm:                r.CBM                ?? null,
-      depot_code:         r.depot_code         ?? null,
-      depot_name:         r.depot_name         ?? null,
-      province:           r.province           ?? r.ctm_province ?? null,
-      power_authority:    r.power_authority    ?? null,
-      card_expire_date:   r.card_expire_date   ?? null,
+      national_id: r.national_id ?? null,
+      tech_id: r.tech_id ?? null,
+      full_name: r.full_name ?? (r.tech_first_name && r.tech_last_name
+        ? `${r.tech_first_name} ${r.tech_last_name}`
+        : (r.tech_first_name ?? r.tech_last_name ?? null)),
+      gender: r.gender ?? null,
+      age: r.age ?? null,
+      degree: r.degree ?? null,
+      doc_tech_card_url: r.doc_tech_card_url ?? r.tech_card_url ?? null,
+      phone: r.phone ?? r.tel ?? null,
+      email: r.email ?? null,
+      workgroup_status: r.workgroup_status ?? r.status ?? null,
+      work_type: r.work_type ?? r.team_type ?? null,
+      provider: r.provider ?? null,
+      area: r.area ?? null,
+      rsm: r.RBM ?? null,
+      ctm: r.CBM ?? null,
+      depot_code: r.depot_code ?? null,
+      depot_name: r.depot_name ?? null,
+      province: r.province ?? r.ctm_province ?? null,
+      power_authority: r.power_authority ?? null,
+      card_expire_date: r.card_expire_date ?? null,
       // Service columns
-      svc_install:        r.svc_install        ?? null,
-      svc_repair:         r.svc_repair         ?? null,
-      svc_nonstandard:    r.svc_nonstandard    ?? null,
-      svc_corporate:      r.svc_corporate      ?? null,
-      svc_solar:          r.svc_solar          ?? null,
-      svc_fttr:           r.svc_fttr           ?? null,
-      svc_2g:             r.svc_2g             ?? null,
-      svc_cctv:           r.svc_cctv           ?? null,
-      svc_cyod:           r.svc_cyod           ?? null,
-      svc_dongle:         r.svc_dongle         ?? null,
-      svc_iot:            r.svc_iot            ?? null,
-      svc_gigatex:        r.svc_gigatex        ?? null,
-      svc_wifi:           r.svc_wifi           ?? null,
-      svc_smarthome:      r.svc_smarthome      ?? null,
+      svc_install: r.svc_install ?? null,
+      svc_repair: r.svc_repair ?? null,
+      svc_nonstandard: r.svc_nonstandard ?? null,
+      svc_corporate: r.svc_corporate ?? null,
+      svc_solar: r.svc_solar ?? null,
+      svc_fttr: r.svc_fttr ?? null,
+      svc_2g: r.svc_2g ?? null,
+      svc_cctv: r.svc_cctv ?? null,
+      svc_cyod: r.svc_cyod ?? null,
+      svc_dongle: r.svc_dongle ?? null,
+      svc_iot: r.svc_iot ?? null,
+      svc_gigatex: r.svc_gigatex ?? null,
+      svc_wifi: r.svc_wifi ?? null,
+      svc_smarthome: r.svc_smarthome ?? null,
       svc_catv_settop_box: r.svc_catv_settop_box ?? null,
-      svc_true_id:        r.svc_true_id        ?? null,
-      svc_true_inno:      r.svc_true_inno      ?? null,
-      svc_l3:             r.svc_l3             ?? null,
+      svc_true_id: r.svc_true_id ?? null,
+      svc_true_inno: r.svc_true_inno ?? null,
+      svc_l3: r.svc_l3 ?? null,
+      course_g: r.Course_G ?? null,
+      course_ec: r.Course_EC ?? null,
+      course_h: r.Course_H ?? null,
     }));
 
     const total = count ?? 0;

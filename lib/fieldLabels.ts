@@ -19,14 +19,14 @@ export const FIELD_LABELS: Record<string, string> = {
   email: "อีเมล",
   card_register_date: "วันที่ลงทะเบียน",
   work_experience: "ประสบการณ์การทำงาน",
-  
+
   // สถานะและประเภทงาน
   workgroup_status: "workgroup_status",
   status: "status",
   work_type: "work_type",
   team_type: "team_type",
   provider: "provider",
-  
+
   // พื้นที่และตำแหน่ง
   area: "พื้นที่",
   rsm: "RBM",
@@ -35,7 +35,7 @@ export const FIELD_LABELS: Record<string, string> = {
   depot_name: "depot_name",
   province: "จังหวัด",
   ctm_province: "ctm_province",
-  
+
   // เอกสาร
   doc_tech_card_url: "บัตรช่าง",
   tech_card_url: "บัตรช่าง",
@@ -48,7 +48,7 @@ export const FIELD_LABELS: Record<string, string> = {
   doc_safety_officer_executive_url: "doc_safety_officer_executive_url",
   doc_safety_officer_supervisor_url: "doc_safety_officer_supervisor_url",
   doc_safety_officer_technical_url: "doc_safety_officer_technical_url",
-  
+
   // บริการ
   svc_install: "svc_install",
   svc_repair: "svc_repair",
@@ -72,7 +72,10 @@ export const FIELD_LABELS: Record<string, string> = {
   svc_true_id: "ผ่านการอบรม True ID",
   svc_true_inno: "ผ่านการอบรม True Inno",
   svc_l3: "ผ่านการอบรม L3",
-  
+  course_g: "ผ่านการอบรม Course G",
+  course_ec: "ผ่านการอบรม Course EC",
+  course_h: "ผ่านการอบรม Course H",
+
   // อำนาจและความปลอดภัย
   power_authority: "บัตรการไฟฟ้า",
   power_card_start_date: "บัตรการไฟฟ้า(วันออกบัตร)",
@@ -81,7 +84,7 @@ export const FIELD_LABELS: Record<string, string> = {
   safety_officer_executive: "safety_officer_executive",
   safety_officer_supervisor: "safety_officer_supervisor",
   safety_officer_technical: "safety_officer_technical",
-  
+
   // ข้อมูลรถยนต์
   car_brand_code: "ยี่ห้อรถ",
   car_model: "รุ่นรถ",
@@ -90,7 +93,7 @@ export const FIELD_LABELS: Record<string, string> = {
   car_reg_province: "จังหวัดที่จดทะเบียน",
   car_type: "ประเภทรถ",
   equip_carryboy: "equip_carryboy",
-  
+
   // ข้อมูลระบบ
   created_at: "created_at",
   updated_at: "updated_at",
@@ -113,7 +116,7 @@ export function getFieldLabel(key: string): string {
 export const SECTION_LABELS = {
   basic_info: "ข้อมูลพื้นฐาน",
   area_service: "พื้นที่รับงาน",
-  services: "ข้อมูลบริการ",
+  services: "ข้อมูลการอบรม",
   authority_safety: "ข้อมูลความปลอดภัย",
   vehicle_info: "ข้อมูลรถยนต์",
   documents: "ข้อมูลเอกสาร",

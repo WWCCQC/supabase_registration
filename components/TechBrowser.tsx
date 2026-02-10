@@ -19,7 +19,7 @@ import {
 } from "recharts";
 
 // Dynamic import สำหรับ RsmProviderChart
-const RsmProviderChart = dynamic(() => import("./charts/RsmProviderChart"), { 
+const RsmProviderChart = dynamic(() => import("./charts/RsmProviderChart"), {
   ssr: false,
   loading: () => (
     <div style={{ padding: 24, textAlign: "center" }}>
@@ -29,7 +29,7 @@ const RsmProviderChart = dynamic(() => import("./charts/RsmProviderChart"), {
 });
 
 // Dynamic import สำหรับ CtmProviderChart
-const CtmProviderChart = dynamic(() => import("./charts/CtmProviderChart"), { 
+const CtmProviderChart = dynamic(() => import("./charts/CtmProviderChart"), {
   ssr: false,
   loading: () => (
     <div style={{ padding: 24, textAlign: "center" }}>
@@ -39,7 +39,7 @@ const CtmProviderChart = dynamic(() => import("./charts/CtmProviderChart"), {
 });
 
 // Dynamic import สำหรับ PivotTable
-const PivotTable = dynamic(() => import("./tables/PivotTable"), { 
+const PivotTable = dynamic(() => import("./tables/PivotTable"), {
   ssr: false,
   loading: () => (
     <div style={{ padding: 24, textAlign: "center" }}>
@@ -49,7 +49,7 @@ const PivotTable = dynamic(() => import("./tables/PivotTable"), {
 });
 
 // Dynamic import สำหรับ DepotPowerRanking
-const DepotPowerRanking = dynamic(() => import("./charts/DepotPowerRanking"), { 
+const DepotPowerRanking = dynamic(() => import("./charts/DepotPowerRanking"), {
   ssr: false,
   loading: () => (
     <div style={{ padding: 24, textAlign: "center" }}>
@@ -100,7 +100,7 @@ function calculateWorkExperience(cardRegisterDate: string): string {
   try {
     const registerDate = new Date(cardRegisterDate);
     const currentDate = new Date();
-    
+
     // ตรวจสอบว่าวันที่ valid หรือไม่
     if (isNaN(registerDate.getTime()) || registerDate > currentDate) {
       return "—";
@@ -178,7 +178,7 @@ const WIDTHS: Partial<Record<(typeof COLS)[number], number>> = {
 export default function TechBrowser() {
   /* Auth check */
   const { user, isAdmin, isManager } = useAuth();
-  
+
   /* Performance Timing */
   const [componentStartTime] = React.useState(() => performance.now());
   const [initialLoadComplete, setInitialLoadComplete] = React.useState(false);
@@ -197,13 +197,13 @@ export default function TechBrowser() {
   const [rsm, setRsm] = React.useState("");
   const [depot_code, setDepotCode] = React.useState("");
   const [q, setQ] = React.useState("");
-  
+
   /* Selected RSM from chart */
   const [selectedRsm, setSelectedRsm] = React.useState<string | null>(null);
-  
+
   /* Selected CTM from chart */
   const [selectedCtm, setSelectedCtm] = React.useState<string | null>(null);
-  
+
   /* Selected Power Authority Status from chart */
   const [selectedPowerAuthority, setSelectedPowerAuthority] = React.useState<string | null>(null);
 
@@ -245,7 +245,7 @@ export default function TechBrowser() {
   const [depotCodeLoading, setDepotCodeLoading] = React.useState(false);
 
   /* depot codes by provider */
-  const [depotByProvider, setDepotByProvider] = React.useState<{[key: string]: number}>({});
+  const [depotByProvider, setDepotByProvider] = React.useState<{ [key: string]: number }>({});
   const [depotByProviderLoading, setDepotByProviderLoading] = React.useState(false);
 
   /* pivot table data */
@@ -334,12 +334,12 @@ export default function TechBrowser() {
       console.log('🔍 Fetching data with selectedCtm:', selectedCtm);
       console.log('🔍 Fetching data with selectedPowerAuthority:', selectedPowerAuthority);
       console.log('🔍 Fetching data from:', url);
-      
+
       // เพิ่ม timeout และ headers
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 seconds timeout
-      
-      const res = await fetch(url, { 
+
+      const res = await fetch(url, {
         cache: "no-store",
         signal: controller.signal,
         headers: {
@@ -347,30 +347,30 @@ export default function TechBrowser() {
           'Content-Type': 'application/json',
         }
       });
-      
+
       clearTimeout(timeoutId);
-      
+
       console.log('📡 Response status:', res.status);
       console.log('📡 Response headers:', Object.fromEntries(res.headers.entries()));
-      
+
       const text = await res.text();
       console.log('📄 Raw response:', text);
-      
+
       let json;
       try {
         json = JSON.parse(text);
       } catch {
         throw new Error('Invalid JSON response: ' + text.substring(0, 100));
       }
-      
+
       console.log('📊 Response data:', json);
-      
+
       if (!res.ok) throw new Error(json?.error || `HTTP ${res.status}: Failed to fetch`);
       setRows(json.rows || []);
       setTotal(json.total || 0);
       setTotalPages(json.totalPages || 1);
       setPage(json.page || p);
-      
+
       const endTime = performance.now();
       console.log(`📊 Data fetch completed in ${(endTime - startTime).toFixed(2)}ms`);
     } catch (e: any) {
@@ -392,7 +392,7 @@ export default function TechBrowser() {
     try {
       // Add cache-busting parameter
       const cacheBuster = Date.now();
-      const res = await fetch(`/api/chart/rsm-workgroup?_t=${cacheBuster}`, { 
+      const res = await fetch(`/api/chart/rsm-workgroup?_t=${cacheBuster}`, {
         cache: "no-store",
         headers: {
           'Cache-Control': 'no-cache, no-store, must-revalidate',
@@ -400,12 +400,12 @@ export default function TechBrowser() {
         }
       });
       const json = await res.json();
-      
+
       if (!res.ok) throw new Error(json?.error || "Failed to fetch chart data");
-      
+
       setChartData(json.chartData || []);
       setChartSummary(json.summary || null);
-      
+
       const endTime = performance.now();
       console.log(`📊 Chart data fetch completed in ${(endTime - startTime).toFixed(2)}ms`);
     } catch (e: any) {
@@ -421,7 +421,7 @@ export default function TechBrowser() {
       console.log('🔄 KPI fetch already in progress, skipping...');
       return;
     }
-    
+
     const startTime = performance.now();
     setKpiFetching(true);
     setKpiLoading(true);
@@ -432,12 +432,12 @@ export default function TechBrowser() {
       const url = `/api/kpis`; // NO FILTERS - always show total data
       console.log('📊 Fetching KPIs (TOTAL DATA - no filters)');
       console.log('📊 Fetching KPIs from:', url);
-      
+
       // เพิ่ม timeout และ headers
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 seconds timeout
-      
-      const res = await fetch(url, { 
+
+      const res = await fetch(url, {
         cache: "no-store",
         signal: controller.signal,
         headers: {
@@ -445,25 +445,25 @@ export default function TechBrowser() {
           'Content-Type': 'application/json',
         }
       });
-      
+
       clearTimeout(timeoutId);
-      
+
       console.log('📡 KPI Response status:', res.status);
-      
+
       const text = await res.text();
       console.log('📄 KPI Raw response:', text);
-      
+
       let json;
       try {
         json = JSON.parse(text);
       } catch {
         throw new Error('Invalid JSON response from KPI API');
       }
-      
+
       console.log('📊 KPI Response data:', json);
-      
+
       if (!res.ok) throw new Error(json?.error || `HTTP ${res.status}: KPI fetch error`);
-      
+
       // ตรวจสอบว่าข้อมูลมีค่าที่ถูกต้องหรือไม่ (รองรับทั้ง nested และ flat format)
       const kpiData = json?.data || json; // รองรับทั้ง { data: {...} } และ {...} format
       console.log('📊 KPI Data extracted:', kpiData);
@@ -472,12 +472,12 @@ export default function TechBrowser() {
         by_work_type: Array.isArray(kpiData?.by_work_type) ? kpiData.by_work_type : [],
         by_provider: Array.isArray(kpiData?.by_provider) ? kpiData.by_provider : []
       };
-      
+
       console.log('📊 Setting KPI data:', validKpi);
       console.log('📊 KPI total specifically:', kpiData?.total, 'vs', validKpi.total);
       setKpi(validKpi);
       setKpiInitialized(true);
-      
+
       const endTime = performance.now();
       console.log(`📊 KPI fetch completed in ${(endTime - startTime).toFixed(2)}ms`);
     } catch (e: any) {
@@ -503,7 +503,7 @@ export default function TechBrowser() {
     if (kpiTimeoutRef.current) {
       clearTimeout(kpiTimeoutRef.current);
     }
-    
+
     kpiTimeoutRef.current = setTimeout(() => {
       fetchKpis();
     }, delay);
@@ -521,13 +521,13 @@ export default function TechBrowser() {
         const list: string[] = Array.isArray(json?.options)
           ? json.options
           : Array.isArray(json?.rsmList)
-          ? json.rsmList
-          : Array.isArray(json) ? json : [];
+            ? json.rsmList
+            : Array.isArray(json) ? json : [];
         const uniq = Array.from(new Set(list.filter(Boolean))).sort(
           (a, b) => a.localeCompare(b, "th")
         );
         setRsmOptions(uniq);
-        
+
         const endTime = performance.now();
         console.log(`📊 RSM options fetch completed in ${(endTime - startTime).toFixed(2)}ms`);
         return;
@@ -542,7 +542,7 @@ export default function TechBrowser() {
         new Set<string>((json2?.rows || []).map((x: Row) => String(x?.rsm || "").trim()).filter(Boolean))
       ).sort((a, b) => a.localeCompare(b, "th"));
       setRsmOptions(uniq2);
-      
+
       const endTime = performance.now();
       console.log(`📊 RSM options fetch (fallback) completed in ${(endTime - startTime).toFixed(2)}ms`);
     } catch (e) {
@@ -570,7 +570,7 @@ export default function TechBrowser() {
       // ใช้ API ใหม่ที่ดึง depot_code ทั้งหมดโดยตรงจากฐานข้อมูล
       const res = await fetch('/api/depot-codes', { cache: "no-store" });
       const json = await res.json();
-      
+
       if (json.count !== undefined) {
         setDepotCodeCount(json.count);
         console.log(`📊 Depot codes: ${json.count} unique codes from ${json.total_rows} total rows`);
@@ -579,7 +579,7 @@ export default function TechBrowser() {
         console.error('❌ Invalid response from depot-codes API:', json);
         setDepotCodeCount(0);
       }
-      
+
     } catch (error) {
       console.error('Error fetching depot code count:', error);
       setDepotCodeCount(0);
@@ -593,16 +593,16 @@ export default function TechBrowser() {
     try {
       // ใช้ชื่อ provider ที่ตรงกับฐานข้อมูลตามที่คุณระบุ
       const providers = ["WW-Provider", "True Tech", "เถ้าแก่เทค"];
-      const results: {[key: string]: number} = {};
-      
+      const results: { [key: string]: number } = {};
+
       // ดึงข้อมูลแต่ละ provider
       for (const provider of providers) {
         console.log(`🔍 Fetching data for provider: "${provider}"`);
         const res = await fetch(`/api/depot-codes-by-provider?provider=${encodeURIComponent(provider)}`, { cache: "no-store" });
         const json = await res.json();
-        
+
         console.log(`📊 Response for ${provider}:`, json);
-        
+
         if (json.count !== undefined) {
           results[provider] = json.count;
           console.log(`✅ ${provider}: ${json.count} unique depot codes`);
@@ -611,16 +611,16 @@ export default function TechBrowser() {
           console.error(`❌ Invalid response for ${provider}:`, json);
         }
       }
-      
+
       // ดึงรายการ provider ทั้งหมดเพื่อ debug
       console.log('🔍 Fetching all providers for debugging...');
       const allProvidersRes = await fetch('/api/depot-codes-by-provider?list_all=true', { cache: "no-store" });
       const allProviders = await allProvidersRes.json();
       console.log('📋 All providers in database:', allProviders);
-      
+
       console.log('📊 Final depot by provider results:', results);
       setDepotByProvider(results);
-      
+
     } catch (error) {
       console.error('Error fetching depot codes by provider:', error);
       setDepotByProvider({});
@@ -633,19 +633,19 @@ export default function TechBrowser() {
     setPivotLoading(true);
     try {
       console.log('📊 Fetching pivot table data with filter q:', q);
-      
+
       // Build URL with current filter
       const params = new URLSearchParams();
       if (q) {
         params.append('q', q);
       }
-      
+
       const url = `/api/pivot-data${params.toString() ? '?' + params.toString() : ''}`;
       console.log('📊 Pivot API URL:', url);
-      
+
       const res = await fetch(url, { cache: "no-store" });
       const json = await res.json();
-      
+
       if (json.data && Array.isArray(json.data)) {
         setPivotData(json.data);
         console.log(`📊 Pivot data loaded: ${json.data.length} combinations from ${json.total_rows} total rows`);
@@ -653,7 +653,7 @@ export default function TechBrowser() {
         console.error('❌ Invalid pivot data response:', json);
         setPivotData([]);
       }
-      
+
     } catch (error) {
       console.error('Error fetching pivot data:', error);
       setPivotData([]);
@@ -672,8 +672,8 @@ export default function TechBrowser() {
       params.set('_t', Date.now().toString());
       const url = `/api/chart/workgroup-count?${params.toString()}`;
       console.log('👥 Fetching workgroup data from:', url);
-      
-      const res = await fetch(url, { 
+
+      const res = await fetch(url, {
         cache: "no-store",
         headers: {
           'Cache-Control': 'no-cache, no-store, must-revalidate',
@@ -681,21 +681,21 @@ export default function TechBrowser() {
         }
       });
       const json = await res.json();
-      
+
       if (!res.ok) {
         throw new Error(json.error || `HTTP ${res.status}: Workgroup fetch error`);
       }
-      
+
       console.log('👥 Workgroup data response:', json);
       console.log('👥 Response timestamp:', json.timestamp);
       console.log('👥 Response message:', json.message);
       setWorkgroupData(json.data || json); // Support both {data: ..., grandTotal: ...} and old format
       setWorkgroupGrandTotal(json.grandTotal || 0); // Get grandTotal from API
-      
+
       const endTime = performance.now();
       console.log(`👥 Workgroup data loaded in ${(endTime - startTime).toFixed(2)}ms`);
       console.log(`👥 Workgroup Grand Total from API: ${json.grandTotal || 0}`);
-      
+
       // Verify grand total calculation
       let calculatedTotal = 0;
       if (json.data) {
@@ -709,7 +709,7 @@ export default function TechBrowser() {
       }
       console.log(`👥 Workgroup Grand Total (calculated in frontend): ${calculatedTotal}`);
       console.log(`👥 Difference: ${Math.abs((json.grandTotal || 0) - calculatedTotal)}`);
-      
+
     } catch (error) {
       console.error('Error fetching workgroup data:', error);
       setWorkgroupData({});
@@ -729,8 +729,8 @@ export default function TechBrowser() {
       params.set('_t', Date.now().toString());
       const url = `/api/chart/technician-count?${params.toString()}`;
       console.log('👨‍💼 Fetching technician data from:', url);
-      
-      const res = await fetch(url, { 
+
+      const res = await fetch(url, {
         cache: "no-store",
         headers: {
           'Cache-Control': 'no-cache, no-store, must-revalidate',
@@ -738,17 +738,17 @@ export default function TechBrowser() {
         }
       });
       const json = await res.json();
-      
+
       if (!res.ok) {
         throw new Error(json.error || `HTTP ${res.status}: Technician fetch error`);
       }
-      
+
       console.log('👨‍💼 Technician data response:', json);
       setTechnicianData(json);
-      
+
       const endTime = performance.now();
       console.log(`👨‍💼 Technician data loaded in ${(endTime - startTime).toFixed(2)}ms`);
-      
+
     } catch (error) {
       console.error('Error fetching technician data:', error);
       setTechnicianData({});
@@ -756,11 +756,11 @@ export default function TechBrowser() {
       setTechnicianLoading(false);
     }
   }
-  
+
   // Handle chart bar click for specific power authority status
   function handlePowerAuthorityClick(rsm: string, powerAuthority: "Yes" | "No") {
     console.log('📊 Power Authority bar clicked:', { rsm, powerAuthority });
-    
+
     // Toggle selection if same RSM and power authority is clicked
     if (selectedRsm === rsm && selectedPowerAuthority === powerAuthority) {
       console.log('📊 Deselecting RSM and Power Authority');
@@ -780,7 +780,7 @@ export default function TechBrowser() {
     if (data && data.activePayload && data.activePayload[0]) {
       const clickedRsm = data.activePayload[0].payload.RBM;
       console.log('📊 General chart clicked:', clickedRsm);
-      
+
       // Only handle RSM selection without power authority filter
       if (selectedRsm === clickedRsm && !selectedPowerAuthority) {
         console.log('📊 Deselecting RSM');
@@ -812,15 +812,15 @@ export default function TechBrowser() {
     try {
       setLoading(true);
       const XLSX = await import("xlsx");
-      
+
       // ✅ Fetch ALL data using pagination to avoid Supabase 1000 limit
       console.log('📥 Starting Excel export with pagination...');
-      
+
       let allRecords: any[] = [];
       let currentPage = 1;
       const pageSize = 1000; // Safe batch size
       let hasMore = true;
-      
+
       while (hasMore) {
         const params = new URLSearchParams({
           page: currentPage.toString(),
@@ -828,31 +828,31 @@ export default function TechBrowser() {
           sort: "tech_id",
           dir: "asc",
         });
-        
+
         const res = await fetch(`/api/technicians?${params.toString()}`, {
           cache: "no-store",
         });
         const json = await res.json();
-        
+
         if (!res.ok) throw new Error(json?.error || "Export fetch failed");
-        
+
         const rows = json.rows || [];
         allRecords = [...allRecords, ...rows];
-        
+
         console.log(`📦 Page ${currentPage}: ${rows.length} records (total: ${allRecords.length}/${json.total})`);
-        
+
         hasMore = rows.length === pageSize && allRecords.length < json.total;
         currentPage++;
-        
+
         // Safety limit
         if (currentPage > 10) {
           console.warn('⚠️ Reached page limit');
           break;
         }
       }
-      
+
       console.log(`✅ Exported ${allRecords.length} records total`);
-      
+
       // ✅ Map ข้อมูลให้ตรงกับคอลัมน์ที่แสดงในตารางหน้าเว็บ (ใช้ชื่อภาษาไทย)
       const exportData = allRecords.map((r) => ({
         [getFieldLabel("national_id")]: r.national_id ?? "",
@@ -870,7 +870,7 @@ export default function TechBrowser() {
         [getFieldLabel("province")]: r.province ?? "",
         [getFieldLabel("power_authority")]: r.power_authority ?? "",
       }));
-      
+
       const ws = XLSX.utils.json_to_sheet(exportData);
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, "technicians");
@@ -892,9 +892,9 @@ export default function TechBrowser() {
       alert("ไม่มีสิทธิ์ในการดูรายละเอียดช่างแต่ละคน\nสำหรับผู้ดูแลระบบและผู้จัดการเท่านั้น");
       return;
     }
-    
+
     console.log('🔍 Opening detail for:', fullRowCandidate);
-    
+
     const id =
       (fullRowCandidate?.tech_id || "").toString().trim() ||
       (fullRowCandidate?.national_id || "").toString().trim();
@@ -914,17 +914,17 @@ export default function TechBrowser() {
     try {
       const url = `/api/technicians/${encodeURIComponent(id)}`;
       console.log('🔍 Fetching URL:', url);
-      
+
       const res = await fetch(url, {
         cache: "no-store",
       });
-      
+
       console.log('🔍 Response status:', res.status);
       console.log('🔍 Response ok:', res.ok);
-      
+
       const json = await res.json();
       console.log('🔍 Response JSON:', json);
-      
+
       if (!res.ok) throw new Error(json?.error || "โหลดรายละเอียดไม่สำเร็จ");
       setDetailRow(json.row || json.data || null);
     } catch (e) {
@@ -942,7 +942,7 @@ export default function TechBrowser() {
     console.log('🔧 NEXT_PUBLIC_SUPABASE_ANON_KEY:', process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? '✅ Set' : '❌ Not set');
     console.log('🔧 Current URL:', window.location.href);
     console.log('🔧 User Agent:', navigator.userAgent);
-    
+
     fetchData(1);
   }, [d_national_id, d_tech_id, d_rsm, d_depot_code, d_q, sort, dir]);
 
@@ -1013,7 +1013,7 @@ export default function TechBrowser() {
       const totalTime = performance.now() - componentStartTime;
       console.log(`🎯 TechBrowser initial load completed in ${totalTime.toFixed(2)}ms`);
       setInitialLoadComplete(true);
-      
+
       // Check if we have login timing data
       const loginStartTime = localStorage.getItem('loginStartTime');
       if (loginStartTime) {
@@ -1051,10 +1051,10 @@ export default function TechBrowser() {
           // แสดง notification
           const eventType = payload.eventType;
           const message = eventType === 'INSERT' ? '✅ มีข้อมูลช่างใหม่' :
-                         eventType === 'UPDATE' ? '🔄 ข้อมูลช่างถูกอัพเดท' :
-                         eventType === 'DELETE' ? '🗑️ ข้อมูลช่างถูกลบ' :
-                         '🔄 ข้อมูลมีการเปลี่ยนแปลง';
-          
+            eventType === 'UPDATE' ? '🔄 ข้อมูลช่างถูกอัพเดท' :
+              eventType === 'DELETE' ? '🗑️ ข้อมูลช่างถูกลบ' :
+                '🔄 ข้อมูลมีการเปลี่ยนแปลง';
+
           // แสดง toast notification (ถ้าต้องการ)
           if (typeof window !== 'undefined') {
             // สร้าง notification element
@@ -1150,327 +1150,327 @@ export default function TechBrowser() {
       )}
 
       {/* ===== KPI Container + Technicians by RSM Table ===== */}
-      <div style={{ 
-        display: "flex", 
-        gap: "16px", 
+      <div style={{
+        display: "flex",
+        gap: "16px",
         alignItems: "stretch",
-        marginBottom: "16px" 
+        marginBottom: "16px"
       }}>
         {/* ===== ปุ่มรีเฟรชและ KPI rows ===== */}
-        <div style={{ 
+        <div style={{
           background: "#eeeeee",
           padding: "16px",
           borderRadius: "8px",
           width: "650px"
         }}>
-        {/* Header */}
-        <div style={{ 
-          display: "flex", 
-          justifyContent: "space-between", 
-          alignItems: "center", 
-          marginBottom: "12px",
-          padding: "8px 0"
-        }}>
-          <div style={{ fontSize: "14px", fontWeight: "bold", color: "#333" }}>
-            📊 ข้อมูลสรุป (Dashboard)
+          {/* Header */}
+          <div style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: "12px",
+            padding: "8px 0"
+          }}>
+            <div style={{ fontSize: "14px", fontWeight: "bold", color: "#333" }}>
+              📊 ข้อมูลสรุป (Dashboard)
+            </div>
           </div>
-        </div>
-        {/* บรรทัดที่ 1: Technicians, Installation, Repair + Depot */}
-        <div
-          style={{
-            display: "grid",
-            gridAutoFlow: "column",
-            gridAutoColumns: "130px",
-            gap: 2,
-            alignItems: "stretch",
-            minHeight: 65,
-            height: 65,
-            overflow: "hidden",
-            marginBottom: 4,
-          }}
-        >
-          {/* Total */}
+          {/* บรรทัดที่ 1: Technicians, Installation, Repair + Depot */}
           <div
             style={{
-              ...cardStyle,
-              cursor: "pointer",
-              background: "#203864",
-              color: "white",
-              border: "none",
+              display: "grid",
+              gridAutoFlow: "column",
+              gridAutoColumns: "130px",
+              gap: 2,
+              alignItems: "stretch",
+              minHeight: 65,
+              height: 65,
+              overflow: "hidden",
+              marginBottom: 4,
             }}
-            onClick={() => {
-              clearFilters();
-              setQ("");
-            }}
-            title="คลิกเพื่อล้างตัวกรองทั้งหมด"
           >
-            <div style={{ ...cardTitle, color: "rgba(255,255,255,0.8)" }}>
-              Technicians (คน)
-            </div>
-            <div style={{ ...cardNumber, color: "white" }}>
-              {kpiLoading ? "กำลังโหลด..." : (kpiInitialized ? `${(kpi?.total ?? 0).toLocaleString()} (100%)` : "กำลังโหลด...")}
-            </div>
-          </div>
-
-          {/* Work Type: Installation, Repair */}
-          {["Installation", "Repair"].map((name, index) => {
-            const f = (kpi?.by_work_type || []).find(
-              (x) =>
-                (x.key || "").trim().toLowerCase() === name.toLowerCase()
-            );
-            const count = f?.count ?? 0;
-            const pct = f?.percent ?? 0;
-
-            const colors = [
-              { bg: "#87BFFF", text: "white" },
-              { bg: "#87BFFF", text: "white" },
-            ];
-
-            return (
-              <div
-                key={name}
-                style={{
-                  ...cardStyle,
-                  cursor: "pointer",
-                  background: colors[index].bg,
-                  color: colors[index].text,
-                  border: q === name ? "2px solid #fff" : "none",
-                  transition: "all 0.2s ease",
-                  transform: q === name ? "scale(1.05)" : "scale(1)",
-                  boxShadow: q === name ? "0 8px 16px rgba(0,0,0,0.2)" : "0 1px 2px rgba(0,0,0,0.04)",
-                }}
-                onClick={() => {
-                  if (q === name) {
-                    setQ("");
-                  } else {
-                    clearFilters();
-                    setQ(name);
-                  }
-                }}
-                onMouseOver={(e) => {
-                  if (q !== name) e.currentTarget.style.transform = "scale(1.02)";
-                }}
-                onMouseOut={(e) => {
-                  if (q !== name) e.currentTarget.style.transform = "scale(1)";
-                }}
-                title={`คลิกเพื่อกรองตาม ${name}`}
-              >
-                <div style={{ ...cardTitle, color: "rgba(255,255,255,0.8)" }}>
-                  {name}
-                </div>
-                <div style={{ ...cardNumber, color: "white" }}>
-                  {kpiLoading ? "กำลังโหลด..." : `${count.toLocaleString()} (${pct.toFixed(1)}%)`}
-                </div>
-              </div>
-            );
-          })}
-
-          {/* Depot Code */}
-          <div
-            style={{
-              ...cardStyle,
-              cursor: "pointer",
-              background: "#203864",
-              color: "white",
-              border: "none",
-              marginLeft: "10px",
-            }}
-            onClick={() => {
-              clearFilters();
-              setQ("");
-            }}
-            title="คลิกเพื่อล้างตัวกรองทั้งหมด - ข้อมูล Depot Code"
-          >
-            <div style={{ ...cardTitle, color: "rgba(255,255,255,0.8)" }}>
-              Depot Code
-            </div>
-            <div style={{ ...cardNumber, color: "white" }}>
-              {depotCodeLoading ? "กำลังโหลด..." : depotCodeCount.toLocaleString()}
-            </div>
-          </div>
-
-          {/* Depot WW-Provider */}
-          <div
-            style={{
-              ...cardStyle,
-              cursor: "pointer",
-              background: "#87BFFF",
-              color: "white",
-              border: "none",
-            }}
-            onClick={() => {
-              if (q === "Depot WW-Provider") {
-                setQ("");
-              } else {
+            {/* Total */}
+            <div
+              style={{
+                ...cardStyle,
+                cursor: "pointer",
+                background: "#203864",
+                color: "white",
+                border: "none",
+              }}
+              onClick={() => {
                 clearFilters();
-                setQ("Depot WW-Provider");
-              }
-            }}
-            onMouseOver={(e) => {
-              if (q !== "Depot WW-Provider") e.currentTarget.style.transform = "scale(1.02)";
-            }}
-            onMouseOut={(e) => {
-              if (q !== "Depot WW-Provider") e.currentTarget.style.transform = "scale(1)";
-            }}
-            title="คลิกเพื่อกรองตาม Depot WW-Provider"
-          >
-            <div style={{ ...cardTitle, color: "rgba(255,255,255,0.8)" }}>
-              Depot WW
+                setQ("");
+              }}
+              title="คลิกเพื่อล้างตัวกรองทั้งหมด"
+            >
+              <div style={{ ...cardTitle, color: "rgba(255,255,255,0.8)" }}>
+                Technicians (คน)
+              </div>
+              <div style={{ ...cardNumber, color: "white" }}>
+                {kpiLoading ? "กำลังโหลด..." : (kpiInitialized ? `${(kpi?.total ?? 0).toLocaleString()} (100%)` : "กำลังโหลด...")}
+              </div>
             </div>
-            <div style={{ ...cardNumber, color: "white" }}>
-              {depotByProviderLoading ? "กำลังโหลด..." : (() => {
-                const count = depotByProvider["WW-Provider"] || 0;
-                const percentage = depotCodeCount > 0 ? ((count / depotCodeCount) * 100).toFixed(1) : 0;
-                return `${count} (${percentage}%)`;
-              })()}
+
+            {/* Work Type: Installation, Repair */}
+            {["Installation", "Repair"].map((name, index) => {
+              const f = (kpi?.by_work_type || []).find(
+                (x) =>
+                  (x.key || "").trim().toLowerCase() === name.toLowerCase()
+              );
+              const count = f?.count ?? 0;
+              const pct = f?.percent ?? 0;
+
+              const colors = [
+                { bg: "#87BFFF", text: "white" },
+                { bg: "#87BFFF", text: "white" },
+              ];
+
+              return (
+                <div
+                  key={name}
+                  style={{
+                    ...cardStyle,
+                    cursor: "pointer",
+                    background: colors[index].bg,
+                    color: colors[index].text,
+                    border: q === name ? "2px solid #fff" : "none",
+                    transition: "all 0.2s ease",
+                    transform: q === name ? "scale(1.05)" : "scale(1)",
+                    boxShadow: q === name ? "0 8px 16px rgba(0,0,0,0.2)" : "0 1px 2px rgba(0,0,0,0.04)",
+                  }}
+                  onClick={() => {
+                    if (q === name) {
+                      setQ("");
+                    } else {
+                      clearFilters();
+                      setQ(name);
+                    }
+                  }}
+                  onMouseOver={(e) => {
+                    if (q !== name) e.currentTarget.style.transform = "scale(1.02)";
+                  }}
+                  onMouseOut={(e) => {
+                    if (q !== name) e.currentTarget.style.transform = "scale(1)";
+                  }}
+                  title={`คลิกเพื่อกรองตาม ${name}`}
+                >
+                  <div style={{ ...cardTitle, color: "rgba(255,255,255,0.8)" }}>
+                    {name}
+                  </div>
+                  <div style={{ ...cardNumber, color: "white" }}>
+                    {kpiLoading ? "กำลังโหลด..." : `${count.toLocaleString()} (${pct.toFixed(1)}%)`}
+                  </div>
+                </div>
+              );
+            })}
+
+            {/* Depot Code */}
+            <div
+              style={{
+                ...cardStyle,
+                cursor: "pointer",
+                background: "#203864",
+                color: "white",
+                border: "none",
+                marginLeft: "10px",
+              }}
+              onClick={() => {
+                clearFilters();
+                setQ("");
+              }}
+              title="คลิกเพื่อล้างตัวกรองทั้งหมด - ข้อมูล Depot Code"
+            >
+              <div style={{ ...cardTitle, color: "rgba(255,255,255,0.8)" }}>
+                Depot Code
+              </div>
+              <div style={{ ...cardNumber, color: "white" }}>
+                {depotCodeLoading ? "กำลังโหลด..." : depotCodeCount.toLocaleString()}
+              </div>
+            </div>
+
+            {/* Depot WW-Provider */}
+            <div
+              style={{
+                ...cardStyle,
+                cursor: "pointer",
+                background: "#87BFFF",
+                color: "white",
+                border: "none",
+              }}
+              onClick={() => {
+                if (q === "Depot WW-Provider") {
+                  setQ("");
+                } else {
+                  clearFilters();
+                  setQ("Depot WW-Provider");
+                }
+              }}
+              onMouseOver={(e) => {
+                if (q !== "Depot WW-Provider") e.currentTarget.style.transform = "scale(1.02)";
+              }}
+              onMouseOut={(e) => {
+                if (q !== "Depot WW-Provider") e.currentTarget.style.transform = "scale(1)";
+              }}
+              title="คลิกเพื่อกรองตาม Depot WW-Provider"
+            >
+              <div style={{ ...cardTitle, color: "rgba(255,255,255,0.8)" }}>
+                Depot WW
+              </div>
+              <div style={{ ...cardNumber, color: "white" }}>
+                {depotByProviderLoading ? "กำลังโหลด..." : (() => {
+                  const count = depotByProvider["WW-Provider"] || 0;
+                  const percentage = depotCodeCount > 0 ? ((count / depotCodeCount) * 100).toFixed(1) : 0;
+                  return `${count} (${percentage}%)`;
+                })()}
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* บรรทัดที่ 2: WW-Provider, True Tech, เถ้าแก่เทค + Depot Provider */}
-        <div
-          style={{
-            display: "grid",
-            gridAutoFlow: "column",
-            gridAutoColumns: "130px",
-            gap: 2,
-            alignItems: "stretch",
-            minHeight: 65,
-            height: 65,
-            overflow: "hidden",
-          }}
-        >
-          {/* Provider */}
-          {["WW-Provider", "True Tech", "เถ้าแก่เทค"].map((name, index) => {
-            const f = (kpi?.by_provider || []).find(
-              (x) =>
-                (x.key || "").trim().toLowerCase() === name.toLowerCase()
-            );
-            const count = f?.count ?? 0;
-            const pct = f?.percent ?? 0;
+          {/* บรรทัดที่ 2: WW-Provider, True Tech, เถ้าแก่เทค + Depot Provider */}
+          <div
+            style={{
+              display: "grid",
+              gridAutoFlow: "column",
+              gridAutoColumns: "130px",
+              gap: 2,
+              alignItems: "stretch",
+              minHeight: 65,
+              height: 65,
+              overflow: "hidden",
+            }}
+          >
+            {/* Provider */}
+            {["WW-Provider", "True Tech", "เถ้าแก่เทค"].map((name, index) => {
+              const f = (kpi?.by_provider || []).find(
+                (x) =>
+                  (x.key || "").trim().toLowerCase() === name.toLowerCase()
+              );
+              const count = f?.count ?? 0;
+              const pct = f?.percent ?? 0;
 
-            const colors = [
-              { bg: "#87BFFF", text: "white" },
-              { bg: "#87BFFF", text: "white" },
-              { bg: "#87BFFF", text: "white" },
-            ];
+              const colors = [
+                { bg: "#87BFFF", text: "white" },
+                { bg: "#87BFFF", text: "white" },
+                { bg: "#87BFFF", text: "white" },
+              ];
 
-            return (
-              <div
-                key={name}
-                style={{
-                  ...cardStyle,
-                  cursor: "pointer",
-                  background: colors[index].bg,
-                  color: colors[index].text,
-                  border: q === name ? "2px solid #fff" : "none",
-                  transition: "all 0.2s ease",
-                  transform: q === name ? "scale(1.05)" : "scale(1)",
-                  boxShadow: q === name ? "0 8px 16px rgba(0,0,0,0.2)" : "0 1px 2px rgba(0,0,0,0.04)",
-                }}
-                onClick={() => {
-                  if (q === name) {
-                    setQ("");
-                  } else {
-                    clearFilters();
-                    setQ(name);
-                  }
-                }}
-                onMouseOver={(e) => {
-                  if (q !== name) e.currentTarget.style.transform = "scale(1.02)";
-                }}
-                onMouseOut={(e) => {
-                  if (q !== name) e.currentTarget.style.transform = "scale(1)";
-                }}
-                title={`คลิกเพื่อกรองตาม ${name}`}
-              >
+              return (
                 <div
+                  key={name}
                   style={{
-                    ...cardTitle,
-                    color: "rgba(255,255,255,0.8)",
+                    ...cardStyle,
+                    cursor: "pointer",
+                    background: colors[index].bg,
+                    color: colors[index].text,
+                    border: q === name ? "2px solid #fff" : "none",
+                    transition: "all 0.2s ease",
+                    transform: q === name ? "scale(1.05)" : "scale(1)",
+                    boxShadow: q === name ? "0 8px 16px rgba(0,0,0,0.2)" : "0 1px 2px rgba(0,0,0,0.04)",
                   }}
-                >
-                  {name}
-                </div>
-                <div
-                  style={{
-                    ...cardNumber,
-                    color: "white",
+                  onClick={() => {
+                    if (q === name) {
+                      setQ("");
+                    } else {
+                      clearFilters();
+                      setQ(name);
+                    }
                   }}
+                  onMouseOver={(e) => {
+                    if (q !== name) e.currentTarget.style.transform = "scale(1.02)";
+                  }}
+                  onMouseOut={(e) => {
+                    if (q !== name) e.currentTarget.style.transform = "scale(1)";
+                  }}
+                  title={`คลิกเพื่อกรองตาม ${name}`}
                 >
-                  {kpiLoading ? "โหลด..." : (kpiInitialized ? `${count.toLocaleString()} (${pct}%)` : "โหลด...")}
+                  <div
+                    style={{
+                      ...cardTitle,
+                      color: "rgba(255,255,255,0.8)",
+                    }}
+                  >
+                    {name}
+                  </div>
+                  <div
+                    style={{
+                      ...cardNumber,
+                      color: "white",
+                    }}
+                  >
+                    {kpiLoading ? "โหลด..." : (kpiInitialized ? `${count.toLocaleString()} (${pct}%)` : "โหลด...")}
+                  </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
 
-          {/* Depot Provider cards */}
-          {["Depot True Tech", "Depot เถ้าแก่เทค"].map((name, index) => {
-            // TODO: เพิ่มข้อมูลจริงจาก API ในอนาคต
-            const count = 0;
-            const pct = 0;
+            {/* Depot Provider cards */}
+            {["Depot True Tech", "Depot เถ้าแก่เทค"].map((name, index) => {
+              // TODO: เพิ่มข้อมูลจริงจาก API ในอนาคต
+              const count = 0;
+              const pct = 0;
 
-            const colors = [
-              { bg: "#87BFFF", text: "white" },
-              { bg: "#87BFFF", text: "white" },
-            ];
+              const colors = [
+                { bg: "#87BFFF", text: "white" },
+                { bg: "#87BFFF", text: "white" },
+              ];
 
-            return (
-              <div
-                key={name}
-                style={{
-                  ...cardStyle,
-                  cursor: "pointer",
-                  background: colors[index].bg,
-                  color: colors[index].text,
-                  border: q === name ? "2px solid #fff" : "none",
-                  transition: "all 0.2s ease",
-                  transform: q === name ? "scale(1.05)" : "scale(1)",
-                  boxShadow: q === name ? "0 8px 16px rgba(0,0,0,0.2)" : "0 1px 2px rgba(0,0,0,0.04)",
-                  marginLeft: index === 0 ? "10px" : "0",
-                }}
-                onClick={() => {
-                  if (q === name) {
-                    setQ("");
-                  } else {
-                    clearFilters();
-                    setQ(name);
-                  }
-                }}
-                onMouseOver={(e) => {
-                  if (q !== name) e.currentTarget.style.transform = "scale(1.02)";
-                }}
-                onMouseOut={(e) => {
-                  if (q !== name) e.currentTarget.style.transform = "scale(1)";
-                }}
-                title={`คลิกเพื่อกรองตาม ${name}`}
-              >
+              return (
                 <div
+                  key={name}
                   style={{
-                    ...cardTitle,
-                    color: "rgba(255,255,255,0.8)",
+                    ...cardStyle,
+                    cursor: "pointer",
+                    background: colors[index].bg,
+                    color: colors[index].text,
+                    border: q === name ? "2px solid #fff" : "none",
+                    transition: "all 0.2s ease",
+                    transform: q === name ? "scale(1.05)" : "scale(1)",
+                    boxShadow: q === name ? "0 8px 16px rgba(0,0,0,0.2)" : "0 1px 2px rgba(0,0,0,0.04)",
+                    marginLeft: index === 0 ? "10px" : "0",
                   }}
-                >
-                  {name}
-                </div>
-                <div
-                  style={{
-                    ...cardNumber,
-                    color: "white",
+                  onClick={() => {
+                    if (q === name) {
+                      setQ("");
+                    } else {
+                      clearFilters();
+                      setQ(name);
+                    }
                   }}
+                  onMouseOver={(e) => {
+                    if (q !== name) e.currentTarget.style.transform = "scale(1.02)";
+                  }}
+                  onMouseOut={(e) => {
+                    if (q !== name) e.currentTarget.style.transform = "scale(1)";
+                  }}
+                  title={`คลิกเพื่อกรองตาม ${name}`}
                 >
-                  {depotByProviderLoading ? "กำลังโหลด..." : (() => {
-                    const providerName = name === "Depot True Tech" ? "True Tech" : "เถ้าแก่เทค";
-                    const depotCount = depotByProvider[providerName] || 0;
-                    const percentage = depotCodeCount > 0 ? ((depotCount / depotCodeCount) * 100).toFixed(1) : 0;
-                    console.log(`🔍 Card ${name}: Looking for provider "${providerName}", found count: ${depotCount}, all providers:`, Object.keys(depotByProvider));
-                    return `${depotCount} (${percentage}%)`;
-                  })()}
+                  <div
+                    style={{
+                      ...cardTitle,
+                      color: "rgba(255,255,255,0.8)",
+                    }}
+                  >
+                    {name}
+                  </div>
+                  <div
+                    style={{
+                      ...cardNumber,
+                      color: "white",
+                    }}
+                  >
+                    {depotByProviderLoading ? "กำลังโหลด..." : (() => {
+                      const providerName = name === "Depot True Tech" ? "True Tech" : "เถ้าแก่เทค";
+                      const depotCount = depotByProvider[providerName] || 0;
+                      const percentage = depotCodeCount > 0 ? ((depotCount / depotCodeCount) * 100).toFixed(1) : 0;
+                      console.log(`🔍 Card ${name}: Looking for provider "${providerName}", found count: ${depotCount}, all providers:`, Object.keys(depotByProvider));
+                      return `${depotCount} (${percentage}%)`;
+                    })()}
+                  </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
 
         </div>
         {/* ===== /KPI rows ===== */}
@@ -1488,24 +1488,24 @@ export default function TechBrowser() {
           flexDirection: "column"
         }}>
           {pivotData.length > 0 ? (
-            <div style={{ 
-              fontSize: "12px", 
+            <div style={{
+              fontSize: "12px",
               overflow: "auto",
               flex: "1",
               display: "flex",
               flexDirection: "column"
             }}>
-              <PivotTableComponent 
-                data={pivotData} 
+              <PivotTableComponent
+                data={pivotData}
                 workgroupData={workgroupData}
                 workgroupGrandTotal={workgroupGrandTotal}
                 technicianData={technicianData}
               />
             </div>
           ) : (
-            <div style={{ 
-              textAlign: "center", 
-              color: "#6b7280", 
+            <div style={{
+              textAlign: "center",
+              color: "#6b7280",
               padding: "20px",
               fontSize: "12px"
             }}>
@@ -1521,8 +1521,8 @@ export default function TechBrowser() {
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             {selectedRsm && (
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <span style={{ 
-                  padding: "6px 12px", 
+                <span style={{
+                  padding: "6px 12px",
                   background: "linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%)",
                   color: "white",
                   borderRadius: "20px",
@@ -1552,8 +1552,8 @@ export default function TechBrowser() {
             )}
             {selectedCtm && (
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <span style={{ 
-                  padding: "6px 12px", 
+                <span style={{
+                  padding: "6px 12px",
                   background: "linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%)",
                   color: "white",
                   borderRadius: "20px",
@@ -1580,10 +1580,10 @@ export default function TechBrowser() {
             )}
           </div>
         </div>
-        
+
         <div style={{
-          display: "grid", 
-          gridTemplateColumns: "50% 50%", 
+          display: "grid",
+          gridTemplateColumns: "50% 50%",
           gap: "20px"
         }}>
           {/* RSM Provider Chart (กราฟใหม่) - ย้ายมาเป็นอันแรก */}
@@ -1623,17 +1623,17 @@ export default function TechBrowser() {
             }}>
               🏪 CBM Provider Distribution
             </h3>
-            <CtmProviderChart 
+            <CtmProviderChart
               selectedCtm={selectedCtm}
               onCtmClick={handleCtmClick}
             />
           </div>
         </div>
-        
+
         {/* บรรทัดใหม่: RSM Power Authority Status Chart (50%) + พื้นที่สำหรับตารางอีก 50% */}
         <div style={{
-          display: "grid", 
-          gridTemplateColumns: "50% 50%", 
+          display: "grid",
+          gridTemplateColumns: "50% 50%",
           gap: "20px",
           marginTop: "20px"
         }}>
@@ -1655,230 +1655,230 @@ export default function TechBrowser() {
               ⚡ RBM Power Authority Status
             </h3>
 
-          {chartLoading ? (
-            <div style={{ textAlign: "center", padding: 40 }}>
-              <div style={{ fontSize: 16, color: "#666" }}>กำลังโหลด Chart...</div>
-            </div>
-          ) : chartData.length > 0 ? (
+            {chartLoading ? (
+              <div style={{ textAlign: "center", padding: 40 }}>
+                <div style={{ fontSize: 16, color: "#666" }}>กำลังโหลด Chart...</div>
+              </div>
+            ) : chartData.length > 0 ? (
               <ResponsiveContainer width="100%" height={460}>
                 <BarChart
                   data={chartData}
                   margin={{ top: 20, right: 30, left: 20, bottom: 100 }}
                 >
-                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                <XAxis 
-                  dataKey="RBM" 
-                  angle={-45}
-                  textAnchor="end"
-                  height={100}
-                  interval={0}
-                  tick={{ fontSize: 11 }}
-                />
-                <YAxis 
-                  label={{ 
-                    value: 'จำนวนช่าง (คน)', 
-                    angle: -90, 
-                    position: 'insideLeft',
-                    style: { fontSize: 12 }
-                  }}
-                  tick={{ fontSize: 11 }}
-                />
-                <Tooltip 
-                  content={({ active, payload, label }: any) => {
-                    if (active && payload && payload.length) {
-                      const total = payload[0].payload.total;
-                      return (
-                        <div style={{
-                          backgroundColor: "white",
-                          padding: "10px",
-                          border: "1px solid #ccc",
-                          borderRadius: "8px",
-                          boxShadow: "0 2px 4px rgba(0,0,0,0.1)"
-                        }}>
-                          <p style={{ fontWeight: "bold", marginBottom: "5px" }}>{label}</p>
-                          {payload.map((entry: any, index: number) => (
-                            <p key={index} style={{ color: entry.color, margin: "3px 0" }}>
-                              {entry.name}: {entry.value} คน
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                  <XAxis
+                    dataKey="RBM"
+                    angle={-45}
+                    textAnchor="end"
+                    height={100}
+                    interval={0}
+                    tick={{ fontSize: 11 }}
+                  />
+                  <YAxis
+                    label={{
+                      value: 'จำนวนช่าง (คน)',
+                      angle: -90,
+                      position: 'insideLeft',
+                      style: { fontSize: 12 }
+                    }}
+                    tick={{ fontSize: 11 }}
+                  />
+                  <Tooltip
+                    content={({ active, payload, label }: any) => {
+                      if (active && payload && payload.length) {
+                        const total = payload[0].payload.total;
+                        return (
+                          <div style={{
+                            backgroundColor: "white",
+                            padding: "10px",
+                            border: "1px solid #ccc",
+                            borderRadius: "8px",
+                            boxShadow: "0 2px 4px rgba(0,0,0,0.1)"
+                          }}>
+                            <p style={{ fontWeight: "bold", marginBottom: "5px" }}>{label}</p>
+                            {payload.map((entry: any, index: number) => (
+                              <p key={index} style={{ color: entry.color, margin: "3px 0" }}>
+                                {entry.name}: {entry.value} คน
+                              </p>
+                            ))}
+                            <p style={{ fontWeight: "bold", marginTop: "5px", borderTop: "1px solid #eee", paddingTop: "5px" }}>
+                              รวม: {total} คน
                             </p>
-                          ))}
-                          <p style={{ fontWeight: "bold", marginTop: "5px", borderTop: "1px solid #eee", paddingTop: "5px" }}>
-                            รวม: {total} คน
-                          </p>
-                        </div>
-                      );
-                    }
-                    return null;
-                  }}
-                />
-                <Legend 
-                  verticalAlign="top"
-                  height={36}
-                  iconType="rect"
-                  wrapperStyle={{ paddingBottom: "10px" }}
-                  formatter={(value: string) => {
-                    // ใช้ข้อมูลจาก chartSummary ที่มีข้อมูลครบถ้วนทั้งหมด แทนการคำนวณจาก chartData ที่แสดงแค่ Top 8
-                    if (chartSummary) {
+                          </div>
+                        );
+                      }
+                      return null;
+                    }}
+                  />
+                  <Legend
+                    verticalAlign="top"
+                    height={36}
+                    iconType="rect"
+                    wrapperStyle={{ paddingBottom: "10px" }}
+                    formatter={(value: string) => {
+                      // ใช้ข้อมูลจาก chartSummary ที่มีข้อมูลครบถ้วนทั้งหมด แทนการคำนวณจาก chartData ที่แสดงแค่ Top 8
+                      if (chartSummary) {
+                        if (value === "Yes") {
+                          return `${value} (${(chartSummary.totalYes || 0).toLocaleString()})`;
+                        }
+                        if (value === "No") {
+                          return `${value} (${(chartSummary.totalNo || 0).toLocaleString()})`;
+                        }
+                      }
+
+                      // Fallback: คำนวณจาก chartData ถ้าไม่มี chartSummary
+                      const displayedYes = chartData.reduce((sum, item) => sum + (item.Yes || 0), 0);
+                      const displayedNo = chartData.reduce((sum, item) => sum + (item.No || 0), 0);
+
                       if (value === "Yes") {
-                        return `${value} (${(chartSummary.totalYes || 0).toLocaleString()})`;
+                        return `${value} (${displayedYes.toLocaleString()})`;
                       }
                       if (value === "No") {
-                        return `${value} (${(chartSummary.totalNo || 0).toLocaleString()})`;
+                        return `${value} (${displayedNo.toLocaleString()})`;
                       }
-                    }
-                    
-                    // Fallback: คำนวณจาก chartData ถ้าไม่มี chartSummary
-                    const displayedYes = chartData.reduce((sum, item) => sum + (item.Yes || 0), 0);
-                    const displayedNo = chartData.reduce((sum, item) => sum + (item.No || 0), 0);
-                    
-                    if (value === "Yes") {
-                      return `${value} (${displayedYes.toLocaleString()})`;
-                    }
-                    if (value === "No") {
-                      return `${value} (${displayedNo.toLocaleString()})`;
-                    }
-                    return value;
-                  }}
-                />
-                <Bar 
-                  dataKey="Yes" 
-                  stackId="a" 
-                  fill="#0EAD69"
-                  name="Yes"
-                  onClick={(data: any) => {
-                    if (data && data.RBM) {
-                      handlePowerAuthorityClick(data.RBM, "Yes");
-                    }
-                  }}
-                  style={{ cursor: "pointer" }}
-                >
-                  {chartData.map((entry, index) => {
-                    const isRsmSelected = selectedRsm === entry.RBM;
-                    const isPowerAuthoritySelected = selectedPowerAuthority === "Yes";
-                    const isFullySelected = isRsmSelected && isPowerAuthoritySelected;
-                    
-                    return (
-                      <Cell 
-                        key={`cell-yes-${index}`} 
-                        fill={isFullySelected ? "#0A7A4A" : "#0EAD69"}
-                        opacity={
-                          (selectedRsm && !isRsmSelected) || 
-                          (selectedPowerAuthority && selectedPowerAuthority !== "Yes") 
-                            ? 0.5 : 1
-                        }
-                        style={{ cursor: "pointer" }}
-                        onMouseDown={(e: any) => {
-                          e.stopPropagation();
-                          handlePowerAuthorityClick(entry.RBM, "Yes");
-                        }}
-                      />
-                    );
-                  })}
-                  <LabelList 
-                    dataKey="Yes" 
-                    position="center"
-                    fill="white"
-                    fontSize={10}
-                    fontWeight="bold"
-                    content={(props: any) => {
-                      const { x, y, width, height, value, index } = props;
-                      if (!value || value === 0) return null;
-                      const entry = chartData[index];
-                      const total = (entry.Yes || 0) + (entry.No || 0);
-                      const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : '0.0';
-                      return (
-                        <text
-                          x={x + width / 2}
-                          y={y + height / 2}
-                          fill="white"
-                          textAnchor="middle"
-                          dominantBaseline="middle"
-                          fontSize="10"
-                          fontWeight="bold"
-                        >
-                          {value} ({percentage}%)
-                        </text>
-                      );
+                      return value;
                     }}
                   />
-                </Bar>
-                <Bar 
-                  dataKey="No" 
-                  stackId="a" 
-                  fill="#D90429"
-                  name="No"
-                  onClick={(data: any) => {
-                    if (data && data.RBM) {
-                      handlePowerAuthorityClick(data.RBM, "No");
-                    }
-                  }}
-                  style={{ cursor: "pointer" }}
-                >
-                  {chartData.map((entry, index) => {
-                    const isRsmSelected = selectedRsm === entry.RBM;
-                    const isPowerAuthoritySelected = selectedPowerAuthority === "No";
-                    const isFullySelected = isRsmSelected && isPowerAuthoritySelected;
-                    
-                    return (
-                      <Cell 
-                        key={`cell-no-${index}`} 
-                        fill={isFullySelected ? "#A0021F" : "#D90429"}
-                        opacity={
-                          (selectedRsm && !isRsmSelected) || 
-                          (selectedPowerAuthority && selectedPowerAuthority !== "No") 
-                            ? 0.5 : 1
-                        }
-                        style={{ cursor: "pointer" }}
-                        onMouseDown={(e: any) => {
-                          e.stopPropagation();
-                          handlePowerAuthorityClick(entry.RBM, "No");
-                        }}
-                      />
-                    );
-                  })}
-                  <LabelList 
-                    dataKey="No" 
-                    position="center"
-                    fill="white"
-                    fontSize={10}
-                    fontWeight="bold"
-                    content={(props: any) => {
-                      const { x, y, width, height, value, index } = props;
-                      if (!value || value === 0) return null;
-                      const entry = chartData[index];
-                      const total = (entry.Yes || 0) + (entry.No || 0);
-                      const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : '0.0';
-                      return (
-                        <text
-                          x={x + width / 2}
-                          y={y + height / 2}
-                          fill="white"
-                          textAnchor="middle"
-                          dominantBaseline="middle"
-                          fontSize="10"
-                          fontWeight="bold"
-                        >
-                          {value} ({percentage}%)
-                        </text>
-                      );
+                  <Bar
+                    dataKey="Yes"
+                    stackId="a"
+                    fill="#0EAD69"
+                    name="Yes"
+                    onClick={(data: any) => {
+                      if (data && data.RBM) {
+                        handlePowerAuthorityClick(data.RBM, "Yes");
+                      }
                     }}
-                  />
-                  {/* แสดงจำนวนรวมเหนือยอดกราฟ */}
-                  <LabelList 
-                    dataKey="total" 
-                    position="top"
-                    fill="#111827"
-                    fontSize={12}
-                    fontWeight="bold"
-                    offset={5}
-                  />
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          ) : (
-            <div style={{ textAlign: "center", padding: 40 }}>
-              <div style={{ fontSize: 16, color: "#999" }}>ไม่มีข้อมูล Chart</div>
-            </div>
-          )}
+                    style={{ cursor: "pointer" }}
+                  >
+                    {chartData.map((entry, index) => {
+                      const isRsmSelected = selectedRsm === entry.RBM;
+                      const isPowerAuthoritySelected = selectedPowerAuthority === "Yes";
+                      const isFullySelected = isRsmSelected && isPowerAuthoritySelected;
+
+                      return (
+                        <Cell
+                          key={`cell-yes-${index}`}
+                          fill={isFullySelected ? "#0A7A4A" : "#0EAD69"}
+                          opacity={
+                            (selectedRsm && !isRsmSelected) ||
+                              (selectedPowerAuthority && selectedPowerAuthority !== "Yes")
+                              ? 0.5 : 1
+                          }
+                          style={{ cursor: "pointer" }}
+                          onMouseDown={(e: any) => {
+                            e.stopPropagation();
+                            handlePowerAuthorityClick(entry.RBM, "Yes");
+                          }}
+                        />
+                      );
+                    })}
+                    <LabelList
+                      dataKey="Yes"
+                      position="center"
+                      fill="white"
+                      fontSize={10}
+                      fontWeight="bold"
+                      content={(props: any) => {
+                        const { x, y, width, height, value, index } = props;
+                        if (!value || value === 0) return null;
+                        const entry = chartData[index];
+                        const total = (entry.Yes || 0) + (entry.No || 0);
+                        const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : '0.0';
+                        return (
+                          <text
+                            x={x + width / 2}
+                            y={y + height / 2}
+                            fill="white"
+                            textAnchor="middle"
+                            dominantBaseline="middle"
+                            fontSize="10"
+                            fontWeight="bold"
+                          >
+                            {value} ({percentage}%)
+                          </text>
+                        );
+                      }}
+                    />
+                  </Bar>
+                  <Bar
+                    dataKey="No"
+                    stackId="a"
+                    fill="#D90429"
+                    name="No"
+                    onClick={(data: any) => {
+                      if (data && data.RBM) {
+                        handlePowerAuthorityClick(data.RBM, "No");
+                      }
+                    }}
+                    style={{ cursor: "pointer" }}
+                  >
+                    {chartData.map((entry, index) => {
+                      const isRsmSelected = selectedRsm === entry.RBM;
+                      const isPowerAuthoritySelected = selectedPowerAuthority === "No";
+                      const isFullySelected = isRsmSelected && isPowerAuthoritySelected;
+
+                      return (
+                        <Cell
+                          key={`cell-no-${index}`}
+                          fill={isFullySelected ? "#A0021F" : "#D90429"}
+                          opacity={
+                            (selectedRsm && !isRsmSelected) ||
+                              (selectedPowerAuthority && selectedPowerAuthority !== "No")
+                              ? 0.5 : 1
+                          }
+                          style={{ cursor: "pointer" }}
+                          onMouseDown={(e: any) => {
+                            e.stopPropagation();
+                            handlePowerAuthorityClick(entry.RBM, "No");
+                          }}
+                        />
+                      );
+                    })}
+                    <LabelList
+                      dataKey="No"
+                      position="center"
+                      fill="white"
+                      fontSize={10}
+                      fontWeight="bold"
+                      content={(props: any) => {
+                        const { x, y, width, height, value, index } = props;
+                        if (!value || value === 0) return null;
+                        const entry = chartData[index];
+                        const total = (entry.Yes || 0) + (entry.No || 0);
+                        const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : '0.0';
+                        return (
+                          <text
+                            x={x + width / 2}
+                            y={y + height / 2}
+                            fill="white"
+                            textAnchor="middle"
+                            dominantBaseline="middle"
+                            fontSize="10"
+                            fontWeight="bold"
+                          >
+                            {value} ({percentage}%)
+                          </text>
+                        );
+                      }}
+                    />
+                    {/* แสดงจำนวนรวมเหนือยอดกราฟ */}
+                    <LabelList
+                      dataKey="total"
+                      position="top"
+                      fill="#111827"
+                      fontSize={12}
+                      fontWeight="bold"
+                      offset={5}
+                    />
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <div style={{ textAlign: "center", padding: 40 }}>
+                <div style={{ fontSize: 16, color: "#999" }}>ไม่มีข้อมูล Chart</div>
+              </div>
+            )}
           </div>
 
           {/* พื้นที่สำหรับตารางหรือกราฟอื่น - 50% */}
@@ -1964,8 +1964,8 @@ export default function TechBrowser() {
           marginBottom: 12,
         }}
       >
-        <button 
-          onClick={() => fetchData(1)} 
+        <button
+          onClick={() => fetchData(1)}
           disabled={loading}
           style={{
             backgroundColor: "#1e3a5f",
@@ -1979,8 +1979,8 @@ export default function TechBrowser() {
         >
           ค้นหา
         </button>
-        <button 
-          onClick={clearFilters} 
+        <button
+          onClick={clearFilters}
           disabled={loading}
           style={{
             backgroundColor: "#1e3a5f",
@@ -1994,8 +1994,8 @@ export default function TechBrowser() {
         >
           ล้างตัวกรอง
         </button>
-        <button 
-          onClick={exportExcel} 
+        <button
+          onClick={exportExcel}
           disabled={loading}
           style={{
             backgroundColor: "#1e3a5f",
@@ -2026,7 +2026,7 @@ export default function TechBrowser() {
         }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <span>❌ เกิดข้อผิดพลาด: {error}</span>
-            <button 
+            <button
               onClick={() => fetchData(1)}
               style={{
                 background: "#dc2626",
@@ -2195,7 +2195,7 @@ export default function TechBrowser() {
         >
           หน้าถัดไป
         </button>
-        
+
         {/* Jump to page input */}
         <div style={{ display: "flex", gap: 4, alignItems: "center", marginLeft: 12 }}>
           <span style={{ fontSize: 13, color: "#666" }}>ไปหน้า:</span>
@@ -2329,8 +2329,8 @@ export default function TechBrowser() {
                     {detailLoading
                       ? "กำลังโหลดรายละเอียด..."
                       : detailError
-                      ? "เกิดข้อผิดพลาด"
-                      : `แสดงข้อมูลทั้งหมด ${Object.keys(detailRow || {}).length} ฟิลด์จาก Supabase`}
+                        ? "เกิดข้อผิดพลาด"
+                        : `แสดงข้อมูลทั้งหมด ${Object.keys(detailRow || {}).length} ฟิลด์จาก Supabase`}
                   </p>
                 </div>
                 <button
@@ -2363,25 +2363,25 @@ export default function TechBrowser() {
                     <Field row={detailRow!} label={getFieldLabel("gender")} keys={["gender"]} />
                     <Field row={detailRow!} label={getFieldLabel("age")} keys={["age"]} />
                     <Field row={detailRow!} label={getFieldLabel("degree")} keys={["degree"]} />
-                    <Field row={detailRow!} label={getFieldLabel("workgroup_status")} keys={["workgroup_status","status"]} />
-                    <Field row={detailRow!} label={getFieldLabel("work_type")} keys={["work_type","team_type"]} />
+                    <Field row={detailRow!} label={getFieldLabel("workgroup_status")} keys={["workgroup_status", "status"]} />
+                    <Field row={detailRow!} label={getFieldLabel("work_type")} keys={["work_type", "team_type"]} />
                     <Field row={detailRow!} label={getFieldLabel("provider")} keys={["provider"]} />
                     <WorkExperienceField row={detailRow!} />
                   </Section>
 
                   <Section title={`Section 2: ${SECTION_LABELS.area_service}`}>
                     <Field row={detailRow!} label={getFieldLabel("area")} keys={["area"]} />
-                    <Field row={detailRow!} label={getFieldLabel("province")} keys={["province","ctm_province"]} />
-                    <Field row={detailRow!} label={getFieldLabel("rsm")} keys={["RBM","rsm"]} />
-                    <Field row={detailRow!} label={getFieldLabel("ctm")} keys={["CBM","ctm"]} />
+                    <Field row={detailRow!} label={getFieldLabel("province")} keys={["province", "ctm_province"]} />
+                    <Field row={detailRow!} label={getFieldLabel("rsm")} keys={["RBM", "rsm"]} />
+                    <Field row={detailRow!} label={getFieldLabel("ctm")} keys={["CBM", "ctm"]} />
                     <Field row={detailRow!} label={getFieldLabel("depot_code")} keys={["depot_code"]} />
                     <Field row={detailRow!} label={getFieldLabel("depot_name")} keys={["depot_name"]} />
                   </Section>
 
                   <Section title={`Section 3: ${SECTION_LABELS.services}`}>
                     {[
-                      [getFieldLabel("svc_install"), ["svc_install","service_install"]],
-                      [getFieldLabel("svc_repair"), ["svc_repair","service_repair"]],
+                      [getFieldLabel("svc_install"), ["svc_install", "service_install"]],
+                      [getFieldLabel("svc_repair"), ["svc_repair", "service_repair"]],
                       [getFieldLabel("svc_ojt"), ["svc_ojt"]],
                       [getFieldLabel("svc_safety"), ["svc_safety"]],
                       [getFieldLabel("svc_softskill"), ["svc_softskill"]],
@@ -2402,6 +2402,9 @@ export default function TechBrowser() {
                       [getFieldLabel("svc_true_id"), ["svc_true_id"]],
                       [getFieldLabel("svc_true_inno"), ["svc_true_inno"]],
                       [getFieldLabel("svc_l3"), ["svc_l3"]],
+                      [getFieldLabel("course_g"), ["course_g", "Course_G"]],
+                      [getFieldLabel("course_ec"), ["course_ec", "Course_EC"]],
+                      [getFieldLabel("course_h"), ["course_h", "Course_H"]],
                     ].map(([label, keys]) => (
                       <Field key={String(label)} row={detailRow!} label={String(label)} keys={keys as string[]} />
                     ))}
@@ -2428,7 +2431,7 @@ export default function TechBrowser() {
                   </Section>
 
                   <Section title={`Section 6: ${SECTION_LABELS.documents}`}>
-                    <DocField row={detailRow!} label={getFieldLabel("doc_tech_card_url")} keys={["doc_tech_card_url","tech_card_url"]} />
+                    <DocField row={detailRow!} label={getFieldLabel("doc_tech_card_url")} keys={["doc_tech_card_url", "tech_card_url"]} />
                     <DocField row={detailRow!} label={getFieldLabel("doc_id_card_url")} keys={["doc_id_card_url"]} />
                     <DocField row={detailRow!} label={getFieldLabel("doc_driver_license_url")} keys={["doc_driver_license_url"]} />
                     <DocField row={detailRow!} label={getFieldLabel("doc_education_certificate_url")} keys={["doc_education_certificate_url"]} />
@@ -2493,9 +2496,9 @@ function SummaryRow({ row }: { row: Row }) {
       marginBottom: 16,
     }}>
       <SummaryChip label={getFieldLabel("tech_id")}>{pick(row, ["tech_id"]) || "—"}</SummaryChip>
-      <SummaryChip label={getFieldLabel("full_name")}>{pick(row, ["full_name","tech_first_name","tech_last_name"]) || "—"}</SummaryChip>
+      <SummaryChip label={getFieldLabel("full_name")}>{pick(row, ["full_name", "tech_first_name", "tech_last_name"]) || "—"}</SummaryChip>
       <SummaryChip label={getFieldLabel("card_expire_date")}>{pick(row, ["card_expire_date"]) || "—"}</SummaryChip>
-      <SummaryChip label={getFieldLabel("phone")}>{pick(row, ["phone","tel"]) || "—"}</SummaryChip>
+      <SummaryChip label={getFieldLabel("phone")}>{pick(row, ["phone", "tel"]) || "—"}</SummaryChip>
       <SummaryChip label={getFieldLabel("email")}>{pick(row, ["email"]) || "—"}</SummaryChip>
     </div>
   );
@@ -2635,7 +2638,7 @@ function WorkExperienceField({ row }: { row: Row }) {
   const cardRegisterDate = pick(row, ["card_register_date"]);
   const workExperience = calculateWorkExperience(cardRegisterDate || "");
   const hasValue = cardRegisterDate && cardRegisterDate.trim() !== "";
-  
+
   return (
     <div style={{
       padding: 12,
