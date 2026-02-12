@@ -4,7 +4,6 @@ export const fetchCache = 'force-no-store';
 
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
-import { mapCtmToThaiName } from "@/lib/ctmMapping";
 
 type TechnicianData = {
   ctm: string;
@@ -14,20 +13,20 @@ type TechnicianData = {
 export async function GET(request: NextRequest) {
   try {
     const supabase = supabaseAdmin();
-    
+
     // Count each provider using unique national_id (like RSM Provider API)
     const mainProviders = ["WW-Provider", "True Tech", "เถ้าแก่เทค"];
     const providerExactCounts: Record<string, number> = {};
-    
+
     console.log("📊 CTM Provider: Counting with pagination...");
-    
+
     // Count unique national_id for each provider using pagination
     for (const provider of mainProviders) {
       const allIds = new Set<string>();
       let from = 0;
       const pageSize = 1000;
       let hasMore = true;
-      
+
       while (hasMore) {
         const { data: ids } = await supabase
           .from("technicians")
@@ -35,7 +34,7 @@ export async function GET(request: NextRequest) {
           .eq("provider", provider)
           .not("national_id", "is", null)
           .range(from, from + pageSize - 1);
-        
+
         if (ids && ids.length > 0) {
           ids.forEach(r => allIds.add(r.national_id));
           from += pageSize;
@@ -44,31 +43,31 @@ export async function GET(request: NextRequest) {
           hasMore = false;
         }
       }
-      
+
       providerExactCounts[provider] = allIds.size;
       console.log(`   ${provider}: ${allIds.size} (unique national_id)`);
     }
-    
+
     console.log("Provider exact counts (unique national_id):", providerExactCounts);
-    
+
     // Get all technicians data with pagination to avoid 1000 record limit
     let allData: any[] = [];
     let from = 0;
     const pageSize = 1000;
     let hasMore = true;
-    
+
     while (hasMore) {
       const to = from + pageSize - 1;
       const { data: pageData, error: pageError } = await supabase
         .from("technicians")
         .select("CBM, provider, national_id")  // เพิ่ม national_id
         .range(from, to);
-        
+
       if (pageError) {
         console.error("Supabase pagination error:", pageError);
         return NextResponse.json({ error: pageError.message }, { status: 500 });
       }
-      
+
       if (pageData && pageData.length > 0) {
         allData.push(...pageData);
         from += pageSize;
@@ -77,7 +76,7 @@ export async function GET(request: NextRequest) {
         hasMore = false;
       }
     }
-    
+
     const techs = allData;
 
     // Group data by CTM and Provider - Count unique national_id
@@ -94,16 +93,16 @@ export async function GET(request: NextRequest) {
 
       // Skip if provider is empty, null, or contains only whitespace  
       if (!provider || provider === "null" || provider === "undefined") return;
-      
+
       // Only add the 3 main providers to the set
       if (mainProviders.includes(provider)) {
         providers.add(provider);
       }
 
-      // Map CTM code to Thai name (use "No CTM" for missing values)
-      const ctm = (!originalCtm || originalCtm === "null" || originalCtm === "undefined") 
-        ? "No CTM" 
-        : mapCtmToThaiName(originalCtm);
+      // Use CBM value directly from database (no mapping)
+      const ctm = (!originalCtm || originalCtm === "null" || originalCtm === "undefined")
+        ? "No CTM"
+        : originalCtm;
 
       if (!groupedData[ctm]) {
         groupedData[ctm] = {};
@@ -138,7 +137,7 @@ export async function GET(request: NextRequest) {
     // Calculate summary from grouped data (unique national_id counts - same as chart)
     // This ensures summary and chart show the same numbers
     const providerCountsFromGroupedData: Record<string, number> = {};
-    
+
     mainProviders.forEach(provider => {
       let totalForProvider = 0;
       Object.keys(groupedData).forEach(ctm => {
@@ -146,9 +145,9 @@ export async function GET(request: NextRequest) {
       });
       providerCountsFromGroupedData[provider] = totalForProvider;
     });
-    
+
     const totalFromGroupedData = Object.values(providerCountsFromGroupedData).reduce((sum, count) => sum + count, 0);
-    
+
     const summary = {
       totalCBMs: Object.keys(groupedData).length,
       totalTechnicians: totalFromGroupedData,  // Use counts from grouped data (unique national_id)
@@ -177,11 +176,11 @@ export async function GET(request: NextRequest) {
     console.log('Chart data length:', chartData.length);
     console.log('Summary provider breakdown:', summary.providerBreakdown);
     console.log('Top 10 CTMs:', chartData.slice(0, 10).map(item => `${item.ctm}: ${item.total}`));
-    
+
     // Debug CTM mapping
     const sampleMappings = chartData.slice(0, 5).map(item => item.ctm);
     console.log('🔤 Sample mapped CTM names:', sampleMappings);
-    
+
     return NextResponse.json({
       chartData,
       summary,
