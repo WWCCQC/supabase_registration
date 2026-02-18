@@ -35,6 +35,10 @@ const CORRUPTED_TEXT_PATTERNS: { pattern: RegExp; correctName: string }[] = [
   { pattern: /ธัญบุรี.*หนองเสือ.*ลำ.{0,3}ูกกา|ลำ.{0,3}ูกกา.*ธัญบุรี/i, correctName: "PTT : ธัญบุรี_หนองเสือ_ลำลูกกา" },
   // SMP : บางบ่อ_บางเสาธง_บางพลี (fix ��างบ่อ → บางบ่อ - U+FFFD replacement chars)
   { pattern: /SMP\s*:.*างบ่อ.*บางเสาธง.*บางพลี/i, correctName: "SMP : บางบ่อ_บางเสาธง_บางพลี" },
+  // B055 - BKK : มีนบุรี_คันนายาว_บึงกุ่ม (fix มีนบุ��ี → มีนบุรี)
+  { pattern: /มีนบุ.{0,8}ี.*คันนายาว.*บึงกุ่ม|คันนายาว.*บึงกุ่ม/i, correctName: "BKK : มีนบุรี_คันนายาว_บึงกุ่ม" },
+  // B025 - BKK : บางซื่อ_จตุจักร_พญาไท_ดินแดง_ห้วยขวาง (fix พญ���ไท → พญาไท)
+  { pattern: /บางซื่อ.*จตุจักร.*พญ.{0,8}ไท.*ดินแดง.*ห้วยขวาง|จตุจักร.*ดินแดง.*ห้วยขวาง/i, correctName: "BKK : บางซื่อ_จตุจักร_พญาไท_ดินแดง_ห้วยขวาง" },
 ];
 
 export function mapCtmToThaiName(ctmCode: string): string {

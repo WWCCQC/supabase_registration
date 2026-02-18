@@ -4,6 +4,7 @@ export const fetchCache = 'force-no-store';
 
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
+import { mapCtmToThaiName } from "@/lib/ctmMapping";
 
 type TechnicianData = {
   ctm: string;
@@ -99,10 +100,10 @@ export async function GET(request: NextRequest) {
         providers.add(provider);
       }
 
-      // Use CBM value directly from database (no mapping)
+      // Use mapCtmToThaiName to fix corrupted Thai text from database
       const ctm = (!originalCtm || originalCtm === "null" || originalCtm === "undefined")
         ? "No CTM"
-        : originalCtm;
+        : mapCtmToThaiName(originalCtm);
 
       if (!groupedData[ctm]) {
         groupedData[ctm] = {};
