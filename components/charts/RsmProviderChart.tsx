@@ -10,7 +10,6 @@ import {
   ResponsiveContainer,
   LabelList,
   Cell,
-  defs,
 } from "recharts";
 
 type ProviderChartData = {
