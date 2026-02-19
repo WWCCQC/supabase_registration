@@ -38,6 +38,16 @@ const CtmProviderChart = dynamic(() => import("./charts/CtmProviderChart"), {
   )
 });
 
+// Dynamic import สำหรับ RsmPowerAuthorityChart
+const RsmPowerAuthorityChart = dynamic(() => import("./charts/RsmPowerAuthorityChart"), {
+  ssr: false,
+  loading: () => (
+    <div style={{ padding: 24, textAlign: "center" }}>
+      <div style={{ fontSize: 16, color: "#666" }}>กำลังโหลด Power Authority Chart...</div>
+    </div>
+  )
+});
+
 // Dynamic import สำหรับ PivotTable
 const PivotTable = dynamic(() => import("./tables/PivotTable"), {
   ssr: false,
@@ -1637,7 +1647,7 @@ export default function TechBrowser() {
           gap: "20px",
           marginTop: "20px"
         }}>
-          {/* RSM Workgroup Chart (RSM Power Authority Status) - 50% */}
+          {/* RSM Power Authority Status Chart - modernized component */}
           <div style={{
             background: "white",
             borderRadius: 12,
@@ -1647,238 +1657,21 @@ export default function TechBrowser() {
             position: "relative"
           }}>
             <h3 style={{
-              margin: "0 0 20px 0",
+              margin: "0 0 4px 0",
               fontSize: 18,
               fontWeight: 600,
               color: "#1f2937"
             }}>
               ⚡ RBM Power Authority Status
             </h3>
-
-            {chartLoading ? (
-              <div style={{ textAlign: "center", padding: 40 }}>
-                <div style={{ fontSize: 16, color: "#666" }}>กำลังโหลด Chart...</div>
-              </div>
-            ) : chartData.length > 0 ? (
-              <ResponsiveContainer width="100%" height={460}>
-                <BarChart
-                  data={chartData}
-                  margin={{ top: 20, right: 30, left: 20, bottom: 100 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                  <XAxis
-                    dataKey="RBM"
-                    angle={-45}
-                    textAnchor="end"
-                    height={100}
-                    interval={0}
-                    tick={{ fontSize: 11 }}
-                  />
-                  <YAxis
-                    label={{
-                      value: 'จำนวนช่าง (คน)',
-                      angle: -90,
-                      position: 'insideLeft',
-                      style: { fontSize: 12 }
-                    }}
-                    tick={{ fontSize: 11 }}
-                  />
-                  <Tooltip
-                    content={({ active, payload, label }: any) => {
-                      if (active && payload && payload.length) {
-                        const total = payload[0].payload.total;
-                        return (
-                          <div style={{
-                            backgroundColor: "white",
-                            padding: "10px",
-                            border: "1px solid #ccc",
-                            borderRadius: "8px",
-                            boxShadow: "0 2px 4px rgba(0,0,0,0.1)"
-                          }}>
-                            <p style={{ fontWeight: "bold", marginBottom: "5px" }}>{label}</p>
-                            {payload.map((entry: any, index: number) => (
-                              <p key={index} style={{ color: entry.color, margin: "3px 0" }}>
-                                {entry.name}: {entry.value} คน
-                              </p>
-                            ))}
-                            <p style={{ fontWeight: "bold", marginTop: "5px", borderTop: "1px solid #eee", paddingTop: "5px" }}>
-                              รวม: {total} คน
-                            </p>
-                          </div>
-                        );
-                      }
-                      return null;
-                    }}
-                  />
-                  <Legend
-                    verticalAlign="top"
-                    height={36}
-                    iconType="rect"
-                    wrapperStyle={{ paddingBottom: "10px" }}
-                    formatter={(value: string) => {
-                      // ใช้ข้อมูลจาก chartSummary ที่มีข้อมูลครบถ้วนทั้งหมด แทนการคำนวณจาก chartData ที่แสดงแค่ Top 8
-                      if (chartSummary) {
-                        if (value === "Yes") {
-                          return `${value} (${(chartSummary.totalYes || 0).toLocaleString()})`;
-                        }
-                        if (value === "No") {
-                          return `${value} (${(chartSummary.totalNo || 0).toLocaleString()})`;
-                        }
-                      }
-
-                      // Fallback: คำนวณจาก chartData ถ้าไม่มี chartSummary
-                      const displayedYes = chartData.reduce((sum, item) => sum + (item.Yes || 0), 0);
-                      const displayedNo = chartData.reduce((sum, item) => sum + (item.No || 0), 0);
-
-                      if (value === "Yes") {
-                        return `${value} (${displayedYes.toLocaleString()})`;
-                      }
-                      if (value === "No") {
-                        return `${value} (${displayedNo.toLocaleString()})`;
-                      }
-                      return value;
-                    }}
-                  />
-                  <Bar
-                    dataKey="Yes"
-                    stackId="a"
-                    fill="#0EAD69"
-                    name="Yes"
-                    onClick={(data: any) => {
-                      if (data && data.RBM) {
-                        handlePowerAuthorityClick(data.RBM, "Yes");
-                      }
-                    }}
-                    style={{ cursor: "pointer" }}
-                  >
-                    {chartData.map((entry, index) => {
-                      const isRsmSelected = selectedRsm === entry.RBM;
-                      const isPowerAuthoritySelected = selectedPowerAuthority === "Yes";
-                      const isFullySelected = isRsmSelected && isPowerAuthoritySelected;
-
-                      return (
-                        <Cell
-                          key={`cell-yes-${index}`}
-                          fill={isFullySelected ? "#0A7A4A" : "#0EAD69"}
-                          opacity={
-                            (selectedRsm && !isRsmSelected) ||
-                              (selectedPowerAuthority && selectedPowerAuthority !== "Yes")
-                              ? 0.5 : 1
-                          }
-                          style={{ cursor: "pointer" }}
-                          onMouseDown={(e: any) => {
-                            e.stopPropagation();
-                            handlePowerAuthorityClick(entry.RBM, "Yes");
-                          }}
-                        />
-                      );
-                    })}
-                    <LabelList
-                      dataKey="Yes"
-                      position="center"
-                      fill="white"
-                      fontSize={10}
-                      fontWeight="bold"
-                      content={(props: any) => {
-                        const { x, y, width, height, value, index } = props;
-                        if (!value || value === 0) return null;
-                        const entry = chartData[index];
-                        const total = (entry.Yes || 0) + (entry.No || 0);
-                        const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : '0.0';
-                        return (
-                          <text
-                            x={x + width / 2}
-                            y={y + height / 2}
-                            fill="white"
-                            textAnchor="middle"
-                            dominantBaseline="middle"
-                            fontSize="10"
-                            fontWeight="bold"
-                          >
-                            {value} ({percentage}%)
-                          </text>
-                        );
-                      }}
-                    />
-                  </Bar>
-                  <Bar
-                    dataKey="No"
-                    stackId="a"
-                    fill="#D90429"
-                    name="No"
-                    onClick={(data: any) => {
-                      if (data && data.RBM) {
-                        handlePowerAuthorityClick(data.RBM, "No");
-                      }
-                    }}
-                    style={{ cursor: "pointer" }}
-                  >
-                    {chartData.map((entry, index) => {
-                      const isRsmSelected = selectedRsm === entry.RBM;
-                      const isPowerAuthoritySelected = selectedPowerAuthority === "No";
-                      const isFullySelected = isRsmSelected && isPowerAuthoritySelected;
-
-                      return (
-                        <Cell
-                          key={`cell-no-${index}`}
-                          fill={isFullySelected ? "#A0021F" : "#D90429"}
-                          opacity={
-                            (selectedRsm && !isRsmSelected) ||
-                              (selectedPowerAuthority && selectedPowerAuthority !== "No")
-                              ? 0.5 : 1
-                          }
-                          style={{ cursor: "pointer" }}
-                          onMouseDown={(e: any) => {
-                            e.stopPropagation();
-                            handlePowerAuthorityClick(entry.RBM, "No");
-                          }}
-                        />
-                      );
-                    })}
-                    <LabelList
-                      dataKey="No"
-                      position="center"
-                      fill="white"
-                      fontSize={10}
-                      fontWeight="bold"
-                      content={(props: any) => {
-                        const { x, y, width, height, value, index } = props;
-                        if (!value || value === 0) return null;
-                        const entry = chartData[index];
-                        const total = (entry.Yes || 0) + (entry.No || 0);
-                        const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : '0.0';
-                        return (
-                          <text
-                            x={x + width / 2}
-                            y={y + height / 2}
-                            fill="white"
-                            textAnchor="middle"
-                            dominantBaseline="middle"
-                            fontSize="10"
-                            fontWeight="bold"
-                          >
-                            {value} ({percentage}%)
-                          </text>
-                        );
-                      }}
-                    />
-                    {/* แสดงจำนวนรวมเหนือยอดกราฟ */}
-                    <LabelList
-                      dataKey="total"
-                      position="top"
-                      fill="#111827"
-                      fontSize={12}
-                      fontWeight="bold"
-                      offset={5}
-                    />
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            ) : (
-              <div style={{ textAlign: "center", padding: 40 }}>
-                <div style={{ fontSize: 16, color: "#999" }}>ไม่มีข้อมูล Chart</div>
-              </div>
-            )}
+            <RsmPowerAuthorityChart
+              chartData={chartData}
+              chartSummary={chartSummary}
+              chartLoading={chartLoading}
+              selectedRsm={selectedRsm}
+              selectedPowerAuthority={selectedPowerAuthority}
+              onPowerAuthorityClick={handlePowerAuthorityClick}
+            />
           </div>
 
           {/* พื้นที่สำหรับตารางหรือกราฟอื่น - 50% */}
