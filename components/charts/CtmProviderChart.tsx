@@ -61,9 +61,10 @@ export default function CtmProviderChart({ selectedCtm, onCtmClick }: CtmProvide
       setChartData(json.chartData || []);
       setSummary(json.summary || null);
       const fetched: string[] = json.providers || [];
-      const sorted = PROVIDER_ORDER.filter((p) => fetched.includes(p)).concat(
-        fetched.filter((p) => !PROVIDER_ORDER.includes(p as any))
-      );
+      const sorted: string[] = [
+        ...PROVIDER_ORDER.filter((p) => fetched.includes(p)),
+        ...fetched.filter((p) => !(PROVIDER_ORDER as readonly string[]).includes(p)),
+      ];
       setProviders(sorted);
     } catch (e: any) {
       console.error("CTM Provider Chart fetch error:", e);
