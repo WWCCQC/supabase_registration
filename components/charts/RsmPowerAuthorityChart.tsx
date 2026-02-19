@@ -190,11 +190,7 @@ export default function RsmPowerAuthorityChart({
                         tick={{ fontSize: 10, fill: "#64748b", fontWeight: 500 }}
                         axisLine={{ stroke: "#e2e8f0" }} tickLine={false} />
 
-                    <YAxis tick={{ fontSize: 10, fill: "#94a3b8" }} axisLine={false} tickLine={false}
-                        label={{
-                            value: "จำนวนช่าง (คน)", angle: -90, position: "insideLeft",
-                            offset: 10, style: { fontSize: 10, fill: "#94a3b8" }
-                        }} />
+                    <YAxis tick={false} axisLine={false} tickLine={false} width={10} />
 
                     <Tooltip content={<CustomTooltip />} cursor={{ fill: "rgba(148,163,184,0.08)" }} />
 
@@ -217,15 +213,22 @@ export default function RsmPowerAuthorityChart({
                         <LabelList dataKey="Yes" position="center" fill="white" fontSize={8} fontWeight="bold"
                             content={(props: any) => {
                                 const { x, y, width, height, value, index } = props;
-                                if (!value || value === 0 || height < 28) return null;
+                                if (!value || value === 0) return null;
                                 const e = chartData[index];
                                 const tot = (e.Yes || 0) + (e.No || 0);
                                 const pct = tot > 0 ? ((value / tot) * 100).toFixed(1) : "0.0";
                                 const cx = x + width / 2;
                                 const cy = y + height / 2;
+                                if (height < 24) {
+                                    return (
+                                        <text x={cx} y={cy + 2} textAnchor="middle" fill="white" fontWeight="bold" fontSize="7">
+                                            {value.toLocaleString()}
+                                        </text>
+                                    );
+                                }
                                 return (
                                     <text textAnchor="middle" fill="white" fontWeight="bold">
-                                        <tspan x={cx} dy={cy - 5} fontSize="8">{value.toLocaleString()}</tspan>
+                                        <tspan x={cx} y={cy - 3} fontSize="8">{value.toLocaleString()}</tspan>
                                         <tspan x={cx} dy="11" fontSize="7.5">({pct}%)</tspan>
                                     </text>
                                 );
@@ -251,15 +254,22 @@ export default function RsmPowerAuthorityChart({
                         <LabelList dataKey="No" position="center" fill="white" fontSize={8} fontWeight="bold"
                             content={(props: any) => {
                                 const { x, y, width, height, value, index } = props;
-                                if (!value || value === 0 || height < 28) return null;
+                                if (!value || value === 0) return null;
                                 const e = chartData[index];
                                 const tot = (e.Yes || 0) + (e.No || 0);
                                 const pct = tot > 0 ? ((value / tot) * 100).toFixed(1) : "0.0";
                                 const cx = x + width / 2;
                                 const cy = y + height / 2;
+                                if (height < 24) {
+                                    return (
+                                        <text x={cx} y={cy + 2} textAnchor="middle" fill="white" fontWeight="bold" fontSize="7">
+                                            {value.toLocaleString()}
+                                        </text>
+                                    );
+                                }
                                 return (
                                     <text textAnchor="middle" fill="white" fontWeight="bold">
-                                        <tspan x={cx} dy={cy - 5} fontSize="8">{value.toLocaleString()}</tspan>
+                                        <tspan x={cx} y={cy - 3} fontSize="8">{value.toLocaleString()}</tspan>
                                         <tspan x={cx} dy="11" fontSize="7.5">({pct}%)</tspan>
                                     </text>
                                 );
