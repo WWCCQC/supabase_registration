@@ -1168,20 +1168,25 @@ export default function TechBrowser() {
       }}>
         {/* ===== ปุ่มรีเฟรชและ KPI rows ===== */}
         <div style={{
-          background: "#eeeeee",
-          padding: "16px",
-          borderRadius: "8px",
-          width: "650px"
+          background: "linear-gradient(160deg, #1e3a5f 0%, #1a3050 50%, #162840 100%)",
+          padding: "18px",
+          borderRadius: "16px",
+          width: "650px",
+          boxShadow: "0 8px 32px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.06)"
         }}>
           {/* Header */}
           <div style={{
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
-            marginBottom: "12px",
-            padding: "8px 0"
+            marginBottom: "14px",
+            padding: "8px 10px",
+            background: "rgba(255,255,255,0.06)",
+            borderRadius: "10px",
+            backdropFilter: "blur(4px)",
+            border: "1px solid rgba(255,255,255,0.10)"
           }}>
-            <div style={{ fontSize: "14px", fontWeight: "bold", color: "#333" }}>
+            <div style={{ fontSize: "14px", fontWeight: 700, color: "rgba(255,255,255,0.92)", letterSpacing: "0.3px" }}>
               📊 ข้อมูลสรุป (Dashboard)
             </div>
           </div>
@@ -1190,13 +1195,11 @@ export default function TechBrowser() {
             style={{
               display: "grid",
               gridAutoFlow: "column",
-              gridAutoColumns: "130px",
-              gap: 2,
+              gridAutoColumns: "1fr",
+              gap: 8,
               alignItems: "stretch",
-              minHeight: 65,
-              height: 65,
-              overflow: "hidden",
-              marginBottom: 4,
+              minHeight: 72,
+              marginBottom: 8,
             }}
           >
             {/* Total */}
@@ -1204,9 +1207,10 @@ export default function TechBrowser() {
               style={{
                 ...cardStyle,
                 cursor: "pointer",
-                background: "#203864",
+                background: "linear-gradient(145deg, #1e40af 0%, #1e3a8a 60%, #172554 100%)",
                 color: "white",
-                border: "none",
+                border: "1px solid rgba(255,255,255,0.15)",
+                boxShadow: "0 4px 15px rgba(30,58,138,0.5), inset 0 1px 0 rgba(255,255,255,0.12)",
               }}
               onClick={() => {
                 clearFilters();
@@ -1214,10 +1218,10 @@ export default function TechBrowser() {
               }}
               title="คลิกเพื่อล้างตัวกรองทั้งหมด"
             >
-              <div style={{ ...cardTitle, color: "rgba(255,255,255,0.8)" }}>
-                Technicians (คน)
+              <div style={{ ...cardTitle, color: "rgba(255,255,255,0.7)", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                👷 Technicians (คน)
               </div>
-              <div style={{ ...cardNumber, color: "white" }}>
+              <div style={{ ...cardNumber, color: "white", fontSize: 15, textShadow: "0 1px 4px rgba(0,0,0,0.3)" }}>
                 {kpiLoading ? "กำลังโหลด..." : (kpiInitialized ? `${(kpi?.total ?? 0).toLocaleString()} (100%)` : "กำลังโหลด...")}
               </div>
             </div>
@@ -1231,9 +1235,13 @@ export default function TechBrowser() {
               const count = f?.count ?? 0;
               const pct = f?.percent ?? 0;
 
+              const gradients = [
+                "linear-gradient(145deg, #0284c7 0%, #0369a1 60%, #075985 100%)",
+                "linear-gradient(145deg, #0891b2 0%, #0e7490 60%, #155e75 100%)",
+              ];
               const colors = [
-                { bg: "#87BFFF", text: "white" },
-                { bg: "#87BFFF", text: "white" },
+                { bg: gradients[index], text: "white" },
+                { bg: gradients[index], text: "white" },
               ];
 
               return (
@@ -1244,10 +1252,10 @@ export default function TechBrowser() {
                     cursor: "pointer",
                     background: colors[index].bg,
                     color: colors[index].text,
-                    border: q === name ? "2px solid #fff" : "none",
-                    transition: "all 0.2s ease",
+                    border: q === name ? "2px solid rgba(255,255,255,0.9)" : "1px solid rgba(255,255,255,0.15)",
+                    transition: "all 0.22s ease",
                     transform: q === name ? "scale(1.05)" : "scale(1)",
-                    boxShadow: q === name ? "0 8px 16px rgba(0,0,0,0.2)" : "0 1px 2px rgba(0,0,0,0.04)",
+                    boxShadow: q === name ? "0 8px 24px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.2)" : "0 4px 12px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.12)",
                   }}
                   onClick={() => {
                     if (q === name) {
@@ -1265,10 +1273,10 @@ export default function TechBrowser() {
                   }}
                   title={`คลิกเพื่อกรองตาม ${name}`}
                 >
-                  <div style={{ ...cardTitle, color: "rgba(255,255,255,0.8)" }}>
-                    {name}
+                  <div style={{ ...cardTitle, color: "rgba(255,255,255,0.72)", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                    {name === "Installation" ? "🔧 " : "🛠️ "}{name}
                   </div>
-                  <div style={{ ...cardNumber, color: "white" }}>
+                  <div style={{ ...cardNumber, color: "white", fontSize: 14, textShadow: "0 1px 4px rgba(0,0,0,0.3)" }}>
                     {kpiLoading ? "กำลังโหลด..." : `${count.toLocaleString()} (${pct.toFixed(1)}%)`}
                   </div>
                 </div>
@@ -1280,10 +1288,10 @@ export default function TechBrowser() {
               style={{
                 ...cardStyle,
                 cursor: "pointer",
-                background: "#203864",
+                background: "linear-gradient(145deg, #4f46e5 0%, #4338ca 60%, #3730a3 100%)",
                 color: "white",
-                border: "none",
-                marginLeft: "10px",
+                border: "1px solid rgba(255,255,255,0.15)",
+                boxShadow: "0 4px 15px rgba(79,70,229,0.5), inset 0 1px 0 rgba(255,255,255,0.12)",
               }}
               onClick={() => {
                 clearFilters();
@@ -1291,10 +1299,10 @@ export default function TechBrowser() {
               }}
               title="คลิกเพื่อล้างตัวกรองทั้งหมด - ข้อมูล Depot Code"
             >
-              <div style={{ ...cardTitle, color: "rgba(255,255,255,0.8)" }}>
-                Depot Code
+              <div style={{ ...cardTitle, color: "rgba(255,255,255,0.72)", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                🏪 Depot Code
               </div>
-              <div style={{ ...cardNumber, color: "white" }}>
+              <div style={{ ...cardNumber, color: "white", fontSize: 15, textShadow: "0 1px 4px rgba(0,0,0,0.3)" }}>
                 {depotCodeLoading ? "กำลังโหลด..." : depotCodeCount.toLocaleString()}
               </div>
             </div>
@@ -1304,9 +1312,14 @@ export default function TechBrowser() {
               style={{
                 ...cardStyle,
                 cursor: "pointer",
-                background: "#87BFFF",
+                background: q === "Depot WW-Provider"
+                  ? "linear-gradient(145deg, #1d4ed8 0%, #1e40af 60%, #1e3a8a 100%)"
+                  : "linear-gradient(145deg, #3b82f6 0%, #2563eb 60%, #1d4ed8 100%)",
                 color: "white",
-                border: "none",
+                border: q === "Depot WW-Provider" ? "2px solid rgba(255,255,255,0.9)" : "1px solid rgba(255,255,255,0.15)",
+                transition: "all 0.22s ease",
+                transform: q === "Depot WW-Provider" ? "scale(1.05)" : "scale(1)",
+                boxShadow: q === "Depot WW-Provider" ? "0 8px 24px rgba(29,78,216,0.5), inset 0 1px 0 rgba(255,255,255,0.2)" : "0 4px 12px rgba(59,130,246,0.35), inset 0 1px 0 rgba(255,255,255,0.12)",
               }}
               onClick={() => {
                 if (q === "Depot WW-Provider") {
@@ -1324,10 +1337,10 @@ export default function TechBrowser() {
               }}
               title="คลิกเพื่อกรองตาม Depot WW-Provider"
             >
-              <div style={{ ...cardTitle, color: "rgba(255,255,255,0.8)" }}>
-                Depot WW
+              <div style={{ ...cardTitle, color: "rgba(255,255,255,0.72)", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                🏭 Depot WW
               </div>
-              <div style={{ ...cardNumber, color: "white" }}>
+              <div style={{ ...cardNumber, color: "white", fontSize: 14, textShadow: "0 1px 4px rgba(0,0,0,0.3)" }}>
                 {depotByProviderLoading ? "กำลังโหลด..." : (() => {
                   const count = depotByProvider["WW-Provider"] || 0;
                   const percentage = depotCodeCount > 0 ? ((count / depotCodeCount) * 100).toFixed(1) : 0;
@@ -1342,12 +1355,10 @@ export default function TechBrowser() {
             style={{
               display: "grid",
               gridAutoFlow: "column",
-              gridAutoColumns: "130px",
-              gap: 2,
+              gridAutoColumns: "1fr",
+              gap: 8,
               alignItems: "stretch",
-              minHeight: 65,
-              height: 65,
-              overflow: "hidden",
+              minHeight: 72,
             }}
           >
             {/* Provider */}
@@ -1359,10 +1370,15 @@ export default function TechBrowser() {
               const count = f?.count ?? 0;
               const pct = f?.percent ?? 0;
 
+              const providerGradients = [
+                "linear-gradient(145deg, #3b82f6 0%, #2563eb 60%, #1d4ed8 100%)",  // WW-Provider: blue
+                "linear-gradient(145deg, #10b981 0%, #059669 60%, #047857 100%)",  // True Tech: green
+                "linear-gradient(145deg, #f59e0b 0%, #d97706 60%, #b45309 100%)",  // เถ้าแก่เทค: amber
+              ];
               const colors = [
-                { bg: "#87BFFF", text: "white" },
-                { bg: "#87BFFF", text: "white" },
-                { bg: "#87BFFF", text: "white" },
+                { bg: providerGradients[index], text: "white" },
+                { bg: providerGradients[index], text: "white" },
+                { bg: providerGradients[index], text: "white" },
               ];
 
               return (
@@ -1373,10 +1389,10 @@ export default function TechBrowser() {
                     cursor: "pointer",
                     background: colors[index].bg,
                     color: colors[index].text,
-                    border: q === name ? "2px solid #fff" : "none",
-                    transition: "all 0.2s ease",
+                    border: q === name ? "2px solid rgba(255,255,255,0.9)" : "1px solid rgba(255,255,255,0.15)",
+                    transition: "all 0.22s ease",
                     transform: q === name ? "scale(1.05)" : "scale(1)",
-                    boxShadow: q === name ? "0 8px 16px rgba(0,0,0,0.2)" : "0 1px 2px rgba(0,0,0,0.04)",
+                    boxShadow: q === name ? "0 8px 24px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.2)" : "0 4px 12px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.12)",
                   }}
                   onClick={() => {
                     if (q === name) {
@@ -1397,15 +1413,20 @@ export default function TechBrowser() {
                   <div
                     style={{
                       ...cardTitle,
-                      color: "rgba(255,255,255,0.8)",
+                      color: "rgba(255,255,255,0.72)",
+                      fontSize: 10,
+                      textTransform: "uppercase",
+                      letterSpacing: "0.5px",
                     }}
                   >
-                    {name}
+                    {index === 0 ? "🔵 " : index === 1 ? "🟢 " : "🟡 "}{name}
                   </div>
                   <div
                     style={{
                       ...cardNumber,
                       color: "white",
+                      fontSize: 14,
+                      textShadow: "0 1px 4px rgba(0,0,0,0.3)",
                     }}
                   >
                     {kpiLoading ? "โหลด..." : (kpiInitialized ? `${count.toLocaleString()} (${pct}%)` : "โหลด...")}
@@ -1420,9 +1441,13 @@ export default function TechBrowser() {
               const count = 0;
               const pct = 0;
 
+              const depotGradients = [
+                "linear-gradient(145deg, #10b981 0%, #059669 60%, #047857 100%)",  // Depot True Tech: green
+                "linear-gradient(145deg, #f59e0b 0%, #d97706 60%, #b45309 100%)",  // Depot เถ้าแก่เทค: amber
+              ];
               const colors = [
-                { bg: "#87BFFF", text: "white" },
-                { bg: "#87BFFF", text: "white" },
+                { bg: depotGradients[index], text: "white" },
+                { bg: depotGradients[index], text: "white" },
               ];
 
               return (
@@ -1433,11 +1458,10 @@ export default function TechBrowser() {
                     cursor: "pointer",
                     background: colors[index].bg,
                     color: colors[index].text,
-                    border: q === name ? "2px solid #fff" : "none",
-                    transition: "all 0.2s ease",
+                    border: q === name ? "2px solid rgba(255,255,255,0.9)" : "1px solid rgba(255,255,255,0.15)",
+                    transition: "all 0.22s ease",
                     transform: q === name ? "scale(1.05)" : "scale(1)",
-                    boxShadow: q === name ? "0 8px 16px rgba(0,0,0,0.2)" : "0 1px 2px rgba(0,0,0,0.04)",
-                    marginLeft: index === 0 ? "10px" : "0",
+                    boxShadow: q === name ? "0 8px 24px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.2)" : "0 4px 12px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.12)",
                   }}
                   onClick={() => {
                     if (q === name) {
@@ -1458,15 +1482,20 @@ export default function TechBrowser() {
                   <div
                     style={{
                       ...cardTitle,
-                      color: "rgba(255,255,255,0.8)",
+                      color: "rgba(255,255,255,0.72)",
+                      fontSize: 10,
+                      textTransform: "uppercase",
+                      letterSpacing: "0.5px",
                     }}
                   >
-                    {name}
+                    {index === 0 ? "🟢 " : "🟡 "}{name}
                   </div>
                   <div
                     style={{
                       ...cardNumber,
                       color: "white",
+                      fontSize: 14,
+                      textShadow: "0 1px 4px rgba(0,0,0,0.3)",
                     }}
                   >
                     {depotByProviderLoading ? "กำลังโหลด..." : (() => {
@@ -2497,14 +2526,16 @@ function pick(row: Row, keys: string[]) {
 
 /* ---------- styles ---------- */
 const cardStyle: React.CSSProperties = {
-  border: "1px solid #e5e7eb",
-  borderRadius: 12,
-  padding: "12px 14px",
+  border: "1px solid rgba(255,255,255,0.15)",
+  borderRadius: 14,
+  padding: "11px 14px",
   background: "#fff",
-  boxShadow: "0 1px 2px rgba(0,0,0,0.04)",
+  boxShadow: "0 4px 16px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.12)",
   minHeight: 65,
-  transition: "all 0.2s ease-in-out",
+  transition: "all 0.22s cubic-bezier(0.4, 0, 0.2, 1)",
+  position: "relative",
+  overflow: "hidden",
 };
-const cardTitle: React.CSSProperties = { fontSize: 12, color: "#6b7280", marginBottom: 4 };
-const cardNumber: React.CSSProperties = { fontSize: 14, fontWeight: 700 };
+const cardTitle: React.CSSProperties = { fontSize: 11, color: "#6b7280", marginBottom: 3, fontWeight: 500 };
+const cardNumber: React.CSSProperties = { fontSize: 14, fontWeight: 700, letterSpacing: "-0.3px" };
 const cardSub: React.CSSProperties = { fontSize: 12, color: "#6b7280" };
