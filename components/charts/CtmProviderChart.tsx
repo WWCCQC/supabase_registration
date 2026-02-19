@@ -320,16 +320,10 @@ export default function CtmProviderChart({ selectedCtm, onCtmClick }: CtmProvide
           />
 
           <YAxis
-            tick={{ fontSize: 10, fill: "#94a3b8" }}
+            tick={false}
             axisLine={false}
             tickLine={false}
-            label={{
-              value: "จำนวนช่าง (คน)",
-              angle: -90,
-              position: "insideLeft",
-              offset: 10,
-              style: { fontSize: 10, fill: "#94a3b8" },
-            }}
+            width={10}
           />
 
           <Tooltip
