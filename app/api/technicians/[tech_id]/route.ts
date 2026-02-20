@@ -31,6 +31,22 @@ function stripKeys<T extends Record<string, any>>(row: T, keys: readonly string[
   return out;
 }
 
+// Normalize mixed-case / variant column names → lowercase keys ที่ frontend คาดหวัง
+const COLUMN_RENAMES: [string, string][] = [
+  ["svc_catv_settop_box", "svc_catv_settop"],
+];
+
+function normalizeKeys(row: Record<string, any>) {
+  const out: Record<string, any> = { ...row };
+  for (const [from, to] of COLUMN_RENAMES) {
+    if (from in out && !(to in out)) {
+      out[to] = out[from];
+      delete out[from];
+    }
+  }
+  return out;
+}
+
 // GET /api/technicians/[tech_id]
 // รองรับ id ที่เป็นทั้ง tech_id และ national_id
 export async function GET(_req: Request, { params }: { params: Params }) {
@@ -63,9 +79,11 @@ export async function GET(_req: Request, { params }: { params: Params }) {
 
     // ตัดคีย์ที่ไม่ต้องการออกก่อนส่งกลับ (ที่เหลือส่งทั้งหมด)
     const cleaned = stripKeys(row, EXCLUDE_KEYS);
+    // Normalize column names ให้ตรงกับ keys ที่ frontend ใช้
+    const normalized = normalizeKeys(cleaned);
 
     return NextResponse.json(
-      { row: cleaned },
+      { row: normalized },
       { headers: { "Cache-Control": "no-store" } }
     );
   } catch (e: any) {

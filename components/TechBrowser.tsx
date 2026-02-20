@@ -2224,9 +2224,9 @@ export default function TechBrowser() {
                       [getFieldLabel("svc_true_id"), ["svc_true_id"]],
                       [getFieldLabel("svc_true_inno"), ["svc_true_inno"]],
                       [getFieldLabel("svc_l3"), ["svc_l3"]],
-                      [getFieldLabel("course_g"), ["course_g", "Course_G"]],
-                      [getFieldLabel("course_ec"), ["course_ec", "Course_EC"]],
-                      [getFieldLabel("course_h"), ["course_h", "Course_H"]],
+                      [getFieldLabel("course_g"), ["course_g"]],
+                      [getFieldLabel("course_ec"), ["course_ec"]],
+                      [getFieldLabel("course_h"), ["course_h"]],
                     ].map(([label, keys]) => (
                       <Field key={String(label)} row={detailRow!} label={String(label)} keys={keys as string[]} />
                     ))}

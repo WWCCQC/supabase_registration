@@ -41,7 +41,7 @@ export async function GET(req: Request) {
       "svc_nonstandard", "svc_corporate", "svc_solar", "svc_fttr", "svc_2g", "svc_cctv",
       "svc_cyod", "svc_dongle", "svc_iot", "svc_gigatex", "svc_wifi", "svc_smarthome",
       "svc_catv_settop_box", "svc_true_id", "svc_true_inno", "svc_l3",
-      "Course_G", "Course_EC", "Course_H"
+      "course_g", "course_ec", "course_h"
     ];
 
     const cols = [
@@ -203,9 +203,9 @@ export async function GET(req: Request) {
       svc_true_id: r.svc_true_id ?? null,
       svc_true_inno: r.svc_true_inno ?? null,
       svc_l3: r.svc_l3 ?? null,
-      course_g: r.Course_G ?? null,
-      course_ec: r.Course_EC ?? null,
-      course_h: r.Course_H ?? null,
+      course_g: r.course_g ?? null,
+      course_ec: r.course_ec ?? null,
+      course_h: r.course_h ?? null,
     }));
 
     const total = count ?? 0;
