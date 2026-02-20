@@ -3,6 +3,7 @@ export const revalidate = 0;
 export const fetchCache = "force-no-store";
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
+import { mapCtmToThaiName } from "@/lib/ctmMapping";
 
 function sanitizeQ(s?: string | null) {
   if (!s) return "";
@@ -177,7 +178,7 @@ export async function GET(req: Request) {
       provider: r.provider ?? null,
       area: r.area ?? null,
       rsm: r.RBM ?? null,
-      ctm: r.CBM ?? null,
+      ctm: r.CBM ? mapCtmToThaiName(r.CBM) : null,
       depot_code: r.depot_code ?? null,
       depot_name: r.depot_name ?? null,
       province: r.province ?? r.ctm_province ?? null,
