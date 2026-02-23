@@ -1935,7 +1935,7 @@ export default function TechBrowser() {
                       })()
                     ) : c === "national_id" ? (
                       // แสดงผลต่างกันตาม role
-                      (isAdmin() || isManager()) ? (
+                      isAdmin() ? (
                         <span
                           style={{
                             color: "#2563eb",
@@ -1944,7 +1944,7 @@ export default function TechBrowser() {
                             fontWeight: 500,
                           }}
                           onClick={() => openDetail(r)}
-                          title="คลิกเพื่อดูข้อมูลทั้งหมด (Admin และ Manager)"
+                          title="คลิกเพื่อดูข้อมูลทั้งหมด (Admin)"
                         >
                           {maskNationalId(r[c] ?? "")}
                         </span>
@@ -1954,14 +1954,14 @@ export default function TechBrowser() {
                             color: "#374151",
                             fontWeight: 400,
                           }}
-                          title="ข้อมูลสำหรับผู้ดูแลระบบและผู้จัดการเท่านั้น"
+                          title="ข้อมูลสำหรับผู้ดูแลระบบเท่านั้น"
                         >
                           {maskNationalId(r[c] ?? "")}
                         </span>
                       )
                     ) : c === "tech_id" ? (
                       // แสดงผลต่างกันตาม role
-                      (isAdmin() || isManager()) ? (
+                      isAdmin() ? (
                         <span
                           style={{
                             color: "#2563eb",
@@ -1970,7 +1970,7 @@ export default function TechBrowser() {
                             fontWeight: 500,
                           }}
                           onClick={() => openDetail(r)}
-                          title="คลิกเพื่อดูข้อมูลทั้งหมด (Admin และ Manager)"
+                          title="คลิกเพื่อดูข้อมูลทั้งหมด (Admin)"
                         >
                           {r[c] ?? ""}
                         </span>

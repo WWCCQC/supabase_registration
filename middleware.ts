@@ -16,12 +16,12 @@ const PROTECTED_PATHS = [
 // หน้าที่ admin เท่านั้น
 const ADMIN_ONLY_PATHS = [
   '/admin',
-  '/blacklist'
 ];
 
 // หน้าที่ manager และ admin เข้าได้
 const MANAGER_ADMIN_PATHS = [
-  '/chart'
+  '/chart',
+  '/blacklist'
 ];
 
 // หน้าที่ user เข้าได้
