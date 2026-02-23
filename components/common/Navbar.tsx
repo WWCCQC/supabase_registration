@@ -108,8 +108,8 @@ const Navbar = () => {
           </Link>
         )}
 
-        {/* ลงทะเบียนอบรมช่าง - Admin เท่านั้น */}
-        {isAdmin() && (
+        {/* ลงทะเบียนอบรมช่าง - Admin และ Manager */}
+        {(isAdmin() || isManager()) && (
           <a 
             href="https://trainingtech.vercel.app/"
             target="_blank"
@@ -123,8 +123,8 @@ const Navbar = () => {
           </a>
         )}
 
-        {/* อบรมช่างใหม่ - Admin เท่านั้น */}
-        {isAdmin() && (
+        {/* อบรมช่างใหม่ - Admin และ Manager */}
+        {(isAdmin() || isManager()) && (
           <a 
             href="https://sla-training-dashboard.vercel.app/"
             target="_blank"
