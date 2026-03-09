@@ -2323,7 +2323,7 @@ function TechTransactionContent() {
 
         {/* Monthly Technician Comparison Chart (Total vs Resigned) + Provider Pie Chart */}
         {(() => {
-          // ข้อมูลจำนวนช่างทั้งหมดแต่ละเดือน (hard-coded สำหรับ 2025, real-time สำหรับ Jan 2026)
+          // ข้อมูลจำนวนช่างทั้งหมดแต่ละเดือน (hard-coded สำหรับเดือนก่อนหน้า, real-time สำหรับเดือนปัจจุบัน)
           const monthlyTechnicianData = [
             { month: 'January 2025', total: 2632 },
             { month: 'February 2025', total: 2660 },
@@ -2337,7 +2337,9 @@ function TechTransactionContent() {
             { month: 'October 2025', total: 2938 },
             { month: 'November 2025', total: 2963 },
             { month: 'December 2025', total: 2896 },
-            { month: 'January 2026', total: 2944 } // เปลี่ยนเป็น hard-coded
+            { month: 'January 2026', total: 2944 },
+            { month: 'February 2026', total: 2950 },
+            { month: 'March 2026', total: currentTechnicianCount } // real-time จากตาราง technicians
           ];
 
           // คำนวณจำนวนช่างลาออกจาก monthlyChartData
