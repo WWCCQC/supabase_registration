@@ -112,7 +112,7 @@ export default function CardExpiryTrendChart({ selectedMonth, onMonthClick }: Ca
       <div style={{ display: "flex", justifyContent: "center", gap: 20, marginBottom: 8, fontSize: 12 }}>
         <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
           <span style={{ display: "inline-block", width: 12, height: 12, borderRadius: 2, background: "#f97316" }} />
-          ยังไม่ลงทะเบียน
+          บัตรหมดอายุ
         </span>
         <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
           <span style={{ display: "inline-block", width: 12, height: 12, borderRadius: 2, background: "#22c55e" }} />
