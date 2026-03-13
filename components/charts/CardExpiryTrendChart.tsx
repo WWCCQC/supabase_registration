@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import React from "react";
 import {
   BarChart,
@@ -11,6 +11,7 @@ import {
   LabelList,
   Cell,
   ReferenceLine,
+  Legend,
 } from "recharts";
 
 type ChartItem = {
@@ -18,11 +19,14 @@ type ChartItem = {
   monthLabel: string;
   shortLabel: string;
   count: number;
+  renewCount: number;
+  notRenewedCount: number;
 };
 
 type Summary = {
   year: number;
   totalExpiring: number;
+  totalRenew: number;
   currentMonth: number;
 };
 
@@ -44,7 +48,11 @@ export default function CardExpiryTrendChart({ selectedMonth, onMonthClick }: Ca
       const res = await fetch("/api/chart/card-expiry-trend", { cache: "no-store" });
       const json = await res.json();
       if (!res.ok) throw new Error(json?.error || "Failed to fetch");
-      setChartData(json.chartData || []);
+      const mapped = (json.chartData || []).map((d: any) => ({
+        ...d,
+        notRenewedCount: Math.max(0, d.count - d.renewCount),
+      }));
+      setChartData(mapped);
       setSummary(json.summary || null);
     } catch (e: any) {
       console.error("CardExpiryTrendChart error:", e);
@@ -84,14 +92,12 @@ export default function CardExpiryTrendChart({ selectedMonth, onMonthClick }: Ca
 
   const currentMonth = summary?.currentMonth || (new Date().getMonth() + 1);
 
-  function getBarColor(month: number): string {
-    if (month === currentMonth) return "#ef4444"; // current month — red
-    return "#f97316"; // all other months — orange
+  function getBarColor(_month: number): string {
+    return "#f97316";
   }
 
   function handleChartClick(data: any) {
     if (!data) return;
-    // Recharts v3: use activeIndex to look up from chartData
     const idx = data.activeTooltipIndex ?? data.activeIndex;
     if (idx == null) return;
     const entry = chartData[Number(idx)];
@@ -102,16 +108,21 @@ export default function CardExpiryTrendChart({ selectedMonth, onMonthClick }: Ca
 
   return (
     <div style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}>
+      {/* Legend */}
+      <div style={{ display: "flex", justifyContent: "center", gap: 20, marginBottom: 8, fontSize: 12 }}>
+        <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
+          <span style={{ display: "inline-block", width: 12, height: 12, borderRadius: 2, background: "#f97316" }} />
+          ยังไม่ลงทะเบียน
+        </span>
+        <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
+          <span style={{ display: "inline-block", width: 12, height: 12, borderRadius: 2, background: "#22c55e" }} />
+          ลงทะเบียนอบรมช่างต่อบัตร
+        </span>
+      </div>
 
       {/* Chart */}
       <ResponsiveContainer width="100%" height={350}>
         <BarChart data={chartData} margin={{ top: 20, right: 20, left: 0, bottom: 5 }} onClick={handleChartClick} style={{ cursor: "pointer" }}>
-          <defs>
-            <linearGradient id="barGradCurrent" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#ef4444" stopOpacity={1} />
-              <stop offset="100%" stopColor="#dc2626" stopOpacity={0.8} />
-            </linearGradient>
-          </defs>
           <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
           <XAxis
             dataKey="shortLabel"
@@ -148,28 +159,50 @@ export default function CardExpiryTrendChart({ selectedMonth, onMonthClick }: Ca
                     {isPast && <span style={{ color: "#9ca3af", marginLeft: 6 }}>(ผ่านไปแล้ว)</span>}
                   </div>
                   <div style={{ color: "#6b7280" }}>
-                    บัตรช่างหมดอายุ: <strong style={{ color: isCurrent ? "#ef4444" : "#1f2937" }}>{data.count}</strong> ใบ
+                    บัตรช่างหมดอายุ: <strong style={{ color: isCurrent ? "#ef4444" : "#1f2937" }}>{data.count}</strong> คน
+                  </div>
+                  <div style={{ color: "#6b7280", marginTop: 2 }}>
+                    ลงทะเบียนอบรมช่างต่อบัตร: <strong style={{ color: "#16a34a" }}>{data.renewCount}</strong> คน
+                  </div>
+                  <div style={{ color: "#6b7280", marginTop: 2 }}>
+                    ยังไม่ลงทะเบียน: <strong style={{ color: "#f97316" }}>{data.notRenewedCount}</strong> คน
                   </div>
                 </div>
               );
             }}
           />
-          <ReferenceLine
-            x={chartData.find((d) => d.month === currentMonth)?.shortLabel}
-            stroke="#ef4444"
-            strokeDasharray="4 4"
-            strokeWidth={1.5}
-          />
-          <Bar dataKey="count" radius={[4, 4, 0, 0]} maxBarSize={50}>
+          <Bar dataKey="renewCount" stackId="a" fill="#22c55e" maxBarSize={50}>
             <LabelList
-              dataKey="count"
-              position="top"
-              style={{ fontSize: 11, fontWeight: 600, fill: "#374151" }}
+              dataKey="renewCount"
+              position="center"
+              style={{ fontSize: 10, fontWeight: 700, fill: "#fff" }}
               formatter={(value: unknown) => (Number(value) > 0 ? String(value) : "")}
             />
             {chartData.map((entry) => (
               <Cell
-                key={entry.month}
+                key={`renew-${entry.month}`}
+                fill="#22c55e"
+                opacity={selectedMonth != null && selectedMonth !== entry.month ? 0.35 : 1}
+              />
+            ))}
+          </Bar>
+          <Bar dataKey="notRenewedCount" stackId="a" fill="#f97316" maxBarSize={50} radius={[4, 4, 0, 0]}>
+            <LabelList
+              position="top"
+              style={{ fontSize: 11, fontWeight: 600, fill: "#374151" }}
+              content={({ x, y, width, index }: any) => {
+                const d = chartData[index];
+                if (!d || d.count === 0) return null;
+                return (
+                  <text x={Number(x) + Number(width) / 2} y={Number(y) - 6} textAnchor="middle" style={{ fontSize: 11, fontWeight: 600, fill: "#374151" }}>
+                    {d.count}
+                  </text>
+                );
+              }}
+            />
+            {chartData.map((entry) => (
+              <Cell
+                key={`expire-${entry.month}`}
                 fill={getBarColor(entry.month)}
                 opacity={selectedMonth != null && selectedMonth !== entry.month ? 0.35 : 1}
                 stroke={selectedMonth === entry.month ? "#1f2937" : "none"}
@@ -193,7 +226,7 @@ export default function CardExpiryTrendChart({ selectedMonth, onMonthClick }: Ca
         >
           <div style={{ textAlign: "center" }}>
             <div style={{ fontSize: 11, color: "#9ca3af", textTransform: "uppercase", letterSpacing: 0.5 }}>
-              รวมทั้งปี {summary.year}
+              รวมหมดอายุทั้งปี {summary.year}
             </div>
             <div style={{ fontSize: 20, fontWeight: 700, color: "#1f2937" }}>{summary.totalExpiring.toLocaleString()}</div>
           </div>
@@ -207,13 +240,10 @@ export default function CardExpiryTrendChart({ selectedMonth, onMonthClick }: Ca
           </div>
           <div style={{ textAlign: "center" }}>
             <div style={{ fontSize: 11, color: "#9ca3af", textTransform: "uppercase", letterSpacing: 0.5 }}>
-              เดือนที่เหลือ
+              รวมลงทะเบียนอบรมช่างต่อบัตร
             </div>
-            <div style={{ fontSize: 20, fontWeight: 700, color: "#f97316" }}>
-              {chartData
-                .filter((d) => d.month > currentMonth)
-                .reduce((sum, d) => sum + d.count, 0)
-                .toLocaleString()}
+            <div style={{ fontSize: 20, fontWeight: 700, color: "#16a34a" }}>
+              {summary.totalRenew.toLocaleString()}
             </div>
           </div>
         </div>
