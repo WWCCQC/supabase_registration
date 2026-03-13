@@ -68,6 +68,16 @@ const DepotPowerRanking = dynamic(() => import("./charts/DepotPowerRanking"), {
   )
 });
 
+// Dynamic import สำหรับ CardExpiryTrendChart
+const CardExpiryTrendChart = dynamic(() => import("./charts/CardExpiryTrendChart"), {
+  ssr: false,
+  loading: () => (
+    <div style={{ padding: 24, textAlign: "center" }}>
+      <div style={{ fontSize: 16, color: "#666" }}>กำลังโหลด Card Expiry Chart...</div>
+    </div>
+  )
+});
+
 /* ---------- Types ---------- */
 type Row = { [key: string]: any };
 
@@ -217,6 +227,9 @@ export default function TechBrowser() {
   /* Selected Power Authority Status from chart */
   const [selectedPowerAuthority, setSelectedPowerAuthority] = React.useState<string | null>(null);
 
+  /* Selected card expiry month from chart */
+  const [selectedExpiryMonth, setSelectedExpiryMonth] = React.useState<number | null>(null);
+
   const d_national_id = useDebounced(national_id);
   const d_tech_id = useDebounced(tech_id);
   const d_rsm = useDebounced(rsm);
@@ -300,6 +313,12 @@ export default function TechBrowser() {
     if (selectedPowerAuthority) {
       params.set("power_authority", selectedPowerAuthority);
     }
+    // Add card expiry month filter
+    if (selectedExpiryMonth) {
+      const mm = String(selectedExpiryMonth).padStart(2, "0");
+      const yy = String(new Date().getFullYear()).slice(-2);
+      params.set("card_expire_date", `${mm}/${yy}`);
+    }
     if (d_depot_code) params.set("depot_code", d_depot_code);
     if (d_q) params.set("q", d_q);
     return params;
@@ -327,6 +346,12 @@ export default function TechBrowser() {
     if (selectedPowerAuthority) {
       p.set("power_authority", selectedPowerAuthority);
       p.set("f_power_authority", selectedPowerAuthority);
+    }
+    // Add card expiry month filter for KPI
+    if (selectedExpiryMonth) {
+      const mm = String(selectedExpiryMonth).padStart(2, "0");
+      const yy = String(new Date().getFullYear()).slice(-2);
+      p.set("card_expire_date", `${mm}/${yy}`);
     }
     if (d_depot_code) p.set("f_depot_code", d_depot_code);
     if (d_q) p.set("q", d_q);
@@ -990,6 +1015,13 @@ export default function TechBrowser() {
     fetchWorkgroupData();
     fetchTechnicianData();
   }, [selectedCtm]);
+
+  // Trigger immediate update when selectedExpiryMonth changes
+  React.useEffect(() => {
+    console.log('\u{1F3AF} Selected Expiry Month changed:', selectedExpiryMonth);
+    fetchData(1);
+    fetchKpis();
+  }, [selectedExpiryMonth]);
 
   /* ดึงรายการ RSM, Chart data และ KPI ตอน mount */
   React.useEffect(() => {
@@ -1721,6 +1753,31 @@ export default function TechBrowser() {
               🏆 Top 10 Depot - บัตรการไฟฟ้าสูงสุด
             </h3>
             <DepotPowerRanking />
+          </div>
+        </div>
+
+        {/* แถวที่ 3: Card Expiry Trend Chart (เต็มแถว) */}
+        <div style={{ marginTop: "20px" }}>
+          <div style={{
+            background: "white",
+            borderRadius: 12,
+            padding: 20,
+            boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+            border: "1px solid #e5e7eb",
+            position: "relative"
+          }}>
+            <h3 style={{
+              margin: "0 0 12px 0",
+              fontSize: 18,
+              fontWeight: 600,
+              color: "#1f2937"
+            }}>
+              📋 แนวโน้มบัตรช่างใกล้หมดอายุ ({new Date().getFullYear()})
+            </h3>
+            <CardExpiryTrendChart
+              selectedMonth={selectedExpiryMonth}
+              onMonthClick={(month) => setSelectedExpiryMonth(month)}
+            />
           </div>
         </div>
 

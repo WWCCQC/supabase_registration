@@ -29,6 +29,7 @@ export async function GET(req: Request) {
     const f_ctm = url.searchParams.get("ctm") || "";
     const f_depot_code = url.searchParams.get("depot_code") || "";
     const f_power_authority = url.searchParams.get("power_authority") || "";
+    const f_card_expire_date = url.searchParams.get("card_expire_date") || "";
     const f_training_type = url.searchParams.get("training_type") || "";
     const q = sanitizeQ(url.searchParams.get("q"));
 
@@ -77,6 +78,7 @@ export async function GET(req: Request) {
     if (f_ctm) countQuery = countQuery.ilike("CBM", `%${f_ctm}%`);
     if (f_depot_code) countQuery = countQuery.ilike("depot_code", `%${f_depot_code}%`);
     if (f_power_authority) countQuery = countQuery.eq("power_authority", f_power_authority);
+    if (f_card_expire_date) countQuery = countQuery.eq("card_expire_date", f_card_expire_date);
 
     // กรองตามประเภทการอบรม - ค้นหาคอลัมน์ที่มีค่า "Pass"
     if (f_training_type) {
@@ -121,6 +123,7 @@ export async function GET(req: Request) {
     if (f_ctm) dataQuery = dataQuery.ilike("CBM", `%${f_ctm}%`);
     if (f_depot_code) dataQuery = dataQuery.ilike("depot_code", `%${f_depot_code}%`);
     if (f_power_authority) dataQuery = dataQuery.eq("power_authority", f_power_authority);
+    if (f_card_expire_date) dataQuery = dataQuery.eq("card_expire_date", f_card_expire_date);
 
     // กรองตามประเภทการอบรม - ค้นหาคอลัมน์ที่มีค่า "Pass"
     if (f_training_type) {
