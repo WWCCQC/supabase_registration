@@ -136,9 +136,9 @@ export default function TrainingRadarChart() {
               style={{
                 textAlign: "center",
                 padding: "14px 8px",
-                background: "#fdf6e3",
+                background: "#ffffff",
                 borderRadius: 12,
-                border: "1px solid #f0e6c8",
+                border: "2px solid #ffffff",
               }}
             >
               <div style={{ fontSize: 13, color: "#6b7280", marginBottom: 4 }}>
@@ -159,7 +159,6 @@ export default function TrainingRadarChart() {
                   padding: "14px 8px",
                   background: "#fff",
                   borderRadius: 12,
-                  border: "1px solid #e5e7eb",
                 }}
               >
                 <div style={{ fontSize: 13, color: "#6b7280", marginBottom: 4 }}>
