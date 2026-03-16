@@ -1750,28 +1750,30 @@ export default function TechBrowser() {
         style={{
           marginBottom: 12,
           backgroundColor: "#1e3a5f",
-          padding: "12px",
-          borderRadius: "8px"
+          padding: "14px 16px",
+          borderRadius: "10px"
         }}
       >
         <input
-          placeholder="national_id"
+          className="filter-input"
+          placeholder="🔍 national_id"
           value={national_id}
           onChange={(e) => setNationalId(e.target.value)}
         />
         <input
-          placeholder="tech_id"
+          className="filter-input"
+          placeholder="🔍 tech_id"
           value={tech_id}
           onChange={(e) => setTechId(e.target.value)}
         />
 
         {/* RBM → select */}
         <select
+          className="filter-select"
           value={rsm}
           onChange={(e) => setRsm(e.target.value)}
           disabled={rsmLoading}
           title="เลือก RBM"
-          style={{ height: 28 }}
         >
           <option value="">{rsmLoading ? "กำลังโหลด..." : "— RBM ทั้งหมด —"}</option>
           {rsmOptions.map((opt) => (
@@ -1782,71 +1784,42 @@ export default function TechBrowser() {
         </select>
 
         <input
-          placeholder="depot_code"
+          className="filter-input"
+          placeholder="🔍 depot_code"
           value={depot_code}
           onChange={(e) => setDepotCode(e.target.value)}
         />
         <input
-          placeholder="ค้นหา (พิมพ์อะไรก็ได้)"
+          className="filter-input"
+          placeholder="🔍 ค้นหา (พิมพ์อะไรก็ได้)"
           value={q}
           onChange={(e) => setQ(e.target.value)}
         />
       </div>
 
-      <div
-        style={{
-          display: "flex",
-          gap: 8,
-          alignItems: "center",
-          marginBottom: 12,
-        }}
-      >
+      <div className="filter-actions">
         <button
+          className="filter-btn filter-btn-primary"
           onClick={() => fetchData(1)}
           disabled={loading}
-          style={{
-            backgroundColor: "#1e3a5f",
-            color: "white",
-            border: "none",
-            padding: "8px 16px",
-            borderRadius: "4px",
-            cursor: loading ? "not-allowed" : "pointer",
-            opacity: loading ? 0.6 : 1
-          }}
         >
-          ค้นหา
+          🔍 ค้นหา
         </button>
         <button
+          className="filter-btn filter-btn-secondary"
           onClick={clearFilters}
           disabled={loading}
-          style={{
-            backgroundColor: "#1e3a5f",
-            color: "white",
-            border: "none",
-            padding: "8px 16px",
-            borderRadius: "4px",
-            cursor: loading ? "not-allowed" : "pointer",
-            opacity: loading ? 0.6 : 1
-          }}
         >
-          ล้างตัวกรอง
+          ✕ ล้างตัวกรอง
         </button>
         <button
+          className="filter-btn filter-btn-export"
           onClick={exportExcel}
           disabled={loading}
-          style={{
-            backgroundColor: "#1e3a5f",
-            color: "white",
-            border: "none",
-            padding: "8px 16px",
-            borderRadius: "4px",
-            cursor: loading ? "not-allowed" : "pointer",
-            opacity: loading ? 0.6 : 1
-          }}
         >
-          Export Excel
+          📥 Export Excel
         </button>
-        <div style={{ marginLeft: "auto", fontSize: 12, color: "#555" }}>
+        <div className="filter-status">
           {loading ? "กำลังโหลด..." : `${start}-${end} จาก ${total} รายการ`}
         </div>
       </div>
