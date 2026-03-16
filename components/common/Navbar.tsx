@@ -1,6 +1,6 @@
 "use client";
 
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/useAuth';
@@ -9,6 +9,7 @@ import LiveClock from './LiveClock';
 const Navbar = () => {
   const pathname = usePathname();
   const { user, isAdmin, isManager, isUser } = useAuth();
+  const [menuOpen, setMenuOpen] = useState(false);
 
   // สไตล์สำหรับ nav items
   const navItemStyle = (isActive: boolean) => ({
@@ -39,17 +40,10 @@ const Navbar = () => {
       padding: '0',
       boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
       borderRadius: '0 0 12px 12px',
-      marginBottom: '20px'
+      marginBottom: '20px',
+      position: 'relative',
     }}>
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: '16px',
-        height: '56px',
-        width: '100%',
-        paddingLeft: '16px',
-        paddingRight: '16px'
-      }}>
+      <div className="navbar-top">
         {/* Brand/Title */}
         <div style={{
           fontSize: '18px',
@@ -61,91 +55,94 @@ const Navbar = () => {
           Technician Management
         </div>
 
-        {/* Separator */}
-        <div style={{
+        {/* Separator - desktop only */}
+        <div className="navbar-separator" style={{
           width: '1px',
           height: '32px',
           backgroundColor: 'rgba(255,255,255,0.3)',
           margin: '0 8px'
         }} />
 
-        {/* หน้าหลัก */}
-        <Link href="/" style={navItemStyle(pathname === '/')}>
-          <svg style={iconStyle} viewBox="0 0 24 24">
-            <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
-          </svg>
-          หน้าหลัก
-        </Link>
-
-        {/* Charts - ซ่อนไว้ไม่แสดง */}
-        {false && (
-          <Link href="/chart" style={navItemStyle(pathname === '/chart')}>
+        {/* Nav links - desktop */}
+        <div className="navbar-links">
+          {/* หน้าหลัก */}
+          <Link href="/" style={navItemStyle(pathname === '/')}>
             <svg style={iconStyle} viewBox="0 0 24 24">
-              <path d="M3.5 18.49l6-6.01 4 4L22 6.92l-1.41-1.41-7.09 7.97-4-4L3.5 16.49z"/>
+              <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
             </svg>
-            ข้อมูลสถิติ
+            หน้าหลัก
           </Link>
-        )}
 
-        {/* Blacklist - Admin และ Manager */}
-        {(isAdmin() || isManager()) && (
-          <Link href="/blacklist" style={navItemStyle(pathname === '/blacklist')}>
-            <svg style={iconStyle} viewBox="0 0 24 24">
-              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11H7v-2h10v2z"/>
-            </svg>
-            Blacklist
-          </Link>
-        )}
+          {/* Charts - ซ่อนไว้ไม่แสดง */}
+          {false && (
+            <Link href="/chart" style={navItemStyle(pathname === '/chart')}>
+              <svg style={iconStyle} viewBox="0 0 24 24">
+                <path d="M3.5 18.49l6-6.01 4 4L22 6.92l-1.41-1.41-7.09 7.97-4-4L3.5 16.49z"/>
+              </svg>
+              ข้อมูลสถิติ
+            </Link>
+          )}
 
-        {/* Tech-Transaction - Admin และ Manager */}
-        {(isAdmin() || isManager()) && (
-          <Link href="/tech-transaction" style={navItemStyle(pathname === '/tech-transaction')}>
-            <svg style={iconStyle} viewBox="0 0 24 24">
-              <path d="M9 11H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2zm2-7h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V9h14v11z"/>
-            </svg>
-            Tech-Transaction
-          </Link>
-        )}
+          {/* Blacklist - Admin และ Manager */}
+          {(isAdmin() || isManager()) && (
+            <Link href="/blacklist" style={navItemStyle(pathname === '/blacklist')}>
+              <svg style={iconStyle} viewBox="0 0 24 24">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11H7v-2h10v2z"/>
+              </svg>
+              Blacklist
+            </Link>
+          )}
 
-        {/* ลงทะเบียนอบรมช่าง - Admin และ Manager */}
-        {(isAdmin() || isManager()) && (
-          <a 
-            href="https://trainingtech.vercel.app/"
-            target="_blank"
-            rel="noopener noreferrer"
-            style={navItemStyle(false)}
-          >
-            <svg style={iconStyle} viewBox="0 0 24 24">
-              <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
-            </svg>
-            ลงทะเบียนอบรมช่าง
-          </a>
-        )}
+          {/* Tech-Transaction - Admin และ Manager */}
+          {(isAdmin() || isManager()) && (
+            <Link href="/tech-transaction" style={navItemStyle(pathname === '/tech-transaction')}>
+              <svg style={iconStyle} viewBox="0 0 24 24">
+                <path d="M9 11H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2zm2-7h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V9h14v11z"/>
+              </svg>
+              Tech-Transaction
+            </Link>
+          )}
 
-        {/* อบรมช่างใหม่ - Admin และ Manager */}
-        {(isAdmin() || isManager()) && (
-          <a 
-            href="https://sla-training-dashboard.vercel.app/"
-            target="_blank"
-            rel="noopener noreferrer"
-            style={navItemStyle(false)}
-          >
-            <svg style={iconStyle} viewBox="0 0 24 24">
-              <path d="M5 13.18v4L12 21l7-3.82v-4L12 17l-7-3.82zM12 3L1 9l11 6 9-4.91V17h2V9L12 3z"/>
-            </svg>
-            อบรมช่างใหม่
-          </a>
-        )}
+          {/* ลงทะเบียนอบรมช่าง - Admin และ Manager */}
+          {(isAdmin() || isManager()) && (
+            <a 
+              href="https://trainingtech.vercel.app/"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={navItemStyle(false)}
+            >
+              <svg style={iconStyle} viewBox="0 0 24 24">
+                <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
+              </svg>
+              ลงทะเบียนอบรมช่าง
+            </a>
+          )}
 
-        {/* Live Clock */}
-        <LiveClock />
+          {/* อบรมช่างใหม่ - Admin และ Manager */}
+          {(isAdmin() || isManager()) && (
+            <a 
+              href="https://sla-training-dashboard.vercel.app/"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={navItemStyle(false)}
+            >
+              <svg style={iconStyle} viewBox="0 0 24 24">
+                <path d="M5 13.18v4L12 21l7-3.82v-4L12 17l-7-3.82zM12 3L1 9l11 6 9-4.91V17h2V9L12 3z"/>
+              </svg>
+              อบรมช่างใหม่
+            </a>
+          )}
+
+          {/* Live Clock */}
+          <LiveClock />
+        </div>
 
         {/* Spacer - ดันส่วนขวาไปชิดขวา */}
         <div style={{ flex: 1 }} />
 
-        {/* User Info */}
-        <div style={{
+        {/* User Info - desktop */}
+        <div className="navbar-user" style={{
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'flex-start',
@@ -176,7 +173,114 @@ const Navbar = () => {
             ออกจากระบบ
           </button>
         </div>
+
+        {/* Hamburger button - mobile only */}
+        <button
+          className="navbar-hamburger"
+          onClick={() => setMenuOpen((v) => !v)}
+          aria-label="Toggle menu"
+          style={{
+            display: 'none',
+            background: 'transparent',
+            border: 'none',
+            cursor: 'pointer',
+            padding: '8px',
+            color: '#ffffff',
+          }}
+        >
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+            {menuOpen ? (
+              <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+            ) : (
+              <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/>
+            )}
+          </svg>
+        </button>
       </div>
+
+      {/* Mobile dropdown menu */}
+      {menuOpen && (
+        <div className="navbar-mobile-menu" onClick={() => setMenuOpen(false)}>
+          <Link href="/" style={navItemStyle(pathname === '/')}>
+            <svg style={iconStyle} viewBox="0 0 24 24">
+              <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
+            </svg>
+            หน้าหลัก
+          </Link>
+
+          {(isAdmin() || isManager()) && (
+            <Link href="/blacklist" style={navItemStyle(pathname === '/blacklist')}>
+              <svg style={iconStyle} viewBox="0 0 24 24">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11H7v-2h10v2z"/>
+              </svg>
+              Blacklist
+            </Link>
+          )}
+
+          {(isAdmin() || isManager()) && (
+            <Link href="/tech-transaction" style={navItemStyle(pathname === '/tech-transaction')}>
+              <svg style={iconStyle} viewBox="0 0 24 24">
+                <path d="M9 11H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2zm2-7h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V9h14v11z"/>
+              </svg>
+              Tech-Transaction
+            </Link>
+          )}
+
+          {(isAdmin() || isManager()) && (
+            <a href="https://trainingtech.vercel.app/" target="_blank" rel="noopener noreferrer" style={navItemStyle(false)}>
+              <svg style={iconStyle} viewBox="0 0 24 24">
+                <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
+              </svg>
+              ลงทะเบียนอบรมช่าง
+            </a>
+          )}
+
+          {(isAdmin() || isManager()) && (
+            <a href="https://sla-training-dashboard.vercel.app/" target="_blank" rel="noopener noreferrer" style={navItemStyle(false)}>
+              <svg style={iconStyle} viewBox="0 0 24 24">
+                <path d="M5 13.18v4L12 21l7-3.82v-4L12 17l-7-3.82zM12 3L1 9l11 6 9-4.91V17h2V9L12 3z"/>
+              </svg>
+              อบรมช่างใหม่
+            </a>
+          )}
+
+          <LiveClock />
+
+          {/* User info in mobile menu */}
+          <div style={{
+            borderTop: '1px solid rgba(255,255,255,0.2)',
+            paddingTop: '12px',
+            marginTop: '4px',
+            color: '#e5e7eb',
+            fontSize: '12px',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+          }}>
+            <div>
+              {user?.full_name} ({user?.role === 'admin' ? 'ผู้ดูแลระบบ' : user?.role === 'manager' ? 'ผู้จัดการ' : 'ผู้ใช้'})
+            </div>
+            <button 
+              onClick={async (e) => {
+                e.stopPropagation();
+                await fetch('/api/auth/logout', { method: 'POST' });
+                window.location.href = '/login';
+              }}
+              style={{
+                padding: '4px 10px',
+                backgroundColor: 'rgba(220, 38, 38, 0.8)',
+                color: 'white',
+                border: '1px solid rgba(220, 38, 38, 0.3)',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontSize: '11px',
+              }}
+            >
+              ออกจากระบบ
+            </button>
+          </div>
+        </div>
+      )}
     </nav>
   );
 };

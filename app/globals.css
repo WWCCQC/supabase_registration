@@ -1,5 +1,36 @@
 /* ===== Responsive Breakpoints ===== */
 
+/* ===== Navbar ===== */
+.navbar-top {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  height: 56px;
+  width: 100%;
+  padding: 0 16px;
+}
+.navbar-links {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.navbar-hamburger { display: none !important; }
+.navbar-mobile-menu { display: none; }
+
+@media (max-width: 1024px) {
+  .navbar-links { display: none !important; }
+  .navbar-user { display: none !important; }
+  .navbar-separator { display: none !important; }
+  .navbar-hamburger { display: flex !important; }
+  .navbar-mobile-menu {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 12px 16px;
+    border-top: 1px solid rgba(255,255,255,0.15);
+  }
+}
+
 /* KPI Cards: 10 cols → 5 cols → 3 cols → 2 cols */
 .kpi-grid {
   display: grid;
