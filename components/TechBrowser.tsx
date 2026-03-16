@@ -1230,13 +1230,7 @@ export default function TechBrowser() {
 
         {/* Row 1: All cards in single row */}
         <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(10, 1fr)",
-            gap: 8,
-            alignItems: "stretch",
-            minHeight: 72,
-          }}
+          className="kpi-grid"
         >
           {/* 1. Total */}
           <div
@@ -1493,7 +1487,7 @@ export default function TechBrowser() {
       */}
 
       {/* ===== Two Split Tables: Technician Count & Workgroup Count ===== */}
-      <div style={{ display: 'flex', gap: '12px', marginBottom: '16px' }}>
+      <div className="split-tables" style={{ marginBottom: '16px' }}>
         {/* Table 1: จำนวนช่าง (คน) */}
         <div style={{
           flex: 1,
@@ -1606,11 +1600,7 @@ export default function TechBrowser() {
           </div>
         </div>
 
-        <div style={{
-          display: "grid",
-          gridTemplateColumns: "50% 50%",
-          gap: "20px"
-        }}>
+        <div className="chart-grid-2col">
           {/* RSM Provider Chart (กราฟใหม่) - ย้ายมาเป็นอันแรก */}
           <div style={{
             background: "white",
@@ -1656,12 +1646,7 @@ export default function TechBrowser() {
         </div>
 
         {/* บรรทัดใหม่: RSM Power Authority Status Chart (50%) + พื้นที่สำหรับตารางอีก 50% */}
-        <div style={{
-          display: "grid",
-          gridTemplateColumns: "50% 50%",
-          gap: "20px",
-          marginTop: "20px"
-        }}>
+        <div className="chart-grid-2col" style={{ marginTop: "20px" }}>
           {/* RSM Power Authority Status Chart - modernized component */}
           <div style={{
             background: "white",
@@ -1711,11 +1696,9 @@ export default function TechBrowser() {
         </div>
 
         {/* แถวที่ 3: Card Expiry Trend + Training Radar (50/50) */}
-        <div style={{ marginTop: "20px", display: "flex", gap: 20 }}>
+        <div className="chart-flex-row" style={{ marginTop: "20px" }}>
           {/* ซ้าย: Training Radar Chart */}
-          <div style={{
-            flex: "1 1 50%",
-            minWidth: 0,
+          <div className="chart-flex-item" style={{
             background: "white",
             borderRadius: 12,
             padding: 20,
@@ -1735,9 +1718,7 @@ export default function TechBrowser() {
           </div>
 
           {/* ขวา: Card Expiry Trend Chart */}
-          <div style={{
-            flex: "1 1 50%",
-            minWidth: 0,
+          <div className="chart-flex-item" style={{
             background: "white",
             borderRadius: 12,
             padding: 20,
@@ -1765,10 +1746,8 @@ export default function TechBrowser() {
 
       {/* Filters */}
       <div
+        className="filter-grid"
         style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(5, minmax(0, 1fr))",
-          gap: 8,
           marginBottom: 12,
           backgroundColor: "#1e3a5f",
           padding: "12px",
@@ -1903,7 +1882,7 @@ export default function TechBrowser() {
       )}
 
       {/* Table */}
-      <div style={{ overflowX: "auto" }}>
+      <div className="table-wrapper">
         <table style={{ borderCollapse: "collapse", minWidth: 1200, fontSize: 14 }}>
           <thead>
             <tr>
@@ -2164,16 +2143,13 @@ export default function TechBrowser() {
         >
           <div
             onClick={(e) => e.stopPropagation()}
+            className="detail-modal"
             style={{
               background: "#fff",
               borderRadius: 12,
               padding: 24,
-              width: "96vw",
-              maxWidth: "1600px",
-              height: "90vh",
               overflow: "auto",
               boxShadow: "0 20px 40px rgba(0,0,0,.3)",
-              minWidth: 520,
             }}
           >
             {/* Header sticky */}
@@ -2205,7 +2181,7 @@ export default function TechBrowser() {
 
             {/* ====== Portfolio layout ====== */}
             {detailRow && (
-              <div style={{ display: "grid", gridTemplateColumns: "320px 1fr", gap: 16 }}>
+              <div className="portfolio-grid">
                 {/* LEFT — photo sticky */}
                 <div style={{ position: "sticky", top: 64, alignSelf: "start" }}>
                   <PhotoCard row={detailRow!} />

@@ -1,0 +1,114 @@
+/* ===== Responsive Breakpoints ===== */
+
+/* KPI Cards: 10 cols → 5 cols → 3 cols → 2 cols */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  gap: 8px;
+  align-items: stretch;
+  min-height: 72px;
+}
+@media (max-width: 1200px) {
+  .kpi-grid { grid-template-columns: repeat(5, 1fr); }
+}
+@media (max-width: 768px) {
+  .kpi-grid { grid-template-columns: repeat(3, 1fr); }
+}
+@media (max-width: 480px) {
+  .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* Chart 50/50 grids → stack on mobile */
+.chart-grid-2col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+@media (max-width: 768px) {
+  .chart-grid-2col { grid-template-columns: 1fr; }
+}
+
+/* Chart flex 50/50 row → stack on mobile */
+.chart-flex-row {
+  display: flex;
+  gap: 20px;
+}
+@media (max-width: 768px) {
+  .chart-flex-row {
+    flex-direction: column;
+  }
+}
+.chart-flex-row > .chart-flex-item {
+  flex: 1 1 50%;
+  min-width: 0;
+}
+@media (max-width: 768px) {
+  .chart-flex-row > .chart-flex-item {
+    flex: 1 1 100%;
+  }
+}
+
+/* Two split tables → stack on mobile */
+.split-tables {
+  display: flex;
+  gap: 12px;
+}
+@media (max-width: 768px) {
+  .split-tables {
+    flex-direction: column;
+  }
+}
+
+/* Filter row: 5 cols → 3 cols → 2 cols → 1 col */
+.filter-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+}
+@media (max-width: 1024px) {
+  .filter-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 640px) {
+  .filter-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 400px) {
+  .filter-grid { grid-template-columns: 1fr; }
+}
+
+/* Detail modal responsive */
+.detail-modal {
+  width: 96vw;
+  max-width: 1600px;
+  min-width: 520px;
+  height: 90vh;
+}
+@media (max-width: 640px) {
+  .detail-modal {
+    min-width: auto;
+    width: 100vw;
+    height: 100vh;
+    border-radius: 0 !important;
+    padding: 12px !important;
+  }
+}
+
+/* Portfolio grid: sidebar + main → stack */
+.portfolio-grid {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 16px;
+}
+@media (max-width: 768px) {
+  .portfolio-grid {
+    grid-template-columns: 1fr;
+  }
+  .portfolio-grid > div:first-child {
+    position: static !important;
+  }
+}
+
+/* Data table wrapper */
+.table-wrapper {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
