@@ -92,11 +92,11 @@ export default function TrainingRadarChart() {
           <Radar
             name="จำนวนที่อบรม"
             dataKey="percent"
-            stroke="#3b5998"
-            fill="#3b5998"
-            fillOpacity={0.15}
+            stroke="#ef4444"
+            fill="#ef4444"
+            fillOpacity={0.1}
             strokeWidth={2}
-            dot={{ r: 5, fill: "#3b5998", stroke: "#3b5998" }}
+            dot={{ r: 3, fill: "#ef4444", stroke: "#ef4444" }}
           />
           <Tooltip
             formatter={(value: number, _name: string, props: any) => [
