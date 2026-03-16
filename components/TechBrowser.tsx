@@ -1167,42 +1167,6 @@ export default function TechBrowser() {
   /* ---------- Render ---------- */
   return (
     <div>
-      {/* Show loading overlay if KPI is loading */}
-      {kpiLoading && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(255,255,255,0.8)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 9999,
-          flexDirection: 'column',
-          gap: '20px'
-        }}>
-          <div style={{
-            width: '60px',
-            height: '60px',
-            border: '6px solid #f3f3f3',
-            borderTop: '6px solid #3498db',
-            borderRadius: '50%',
-            animation: 'spin 1s linear infinite'
-          }}></div>
-          <div style={{ fontSize: '18px', color: '#666' }}>
-            กำลังโหลดข้อมูล...
-          </div>
-          <style jsx>{`
-            @keyframes spin {
-              0% { transform: rotate(0deg); }
-              100% { transform: rotate(360deg); }
-            }
-          `}</style>
-        </div>
-      )}
-
       {/* ===== KPI Cards - Single Row ===== */}
       <div style={{
         background: "linear-gradient(160deg, #1e3a5f 0%, #1a3050 50%, #162840 100%)",
@@ -1252,7 +1216,7 @@ export default function TechBrowser() {
               👷 ช่างทั้งหมด (คน)
             </div>
             <div style={{ ...cardNumber, color: "white", fontSize: 16, textShadow: "0 1px 4px rgba(0,0,0,0.3)" }}>
-              {kpiLoading ? "กำลังโหลด..." : (kpiInitialized ? `${(kpi?.total ?? 0).toLocaleString()}` : "กำลังโหลด...")}
+              {kpiLoading ? <span className="skeleton skeleton-kpi-number" /> : (kpiInitialized ? `${(kpi?.total ?? 0).toLocaleString()}` : <span className="skeleton skeleton-kpi-number" />)}
             </div>
           </div>
 
@@ -1292,7 +1256,7 @@ export default function TechBrowser() {
                   {name === "Installation" ? "🔧 " : "🛠️ "}{name}
                 </div>
                 <div style={{ ...cardNumber, color: "white", fontSize: 15, textShadow: "0 1px 4px rgba(0,0,0,0.3)" }}>
-                  {kpiLoading ? "โหลด..." : `${count.toLocaleString()} (${pct.toFixed(1)}%)`}
+                  {kpiLoading ? <span className="skeleton skeleton-kpi-number" /> : `${count.toLocaleString()} (${pct.toFixed(1)}%)`}
                 </div>
               </div>
             );
@@ -1336,7 +1300,7 @@ export default function TechBrowser() {
                   {icons[index]} {name}
                 </div>
                 <div style={{ ...cardNumber, color: "white", fontSize: 15, textShadow: "0 1px 4px rgba(0,0,0,0.3)" }}>
-                  {kpiLoading ? "โหลด..." : (kpiInitialized ? `${count.toLocaleString()} (${pct}%)` : "โหลด...")}
+                  {kpiLoading ? <span className="skeleton skeleton-kpi-number" /> : (kpiInitialized ? `${count.toLocaleString()} (${pct}%)` : <span className="skeleton skeleton-kpi-number" />)}
                 </div>
               </div>
             );
@@ -1359,7 +1323,7 @@ export default function TechBrowser() {
               🏪 Depot Code
             </div>
             <div style={{ ...cardNumber, color: "white", fontSize: 16, textShadow: "0 1px 4px rgba(0,0,0,0.3)" }}>
-              {depotCodeLoading ? "กำลังโหลด..." : depotCodeCount.toLocaleString()}
+              {depotCodeLoading ? <span className="skeleton skeleton-kpi-number" /> : depotCodeCount.toLocaleString()}
             </div>
           </div>
 
@@ -1388,7 +1352,7 @@ export default function TechBrowser() {
               🏭 Depot WW
             </div>
             <div style={{ ...cardNumber, color: "white", fontSize: 15, textShadow: "0 1px 4px rgba(0,0,0,0.3)" }}>
-              {depotByProviderLoading ? "กำลังโหลด..." : (() => {
+              {depotByProviderLoading ? <span className="skeleton skeleton-kpi-number" /> : (() => {
                 const count = depotByProvider["WW-Provider"] || 0;
                 const percentage = depotCodeCount > 0 ? ((count / depotCodeCount) * 100).toFixed(1) : 0;
                 return `${count} (${percentage}%)`;
@@ -1421,7 +1385,7 @@ export default function TechBrowser() {
               🟢 Depot True Tech
             </div>
             <div style={{ ...cardNumber, color: "white", fontSize: 15, textShadow: "0 1px 4px rgba(0,0,0,0.3)" }}>
-              {depotByProviderLoading ? "กำลังโหลด..." : (() => {
+              {depotByProviderLoading ? <span className="skeleton skeleton-kpi-number" /> : (() => {
                 const count = depotByProvider["True Tech"] || 0;
                 const percentage = depotCodeCount > 0 ? ((count / depotCodeCount) * 100).toFixed(1) : 0;
                 return `${count} (${percentage}%)`;
@@ -1454,7 +1418,7 @@ export default function TechBrowser() {
               🟡 Depot เถ้าแก่เทค
             </div>
             <div style={{ ...cardNumber, color: "white", fontSize: 15, textShadow: "0 1px 4px rgba(0,0,0,0.3)" }}>
-              {depotByProviderLoading ? "กำลังโหลด..." : (() => {
+              {depotByProviderLoading ? <span className="skeleton skeleton-kpi-number" /> : (() => {
                 const count = depotByProvider["เถ้าแก่เทค"] || 0;
                 const percentage = depotCodeCount > 0 ? ((count / depotCodeCount) * 100).toFixed(1) : 0;
                 return `${count} (${percentage}%)`;
@@ -1504,8 +1468,14 @@ export default function TechBrowser() {
           {pivotData.length > 0 ? (
             <TechnicianCountTable data={pivotData} />
           ) : (
-            <div style={{ textAlign: 'center', color: '#6b7280', padding: '20px', fontSize: '12px' }}>
-              กำลังโหลดข้อมูล...
+            <div style={{ padding: '8px 0' }}>
+              {[...Array(5)].map((_, i) => (
+                <div key={i} className="skeleton-row">
+                  <span className="skeleton-light" style={{ height: 14 }} />
+                  <span className="skeleton-light" style={{ height: 14, width: '40%' }} />
+                  <span className="skeleton-light" style={{ height: 14, width: '30%' }} />
+                </div>
+              ))}
             </div>
           )}
         </div>
@@ -1526,8 +1496,14 @@ export default function TechBrowser() {
           {Object.keys(workgroupData).length > 0 ? (
             <WorkgroupCountTable workgroupData={workgroupData} workgroupGrandTotal={workgroupGrandTotal} />
           ) : (
-            <div style={{ textAlign: 'center', color: '#6b7280', padding: '20px', fontSize: '12px' }}>
-              กำลังโหลดข้อมูล...
+            <div style={{ padding: '8px 0' }}>
+              {[...Array(5)].map((_, i) => (
+                <div key={i} className="skeleton-row">
+                  <span className="skeleton-light" style={{ height: 14 }} />
+                  <span className="skeleton-light" style={{ height: 14, width: '40%' }} />
+                  <span className="skeleton-light" style={{ height: 14, width: '30%' }} />
+                </div>
+              ))}
             </div>
           )}
         </div>
@@ -1876,6 +1852,17 @@ export default function TechBrowser() {
             </tr>
           </thead>
           <tbody>
+            {loading && rows.length === 0 && (
+              [...Array(8)].map((_, i) => (
+                <tr key={`skel-${i}`}>
+                  {COLS.map((c) => (
+                    <td key={c} style={{ width: WIDTHS[c], minWidth: WIDTHS[c] }}>
+                      <span className="skeleton-light skeleton-table-cell" style={{ display: 'block', width: `${60 + Math.random() * 30}%` }} />
+                    </td>
+                  ))}
+                </tr>
+              ))
+            )}
             {rows.map((r, i) => (
               <tr key={`${r.national_id ?? r.tech_id ?? i}-${i}`}>
                 {COLS.map((c) => (

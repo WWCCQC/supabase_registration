@@ -302,3 +302,48 @@
   color: #64748b;
   font-weight: 500;
 }
+
+/* ===== Skeleton Loading ===== */
+@keyframes skeleton-shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.skeleton {
+  background: linear-gradient(90deg, rgba(255,255,255,0.08) 25%, rgba(255,255,255,0.18) 50%, rgba(255,255,255,0.08) 75%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s ease-in-out infinite;
+  border-radius: 6px;
+}
+.skeleton-light {
+  background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s ease-in-out infinite;
+  border-radius: 6px;
+}
+.skeleton-kpi-number {
+  height: 20px;
+  width: 70%;
+  margin-top: 4px;
+}
+.skeleton-kpi-label {
+  height: 10px;
+  width: 50%;
+}
+.skeleton-table-cell {
+  height: 14px;
+  width: 80%;
+}
+.skeleton-chart {
+  height: 100%;
+  min-height: 200px;
+  border-radius: 8px;
+}
+.skeleton-row {
+  display: flex;
+  gap: 8px;
+  padding: 8px;
+  border-bottom: 1px solid #f1f5f9;
+}
+.skeleton-row > span {
+  flex: 1;
+}
