@@ -1856,7 +1856,7 @@ export default function TechBrowser() {
 
       {/* Table */}
       <div className="table-wrapper">
-        <table style={{ borderCollapse: "collapse", minWidth: 1200, fontSize: 14 }}>
+        <table className="data-table" style={{ minWidth: 1200 }}>
           <thead>
             <tr>
               {COLS.map((h) => (
@@ -1865,12 +1865,6 @@ export default function TechBrowser() {
                   onClick={() => toggleSort(h)}
                   title="คลิกเพื่อเรียงลำดับ"
                   style={{
-                    border: "1px solid #ddd",
-                    padding: "6px 8px",
-                    textAlign: "left",
-                    background: "#f7f7f7",
-                    cursor: "pointer",
-                    userSelect: "none",
                     width: WIDTHS[h],
                     minWidth: WIDTHS[h],
                   }}
@@ -1888,9 +1882,6 @@ export default function TechBrowser() {
                   <td
                     key={c}
                     style={{
-                      border: "1px solid #eee",
-                      padding: "6px 8px",
-                      whiteSpace: "nowrap",
                       width: WIDTHS[c],
                       minWidth: WIDTHS[c],
                     }}
