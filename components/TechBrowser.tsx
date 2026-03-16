@@ -80,6 +80,16 @@ const CardExpiryTrendChart = dynamic(() => import("./charts/CardExpiryTrendChart
   )
 });
 
+// Dynamic import สำหรับ TrainingRadarChart
+const TrainingRadarChart = dynamic(() => import("./charts/TrainingRadarChart"), {
+  ssr: false,
+  loading: () => (
+    <div style={{ padding: 24, textAlign: "center" }}>
+      <div style={{ fontSize: 16, color: "#666" }}>กำลังโหลด Training Radar Chart...</div>
+    </div>
+  )
+});
+
 /* ---------- Types ---------- */
 type Row = { [key: string]: any };
 
@@ -1700,9 +1710,34 @@ export default function TechBrowser() {
           </div>
         </div>
 
-        {/* แถวที่ 3: Card Expiry Trend Chart (เต็มแถว) */}
-        <div style={{ marginTop: "20px" }}>
+        {/* แถวที่ 3: Card Expiry Trend + Training Radar (50/50) */}
+        <div style={{ marginTop: "20px", display: "flex", gap: 20 }}>
+          {/* ซ้าย: Training Radar Chart */}
           <div style={{
+            flex: "1 1 50%",
+            minWidth: 0,
+            background: "white",
+            borderRadius: 12,
+            padding: 20,
+            boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+            border: "1px solid #e5e7eb",
+            position: "relative"
+          }}>
+            <h3 style={{
+              margin: "0 0 12px 0",
+              fontSize: 18,
+              fontWeight: 600,
+              color: "#1f2937"
+            }}>
+              🎯 จำนวนผู้เข้าอบรมการไฟฟ้า, Course G, Course H, Course EC
+            </h3>
+            <TrainingRadarChart />
+          </div>
+
+          {/* ขวา: Card Expiry Trend Chart */}
+          <div style={{
+            flex: "1 1 50%",
+            minWidth: 0,
             background: "white",
             borderRadius: 12,
             padding: 20,
