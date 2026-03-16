@@ -141,13 +141,13 @@ export default function TrainingRadarChart() {
                 border: "2px solid #ffffff",
               }}
             >
-              <div style={{ fontSize: 13, color: "#6b7280", marginBottom: 4 }}>
+              <div style={{ fontSize: 11, color: "#9ca3af", textTransform: "uppercase", letterSpacing: 0.5 }}>
                 จำนวนทั้งหมด
               </div>
-              <div style={{ fontSize: 28, fontWeight: 700, color: "#1f2937" }}>
+              <div style={{ fontSize: 20, fontWeight: 700, color: "#1f2937" }}>
                 {total.toLocaleString()}
               </div>
-              <div style={{ fontSize: 12, color: "#9ca3af" }}>ช่าง</div>
+              <div style={{ fontSize: 11, color: "#9ca3af" }}>ช่าง</div>
             </div>
 
             {/* Item cards - hide zero */}
@@ -161,19 +161,19 @@ export default function TrainingRadarChart() {
                   borderRadius: 12,
                 }}
               >
-                <div style={{ fontSize: 13, color: "#6b7280", marginBottom: 4 }}>
+                <div style={{ fontSize: 11, color: "#9ca3af", textTransform: "uppercase", letterSpacing: 0.5 }}>
                   {item.subject}
                 </div>
                 <div
                   style={{
-                    fontSize: 28,
+                    fontSize: 20,
                     fontWeight: 700,
                     color: colorMap[item.subject] || "#4f46e5",
                   }}
                 >
                   {item.count.toLocaleString()}
                 </div>
-                <div style={{ fontSize: 12, color: "#9ca3af" }}>
+                <div style={{ fontSize: 11, color: "#9ca3af" }}>
                   {total > 0 ? ((item.count / total) * 100).toFixed(1) : 0}%
                 </div>
               </div>
