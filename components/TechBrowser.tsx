@@ -5,6 +5,8 @@ import { createClient } from '@supabase/supabase-js';
 import { getFieldLabel, SECTION_LABELS, KPI_LABELS } from "../lib/fieldLabels";
 import { useAuth } from "@/lib/useAuth";
 import PivotTableComponent from "./tables/PivotTable";
+import TechnicianCountTable from "./tables/TechnicianCountTable";
+import WorkgroupCountTable from "./tables/WorkgroupCountTable";
 import {
   BarChart,
   Bar,
@@ -1191,14 +1193,282 @@ export default function TechBrowser() {
         </div>
       )}
 
-      {/* ===== KPI Container + Technicians by RSM Table ===== */}
+      {/* ===== KPI Cards - Single Row ===== */}
+      <div style={{
+        background: "linear-gradient(160deg, #1e3a5f 0%, #1a3050 50%, #162840 100%)",
+        padding: "18px",
+        borderRadius: "16px",
+        marginBottom: "16px",
+        boxShadow: "0 8px 32px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.06)"
+      }}>
+        {/* Header */}
+        <div style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: "14px",
+          padding: "8px 10px",
+          background: "rgba(255,255,255,0.06)",
+          borderRadius: "10px",
+          backdropFilter: "blur(4px)",
+          border: "1px solid rgba(255,255,255,0.10)"
+        }}>
+          <div style={{ fontSize: "14px", fontWeight: 700, color: "rgba(255,255,255,0.92)", letterSpacing: "0.3px" }}>
+            📊 ข้อมูลสรุป (Dashboard)
+          </div>
+        </div>
+
+        {/* Row 1: All cards in single row */}
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(10, 1fr)",
+            gap: 8,
+            alignItems: "stretch",
+            minHeight: 72,
+          }}
+        >
+          {/* 1. Total */}
+          <div
+            style={{
+              ...cardStyle,
+              cursor: "pointer",
+              background: "linear-gradient(145deg, #1e40af 0%, #1e3a8a 60%, #172554 100%)",
+              color: "white",
+              border: "1px solid rgba(255,255,255,0.15)",
+              boxShadow: "0 4px 15px rgba(30,58,138,0.5), inset 0 1px 0 rgba(255,255,255,0.12)",
+            }}
+            onClick={() => {
+              clearFilters();
+              setQ("");
+            }}
+            title="คลิกเพื่อล้างตัวกรองทั้งหมด"
+          >
+            <div style={{ ...cardTitle, color: "rgba(255,255,255,0.7)", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.5px" }}>
+              👷 ช่างทั้งหมด (คน)
+            </div>
+            <div style={{ ...cardNumber, color: "white", fontSize: 16, textShadow: "0 1px 4px rgba(0,0,0,0.3)" }}>
+              {kpiLoading ? "กำลังโหลด..." : (kpiInitialized ? `${(kpi?.total ?? 0).toLocaleString()}` : "กำลังโหลด...")}
+            </div>
+          </div>
+
+          {/* 2-3. Installation, Repair */}
+          {["Installation", "Repair"].map((name, index) => {
+            const f = (kpi?.by_work_type || []).find(
+              (x) => (x.key || "").trim().toLowerCase() === name.toLowerCase()
+            );
+            const count = f?.count ?? 0;
+            const pct = f?.percent ?? 0;
+            const gradients = [
+              "linear-gradient(145deg, #0284c7 0%, #0369a1 60%, #075985 100%)",
+              "linear-gradient(145deg, #0891b2 0%, #0e7490 60%, #155e75 100%)",
+            ];
+
+            return (
+              <div
+                key={name}
+                style={{
+                  ...cardStyle,
+                  cursor: "pointer",
+                  background: gradients[index],
+                  color: "white",
+                  border: q === name ? "2px solid rgba(255,255,255,0.9)" : "1px solid rgba(255,255,255,0.15)",
+                  transition: "all 0.22s ease",
+                  transform: q === name ? "scale(1.05)" : "scale(1)",
+                  boxShadow: q === name ? "0 8px 24px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.2)" : "0 4px 12px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.12)",
+                }}
+                onClick={() => {
+                  if (q === name) { setQ(""); } else { clearFilters(); setQ(name); }
+                }}
+                onMouseOver={(e) => { if (q !== name) e.currentTarget.style.transform = "scale(1.02)"; }}
+                onMouseOut={(e) => { if (q !== name) e.currentTarget.style.transform = "scale(1)"; }}
+                title={`คลิกเพื่อกรองตาม ${name}`}
+              >
+                <div style={{ ...cardTitle, color: "rgba(255,255,255,0.72)", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                  {name === "Installation" ? "🔧 " : "🛠️ "}{name}
+                </div>
+                <div style={{ ...cardNumber, color: "white", fontSize: 15, textShadow: "0 1px 4px rgba(0,0,0,0.3)" }}>
+                  {kpiLoading ? "โหลด..." : `${count.toLocaleString()} (${pct.toFixed(1)}%)`}
+                </div>
+              </div>
+            );
+          })}
+
+          {/* 4-6. Providers: WW-Provider, True Tech, เถ้าแก่เทค */}
+          {["WW-Provider", "True Tech", "เถ้าแก่เทค"].map((name, index) => {
+            const f = (kpi?.by_provider || []).find(
+              (x) => (x.key || "").trim().toLowerCase() === name.toLowerCase()
+            );
+            const count = f?.count ?? 0;
+            const pct = f?.percent ?? 0;
+            const providerGradients = [
+              "linear-gradient(145deg, #3b82f6 0%, #2563eb 60%, #1d4ed8 100%)",
+              "linear-gradient(145deg, #10b981 0%, #059669 60%, #047857 100%)",
+              "linear-gradient(145deg, #f59e0b 0%, #d97706 60%, #b45309 100%)",
+            ];
+            const icons = ["🔵", "🟢", "🟡"];
+
+            return (
+              <div
+                key={name}
+                style={{
+                  ...cardStyle,
+                  cursor: "pointer",
+                  background: providerGradients[index],
+                  color: "white",
+                  border: q === name ? "2px solid rgba(255,255,255,0.9)" : "1px solid rgba(255,255,255,0.15)",
+                  transition: "all 0.22s ease",
+                  transform: q === name ? "scale(1.05)" : "scale(1)",
+                  boxShadow: q === name ? "0 8px 24px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.2)" : "0 4px 12px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.12)",
+                }}
+                onClick={() => {
+                  if (q === name) { setQ(""); } else { clearFilters(); setQ(name); }
+                }}
+                onMouseOver={(e) => { if (q !== name) e.currentTarget.style.transform = "scale(1.02)"; }}
+                onMouseOut={(e) => { if (q !== name) e.currentTarget.style.transform = "scale(1)"; }}
+                title={`คลิกเพื่อกรองตาม ${name}`}
+              >
+                <div style={{ ...cardTitle, color: "rgba(255,255,255,0.72)", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                  {icons[index]} {name}
+                </div>
+                <div style={{ ...cardNumber, color: "white", fontSize: 15, textShadow: "0 1px 4px rgba(0,0,0,0.3)" }}>
+                  {kpiLoading ? "โหลด..." : (kpiInitialized ? `${count.toLocaleString()} (${pct}%)` : "โหลด...")}
+                </div>
+              </div>
+            );
+          })}
+
+          {/* Depot Code */}
+          <div
+            style={{
+              ...cardStyle,
+              cursor: "pointer",
+              background: "linear-gradient(145deg, #4f46e5 0%, #4338ca 60%, #3730a3 100%)",
+              color: "white",
+              border: "1px solid rgba(255,255,255,0.15)",
+              boxShadow: "0 4px 15px rgba(79,70,229,0.5), inset 0 1px 0 rgba(255,255,255,0.12)",
+            }}
+            onClick={() => { clearFilters(); setQ(""); }}
+            title="Depot Code ทั้งหมด"
+          >
+            <div style={{ ...cardTitle, color: "rgba(255,255,255,0.72)", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.5px" }}>
+              🏪 Depot Code
+            </div>
+            <div style={{ ...cardNumber, color: "white", fontSize: 16, textShadow: "0 1px 4px rgba(0,0,0,0.3)" }}>
+              {depotCodeLoading ? "กำลังโหลด..." : depotCodeCount.toLocaleString()}
+            </div>
+          </div>
+
+          {/* Depot WW-Provider */}
+          <div
+            style={{
+              ...cardStyle,
+              cursor: "pointer",
+              background: q === "Depot WW-Provider"
+                ? "linear-gradient(145deg, #1d4ed8 0%, #1e40af 60%, #1e3a8a 100%)"
+                : "linear-gradient(145deg, #3b82f6 0%, #2563eb 60%, #1d4ed8 100%)",
+              color: "white",
+              border: q === "Depot WW-Provider" ? "2px solid rgba(255,255,255,0.9)" : "1px solid rgba(255,255,255,0.15)",
+              transition: "all 0.22s ease",
+              transform: q === "Depot WW-Provider" ? "scale(1.05)" : "scale(1)",
+              boxShadow: q === "Depot WW-Provider" ? "0 8px 24px rgba(29,78,216,0.5), inset 0 1px 0 rgba(255,255,255,0.2)" : "0 4px 12px rgba(59,130,246,0.35), inset 0 1px 0 rgba(255,255,255,0.12)",
+            }}
+            onClick={() => {
+              if (q === "Depot WW-Provider") { setQ(""); } else { clearFilters(); setQ("Depot WW-Provider"); }
+            }}
+            onMouseOver={(e) => { if (q !== "Depot WW-Provider") e.currentTarget.style.transform = "scale(1.02)"; }}
+            onMouseOut={(e) => { if (q !== "Depot WW-Provider") e.currentTarget.style.transform = "scale(1)"; }}
+            title="คลิกเพื่อกรองตาม Depot WW-Provider"
+          >
+            <div style={{ ...cardTitle, color: "rgba(255,255,255,0.72)", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.5px" }}>
+              🏭 Depot WW
+            </div>
+            <div style={{ ...cardNumber, color: "white", fontSize: 15, textShadow: "0 1px 4px rgba(0,0,0,0.3)" }}>
+              {depotByProviderLoading ? "กำลังโหลด..." : (() => {
+                const count = depotByProvider["WW-Provider"] || 0;
+                const percentage = depotCodeCount > 0 ? ((count / depotCodeCount) * 100).toFixed(1) : 0;
+                return `${count} (${percentage}%)`;
+              })()}
+            </div>
+          </div>
+
+          {/* Depot True Tech */}
+          <div
+            style={{
+              ...cardStyle,
+              cursor: "pointer",
+              background: q === "Depot True Tech"
+                ? "linear-gradient(145deg, #047857 0%, #065f46 60%, #064e3b 100%)"
+                : "linear-gradient(145deg, #10b981 0%, #059669 60%, #047857 100%)",
+              color: "white",
+              border: q === "Depot True Tech" ? "2px solid rgba(255,255,255,0.9)" : "1px solid rgba(255,255,255,0.15)",
+              transition: "all 0.22s ease",
+              transform: q === "Depot True Tech" ? "scale(1.05)" : "scale(1)",
+              boxShadow: q === "Depot True Tech" ? "0 8px 24px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.2)" : "0 4px 12px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.12)",
+            }}
+            onClick={() => {
+              if (q === "Depot True Tech") { setQ(""); } else { clearFilters(); setQ("Depot True Tech"); }
+            }}
+            onMouseOver={(e) => { if (q !== "Depot True Tech") e.currentTarget.style.transform = "scale(1.02)"; }}
+            onMouseOut={(e) => { if (q !== "Depot True Tech") e.currentTarget.style.transform = "scale(1)"; }}
+            title="คลิกเพื่อกรองตาม Depot True Tech"
+          >
+            <div style={{ ...cardTitle, color: "rgba(255,255,255,0.72)", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.5px" }}>
+              🟢 Depot True Tech
+            </div>
+            <div style={{ ...cardNumber, color: "white", fontSize: 15, textShadow: "0 1px 4px rgba(0,0,0,0.3)" }}>
+              {depotByProviderLoading ? "กำลังโหลด..." : (() => {
+                const count = depotByProvider["True Tech"] || 0;
+                const percentage = depotCodeCount > 0 ? ((count / depotCodeCount) * 100).toFixed(1) : 0;
+                return `${count} (${percentage}%)`;
+              })()}
+            </div>
+          </div>
+
+          {/* Depot เถ้าแก่เทค */}
+          <div
+            style={{
+              ...cardStyle,
+              cursor: "pointer",
+              background: q === "Depot เถ้าแก่เทค"
+                ? "linear-gradient(145deg, #b45309 0%, #92400e 60%, #78350f 100%)"
+                : "linear-gradient(145deg, #f59e0b 0%, #d97706 60%, #b45309 100%)",
+              color: "white",
+              border: q === "Depot เถ้าแก่เทค" ? "2px solid rgba(255,255,255,0.9)" : "1px solid rgba(255,255,255,0.15)",
+              transition: "all 0.22s ease",
+              transform: q === "Depot เถ้าแก่เทค" ? "scale(1.05)" : "scale(1)",
+              boxShadow: q === "Depot เถ้าแก่เทค" ? "0 8px 24px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.2)" : "0 4px 12px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.12)",
+            }}
+            onClick={() => {
+              if (q === "Depot เถ้าแก่เทค") { setQ(""); } else { clearFilters(); setQ("Depot เถ้าแก่เทค"); }
+            }}
+            onMouseOver={(e) => { if (q !== "Depot เถ้าแก่เทค") e.currentTarget.style.transform = "scale(1.02)"; }}
+            onMouseOut={(e) => { if (q !== "Depot เถ้าแก่เทค") e.currentTarget.style.transform = "scale(1)"; }}
+            title="คลิกเพื่อกรองตาม Depot เถ้าแก่เทค"
+          >
+            <div style={{ ...cardTitle, color: "rgba(255,255,255,0.72)", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.5px" }}>
+              🟡 Depot เถ้าแก่เทค
+            </div>
+            <div style={{ ...cardNumber, color: "white", fontSize: 15, textShadow: "0 1px 4px rgba(0,0,0,0.3)" }}>
+              {depotByProviderLoading ? "กำลังโหลด..." : (() => {
+                const count = depotByProvider["เถ้าแก่เทค"] || 0;
+                const percentage = depotCodeCount > 0 ? ((count / depotCodeCount) * 100).toFixed(1) : 0;
+                return `${count} (${percentage}%)`;
+              })()}
+            </div>
+          </div>
+        </div>
+      </div>
+      {/* ===== /KPI Cards ===== */}
+
+      {/* ===== [HIDDEN] KPI เดิม 2 แถว + PivotTable - ซ่อนไว้ชั่วคราว เรียกกลับได้โดย uncomment ===== */}
+      {/*
       <div style={{
         display: "flex",
         gap: "16px",
         alignItems: "stretch",
         marginBottom: "16px"
       }}>
-        {/* ===== ปุ่มรีเฟรชและ KPI rows ===== */}
         <div style={{
           background: "linear-gradient(160deg, #1e3a5f 0%, #1a3050 50%, #162840 100%)",
           padding: "18px",
@@ -1206,385 +1476,59 @@ export default function TechBrowser() {
           width: "650px",
           boxShadow: "0 8px 32px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.06)"
         }}>
-          {/* Header */}
-          <div style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            marginBottom: "14px",
-            padding: "8px 10px",
-            background: "rgba(255,255,255,0.06)",
-            borderRadius: "10px",
-            backdropFilter: "blur(4px)",
-            border: "1px solid rgba(255,255,255,0.10)"
-          }}>
-            <div style={{ fontSize: "14px", fontWeight: 700, color: "rgba(255,255,255,0.92)", letterSpacing: "0.3px" }}>
-              📊 ข้อมูลสรุป (Dashboard)
-            </div>
-          </div>
-          {/* บรรทัดที่ 1: Technicians, Installation, Repair + Depot */}
-          <div
-            style={{
-              display: "grid",
-              gridAutoFlow: "column",
-              gridAutoColumns: "1fr",
-              gap: 8,
-              alignItems: "stretch",
-              minHeight: 72,
-              marginBottom: 8,
-            }}
-          >
-            {/* Total */}
-            <div
-              style={{
-                ...cardStyle,
-                cursor: "pointer",
-                background: "linear-gradient(145deg, #1e40af 0%, #1e3a8a 60%, #172554 100%)",
-                color: "white",
-                border: "1px solid rgba(255,255,255,0.15)",
-                boxShadow: "0 4px 15px rgba(30,58,138,0.5), inset 0 1px 0 rgba(255,255,255,0.12)",
-              }}
-              onClick={() => {
-                clearFilters();
-                setQ("");
-              }}
-              title="คลิกเพื่อล้างตัวกรองทั้งหมด"
-            >
-              <div style={{ ...cardTitle, color: "rgba(255,255,255,0.7)", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.5px" }}>
-                👷 Technicians (คน)
-              </div>
-              <div style={{ ...cardNumber, color: "white", fontSize: 15, textShadow: "0 1px 4px rgba(0,0,0,0.3)" }}>
-                {kpiLoading ? "กำลังโหลด..." : (kpiInitialized ? `${(kpi?.total ?? 0).toLocaleString()} (100%)` : "กำลังโหลด...")}
-              </div>
-            </div>
-
-            {/* Work Type: Installation, Repair */}
-            {["Installation", "Repair"].map((name, index) => {
-              const f = (kpi?.by_work_type || []).find(
-                (x) =>
-                  (x.key || "").trim().toLowerCase() === name.toLowerCase()
-              );
-              const count = f?.count ?? 0;
-              const pct = f?.percent ?? 0;
-
-              const gradients = [
-                "linear-gradient(145deg, #0284c7 0%, #0369a1 60%, #075985 100%)",
-                "linear-gradient(145deg, #0891b2 0%, #0e7490 60%, #155e75 100%)",
-              ];
-              const colors = [
-                { bg: gradients[index], text: "white" },
-                { bg: gradients[index], text: "white" },
-              ];
-
-              return (
-                <div
-                  key={name}
-                  style={{
-                    ...cardStyle,
-                    cursor: "pointer",
-                    background: colors[index].bg,
-                    color: colors[index].text,
-                    border: q === name ? "2px solid rgba(255,255,255,0.9)" : "1px solid rgba(255,255,255,0.15)",
-                    transition: "all 0.22s ease",
-                    transform: q === name ? "scale(1.05)" : "scale(1)",
-                    boxShadow: q === name ? "0 8px 24px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.2)" : "0 4px 12px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.12)",
-                  }}
-                  onClick={() => {
-                    if (q === name) {
-                      setQ("");
-                    } else {
-                      clearFilters();
-                      setQ(name);
-                    }
-                  }}
-                  onMouseOver={(e) => {
-                    if (q !== name) e.currentTarget.style.transform = "scale(1.02)";
-                  }}
-                  onMouseOut={(e) => {
-                    if (q !== name) e.currentTarget.style.transform = "scale(1)";
-                  }}
-                  title={`คลิกเพื่อกรองตาม ${name}`}
-                >
-                  <div style={{ ...cardTitle, color: "rgba(255,255,255,0.72)", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.5px" }}>
-                    {name === "Installation" ? "🔧 " : "🛠️ "}{name}
-                  </div>
-                  <div style={{ ...cardNumber, color: "white", fontSize: 14, textShadow: "0 1px 4px rgba(0,0,0,0.3)" }}>
-                    {kpiLoading ? "กำลังโหลด..." : `${count.toLocaleString()} (${pct.toFixed(1)}%)`}
-                  </div>
-                </div>
-              );
-            })}
-
-            {/* Depot Code */}
-            <div
-              style={{
-                ...cardStyle,
-                cursor: "pointer",
-                background: "linear-gradient(145deg, #4f46e5 0%, #4338ca 60%, #3730a3 100%)",
-                color: "white",
-                border: "1px solid rgba(255,255,255,0.15)",
-                boxShadow: "0 4px 15px rgba(79,70,229,0.5), inset 0 1px 0 rgba(255,255,255,0.12)",
-              }}
-              onClick={() => {
-                clearFilters();
-                setQ("");
-              }}
-              title="คลิกเพื่อล้างตัวกรองทั้งหมด - ข้อมูล Depot Code"
-            >
-              <div style={{ ...cardTitle, color: "rgba(255,255,255,0.72)", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.5px" }}>
-                🏪 Depot Code
-              </div>
-              <div style={{ ...cardNumber, color: "white", fontSize: 15, textShadow: "0 1px 4px rgba(0,0,0,0.3)" }}>
-                {depotCodeLoading ? "กำลังโหลด..." : depotCodeCount.toLocaleString()}
-              </div>
-            </div>
-
-            {/* Depot WW-Provider */}
-            <div
-              style={{
-                ...cardStyle,
-                cursor: "pointer",
-                background: q === "Depot WW-Provider"
-                  ? "linear-gradient(145deg, #1d4ed8 0%, #1e40af 60%, #1e3a8a 100%)"
-                  : "linear-gradient(145deg, #3b82f6 0%, #2563eb 60%, #1d4ed8 100%)",
-                color: "white",
-                border: q === "Depot WW-Provider" ? "2px solid rgba(255,255,255,0.9)" : "1px solid rgba(255,255,255,0.15)",
-                transition: "all 0.22s ease",
-                transform: q === "Depot WW-Provider" ? "scale(1.05)" : "scale(1)",
-                boxShadow: q === "Depot WW-Provider" ? "0 8px 24px rgba(29,78,216,0.5), inset 0 1px 0 rgba(255,255,255,0.2)" : "0 4px 12px rgba(59,130,246,0.35), inset 0 1px 0 rgba(255,255,255,0.12)",
-              }}
-              onClick={() => {
-                if (q === "Depot WW-Provider") {
-                  setQ("");
-                } else {
-                  clearFilters();
-                  setQ("Depot WW-Provider");
-                }
-              }}
-              onMouseOver={(e) => {
-                if (q !== "Depot WW-Provider") e.currentTarget.style.transform = "scale(1.02)";
-              }}
-              onMouseOut={(e) => {
-                if (q !== "Depot WW-Provider") e.currentTarget.style.transform = "scale(1)";
-              }}
-              title="คลิกเพื่อกรองตาม Depot WW-Provider"
-            >
-              <div style={{ ...cardTitle, color: "rgba(255,255,255,0.72)", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.5px" }}>
-                🏭 Depot WW
-              </div>
-              <div style={{ ...cardNumber, color: "white", fontSize: 14, textShadow: "0 1px 4px rgba(0,0,0,0.3)" }}>
-                {depotByProviderLoading ? "กำลังโหลด..." : (() => {
-                  const count = depotByProvider["WW-Provider"] || 0;
-                  const percentage = depotCodeCount > 0 ? ((count / depotCodeCount) * 100).toFixed(1) : 0;
-                  return `${count} (${percentage}%)`;
-                })()}
-              </div>
-            </div>
-          </div>
-
-          {/* บรรทัดที่ 2: WW-Provider, True Tech, เถ้าแก่เทค + Depot Provider */}
-          <div
-            style={{
-              display: "grid",
-              gridAutoFlow: "column",
-              gridAutoColumns: "1fr",
-              gap: 8,
-              alignItems: "stretch",
-              minHeight: 72,
-            }}
-          >
-            {/* Provider */}
-            {["WW-Provider", "True Tech", "เถ้าแก่เทค"].map((name, index) => {
-              const f = (kpi?.by_provider || []).find(
-                (x) =>
-                  (x.key || "").trim().toLowerCase() === name.toLowerCase()
-              );
-              const count = f?.count ?? 0;
-              const pct = f?.percent ?? 0;
-
-              const providerGradients = [
-                "linear-gradient(145deg, #3b82f6 0%, #2563eb 60%, #1d4ed8 100%)",  // WW-Provider: blue
-                "linear-gradient(145deg, #10b981 0%, #059669 60%, #047857 100%)",  // True Tech: green
-                "linear-gradient(145deg, #f59e0b 0%, #d97706 60%, #b45309 100%)",  // เถ้าแก่เทค: amber
-              ];
-              const colors = [
-                { bg: providerGradients[index], text: "white" },
-                { bg: providerGradients[index], text: "white" },
-                { bg: providerGradients[index], text: "white" },
-              ];
-
-              return (
-                <div
-                  key={name}
-                  style={{
-                    ...cardStyle,
-                    cursor: "pointer",
-                    background: colors[index].bg,
-                    color: colors[index].text,
-                    border: q === name ? "2px solid rgba(255,255,255,0.9)" : "1px solid rgba(255,255,255,0.15)",
-                    transition: "all 0.22s ease",
-                    transform: q === name ? "scale(1.05)" : "scale(1)",
-                    boxShadow: q === name ? "0 8px 24px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.2)" : "0 4px 12px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.12)",
-                  }}
-                  onClick={() => {
-                    if (q === name) {
-                      setQ("");
-                    } else {
-                      clearFilters();
-                      setQ(name);
-                    }
-                  }}
-                  onMouseOver={(e) => {
-                    if (q !== name) e.currentTarget.style.transform = "scale(1.02)";
-                  }}
-                  onMouseOut={(e) => {
-                    if (q !== name) e.currentTarget.style.transform = "scale(1)";
-                  }}
-                  title={`คลิกเพื่อกรองตาม ${name}`}
-                >
-                  <div
-                    style={{
-                      ...cardTitle,
-                      color: "rgba(255,255,255,0.72)",
-                      fontSize: 10,
-                      textTransform: "uppercase",
-                      letterSpacing: "0.5px",
-                    }}
-                  >
-                    {index === 0 ? "🔵 " : index === 1 ? "🟢 " : "🟡 "}{name}
-                  </div>
-                  <div
-                    style={{
-                      ...cardNumber,
-                      color: "white",
-                      fontSize: 14,
-                      textShadow: "0 1px 4px rgba(0,0,0,0.3)",
-                    }}
-                  >
-                    {kpiLoading ? "โหลด..." : (kpiInitialized ? `${count.toLocaleString()} (${pct}%)` : "โหลด...")}
-                  </div>
-                </div>
-              );
-            })}
-
-            {/* Depot Provider cards */}
-            {["Depot True Tech", "Depot เถ้าแก่เทค"].map((name, index) => {
-              // TODO: เพิ่มข้อมูลจริงจาก API ในอนาคต
-              const count = 0;
-              const pct = 0;
-
-              const depotGradients = [
-                "linear-gradient(145deg, #10b981 0%, #059669 60%, #047857 100%)",  // Depot True Tech: green
-                "linear-gradient(145deg, #f59e0b 0%, #d97706 60%, #b45309 100%)",  // Depot เถ้าแก่เทค: amber
-              ];
-              const colors = [
-                { bg: depotGradients[index], text: "white" },
-                { bg: depotGradients[index], text: "white" },
-              ];
-
-              return (
-                <div
-                  key={name}
-                  style={{
-                    ...cardStyle,
-                    cursor: "pointer",
-                    background: colors[index].bg,
-                    color: colors[index].text,
-                    border: q === name ? "2px solid rgba(255,255,255,0.9)" : "1px solid rgba(255,255,255,0.15)",
-                    transition: "all 0.22s ease",
-                    transform: q === name ? "scale(1.05)" : "scale(1)",
-                    boxShadow: q === name ? "0 8px 24px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.2)" : "0 4px 12px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.12)",
-                  }}
-                  onClick={() => {
-                    if (q === name) {
-                      setQ("");
-                    } else {
-                      clearFilters();
-                      setQ(name);
-                    }
-                  }}
-                  onMouseOver={(e) => {
-                    if (q !== name) e.currentTarget.style.transform = "scale(1.02)";
-                  }}
-                  onMouseOut={(e) => {
-                    if (q !== name) e.currentTarget.style.transform = "scale(1)";
-                  }}
-                  title={`คลิกเพื่อกรองตาม ${name}`}
-                >
-                  <div
-                    style={{
-                      ...cardTitle,
-                      color: "rgba(255,255,255,0.72)",
-                      fontSize: 10,
-                      textTransform: "uppercase",
-                      letterSpacing: "0.5px",
-                    }}
-                  >
-                    {index === 0 ? "🟢 " : "🟡 "}{name}
-                  </div>
-                  <div
-                    style={{
-                      ...cardNumber,
-                      color: "white",
-                      fontSize: 14,
-                      textShadow: "0 1px 4px rgba(0,0,0,0.3)",
-                    }}
-                  >
-                    {depotByProviderLoading ? "กำลังโหลด..." : (() => {
-                      const providerName = name === "Depot True Tech" ? "True Tech" : "เถ้าแก่เทค";
-                      const depotCount = depotByProvider[providerName] || 0;
-                      const percentage = depotCodeCount > 0 ? ((depotCount / depotCodeCount) * 100).toFixed(1) : 0;
-                      console.log(`🔍 Card ${name}: Looking for provider "${providerName}", found count: ${depotCount}, all providers:`, Object.keys(depotByProvider));
-                      return `${depotCount} (${percentage}%)`;
-                    })()}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
+          -- OLD KPI 2-row layout + PivotTable was here --
+          -- Depot Code, Depot WW, Depot True Tech, Depot เถ้าแก่เทค cards were in row 1 & 2 --
         </div>
-        {/* ===== /KPI rows ===== */}
+      </div>
+      */}
 
-        {/* Technicians by RSM Table */}
+      {/* ===== Two Split Tables: Technician Count & Workgroup Count ===== */}
+      <div style={{ display: 'flex', gap: '12px', marginBottom: '16px' }}>
+        {/* Table 1: จำนวนช่าง (คน) */}
         <div style={{
-          background: "#ffffff",
-          border: "1px solid #e5e7eb",
-          borderRadius: "8px",
-          padding: "12px",
-          flex: "1",
-          minWidth: "700px",
-          boxShadow: "0 1px 2px rgba(0,0,0,0.04)",
-          display: "flex",
-          flexDirection: "column"
+          flex: 1,
+          background: '#ffffff',
+          border: '1px solid #e5e7eb',
+          borderRadius: '8px',
+          padding: '12px',
+          boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
+          overflow: 'hidden',
         }}>
+          <div style={{ fontSize: '13px', fontWeight: 'bold', marginBottom: '8px', color: '#1e3a5f' }}>
+            📊 จำนวนช่าง (คน) แยกตามพื้นที่
+          </div>
           {pivotData.length > 0 ? (
-            <div style={{
-              fontSize: "12px",
-              overflow: "auto",
-              flex: "1",
-              display: "flex",
-              flexDirection: "column"
-            }}>
-              <PivotTableComponent
-                data={pivotData}
-                workgroupData={workgroupData}
-                workgroupGrandTotal={workgroupGrandTotal}
-                technicianData={technicianData}
-              />
-            </div>
+            <TechnicianCountTable data={pivotData} />
           ) : (
-            <div style={{
-              textAlign: "center",
-              color: "#6b7280",
-              padding: "20px",
-              fontSize: "12px"
-            }}>
+            <div style={{ textAlign: 'center', color: '#6b7280', padding: '20px', fontSize: '12px' }}>
+              กำลังโหลดข้อมูล...
+            </div>
+          )}
+        </div>
+
+        {/* Table 2: จำนวนกองงานช่าง (กองงาน) */}
+        <div style={{
+          flex: 1,
+          background: '#ffffff',
+          border: '1px solid #e5e7eb',
+          borderRadius: '8px',
+          padding: '12px',
+          boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
+          overflow: 'hidden',
+        }}>
+          <div style={{ fontSize: '13px', fontWeight: 'bold', marginBottom: '8px', color: '#8b1a1a' }}>
+            📋 จำนวนกองงานช่าง (กองงาน) แยกตามพื้นที่
+          </div>
+          {Object.keys(workgroupData).length > 0 ? (
+            <WorkgroupCountTable workgroupData={workgroupData} workgroupGrandTotal={workgroupGrandTotal} />
+          ) : (
+            <div style={{ textAlign: 'center', color: '#6b7280', padding: '20px', fontSize: '12px' }}>
               กำลังโหลดข้อมูล...
             </div>
           )}
         </div>
       </div>
+      {/* ===== /Two Split Tables ===== */}
 
       {/* ===== Stacked Column Charts ===== */}
       <div style={{ marginBottom: 20 }}>
