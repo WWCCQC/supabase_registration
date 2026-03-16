@@ -45,7 +45,9 @@ export async function GET(request: NextRequest) {
     }
 
     // Collect national_ids from technicians whose card expires this year
+    // Map: national_id → expiry month (for matching with training records)
     const nationalIdSet = new Set<string>();
+    const nationalIdToExpiryMonth = new Map<string, number>();
 
     allData.forEach((row) => {
       const val = row.card_expire_date?.trim();
@@ -59,7 +61,10 @@ export async function GET(request: NextRequest) {
 
       if (year === yearSuffix && month >= 1 && month <= 12) {
         monthCounts[month]++;
-        if (row.national_id) nationalIdSet.add(row.national_id);
+        if (row.national_id) {
+          nationalIdSet.add(row.national_id);
+          nationalIdToExpiryMonth.set(row.national_id, month);
+        }
       }
     });
 
@@ -91,19 +96,26 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Count renew training by month (only for technicians in our technicians table)
+    // Count renew by card expiry month (not training date month)
+    // ดูว่าช่างที่บัตรหมดอายุเดือนไหน ลงทะเบียนอบรมต่อบัตรแล้วหรือยัง (ไม่สนว่าอบรมเดือนไหน)
     const renewCounts: Record<number, number> = {};
     for (let m = 1; m <= 12; m++) {
       renewCounts[m] = 0;
     }
 
+    // Collect unique renewed national_ids to avoid double-counting
+    const renewedIds = new Set<string>();
     allTraining.forEach((row) => {
-      if (!row.training_date || !row.id_card) return;
+      if (!row.id_card) return;
       if (!nationalIdSet.has(row.id_card)) return; // only count if in technicians table
-      const d = new Date(row.training_date);
-      const m = d.getMonth() + 1;
-      if (m >= 1 && m <= 12) {
-        renewCounts[m]++;
+      renewedIds.add(row.id_card);
+    });
+
+    // Map renewed technicians back to their card expiry month
+    renewedIds.forEach((id) => {
+      const expiryMonth = nationalIdToExpiryMonth.get(id);
+      if (expiryMonth && expiryMonth >= 1 && expiryMonth <= 12) {
+        renewCounts[expiryMonth]++;
       }
     });
 
