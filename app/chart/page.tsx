@@ -1,7 +1,7 @@
 "use client";
 import dynamic from "next/dynamic";
 import ProtectedRoute from "@/components/common/ProtectedRoute";
-import Navbar from "@/components/common/Navbar";
+import SidebarLayout from "@/components/common/SidebarLayout";
 
 // Dynamic import เพื่อป้องกัน SSR issues กับ Recharts
 const RsmWorkgroupChart = dynamic(() => import("@/components/charts/RsmWorkgroupChart"), { 
@@ -16,12 +16,11 @@ const RsmWorkgroupChart = dynamic(() => import("@/components/charts/RsmWorkgroup
 export default function ChartPage() {
   return (
     <ProtectedRoute requiredRole="admin">
-      <div>
-        <Navbar />
+      <SidebarLayout>
         <div style={{ padding: '20px' }}>
           <RsmWorkgroupChart />
         </div>
-      </div>
+      </SidebarLayout>
     </ProtectedRoute>
   );
 }

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import ProtectedRoute from '@/components/common/ProtectedRoute';
-import Navbar from '@/components/common/Navbar';
+import SidebarLayout from '@/components/common/SidebarLayout';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell, LabelList } from 'recharts';
 
 interface BlacklistItem {
@@ -263,7 +263,7 @@ function BlacklistContent() {
   }
 
   return (
-    <div style={{ padding: '24px' }}>
+    <div style={{ padding: '24px', width: '100%', boxSizing: 'border-box', overflow: 'hidden' }}>
       <div style={{ marginBottom: '24px' }}>
         <h1 style={{
           fontSize: '28px',
@@ -751,8 +751,9 @@ function BlacklistContent() {
 export default function BlacklistPage() {
   return (
     <ProtectedRoute allowedRoles={['admin', 'manager']}>
-      <Navbar />
-      <BlacklistContent />
+      <SidebarLayout>
+        <BlacklistContent />
+      </SidebarLayout>
     </ProtectedRoute>
   );
 }

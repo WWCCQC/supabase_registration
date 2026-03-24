@@ -1,13 +1,13 @@
 "use client";
 import React from "react";
-import Navbar from "@/components/common/Navbar";
+import SidebarLayout from "@/components/common/SidebarLayout";
 import ProtectedRoute from "@/components/common/ProtectedRoute";
 
 export default function EntryExitReportPage() {
   return (
     <ProtectedRoute allowedRoles={['admin', 'manager']}>
+      <SidebarLayout>
       <div style={{ minHeight: "100vh", backgroundColor: "#f3f4f6" }}>
-        <Navbar />
         
         <div style={{
           maxWidth: "1200px",
@@ -154,6 +154,7 @@ export default function EntryExitReportPage() {
           </div>
         </div>
       </div>
+      </SidebarLayout>
     </ProtectedRoute>
   );
 }

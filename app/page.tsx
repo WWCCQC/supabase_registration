@@ -1,16 +1,17 @@
 ﻿"use client";
 
-import React from "react";
+import React, { useState } from "react";
 import NextDynamic from "next/dynamic";
 import { useAuth } from "@/lib/useAuth";
-import Navbar from "@/components/common/Navbar";
-import Link from "next/link";
+import SidebarLayout from "@/components/common/SidebarLayout";
+import type { NavTab } from "@/components/common/NavTabs";
 
-// โหลด component แบบ client-only (เปลี่ยนชื่อ import เป็น NextDynamic)
+// โหลด component แบบ client-only
 const TechBrowser = NextDynamic(() => import("@/components/TechBrowser"), { ssr: false });
 
 export default function Page() {
   const { user, authenticated, loading, isAdmin } = useAuth();
+  const [activeTab, setActiveTab] = useState<NavTab>('TOL');
   
   // วัดเวลาการโหลดหน้าหลัก
   React.useEffect(() => {
@@ -47,46 +48,69 @@ export default function Page() {
   }
 
   return (
-    <div>
-      {/* Navbar */}
-      <Navbar />
-      
-      <React.Suspense 
-        fallback={
-          <div style={{
-            padding: '60px 20px',
-            textAlign: 'center',
-            backgroundColor: '#ffffff',
-            borderRadius: '12px',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-          }}>
-            <div style={{ 
-              fontSize: '18px', 
-              color: '#666', 
-              marginBottom: '20px' 
-            }}>
-              กำลังโหลดข้อมูลระบบ...
-            </div>
+    <SidebarLayout activeTab={activeTab} onTabChange={setActiveTab}>
+      {activeTab === 'TOL' && (
+        <React.Suspense 
+          fallback={
             <div style={{
-              width: '40px',
-              height: '40px',
-              border: '4px solid #f3f3f3',
-              borderTop: '4px solid #3498db',
-              borderRadius: '50%',
-              animation: 'spin 1s linear infinite',
-              margin: '0 auto'
-            }}></div>
-            <style jsx>{`
-              @keyframes spin {
-                0% { transform: rotate(0deg); }
-                100% { transform: rotate(360deg); }
-              }
-            `}</style>
-          </div>
-        }
-      >
-        <TechBrowser />
-      </React.Suspense>
-    </div>
+              padding: '60px 20px',
+              textAlign: 'center',
+              backgroundColor: '#ffffff',
+              borderRadius: '12px',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+            }}>
+              <div style={{ 
+                fontSize: '18px', 
+                color: '#666', 
+                marginBottom: '20px' 
+              }}>
+                กำลังโหลดข้อมูลระบบ...
+              </div>
+              <div style={{
+                width: '40px',
+                height: '40px',
+                border: '4px solid #f3f3f3',
+                borderTop: '4px solid #3498db',
+                borderRadius: '50%',
+                animation: 'spin 1s linear infinite',
+                margin: '0 auto'
+              }}></div>
+              <style jsx>{`
+                @keyframes spin {
+                  0% { transform: rotate(0deg); }
+                  100% { transform: rotate(360deg); }
+                }
+              `}</style>
+            </div>
+          }
+        >
+          <TechBrowser />
+        </React.Suspense>
+      )}
+
+      {activeTab === 'SOLAR' && (
+        <div style={{ padding: '40px', textAlign: 'center' }}>
+          <div style={{ fontSize: '48px', marginBottom: '16px' }}>☀️</div>
+          <h2 style={{ fontSize: '24px', color: '#1f2937', marginBottom: '8px' }}>SOLAR</h2>
+          <p style={{ color: '#6b7280' }}>อยู่ระหว่างการพัฒนา</p>
+        </div>
+      )}
+
+      {activeTab === 'ROLLOUT' && (
+        <div style={{ padding: '40px', textAlign: 'center' }}>
+          <div style={{ fontSize: '48px', marginBottom: '16px' }}>🚀</div>
+          <h2 style={{ fontSize: '24px', color: '#1f2937', marginBottom: '8px' }}>ROLLOUT</h2>
+          <p style={{ color: '#6b7280' }}>อยู่ระหว่างการพัฒนา</p>
+        </div>
+      )}
+
+      {activeTab === 'CORPORATE' && (
+        <div style={{ padding: '40px', textAlign: 'center' }}>
+          <div style={{ fontSize: '48px', marginBottom: '16px' }}>🏢</div>
+          <h2 style={{ fontSize: '24px', color: '#1f2937', marginBottom: '8px' }}>CORPORATE</h2>
+          <p style={{ color: '#6b7280' }}>อยู่ระหว่างการพัฒนา</p>
+        </div>
+      )}
+    </SidebarLayout>
   );
 }

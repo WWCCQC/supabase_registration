@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import ProtectedRoute from '@/components/common/ProtectedRoute';
-import Navbar from '@/components/common/Navbar';
+import SidebarLayout from '@/components/common/SidebarLayout';
 
 interface User {
   id: number;
@@ -64,11 +64,7 @@ function DashboardContent() {
   }
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
-    }}>
-      <Navbar />
+    <SidebarLayout>
       <div style={{ padding: '20px' }}>
       <div style={{
         background: 'white',
@@ -119,7 +115,7 @@ function DashboardContent() {
         </div>
       </Link>
       </div>
-    </div>
+    </SidebarLayout>
   );
 }
 

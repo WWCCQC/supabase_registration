@@ -1166,7 +1166,7 @@ export default function TechBrowser() {
 
   /* ---------- Render ---------- */
   return (
-    <div>
+    <div style={{ width: '100%', overflow: 'hidden', padding: '16px', boxSizing: 'border-box' }}>
       {/* ===== KPI Cards - Single Row ===== */}
       <div style={{
         background: "linear-gradient(160deg, #1e3a5f 0%, #1a3050 50%, #162840 100%)",

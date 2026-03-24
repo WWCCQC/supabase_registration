@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import ProtectedRoute from '@/components/common/ProtectedRoute';
-import Navbar from '@/components/common/Navbar';
+import SidebarLayout from '@/components/common/SidebarLayout';
 import * as XLSX from 'xlsx';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell, LabelList, PieChart, Pie, ComposedChart, AreaChart, Area } from 'recharts';
 
@@ -1087,10 +1087,12 @@ function TechTransactionContent() {
   return (
     <div style={{
       padding: '32px',
-      maxWidth: '1400px',
+      maxWidth: '100%',
       margin: '0 auto',
       backgroundColor: '#f9fafb',
-      minHeight: '100vh'
+      minHeight: '100vh',
+      boxSizing: 'border-box',
+      overflow: 'hidden',
     }}>
       <div style={{
         backgroundColor: 'white',
@@ -3549,8 +3551,9 @@ function TechTransactionContent() {
 export default function TechTransactionPage() {
   return (
     <ProtectedRoute allowedRoles={['admin', 'manager']}>
-      <Navbar />
-      <TechTransactionContent />
+      <SidebarLayout>
+        <TechTransactionContent />
+      </SidebarLayout>
     </ProtectedRoute>
   );
 }

@@ -10,7 +10,8 @@ const PROTECTED_PATHS = [
   '/dashboard',
   '/chart',
   '/blacklist',
-  '/admin'
+  '/admin',
+  '/ww-provider'
 ];
 
 // หน้าที่ admin เท่านั้น
