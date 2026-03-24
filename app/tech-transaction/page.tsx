@@ -738,11 +738,16 @@ function TechTransactionContent() {
         return a.date.localeCompare(b.date);
       });
 
-    // Show last 30 days only if no filters applied, otherwise show all filtered dates
+    // Show current month only if no filters applied, otherwise show all filtered dates
     const isFiltered = selectedYears.length > 0 || selectedMonths.length > 0 || selectedWeeks.length > 0 || selectedDates.length > 0;
-    const finalChartArray = isFiltered ? chartArray : chartArray.slice(-30);
+    let finalChartArray = chartArray;
+    if (!isFiltered) {
+      const now = new Date();
+      const currentYM = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+      finalChartArray = chartArray.filter(item => item.date.startsWith(currentYM));
+    }
 
-    console.log('📈 Chart data prepared:', finalChartArray.length, 'dates', isFiltered ? '(filtered)' : '(last 30 days)');
+    console.log('📈 Chart data prepared:', finalChartArray.length, 'dates', isFiltered ? '(filtered)' : '(current month)');
     return finalChartArray;
   }, [allData, selectedYears, selectedMonths, selectedWeeks, selectedDates, selectedCard]);
 
@@ -1106,7 +1111,7 @@ function TechTransactionContent() {
           color: '#1f2937',
           marginBottom: '24px'
         }}>
-          Tech-Transaction (2025) : update ทุกวันเวลา 8.00 น.
+          Tech-Transaction (2026) : update ทุกวันเวลา 8.00 น.
         </h1>
 
 
@@ -2106,7 +2111,7 @@ function TechTransactionContent() {
                   color: '#1e3a8a',
                   margin: 0
                 }}>
-                  (แสดงข้อมูล 30 วัน ล่าสุด)
+                  (แสดงข้อมูลเดือนปัจจุบัน)
                 </p>
               </div>
               <ResponsiveContainer width="100%" height={500}>
@@ -2193,7 +2198,7 @@ function TechTransactionContent() {
                 </h2>
                 <ResponsiveContainer width="100%" height={500}>
                   <ComposedChart
-                    data={monthlyChartData.map(item => ({
+                    data={monthlyChartData.filter(item => item.year === '2026').map(item => ({
                       name: `${item.monthOnly?.substring(0, 3) || item.month.substring(0, 3)} ${item.year?.slice(-2) || ''}`.trim(),
                       month: item.month,
                       newTech: item['ช่างใหม่'],
@@ -2281,7 +2286,8 @@ function TechTransactionContent() {
                       name="Net Change"
                       label={(props: any) => {
                         const { x, y, value, index } = props;
-                        const data = monthlyChartData[index];
+                        const filtered2026 = monthlyChartData.filter(item => item.year === '2026');
+                        const data = filtered2026[index];
                         if (!data) return null;
 
                         const netChange = data['ช่างใหม่'] - data['ช่างลาออก'];
@@ -2351,17 +2357,19 @@ function TechTransactionContent() {
           }, {});
 
           // รวมข้อมูลและคำนวณ %
-          const comparisonData = monthlyTechnicianData.map(item => {
-            const resigned = resignedByMonth[item.month] || 0;
-            const resignedPercent = item.total > 0 ? ((resigned / item.total) * 100).toFixed(1) : '0';
+          const comparisonData = monthlyTechnicianData
+            .filter(item => item.month.includes('2026'))
+            .map(item => {
+              const resigned = resignedByMonth[item.month] || 0;
+              const resignedPercent = item.total > 0 ? ((resigned / item.total) * 100).toFixed(1) : '0';
 
-            return {
-              month: item.month,
-              'ช่างทั้งหมด': item.total,
-              'ช่างลาออก': resigned,
-              resignedPercent: resignedPercent
-            };
-          });
+              return {
+                month: item.month,
+                'ช่างทั้งหมด': item.total,
+                'ช่างลาออก': resigned,
+                resignedPercent: resignedPercent
+              };
+            });
 
           // คำนวณข้อมูล Pie Chart สำหรับช่างลาออกแยกตาม Provider (ถึง December)
           const monthsToInclude = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
@@ -2490,8 +2498,9 @@ function TechTransactionContent() {
                         fontWeight="600"
                         content={(props: any) => {
                           const { x, y, width, value, index } = props;
+                          if (!value) return null;
                           const item = comparisonData[index];
-                          if (!item || !value) return null;
+                          if (!item) return null;
 
                           return (
                             <text
