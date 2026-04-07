@@ -17,7 +17,13 @@ const NavTabs: React.FC<NavTabsProps> = ({ activeTab, onTabChange }) => {
         <button
           key={tab}
           className={`navtab-item ${activeTab === tab ? 'navtab-active' : ''}`}
-          onClick={() => onTabChange(tab)}
+          onClick={() => {
+            if (tab === 'SOLAR') {
+              window.open('https://solar-alpha-sand.vercel.app/', '_blank', 'noopener,noreferrer');
+              return;
+            }
+            onTabChange(tab);
+          }}
         >
           {tab}
         </button>
