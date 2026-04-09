@@ -901,8 +901,14 @@ export default function TechBrowser() {
       console.log(`✅ Exported ${allRecords.length} records total`);
 
       // ✅ Map ข้อมูลให้ตรงกับคอลัมน์ที่แสดงในตารางหน้าเว็บ (ใช้ชื่อภาษาไทย)
+      const maskNationalId = (id: string | null | undefined) => {
+        if (!id) return "";
+        const str = String(id);
+        if (/^\d{13}$/.test(str)) return "xxxxxxxxx" + str.slice(-4);
+        return str;
+      };
       const exportData = allRecords.map((r) => ({
-        [getFieldLabel("national_id")]: r.national_id ?? "",
+        [getFieldLabel("national_id")]: maskNationalId(r.national_id),
         [getFieldLabel("tech_id")]: r.tech_id ?? "",
         [getFieldLabel("card_expire_date")]: r.card_expire_date ?? "",
         [getFieldLabel("full_name")]: r.full_name ?? "",
