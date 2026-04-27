@@ -2347,7 +2347,8 @@ function TechTransactionContent() {
             { month: 'December 2025', total: 2896 },
             { month: 'January 2026', total: 2944 },
             { month: 'February 2026', total: 2950 },
-            { month: 'March 2026', total: currentTechnicianCount } // real-time จากตาราง technicians
+            { month: 'March 2026', total: 2985 },
+            { month: 'April 2026', total: currentTechnicianCount } // real-time จากตาราง technicians
           ];
 
           // คำนวณจำนวนช่างลาออกจาก monthlyChartData
