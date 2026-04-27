@@ -169,7 +169,7 @@ export default function LoginPage() {
             marginBottom: '10px',
             opacity: 0.95
           }}>
-            Command Center & Quality Control
+            Prime Business
           </div>
           
           <div style={{
@@ -188,7 +188,7 @@ export default function LoginPage() {
             lineHeight: '1.8',
             opacity: 0.9
           }}>
-            Installation & Maintenance
+            Last-Mile Service Management
           </div>
 
           <div style={{
