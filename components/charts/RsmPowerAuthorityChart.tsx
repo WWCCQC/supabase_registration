@@ -15,14 +15,22 @@ import * as XLSX from "xlsx";
 
 type PowerEntry = {
     RBM: string;
+    HRBM?: string;
     Yes: number;
     No: number;
     total: number;
+    CourseG?: number;
+    CourseGNo?: number;
+    CourseEC?: number;
+    CourseECNo?: number;
+    totalRbm?: number;
 };
 
 type ChartSummary = {
     totalYes?: number;
     totalNo?: number;
+    totalCourseG?: number;
+    totalCourseEC?: number;
 };
 
 type Props = {
@@ -35,8 +43,12 @@ type Props = {
 };
 
 // Color tokens
-const YES_COLOR = { from: "#4ade80", to: "#15803d", selected: "#166534", solid: "#22c55e", light: "#dcfce7", text: "#166534" };
-const NO_COLOR = { from: "#f87171", to: "#b91c1c", selected: "#7f1d1d", solid: "#ef4444", light: "#fee2e2", text: "#b91c1c" };
+const YES_COLOR = { from: "#ffb74d", to: "#e65100", selected: "#bf360c", solid: "#f57c00", light: "#fff3e0", text: "#e65100" };
+const NO_COLOR = { from: "#e2e8f0", to: "#94a3b8", selected: "#334155", solid: "#cbd5e1", light: "#f1f5f9", text: "#475569" };
+const CG_COLOR  = { from: "#34d399", to: "#0d9488", solid: "#14b8a6", light: "#ccfbf1", text: "#0f766e", selected: "#065f46" };
+const CG_NO_COLOR  = { from: "#e2e8f0", to: "#94a3b8", solid: "#cbd5e1", text: "#475569" };
+const CEC_COLOR = { from: "#fff176", to: "#f9a825", selected: "#f57f17", solid: "#ffee58", light: "#fffde7", text: "#f57f17" };
+const CEC_NO_COLOR = { from: "#e2e8f0", to: "#94a3b8", solid: "#cbd5e1", text: "#475569" };
 
 export default function RsmPowerAuthorityChart({
     chartData,
@@ -51,24 +63,37 @@ export default function RsmPowerAuthorityChart({
     const totalYes = chartSummary?.totalYes ?? chartData.reduce((s, d) => s + (d.Yes || 0), 0);
     const totalNo = chartSummary?.totalNo ?? chartData.reduce((s, d) => s + (d.No || 0), 0);
     const grandTotal = totalYes + totalNo;
+    const totalCourseG = chartSummary?.totalCourseG ?? chartData.reduce((s, d) => s + (d.CourseG || 0), 0);
+    const totalCourseEC = chartSummary?.totalCourseEC ?? chartData.reduce((s, d) => s + (d.CourseEC || 0), 0);
+    const totalCourseGNo = chartData.reduce((s, d) => s + (d.CourseGNo || 0), 0);
+    const totalCourseECNo = chartData.reduce((s, d) => s + (d.CourseECNo || 0), 0);
+    const totalCGAll = totalCourseG + totalCourseGNo;
+    const totalCECAll = totalCourseEC + totalCourseECNo;
 
-    // Legend modal state
-    const [legendModal, setLegendModal] = useState<"Yes" | "No" | null>(null);
+    // Legend modal state — supports PA (Yes/No) + Course G/EC (pass/notpass)
+    type ModalType = "Yes" | "No" | "CG_pass" | "CG_notpass" | "CEC_pass" | "CEC_notpass";
+    const [legendModal, setLegendModal] = useState<ModalType | null>(null);
     const [modalRows, setModalRows] = useState<any[]>([]);
     const [modalLoading, setModalLoading] = useState(false);
     const [modalError, setModalError] = useState<string | null>(null);
     const [modalSearch, setModalSearch] = useState("");
 
     // Fetch technician detail when modal opens
-    const fetchModalData = useCallback(async (status: "Yes" | "No") => {
+    const fetchModalData = useCallback(async (type: ModalType) => {
         setModalLoading(true);
         setModalError(null);
         setModalRows([]);
         setModalSearch("");
         try {
-            const res = await fetch(`/api/chart/power-authority-detail?power_authority=${status}`, {
-                cache: "no-store",
-            });
+            let url = "";
+            if (type === "Yes" || type === "No") {
+                url = `/api/chart/power-authority-detail?power_authority=${type}`;
+            } else {
+                const course = type.startsWith("CG") ? "g" : "ec";
+                const status = type.endsWith("pass") && !type.endsWith("notpass") ? "pass" : "notpass";
+                url = `/api/chart/course-detail?course=${course}&status=${status}`;
+            }
+            const res = await fetch(url, { cache: "no-store" });
             if (!res.ok) throw new Error("Failed to fetch data");
             const json = await res.json();
             setModalRows(json.rows ?? []);
@@ -79,9 +104,9 @@ export default function RsmPowerAuthorityChart({
         }
     }, []);
 
-    const openLegendModal = useCallback((status: "Yes" | "No") => {
-        setLegendModal(status);
-        fetchModalData(status);
+    const openLegendModal = useCallback((type: ModalType) => {
+        setLegendModal(type);
+        fetchModalData(type);
     }, [fetchModalData]);
 
     const closeLegendModal = useCallback(() => {
@@ -99,63 +124,96 @@ export default function RsmPowerAuthorityChart({
         })
         : modalRows;
 
+    // Modal meta helpers
+    const modalIsCourse = legendModal && legendModal !== "Yes" && legendModal !== "No";
+    const modalLabel = legendModal === "Yes" ? "✅ มีบัตรการไฟฟ้า"
+        : legendModal === "No" ? "❌ ไม่มีบัตรการไฟฟ้า"
+        : legendModal === "CG_pass" ? "📗 Course G อบรมแล้ว"
+        : legendModal === "CG_notpass" ? "⬜ Course G ยังไม่อบรม"
+        : legendModal === "CEC_pass" ? "📙 Course EC อบรมแล้ว"
+        : legendModal === "CEC_notpass" ? "⬜ Course EC ยังไม่อบรม" : "";
+    const modalColor = legendModal === "Yes" ? YES_COLOR
+        : legendModal === "No" ? NO_COLOR
+        : legendModal?.startsWith("CG") ? CG_COLOR
+        : CEC_COLOR;
+    const modalIsG = legendModal?.startsWith("CG");
+    const modalIsEC = legendModal?.startsWith("CEC");
+    const modalHeaderCols = modalIsG
+        ? ["#", "HRBM", "RBM", "CBM", "Provider", "Depot Code", "Depot Name", "Tech ID", "Full Name", "Course G"]
+        : modalIsEC
+        ? ["#", "HRBM", "RBM", "CBM", "Provider", "Depot Code", "Depot Name", "Tech ID", "Full Name", "Course EC"]
+        : ["#", "HRBM", "RBM", "CBM", "Provider", "Depot Code", "Depot Name", "Tech ID", "Full Name", "Power Authority"];
+
     // Excel download
     const handleDownloadExcel = useCallback(() => {
         if (!filteredModalRows.length) return;
-        const headers = ["HRBM", "RBM", "CBM", "provider", "depot_code", "depot_name", "tech_id", "full_name", "power_authority"];
+        const headers = modalIsG
+            ? ["HRBM", "RBM", "CBM", "provider", "depot_code", "depot_name", "tech_id", "full_name", "course_g"]
+            : modalIsEC
+            ? ["HRBM", "RBM", "CBM", "provider", "depot_code", "depot_name", "tech_id", "full_name", "course_ec"]
+            : ["HRBM", "RBM", "CBM", "provider", "depot_code", "depot_name", "tech_id", "full_name", "power_authority"];
         const wsData = [headers, ...filteredModalRows.map((r) => headers.map((h) => r[h] ?? "-"))];
         const ws = XLSX.utils.aoa_to_sheet(wsData);
-        // Auto-width columns
         ws["!cols"] = headers.map((h) => ({ wch: Math.max(h.length, 14) }));
         const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, legendModal === "Yes" ? "มีบัตรการไฟฟ้า" : "ไม่มีบัตรการไฟฟ้า");
-        XLSX.writeFile(wb, `power_authority_${legendModal?.toLowerCase() ?? "all"}_${new Date().toISOString().slice(0, 10)}.xlsx`);
-    }, [filteredModalRows, legendModal]);
+        XLSX.utils.book_append_sheet(wb, ws, modalLabel.replace(/[^a-zA-Z0-9ก-๙ ]/g, "").trim().slice(0, 31));
+        XLSX.writeFile(wb, `course_detail_${legendModal?.toLowerCase() ?? "all"}_${new Date().toISOString().slice(0, 10)}.xlsx`);
+    }, [filteredModalRows, legendModal, modalIsCourse, modalIsG, modalIsEC, modalLabel]);
 
     // ─── Glassmorphism Tooltip ─────────────────────────────────────
     const CustomTooltip = ({ active, payload, label }: any) => {
         if (!active || !payload?.length) return null;
-        const total = payload[0]?.payload?.total ?? 0;
+        const rowData = payload[0]?.payload;
+        const paTotal = rowData?.total ?? 0;
+        const cgTotal = (rowData?.CourseG ?? 0) + (rowData?.CourseGNo ?? 0);
+        const cecTotal = (rowData?.CourseEC ?? 0) + (rowData?.CourseECNo ?? 0);
+        const hrbm = rowData?.HRBM;
+        const fmt = (v: number, t: number) => t > 0 ? `${v} (${((v / t) * 100).toFixed(1)}%)` : `${v}`;
         return (
             <div style={{
-                background: "linear-gradient(135deg, rgba(15,23,42,0.95) 0%, rgba(30,41,59,0.95) 100%)",
+                background: "linear-gradient(135deg, rgba(15,23,42,0.96) 0%, rgba(30,41,59,0.96) 100%)",
                 backdropFilter: "blur(12px)",
                 border: "1px solid rgba(255,255,255,0.12)",
-                borderRadius: 14,
-                padding: "14px 18px",
+                borderRadius: 14, padding: "14px 18px",
                 boxShadow: "0 8px 32px rgba(0,0,0,0.35)",
-                minWidth: 190,
-                fontFamily: "Inter, 'Noto Sans Thai', sans-serif",
+                minWidth: 240, fontFamily: "Inter, 'Noto Sans Thai', sans-serif",
             }}>
-                <p style={{
-                    fontWeight: 700, fontSize: 13, color: "#f1f5f9", marginBottom: 10,
-                    borderBottom: "1px solid rgba(255,255,255,0.1)", paddingBottom: 6
-                }}>
+                <p style={{ fontWeight: 700, fontSize: 13, color: "#f1f5f9", marginBottom: 4, borderBottom: "1px solid rgba(255,255,255,0.1)", paddingBottom: 6 }}>
                     📍 {label}
                 </p>
-                {payload.map((entry: any, i: number) => {
-                    const pct = total > 0 ? ((entry.value / total) * 100).toFixed(1) : "0.0";
-                    return (
-                        <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, marginBottom: 5 }}>
-                            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                                <span style={{
-                                    width: 10, height: 10, borderRadius: "50%", backgroundColor: entry.color,
-                                    flexShrink: 0, boxShadow: `0 0 6px ${entry.color}`
-                                }} />
-                                <span style={{ fontSize: 12, color: "#cbd5e1" }}>{entry.name}</span>
-                            </div>
-                            <span style={{ fontSize: 12, color: "#f8fafc", fontWeight: 600 }}>
-                                {entry.value.toLocaleString()} ({pct}%)
-                            </span>
-                        </div>
-                    );
-                })}
-                <div style={{
-                    marginTop: 8, paddingTop: 8, borderTop: "1px solid rgba(255,255,255,0.1)",
-                    display: "flex", justifyContent: "space-between"
-                }}>
-                    <span style={{ fontSize: 12, color: "#94a3b8" }}>รวมทั้งหมด</span>
-                    <span style={{ fontSize: 13, fontWeight: 700, color: "#38bdf8" }}>{total.toLocaleString()} คน</span>
+                {hrbm && <p style={{ fontSize: 11, color: "#94a3b8", marginBottom: 8 }}>🗺️ พื้นที่: {hrbm}</p>}
+
+                {/* Power Authority */}
+                <p style={{ fontSize: 11, color: "#94a3b8", marginBottom: 4, fontWeight: 600 }}>⚡ Power Authority</p>
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 3 }}>
+                    <span style={{ fontSize: 11, color: "#f57c00" }}>✅ มีบัตร</span>
+                    <span style={{ fontSize: 11, color: "#f8fafc", fontWeight: 600 }}>{fmt(rowData?.Yes ?? 0, paTotal)}</span>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
+                    <span style={{ fontSize: 11, color: "#94a3b8" }}>❌ ไม่มีบัตร</span>
+                    <span style={{ fontSize: 11, color: "#f8fafc", fontWeight: 600 }}>{fmt(rowData?.No ?? 0, paTotal)}</span>
+                </div>
+
+                {/* Course G */}
+                <p style={{ fontSize: 11, color: "#94a3b8", marginBottom: 4, fontWeight: 600 }}>📗 Course G</p>
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 3 }}>
+                    <span style={{ fontSize: 11, color: "#34d399" }}>✅ อบรมแล้ว</span>
+                    <span style={{ fontSize: 11, color: "#f8fafc", fontWeight: 600 }}>{fmt(rowData?.CourseG ?? 0, cgTotal)}</span>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
+                    <span style={{ fontSize: 11, color: "#94a3b8" }}>⬜ ยังไม่อบรม</span>
+                    <span style={{ fontSize: 11, color: "#f8fafc", fontWeight: 600 }}>{fmt(rowData?.CourseGNo ?? 0, cgTotal)}</span>
+                </div>
+
+                {/* Course EC */}
+                <p style={{ fontSize: 11, color: "#94a3b8", marginBottom: 4, fontWeight: 600 }}>📙 Course EC</p>
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 3 }}>
+                    <span style={{ fontSize: 11, color: "#f9a825" }}>✅ อบรมแล้ว</span>
+                    <span style={{ fontSize: 11, color: "#f8fafc", fontWeight: 600 }}>{fmt(rowData?.CourseEC ?? 0, cecTotal)}</span>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between" }}>
+                    <span style={{ fontSize: 11, color: "#94a3b8" }}>⬜ ยังไม่อบรม</span>
+                    <span style={{ fontSize: 11, color: "#f8fafc", fontWeight: 600 }}>{fmt(rowData?.CourseECNo ?? 0, cecTotal)}</span>
                 </div>
             </div>
         );
@@ -189,189 +247,285 @@ export default function RsmPowerAuthorityChart({
     return (
         <div style={{ fontFamily: "Inter, 'Noto Sans Thai', sans-serif" }}>
 
-            {/* ── Legend Badges ─────────────────────────────────────── */}
-            <div style={{ display: "flex", justifyContent: "center", gap: 10, marginBottom: 20, flexWrap: "wrap" }}>
-                {/* Yes */}
-                <div
-                    onClick={() => openLegendModal("Yes")}
-                    style={{
-                    display: "flex", alignItems: "center", gap: 8,
-                    background: YES_COLOR.light, border: `1.5px solid ${YES_COLOR.solid}`,
-                    borderRadius: 30, padding: "5px 14px 5px 8px", boxShadow: `0 2px 8px ${YES_COLOR.solid}30`,
-                    cursor: "pointer", transition: "transform 0.15s, box-shadow 0.15s",
-                }}
-                    onMouseEnter={(e) => { e.currentTarget.style.transform = "scale(1.05)"; e.currentTarget.style.boxShadow = `0 4px 16px ${YES_COLOR.solid}50`; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.transform = "scale(1)"; e.currentTarget.style.boxShadow = `0 2px 8px ${YES_COLOR.solid}30`; }}
-                >
-                    <span style={{
-                        width: 10, height: 10, borderRadius: "50%",
-                        background: `linear-gradient(135deg, ${YES_COLOR.from}, ${YES_COLOR.to})`,
-                        boxShadow: `0 0 6px ${YES_COLOR.solid}80`, flexShrink: 0
-                    }} />
-                    <span style={{ fontSize: 12, fontWeight: 600, color: YES_COLOR.text }}>✅ มีบัตรการไฟฟ้า</span>
-                    <span style={{
-                        fontSize: 11, fontWeight: 700, color: YES_COLOR.text,
-                        background: "rgba(255,255,255,0.6)", borderRadius: 10, padding: "1px 7px"
-                    }}>
-                        {totalYes.toLocaleString()} ({grandTotal > 0 ? ((totalYes / grandTotal) * 100).toFixed(1) : 0}%)
-                    </span>
-                </div>
-                {/* No */}
-                <div
-                    onClick={() => openLegendModal("No")}
-                    style={{
-                    display: "flex", alignItems: "center", gap: 8,
-                    background: NO_COLOR.light, border: `1.5px solid ${NO_COLOR.solid}`,
-                    borderRadius: 30, padding: "5px 14px 5px 8px", boxShadow: `0 2px 8px ${NO_COLOR.solid}30`,
-                    cursor: "pointer", transition: "transform 0.15s, box-shadow 0.15s",
-                }}
-                    onMouseEnter={(e) => { e.currentTarget.style.transform = "scale(1.05)"; e.currentTarget.style.boxShadow = `0 4px 16px ${NO_COLOR.solid}50`; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.transform = "scale(1)"; e.currentTarget.style.boxShadow = `0 2px 8px ${NO_COLOR.solid}30`; }}
-                >
-                    <span style={{
-                        width: 10, height: 10, borderRadius: "50%",
-                        background: `linear-gradient(135deg, ${NO_COLOR.from}, ${NO_COLOR.to})`,
-                        boxShadow: `0 0 6px ${NO_COLOR.solid}80`, flexShrink: 0
-                    }} />
-                    <span style={{ fontSize: 12, fontWeight: 600, color: NO_COLOR.text }}>❌ ไม่มีบัตรการไฟฟ้า</span>
-                    <span style={{
-                        fontSize: 11, fontWeight: 700, color: NO_COLOR.text,
-                        background: "rgba(255,255,255,0.6)", borderRadius: 10, padding: "1px 7px"
-                    }}>
-                        {totalNo.toLocaleString()} ({grandTotal > 0 ? ((totalNo / grandTotal) * 100).toFixed(1) : 0}%)
-                    </span>
-                </div>
-            </div>
-
             {/* ── Bar Chart ──────────────────────────────────────────── */}
-            <ResponsiveContainer width="100%" height={420}>
-                <BarChart data={chartData} margin={{ top: 24, right: 16, left: 10, bottom: 100 }} barSize={36}>
+            {/* 1 RBM = 3 กลุ่มแท่ง: Power Authority (Yes/No stacked) | Course G (อบรม/ยังไม่อบรม stacked) | Course EC (อบรม/ยังไม่อบรม stacked) */}
+            <ResponsiveContainer width="100%" height={500}>
+                <BarChart
+                    data={chartData}
+                    margin={{ top: 36, right: 24, left: 10, bottom: 40 }}
+                    barCategoryGap="18%"
+                    barGap={5}
+                >
                     <defs>
                         <linearGradient id="paGradYes" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stopColor="#4ade80" />
-                            <stop offset="100%" stopColor="#15803d" />
+                            <stop offset="0%" stopColor="#ffb74d" /><stop offset="100%" stopColor="#e65100" />
                         </linearGradient>
                         <linearGradient id="paGradNo" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stopColor="#f87171" />
-                            <stop offset="100%" stopColor="#b91c1c" />
+                            <stop offset="0%" stopColor="#e2e8f0" /><stop offset="100%" stopColor="#94a3b8" />
+                        </linearGradient>
+                        <linearGradient id="paGradCG" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor="#34d399" /><stop offset="100%" stopColor="#0d9488" />
+                        </linearGradient>
+                        <linearGradient id="paGradCGNo" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor="#e2e8f0" /><stop offset="100%" stopColor="#94a3b8" />
+                        </linearGradient>
+                        <linearGradient id="paGradCEC" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor="#fff176" /><stop offset="100%" stopColor="#f9a825" />
+                        </linearGradient>
+                        <linearGradient id="paGradCECNo" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor="#e2e8f0" /><stop offset="100%" stopColor="#94a3b8" />
                         </linearGradient>
                     </defs>
 
                     <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
 
-                    <XAxis dataKey="RBM" angle={-45} textAnchor="end" height={100} interval={0}
-                        tick={{ fontSize: 10, fill: "#64748b", fontWeight: 500 }}
+                    <XAxis dataKey="RBM" angle={-45} textAnchor="end" height={110} interval={0}
+                        tick={{ fontSize: 11, fill: "#64748b", fontWeight: 500 }}
                         axisLine={{ stroke: "#e2e8f0" }} tickLine={false} />
 
-                    <YAxis tick={false} axisLine={false} tickLine={false} width={10} />
+                    <YAxis tick={false} axisLine={false} tickLine={false} width={0} />
 
-                    <Tooltip content={<CustomTooltip />} cursor={{ fill: "rgba(148,163,184,0.08)" }} />
+                    <Tooltip content={<CustomTooltip />} cursor={{ fill: "rgba(148,163,184,0.06)" }} />
 
-                    {/* Yes Bar */}
-                    <Bar dataKey="Yes" stackId="a" fill="url(#paGradYes)" name="มีบัตรการไฟฟ้า"
+                    {/* ── กลุ่มที่ 1: Power Authority ── */}
+                    <Bar dataKey="Yes" stackId="pa" name="มีบัตรการไฟฟ้า"
                         style={{ cursor: "pointer" }}
                         onClick={(data: any) => { if (data?.RBM) onPowerAuthorityClick?.(data.RBM, "Yes"); }}>
                         {chartData.map((entry, idx) => {
-                            const rsmSel = selectedRsm === entry.RBM;
-                            const paSel = selectedPowerAuthority === "Yes";
-                            return (
-                                <Cell key={`cell-yes-${idx}`}
-                                    fill={(rsmSel && paSel) ? YES_COLOR.selected : "url(#paGradYes)"}
-                                    opacity={(selectedRsm && !rsmSel) || (selectedPowerAuthority && !paSel) ? 0.35 : 1}
-                                    style={{ cursor: "pointer" }}
-                                    onMouseDown={(e: any) => { e.stopPropagation(); onPowerAuthorityClick?.(entry.RBM, "Yes"); }}
-                                />
-                            );
+                            const sel = selectedRsm === entry.RBM && selectedPowerAuthority === "Yes";
+                            const dim = (selectedRsm && selectedRsm !== entry.RBM) || (selectedPowerAuthority && selectedPowerAuthority !== "Yes");
+                            return <Cell key={`cy-${idx}`} fill={sel ? YES_COLOR.selected : "url(#paGradYes)"} opacity={dim ? 0.3 : 1} style={{ cursor: "pointer" }} onMouseDown={(e: any) => { e.stopPropagation(); onPowerAuthorityClick?.(entry.RBM, "Yes"); }} />;
                         })}
-                        <LabelList dataKey="Yes" position="center" fill="white" fontSize={8} fontWeight="bold"
-                            content={(props: any) => {
-                                const { x, y, width, height, value, index } = props;
-                                if (!value || value === 0) return null;
-                                const e = chartData[index];
-                                const tot = (e.Yes || 0) + (e.No || 0);
-                                const pct = tot > 0 ? ((value / tot) * 100).toFixed(1) : "0.0";
-                                const cx = x + width / 2;
-                                const cy = y + height / 2;
-                                if (height < 24) {
-                                    return (
-                                        <text x={cx} y={cy + 2} textAnchor="middle" fill="white" fontWeight="bold" fontSize="7">
-                                            {value.toLocaleString()}
-                                        </text>
-                                    );
-                                }
-                                return (
-                                    <text textAnchor="middle" fill="white" fontWeight="bold">
-                                        <tspan x={cx} y={cy - 3} fontSize="8">{value.toLocaleString()}</tspan>
-                                        <tspan x={cx} dy="11" fontSize="7.5">({pct}%)</tspan>
-                                    </text>
-                                );
-                            }} />
+                        <LabelList dataKey="Yes" content={(props: any) => {
+                            const { x, y, width, height, value, index } = props;
+                            if (!value || value === 0 || height < 18) return null;
+                            const tot = (chartData[index]?.Yes || 0) + (chartData[index]?.No || 0);
+                            const pct = tot > 0 ? `${((value / tot) * 100).toFixed(0)}%` : "";
+                            const cx = x + width / 2;
+                            const cy = y + height / 2;
+                            return height < 28
+                                ? <text x={cx} y={cy + 4} textAnchor="middle" fill="white" fontSize={8} fontWeight="bold">{value}</text>
+                                : <text textAnchor="middle" fill="white" fontWeight="bold">
+                                    <tspan x={cx} y={cy - 2} fontSize={9}>{value}</tspan>
+                                    <tspan x={cx} dy={11} fontSize={8}>{pct}</tspan>
+                                  </text>;
+                        }} />
                     </Bar>
-
-                    {/* No Bar */}
-                    <Bar dataKey="No" stackId="a" fill="url(#paGradNo)" name="ไม่มีบัตรการไฟฟ้า"
-                        radius={[6, 6, 0, 0]} style={{ cursor: "pointer" }}
+                    <Bar dataKey="No" stackId="pa" name="ไม่มีบัตรการไฟฟ้า" radius={[5, 5, 0, 0]}
+                        style={{ cursor: "pointer" }}
                         onClick={(data: any) => { if (data?.RBM) onPowerAuthorityClick?.(data.RBM, "No"); }}>
                         {chartData.map((entry, idx) => {
-                            const rsmSel = selectedRsm === entry.RBM;
-                            const paSel = selectedPowerAuthority === "No";
-                            return (
-                                <Cell key={`cell-no-${idx}`}
-                                    fill={(rsmSel && paSel) ? NO_COLOR.selected : "url(#paGradNo)"}
-                                    opacity={(selectedRsm && !rsmSel) || (selectedPowerAuthority && !paSel) ? 0.35 : 1}
-                                    style={{ cursor: "pointer" }}
-                                    onMouseDown={(e: any) => { e.stopPropagation(); onPowerAuthorityClick?.(entry.RBM, "No"); }}
-                                />
-                            );
+                            const sel = selectedRsm === entry.RBM && selectedPowerAuthority === "No";
+                            const dim = (selectedRsm && selectedRsm !== entry.RBM) || (selectedPowerAuthority && selectedPowerAuthority !== "No");
+                            return <Cell key={`cn-${idx}`} fill={sel ? NO_COLOR.selected : "url(#paGradNo)"} opacity={dim ? 0.3 : 1} style={{ cursor: "pointer" }} onMouseDown={(e: any) => { e.stopPropagation(); onPowerAuthorityClick?.(entry.RBM, "No"); }} />;
                         })}
-                        <LabelList dataKey="No" position="center" fill="white" fontSize={8} fontWeight="bold"
-                            content={(props: any) => {
-                                const { x, y, width, height, value, index } = props;
-                                if (!value || value === 0) return null;
-                                const e = chartData[index];
-                                const tot = (e.Yes || 0) + (e.No || 0);
-                                const pct = tot > 0 ? ((value / tot) * 100).toFixed(1) : "0.0";
-                                const cx = x + width / 2;
-                                const cy = y + height / 2;
-                                if (height < 24) {
-                                    return (
-                                        <text x={cx} y={cy + 2} textAnchor="middle" fill="white" fontWeight="bold" fontSize="7">
-                                            {value.toLocaleString()}
-                                        </text>
-                                    );
-                                }
-                                return (
-                                    <text textAnchor="middle" fill="white" fontWeight="bold">
-                                        <tspan x={cx} y={cy - 3} fontSize="8">{value.toLocaleString()}</tspan>
-                                        <tspan x={cx} dy="11" fontSize="7.5">({pct}%)</tspan>
-                                    </text>
-                                );
-                            }} />
-                        {/* Total on top */}
-                        <LabelList dataKey="total" position="top" fill="#1e293b" fontSize={11} fontWeight="bold" offset={6} />
+                        <LabelList dataKey="No" content={(props: any) => {
+                            const { x, y, width, height, value, index } = props;
+                            if (!value || value === 0 || height < 18) return null;
+                            const tot = (chartData[index]?.Yes || 0) + (chartData[index]?.No || 0);
+                            const pct = tot > 0 ? `${((value / tot) * 100).toFixed(0)}%` : "";
+                            const cx = x + width / 2;
+                            const cy = y + height / 2;
+                            return height < 28
+                                ? <text x={cx} y={cy + 4} textAnchor="middle" fill="white" fontSize={8} fontWeight="bold">{value}</text>
+                                : <text textAnchor="middle" fill="white" fontWeight="bold">
+                                    <tspan x={cx} y={cy - 2} fontSize={9}>{value}</tspan>
+                                    <tspan x={cx} dy={11} fontSize={8}>{pct}</tspan>
+                                  </text>;
+                        }} />
+                        <LabelList dataKey="total" content={(props: any) => {
+                            const { x, y, width, value } = props;
+                            if (!value) return null;
+                            return <text x={x + width / 2} y={y - 7} textAnchor="middle" fill={YES_COLOR.solid} fontSize={11} fontWeight="bold">{value}</text>;
+                        }} />
+                    </Bar>
+
+                    {/* ── กลุ่มที่ 2: Course G ── */}
+                    <Bar dataKey="CourseG" stackId="cg" name="Course G อบรมแล้ว">
+                        {chartData.map((_, idx) => <Cell key={`cg-${idx}`} fill="url(#paGradCG)" />)}
+                        <LabelList dataKey="CourseG" content={(props: any) => {
+                            const { x, y, width, height, value, index } = props;
+                            if (!value || value === 0 || height < 18) return null;
+                            const tot = (chartData[index]?.CourseG || 0) + (chartData[index]?.CourseGNo || 0);
+                            const pct = tot > 0 ? `${((value / tot) * 100).toFixed(0)}%` : "";
+                            const cx = x + width / 2;
+                            const cy = y + height / 2;
+                            return height < 28
+                                ? <text x={cx} y={cy + 4} textAnchor="middle" fill="white" fontSize={8} fontWeight="bold">{value}</text>
+                                : <text textAnchor="middle" fill="white" fontWeight="bold">
+                                    <tspan x={cx} y={cy - 2} fontSize={9}>{value}</tspan>
+                                    <tspan x={cx} dy={11} fontSize={8}>{pct}</tspan>
+                                  </text>;
+                        }} />
+                    </Bar>
+                    <Bar dataKey="CourseGNo" stackId="cg" name="Course G ยังไม่อบรม" radius={[5, 5, 0, 0]}>
+                        {chartData.map((_, idx) => <Cell key={`cgno-${idx}`} fill="url(#paGradCGNo)" />)}
+                        <LabelList dataKey="CourseGNo" content={(props: any) => {
+                            const { x, y, width, height, value, index } = props;
+                            if (!value || value === 0 || height < 18) return null;
+                            const tot = (chartData[index]?.CourseG || 0) + (chartData[index]?.CourseGNo || 0);
+                            const pct = tot > 0 ? `${((value / tot) * 100).toFixed(0)}%` : "";
+                            const cx = x + width / 2;
+                            const cy = y + height / 2;
+                            return height < 28
+                                ? <text x={cx} y={cy + 4} textAnchor="middle" fill="white" fontSize={8} fontWeight="bold">{value}</text>
+                                : <text textAnchor="middle" fill="white" fontWeight="bold">
+                                    <tspan x={cx} y={cy - 2} fontSize={9}>{value}</tspan>
+                                    <tspan x={cx} dy={11} fontSize={8}>{pct}</tspan>
+                                  </text>;
+                        }} />
+                        {/* Total Course G บนสุด */}
+                        <LabelList content={(props: any) => {
+                            const { x, y, width, index } = props;
+                            const tot = (chartData[index]?.CourseG || 0) + (chartData[index]?.CourseGNo || 0);
+                            if (!tot) return null;
+                            return <text x={x + width / 2} y={y - 7} textAnchor="middle" fill={CG_COLOR.text} fontSize={11} fontWeight="bold">{tot}</text>;
+                        }} />
+                    </Bar>
+
+                    {/* ── กลุ่มที่ 3: Course EC ── */}
+                    <Bar dataKey="CourseEC" stackId="cec" name="Course EC อบรมแล้ว">
+                        {chartData.map((_, idx) => <Cell key={`cec-${idx}`} fill="url(#paGradCEC)" />)}
+                        <LabelList dataKey="CourseEC" content={(props: any) => {
+                            const { x, y, width, height, value, index } = props;
+                            if (!value || value === 0 || height < 18) return null;
+                            const tot = (chartData[index]?.CourseEC || 0) + (chartData[index]?.CourseECNo || 0);
+                            const pct = tot > 0 ? `${((value / tot) * 100).toFixed(0)}%` : "";
+                            const cx = x + width / 2;
+                            const cy = y + height / 2;
+                            return height < 28
+                                ? <text x={cx} y={cy + 4} textAnchor="middle" fill="white" fontSize={8} fontWeight="bold">{value}</text>
+                                : <text textAnchor="middle" fill="white" fontWeight="bold">
+                                    <tspan x={cx} y={cy - 2} fontSize={9}>{value}</tspan>
+                                    <tspan x={cx} dy={11} fontSize={8}>{pct}</tspan>
+                                  </text>;
+                        }} />
+                    </Bar>
+                    <Bar dataKey="CourseECNo" stackId="cec" name="Course EC ยังไม่อบรม" radius={[5, 5, 0, 0]}>
+                        {chartData.map((_, idx) => <Cell key={`cecno-${idx}`} fill="url(#paGradCECNo)" />)}
+                        <LabelList dataKey="CourseECNo" content={(props: any) => {
+                            const { x, y, width, height, value, index } = props;
+                            if (!value || value === 0 || height < 18) return null;
+                            const tot = (chartData[index]?.CourseEC || 0) + (chartData[index]?.CourseECNo || 0);
+                            const pct = tot > 0 ? `${((value / tot) * 100).toFixed(0)}%` : "";
+                            const cx = x + width / 2;
+                            const cy = y + height / 2;
+                            return height < 28
+                                ? <text x={cx} y={cy + 4} textAnchor="middle" fill="white" fontSize={8} fontWeight="bold">{value}</text>
+                                : <text textAnchor="middle" fill="white" fontWeight="bold">
+                                    <tspan x={cx} y={cy - 2} fontSize={9}>{value}</tspan>
+                                    <tspan x={cx} dy={11} fontSize={8}>{pct}</tspan>
+                                  </text>;
+                        }} />
+                        {/* Total Course EC บนสุด */}
+                        <LabelList content={(props: any) => {
+                            const { x, y, width, index } = props;
+                            const tot = (chartData[index]?.CourseEC || 0) + (chartData[index]?.CourseECNo || 0);
+                            if (!tot) return null;
+                            return <text x={x + width / 2} y={y - 7} textAnchor="middle" fill={CEC_COLOR.text} fontSize={11} fontWeight="bold">{tot}</text>;
+                        }} />
                     </Bar>
                 </BarChart>
             </ResponsiveContainer>
 
-            {/* ── Summary Footer ─────────────────────────────────────── */}
-            <div style={{ display: "flex", justifyContent: "center", gap: 8, marginTop: 12, flexWrap: "wrap" }}>
-                <div style={{
-                    background: "linear-gradient(135deg, #f0fdf4, #dcfce7)", border: "1px solid #bbf7d0",
-                    borderRadius: 10, padding: "6px 16px", fontSize: 12, fontWeight: 600, color: "#166534"
-                }}>
-                    ✅ มีบัตร {totalYes.toLocaleString()} คน
+            {/* ── Legend Badges (below chart, paired by group) ───────── */}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginTop: 4, maxWidth: 720, marginLeft: "auto", marginRight: "auto" }}>
+                {/* Row 1 — บัตรการไฟฟ้า */}
+                <div
+                    onClick={() => openLegendModal("Yes")}
+                    style={{
+                        display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8,
+                        background: YES_COLOR.light, border: `1.5px solid ${YES_COLOR.solid}`,
+                        borderRadius: 30, padding: "5px 14px 5px 8px", boxShadow: `0 2px 8px ${YES_COLOR.solid}30`,
+                        cursor: "pointer", transition: "transform 0.15s, box-shadow 0.15s",
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.transform = "scale(1.05)"; e.currentTarget.style.boxShadow = `0 4px 16px ${YES_COLOR.solid}50`; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.transform = "scale(1)"; e.currentTarget.style.boxShadow = `0 2px 8px ${YES_COLOR.solid}30`; }}
+                >
+                    <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <span style={{ width: 10, height: 10, borderRadius: "50%", background: `linear-gradient(135deg, ${YES_COLOR.from}, ${YES_COLOR.to})`, boxShadow: `0 0 6px ${YES_COLOR.solid}80`, flexShrink: 0 }} />
+                        <span style={{ fontSize: 12, fontWeight: 600, color: YES_COLOR.text }}>✅ มีบัตรการไฟฟ้า</span>
+                    </span>
+                    <span style={{ fontSize: 11, fontWeight: 700, color: YES_COLOR.text, background: "rgba(255,255,255,0.6)", borderRadius: 10, padding: "1px 7px", whiteSpace: "nowrap" }}>
+                        {totalYes.toLocaleString()} ({grandTotal > 0 ? ((totalYes / grandTotal) * 100).toFixed(1) : 0}%)
+                    </span>
                 </div>
-                <div style={{
-                    background: "linear-gradient(135deg, #fef2f2, #fee2e2)", border: "1px solid #fca5a5",
-                    borderRadius: 10, padding: "6px 16px", fontSize: 12, fontWeight: 600, color: "#b91c1c"
-                }}>
-                    ❌ ไม่มีบัตร {totalNo.toLocaleString()} คน
+                <div
+                    onClick={() => openLegendModal("No")}
+                    style={{
+                        display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8,
+                        background: NO_COLOR.light, border: `1.5px solid ${NO_COLOR.solid}`,
+                        borderRadius: 30, padding: "5px 14px 5px 8px", boxShadow: `0 2px 8px ${NO_COLOR.solid}30`,
+                        cursor: "pointer", transition: "transform 0.15s, box-shadow 0.15s",
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.transform = "scale(1.05)"; e.currentTarget.style.boxShadow = `0 4px 16px ${NO_COLOR.solid}50`; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.transform = "scale(1)"; e.currentTarget.style.boxShadow = `0 2px 8px ${NO_COLOR.solid}30`; }}
+                >
+                    <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <span style={{ width: 10, height: 10, borderRadius: "50%", background: `linear-gradient(135deg, ${NO_COLOR.from}, ${NO_COLOR.to})`, boxShadow: `0 0 6px ${NO_COLOR.solid}80`, flexShrink: 0 }} />
+                        <span style={{ fontSize: 12, fontWeight: 600, color: NO_COLOR.text }}>❌ ไม่มีบัตรการไฟฟ้า</span>
+                    </span>
+                    <span style={{ fontSize: 11, fontWeight: 700, color: NO_COLOR.text, background: "rgba(255,255,255,0.6)", borderRadius: 10, padding: "1px 7px", whiteSpace: "nowrap" }}>
+                        {totalNo.toLocaleString()} ({grandTotal > 0 ? ((totalNo / grandTotal) * 100).toFixed(1) : 0}%)
+                    </span>
                 </div>
-                <div style={{
-                    background: "linear-gradient(135deg, #f0f9ff, #e0f2fe)", border: "1px solid #bae6fd",
-                    borderRadius: 10, padding: "6px 16px", fontSize: 12, fontWeight: 600, color: "#0369a1"
-                }}>
-                    👷 รวม {grandTotal.toLocaleString()} คน
+                {/* Row 2 — Course G */}
+                <div
+                    onClick={() => openLegendModal("CG_pass")}
+                    style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, background: CG_COLOR.light, border: `1.5px solid ${CG_COLOR.solid}`, borderRadius: 30, padding: "5px 14px 5px 8px", boxShadow: `0 2px 8px ${CG_COLOR.solid}30`, cursor: "pointer", transition: "transform 0.15s, box-shadow 0.15s" }}
+                    onMouseEnter={(e) => { e.currentTarget.style.transform = "scale(1.05)"; e.currentTarget.style.boxShadow = `0 4px 16px ${CG_COLOR.solid}50`; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.transform = "scale(1)"; e.currentTarget.style.boxShadow = `0 2px 8px ${CG_COLOR.solid}30`; }}
+                >
+                    <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <span style={{ width: 10, height: 10, borderRadius: "50%", background: `linear-gradient(135deg, ${CG_COLOR.from}, ${CG_COLOR.to})`, boxShadow: `0 0 6px ${CG_COLOR.solid}80`, flexShrink: 0 }} />
+                        <span style={{ fontSize: 12, fontWeight: 600, color: CG_COLOR.text }}>📗 Course G อบรมแล้ว</span>
+                    </span>
+                    <span style={{ fontSize: 11, fontWeight: 700, color: CG_COLOR.text, background: "rgba(255,255,255,0.6)", borderRadius: 10, padding: "1px 7px", whiteSpace: "nowrap" }}>
+                        {totalCourseG.toLocaleString()} ({totalCGAll > 0 ? ((totalCourseG / totalCGAll) * 100).toFixed(1) : 0}%)
+                    </span>
+                </div>
+                <div
+                    onClick={() => openLegendModal("CG_notpass")}
+                    style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, background: "#f1f5f9", border: `1.5px solid ${CG_NO_COLOR.solid}`, borderRadius: 30, padding: "5px 14px 5px 8px", cursor: "pointer", transition: "transform 0.15s, box-shadow 0.15s" }}
+                    onMouseEnter={(e) => { e.currentTarget.style.transform = "scale(1.05)"; e.currentTarget.style.boxShadow = `0 4px 16px ${CG_NO_COLOR.solid}50`; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.transform = "scale(1)"; e.currentTarget.style.boxShadow = "none"; }}
+                >
+                    <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <span style={{ width: 10, height: 10, borderRadius: "50%", background: `linear-gradient(135deg, ${CG_NO_COLOR.from}, ${CG_NO_COLOR.to})`, flexShrink: 0 }} />
+                        <span style={{ fontSize: 12, fontWeight: 600, color: CG_NO_COLOR.text }}>⬜ Course G ยังไม่อบรม</span>
+                    </span>
+                    <span style={{ fontSize: 11, fontWeight: 700, color: CG_NO_COLOR.text, background: "rgba(255,255,255,0.6)", borderRadius: 10, padding: "1px 7px", whiteSpace: "nowrap" }}>
+                        {totalCourseGNo.toLocaleString()} ({totalCGAll > 0 ? ((totalCourseGNo / totalCGAll) * 100).toFixed(1) : 0}%)
+                    </span>
+                </div>
+                {/* Row 3 — Course EC */}
+                <div
+                    onClick={() => openLegendModal("CEC_pass")}
+                    style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, background: CEC_COLOR.light, border: `1.5px solid ${CEC_COLOR.solid}`, borderRadius: 30, padding: "5px 14px 5px 8px", boxShadow: `0 2px 8px ${CEC_COLOR.solid}30`, cursor: "pointer", transition: "transform 0.15s, box-shadow 0.15s" }}
+                    onMouseEnter={(e) => { e.currentTarget.style.transform = "scale(1.05)"; e.currentTarget.style.boxShadow = `0 4px 16px ${CEC_COLOR.solid}50`; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.transform = "scale(1)"; e.currentTarget.style.boxShadow = `0 2px 8px ${CEC_COLOR.solid}30`; }}
+                >
+                    <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <span style={{ width: 10, height: 10, borderRadius: "50%", background: `linear-gradient(135deg, ${CEC_COLOR.from}, ${CEC_COLOR.to})`, boxShadow: `0 0 6px ${CEC_COLOR.solid}80`, flexShrink: 0 }} />
+                        <span style={{ fontSize: 12, fontWeight: 600, color: CEC_COLOR.text }}>📙 Course EC อบรมแล้ว</span>
+                    </span>
+                    <span style={{ fontSize: 11, fontWeight: 700, color: CEC_COLOR.text, background: "rgba(255,255,255,0.6)", borderRadius: 10, padding: "1px 7px", whiteSpace: "nowrap" }}>
+                        {totalCourseEC.toLocaleString()} ({totalCECAll > 0 ? ((totalCourseEC / totalCECAll) * 100).toFixed(1) : 0}%)
+                    </span>
+                </div>
+                <div
+                    onClick={() => openLegendModal("CEC_notpass")}
+                    style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, background: "#f1f5f9", border: `1.5px solid ${CEC_NO_COLOR.solid}`, borderRadius: 30, padding: "5px 14px 5px 8px", cursor: "pointer", transition: "transform 0.15s, box-shadow 0.15s" }}
+                    onMouseEnter={(e) => { e.currentTarget.style.transform = "scale(1.05)"; e.currentTarget.style.boxShadow = `0 4px 16px ${CEC_NO_COLOR.solid}50`; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.transform = "scale(1)"; e.currentTarget.style.boxShadow = "none"; }}
+                >
+                    <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <span style={{ width: 10, height: 10, borderRadius: "50%", background: `linear-gradient(135deg, ${CEC_NO_COLOR.from}, ${CEC_NO_COLOR.to})`, flexShrink: 0 }} />
+                        <span style={{ fontSize: 12, fontWeight: 600, color: CEC_NO_COLOR.text }}>⬜ Course EC ยังไม่อบรม</span>
+                    </span>
+                    <span style={{ fontSize: 11, fontWeight: 700, color: CEC_NO_COLOR.text, background: "rgba(255,255,255,0.6)", borderRadius: 10, padding: "1px 7px", whiteSpace: "nowrap" }}>
+                        {totalCourseECNo.toLocaleString()} ({totalCECAll > 0 ? ((totalCourseECNo / totalCECAll) * 100).toFixed(1) : 0}%)
+                    </span>
                 </div>
             </div>
 
@@ -402,18 +556,16 @@ export default function RsmPowerAuthorityChart({
                             <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
                                 <span style={{
                                     width: 12, height: 12, borderRadius: "50%",
-                                    background: legendModal === "Yes"
-                                        ? `linear-gradient(135deg, ${YES_COLOR.from}, ${YES_COLOR.to})`
-                                        : `linear-gradient(135deg, ${NO_COLOR.from}, ${NO_COLOR.to})`,
+                                    background: `linear-gradient(135deg, ${modalColor.from}, ${modalColor.to})`,
                                     flexShrink: 0,
                                 }} />
                                 <span style={{ fontSize: 16, fontWeight: 700, color: "#1e293b" }}>
-                                    {legendModal === "Yes" ? "✅ มีบัตรการไฟฟ้า" : "❌ ไม่มีบัตรการไฟฟ้า"}
+                                    {modalLabel}
                                 </span>
                                 <span style={{
                                     fontSize: 13, fontWeight: 700,
-                                    color: legendModal === "Yes" ? YES_COLOR.text : NO_COLOR.text,
-                                    background: legendModal === "Yes" ? YES_COLOR.light : NO_COLOR.light,
+                                    color: modalColor.text,
+                                    background: (modalColor as any).light ?? "#f1f5f9",
                                     borderRadius: 10, padding: "2px 10px",
                                 }}>
                                     {modalLoading ? "..." : `${filteredModalRows.length.toLocaleString()} คน`}
@@ -475,7 +627,7 @@ export default function RsmPowerAuthorityChart({
                             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 40, gap: 10 }}>
                                 <div style={{
                                     width: 36, height: 36, border: "3px solid #e5e7eb",
-                                    borderTopColor: legendModal === "Yes" ? "#22c55e" : "#ef4444",
+                                    borderTopColor: modalColor.solid,
                                     borderRadius: "50%", animation: "spin 0.8s linear infinite",
                                 }} />
                                 <span style={{ fontSize: 13, color: "#6b7280" }}>กำลังโหลดข้อมูล...</span>
@@ -490,16 +642,14 @@ export default function RsmPowerAuthorityChart({
                                 <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12, minWidth: 900 }}>
                                     <thead>
                                         <tr style={{
-                                            background: legendModal === "Yes"
-                                                ? "linear-gradient(135deg, #f0fdf4, #dcfce7)"
-                                                : "linear-gradient(135deg, #fef2f2, #fee2e2)",
+                                            background: `linear-gradient(135deg, ${(modalColor as any).light ?? "#f1f5f9"}, ${(modalColor as any).light ?? "#e2e8f0"})`,
                                             position: "sticky", top: 0, zIndex: 1,
                                         }}>
-                                            {["#", "HRBM", "RBM", "CBM", "Provider", "Depot Code", "Depot Name", "Tech ID", "Full Name", "Power Authority"].map((h) => (
+                                            {modalHeaderCols.map((h) => (
                                                 <th key={h} style={{
                                                     textAlign: "left", padding: "8px 8px", fontWeight: 600, fontSize: 11,
-                                                    color: legendModal === "Yes" ? YES_COLOR.text : NO_COLOR.text,
-                                                    borderBottom: `2px solid ${legendModal === "Yes" ? "#bbf7d0" : "#fca5a5"}`,
+                                                    color: modalColor.text,
+                                                    borderBottom: `2px solid ${modalColor.solid}`,
                                                     whiteSpace: "nowrap",
                                                 }}>{h}</th>
                                             ))}
@@ -508,7 +658,7 @@ export default function RsmPowerAuthorityChart({
                                     <tbody>
                                         {filteredModalRows.length === 0 ? (
                                             <tr>
-                                                <td colSpan={10} style={{ padding: 24, textAlign: "center", color: "#94a3b8", fontSize: 13 }}>
+                                                <td colSpan={modalHeaderCols.length} style={{ padding: 24, textAlign: "center", color: "#94a3b8", fontSize: 13 }}>
                                                     ไม่พบข้อมูล
                                                 </td>
                                             </tr>
@@ -527,15 +677,37 @@ export default function RsmPowerAuthorityChart({
                                                 <td style={{ padding: "6px 8px", color: "#1e293b" }}>{row.depot_name}</td>
                                                 <td style={{ padding: "6px 8px", color: "#0369a1", fontWeight: 600 }}>{row.tech_id}</td>
                                                 <td style={{ padding: "6px 8px", color: "#1e293b" }}>{row.full_name}</td>
-                                                <td style={{ padding: "6px 8px" }}>
-                                                    <span style={{
-                                                        fontSize: 11, fontWeight: 600, borderRadius: 6, padding: "2px 8px",
-                                                        background: row.power_authority === "Yes" ? YES_COLOR.light : NO_COLOR.light,
-                                                        color: row.power_authority === "Yes" ? YES_COLOR.text : NO_COLOR.text,
-                                                    }}>
-                                                        {row.power_authority === "Yes" ? "มี" : "ไม่มี"}
-                                                    </span>
-                                                </td>
+                                                {modalIsG ? (
+                                                    <td style={{ padding: "6px 8px" }}>
+                                                        <span style={{
+                                                            fontSize: 11, fontWeight: 600, borderRadius: 6, padding: "2px 8px",
+                                                            background: String(row.course_g).toLowerCase() === "pass" ? CG_COLOR.light : "#f1f5f9",
+                                                            color: String(row.course_g).toLowerCase() === "pass" ? CG_COLOR.text : CG_NO_COLOR.text,
+                                                        }}>
+                                                            {row.course_g ?? "-"}
+                                                        </span>
+                                                    </td>
+                                                ) : modalIsEC ? (
+                                                    <td style={{ padding: "6px 8px" }}>
+                                                        <span style={{
+                                                            fontSize: 11, fontWeight: 600, borderRadius: 6, padding: "2px 8px",
+                                                            background: String(row.course_ec).toLowerCase() === "pass" ? CEC_COLOR.light : "#f1f5f9",
+                                                            color: String(row.course_ec).toLowerCase() === "pass" ? CEC_COLOR.text : CEC_NO_COLOR.text,
+                                                        }}>
+                                                            {row.course_ec ?? "-"}
+                                                        </span>
+                                                    </td>
+                                                ) : (
+                                                    <td style={{ padding: "6px 8px" }}>
+                                                        <span style={{
+                                                            fontSize: 11, fontWeight: 600, borderRadius: 6, padding: "2px 8px",
+                                                            background: row.power_authority === "Yes" ? YES_COLOR.light : NO_COLOR.light,
+                                                            color: row.power_authority === "Yes" ? YES_COLOR.text : NO_COLOR.text,
+                                                        }}>
+                                                            {row.power_authority === "Yes" ? "มี" : "ไม่มี"}
+                                                        </span>
+                                                    </td>
+                                                )}
                                             </tr>
                                         ))}
                                     </tbody>
@@ -554,9 +726,7 @@ export default function RsmPowerAuthorityChart({
                             <button
                                 onClick={closeLegendModal}
                                 style={{
-                                    background: legendModal === "Yes"
-                                        ? `linear-gradient(135deg, ${YES_COLOR.from}, ${YES_COLOR.to})`
-                                        : `linear-gradient(135deg, ${NO_COLOR.from}, ${NO_COLOR.to})`,
+                                    background: `linear-gradient(135deg, ${modalColor.from}, ${modalColor.to})`,
                                     color: "white", border: "none", borderRadius: 8,
                                     padding: "6px 18px", fontSize: 12, fontWeight: 600,
                                     cursor: "pointer", transition: "opacity 0.15s",

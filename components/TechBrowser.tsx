@@ -1627,16 +1627,15 @@ export default function TechBrowser() {
           </div>
         </div>
 
-        {/* บรรทัดใหม่: RSM Power Authority Status Chart (50%) + พื้นที่สำหรับตารางอีก 50% */}
-        <div className="chart-grid-2col" style={{ marginTop: "20px" }}>
-          {/* RSM Power Authority Status Chart - modernized component */}
+        {/* RSM Power Authority Status Chart - เต็มบรรทัด */}
+        <div style={{ marginTop: "20px" }}>
           <div style={{
             background: "white",
             borderRadius: 12,
             padding: 20,
             boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
             border: "1px solid #e5e7eb",
-            position: "relative"
+            position: "relative",
           }}>
             <h3 style={{
               margin: "0 0 4px 0",
@@ -1644,7 +1643,7 @@ export default function TechBrowser() {
               fontWeight: 600,
               color: "#1f2937"
             }}>
-              ⚡ RBM Power Authority Status
+              📋 RBM Status by Power Authority, Course G, Course EC
             </h3>
             <RsmPowerAuthorityChart
               chartData={chartData}
@@ -1655,51 +1654,11 @@ export default function TechBrowser() {
               onPowerAuthorityClick={handlePowerAuthorityClick}
             />
           </div>
-
-          {/* พื้นที่สำหรับตารางหรือกราฟอื่น - 50% */}
-          <div style={{
-            background: "white",
-            borderRadius: 12,
-            padding: 20,
-            boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
-            border: "1px solid #e5e7eb",
-            position: "relative"
-          }}>
-            <h3 style={{
-              margin: "0 0 20px 0",
-              fontSize: 18,
-              fontWeight: 600,
-              color: "#1f2937"
-            }}>
-              🏆 Top 10 Depot - บัตรการไฟฟ้าสูงสุด
-            </h3>
-            <DepotPowerRanking />
-          </div>
         </div>
 
-        {/* แถวที่ 3: Card Expiry Trend + Training Radar (50/50) */}
+        {/* แถวที่ 3: Card Expiry Trend (เต็มแถว) */}
         <div className="chart-flex-row" style={{ marginTop: "20px" }}>
-          {/* ซ้าย: Training Radar Chart */}
-          <div className="chart-flex-item" style={{
-            background: "white",
-            borderRadius: 12,
-            padding: 20,
-            boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
-            border: "1px solid #e5e7eb",
-            position: "relative"
-          }}>
-            <h3 style={{
-              margin: "0 0 12px 0",
-              fontSize: 18,
-              fontWeight: 600,
-              color: "#1f2937"
-            }}>
-              🎯 จำนวนผู้เข้าอบรมการไฟฟ้า, Course G, Course H, Course EC
-            </h3>
-            <TrainingRadarChart />
-          </div>
-
-          {/* ขวา: Card Expiry Trend Chart */}
+          {/* Card Expiry Trend Chart */}
           <div className="chart-flex-item" style={{
             background: "white",
             borderRadius: 12,

@@ -25,7 +25,7 @@ export async function GET(request: Request) {
     while (hasMore) {
       let query = supabase
         .from("technicians")
-        .select("RBM, provider, power_authority, national_id")
+        .select("RBM, HRBM, provider, power_authority, course_g, course_ec, national_id")
         .order("tech_id", { ascending: true })
         .range(from, from + pageSize - 1);
       
@@ -68,7 +68,7 @@ export async function GET(request: Request) {
     }
 
     // จัดกลุ่มข้อมูลตาม RSM และ power_authority using UNIQUE national_id counting
-    const groupedData: Record<string, { Yes: Set<string>; No: Set<string> }> = {};
+    const groupedData: Record<string, { Yes: Set<string>; No: Set<string>; CourseG: Set<string>; CourseEC: Set<string>; Total: Set<string>; HRBM: string }> = {};
     
     // ตัวแปรสำหรับนับข้อมูลทั้งหมด using unique national_id
     const allNationalIds = new Set<string>();
@@ -80,6 +80,8 @@ export async function GET(request: Request) {
     // เพิ่มตัวแปรสำหรับนับ Yes/No ทั้งหมด (ไม่จำกัดแค่มี RSM)
     const allYesNationalIds = new Set<string>();
     const allNoNationalIds = new Set<string>();
+    const allCourseGNationalIds = new Set<string>();
+    const allCourseECNationalIds = new Set<string>();
     
     allData.forEach((row: any) => {
       const rsm = String(row.RBM || "").trim();
@@ -114,17 +116,34 @@ export async function GET(request: Request) {
       }
       
       if (!rsm || rsm === "null" || rsm === "undefined") return; // ข้ามข้อมูลที่ไม่มี RSM สำหรับการจัดกลุ่ม
-      
+
+      // สร้าง groupedData entry สำหรับ RSM นี้ (ถ้ายังไม่มี)
+      if (!groupedData[rsm]) {
+        const hrbm = String(row.HRBM || "").trim();
+        groupedData[rsm] = { Yes: new Set<string>(), No: new Set<string>(), CourseG: new Set<string>(), CourseEC: new Set<string>(), Total: new Set<string>(), HRBM: hrbm };
+      }
+
+      // นับ total ทุก national_id ต่อ RBM (สำหรับคำนวณ % ยังไม่อบรม)
+      groupedData[rsm].Total.add(nationalId);
+
+      // นับ course_g และ course_ec ต่อ RBM — นับเฉพาะ "Pass" เท่านั้น (case-insensitive)
+      const cg = String(row.course_g || "").trim().toLowerCase();
+      const cec = String(row.course_ec || "").trim().toLowerCase();
+      if (cg === "pass") {
+        groupedData[rsm].CourseG.add(nationalId);
+        allCourseGNationalIds.add(nationalId);
+      }
+      if (cec === "pass") {
+        groupedData[rsm].CourseEC.add(nationalId);
+        allCourseECNationalIds.add(nationalId);
+      }
+
       // ข้ามถ้าไม่มี power_authority (เข้มงวด: ต้องมีค่า Yes หรือ No เท่านั้น)
       if (!powerAuthority || powerAuthority === "null" || powerAuthority === "undefined") return;
-      
-      if (!groupedData[rsm]) {
-        groupedData[rsm] = { Yes: new Set<string>(), No: new Set<string>() };
-      }
-      
+
       // แปลง power_authority เป็น Yes/No (เข้มงวด: ต้องตรงกับ Yes/No เท่านั้น)
       const cleanAuthority = powerAuthority.toLowerCase();
-      
+
       if (cleanAuthority === "yes" || cleanAuthority === "y") {
         groupedData[rsm].Yes.add(nationalId);
       } else if (cleanAuthority === "no" || cleanAuthority === "n") {
@@ -137,17 +156,30 @@ export async function GET(request: Request) {
     const chartData = Object.entries(groupedData)
       .map(([rsm, counts]) => ({
         RBM: rsm,
+        HRBM: counts.HRBM,
         Yes: counts.Yes.size,
         No: counts.No.size,
-        total: counts.Yes.size + counts.No.size
+        total: counts.Yes.size + counts.No.size,
+        CourseG: counts.CourseG.size,
+        CourseGNo: counts.Total.size - counts.CourseG.size,
+        CourseEC: counts.CourseEC.size,
+        CourseECNo: counts.Total.size - counts.CourseEC.size,
+        totalRbm: counts.Total.size
       }))
-      .sort((a, b) => b.total - a.total) // เรียงตาม total มากไปน้อย
+      .sort((a, b) => {
+        // เรียงตาม HRBM (พื้นที่) ก่อน แล้วตาม RBM ภายในพื้นที่เดียวกัน
+        const hrbmCmp = a.HRBM.localeCompare(b.HRBM, "th", { sensitivity: "base" });
+        if (hrbmCmp !== 0) return hrbmCmp;
+        return a.RBM.localeCompare(b.RBM, "th", { sensitivity: "base" });
+      })
       .slice(0, 20); // แสดงแค่ top 20 RBM
     
     // คำนวณ summary - ใช้ค่าจาก fetched data เพราะ count query ของ Supabase ไม่ถูกต้อง (encoding issue)
     // NOTE: count query ได้ Yes=400 แต่ fetch + count จริง ๆ ได้ Yes=390 (ตรวจสอบแล้วว่า 390 ถูกต้อง)
-    const totalYes = allYesNationalIds.size;  // ใช้ค่า fetched ที่ถูกต้อง
-    const totalNo = allNoNationalIds.size;     // ใช้ค่า fetched ที่ถูกต้อง
+    const totalYes = allYesNationalIds.size;     // ใช้ค่า fetched ที่ถูกต้อง
+    const totalNo = allNoNationalIds.size;      // ใช้ค่า fetched ที่ถูกต้อง
+    const totalCourseG = allCourseGNationalIds.size;
+    const totalCourseEC = allCourseECNationalIds.size;
     const totalTechniciansWithRsm = nationalIdsWithRsm.size;
     
     console.log(`📊 RSM Workgroup API v2.0 - Using fetched data only (no count query)`);
@@ -168,6 +200,8 @@ export async function GET(request: Request) {
           totalTechniciansWithRBM: totalTechniciansWithRsm,    // จำนวนช่างที่มี RBM
           totalYes: totalYes,                                  // จำนวนช่างที่มี power_authority = Yes (นับจาก fetched)
           totalNo: totalNo,                                    // จำนวนช่างที่มี power_authority = No (นับจาก fetched)
+          totalCourseG: totalCourseG,                          // จำนวนช่างที่มี course_g
+          totalCourseEC: totalCourseEC,                        // จำนวนช่างที่มี course_ec
           recordsWithoutRBM: nationalIdsWithoutRsm.size,       // จำนวนช่างที่ไม่มี RBM (unique)
           recordsWithoutAuthority: nationalIdsWithoutAuthority.size  // จำนวนช่างที่ไม่มี power_authority (unique)
         }
