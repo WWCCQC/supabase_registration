@@ -9,8 +9,8 @@ export async function GET() {
   try {
     const supabase = supabaseAdmin();
 
-    // ลองดึง max(__imported_at) ก่อน ถ้าไม่มีคอลัมน์ให้ fallback ไป created_at
-    const candidates = ['__imported_at', 'created_at'];
+    // ลำดับความสำคัญ: updated_at (trigger) → __imported_at → created_at
+    const candidates = ['updated_at', '__imported_at', 'created_at'];
     let lastUpdated: string | null = null;
 
     for (const col of candidates) {
