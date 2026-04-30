@@ -9,11 +9,55 @@ interface TopBarProps {
   sidebarCollapsed: boolean;
 }
 
+function formatEnDateTime(isoString: string): string {
+  const d = new Date(isoString);
+  const date = d.toLocaleDateString('en-GB', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    timeZone: 'Asia/Bangkok',
+  });
+  const time = d.toLocaleTimeString('en-GB', {
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    timeZone: 'Asia/Bangkok',
+  });
+  return `${date} ${time}`;
+}
+
 const TopBar: React.FC<TopBarProps> = ({ onToggleSidebar, sidebarCollapsed }) => {
   const { user } = useAuth();
+  const [lastUpdated, setLastUpdated] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    fetch('/api/meta/last-updated')
+      .then((r) => r.json())
+      .then((d) => { if (d.lastUpdated) setLastUpdated(d.lastUpdated); })
+      .catch(() => {});
+  }, []);
 
   return (
     <div className="topbar">
+      {/* Data last updated — left side */}
+      <div style={{
+        marginRight: 'auto',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '6px',
+        color: '#c7d2fe',
+        fontSize: '12px',
+        whiteSpace: 'nowrap',
+      }}>
+        <span style={{ opacity: 0.75 }}>🕐</span>
+        <span>
+          Data updated as{' '}
+          <span style={{ color: '#ffffff', fontWeight: 600 }}>
+            {lastUpdated ? formatEnDateTime(lastUpdated) : '—'}
+          </span>
+        </span>
+      </div>
+
       {/* Mobile hamburger */}
       <button
         className="topbar-mobile-toggle"
