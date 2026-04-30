@@ -116,6 +116,23 @@ export default function RsmPowerAuthorityChart({
         setModalSearch("");
     }, []);
 
+    // ── Active groups for chart toggle (PA / CG / CEC) ──────────
+    type GroupKey = "PA" | "CG" | "CEC";
+    const [activeGroups, setActiveGroups] = React.useState<Set<GroupKey>>(new Set(["PA", "CG", "CEC"]));
+
+    const toggleGroup = (g: GroupKey) => {
+        setActiveGroups((prev) => {
+            const next = new Set(prev);
+            if (next.has(g)) {
+                // ต้องเหลืออย่างน้อย 1 กลุ่ม
+                if (next.size > 1) next.delete(g);
+            } else {
+                next.add(g);
+            }
+            return next;
+        });
+    };
+
     // Filtered rows for search
     const filteredModalRows = modalSearch
         ? modalRows.filter((r) => {
@@ -244,11 +261,66 @@ export default function RsmPowerAuthorityChart({
         );
     }
 
+    // Legend items config
+    const legendItems: { key: GroupKey; label: string; color: string; border: string; dotFrom: string; dotTo: string }[] = [
+        { key: "PA", label: "บัตรไฟฟ้า", color: YES_COLOR.text, border: YES_COLOR.solid, dotFrom: YES_COLOR.from, dotTo: YES_COLOR.to },
+        { key: "CG", label: "Course G",  color: CG_COLOR.text,  border: CG_COLOR.solid,  dotFrom: CG_COLOR.from,  dotTo: CG_COLOR.to  },
+        { key: "CEC", label: "Course EC", color: CEC_COLOR.text, border: CEC_COLOR.solid, dotFrom: CEC_COLOR.from, dotTo: CEC_COLOR.to  },
+    ];
+
     return (
         <div style={{ fontFamily: "Inter, 'Noto Sans Thai', sans-serif" }}>
 
             {/* ── Bar Chart ──────────────────────────────────────────── */}
             {/* 1 RBM = 3 กลุ่มแท่ง: Power Authority (Yes/No stacked) | Course G (อบรม/ยังไม่อบรม stacked) | Course EC (อบรม/ยังไม่อบรม stacked) */}
+            <div style={{ position: "relative" }}>
+
+            {/* ── Chart Legend overlay (top-right) ── */}
+            <div style={{
+                position: "absolute", top: 6, right: 8, zIndex: 10,
+                display: "flex", flexDirection: "column", gap: 5,
+                background: "rgba(255,255,255,0.92)",
+                backdropFilter: "blur(6px)",
+                borderRadius: 10,
+                padding: "8px 12px",
+                boxShadow: "0 2px 12px rgba(0,0,0,0.10)",
+                border: "1px solid rgba(226,232,240,0.8)",
+                minWidth: 120,
+            }}>
+                <span style={{ fontSize: 10, color: "#94a3b8", fontWeight: 600, letterSpacing: "0.5px", marginBottom: 2 }}>SHOW / HIDE</span>
+                {legendItems.map(({ key, label, color, border, dotFrom, dotTo }) => {
+                    const isActive = activeGroups.has(key);
+                    return (
+                        <button
+                            key={key}
+                            onClick={() => toggleGroup(key)}
+                            style={{
+                                display: "flex", alignItems: "center", gap: 7,
+                                background: isActive ? `${border}18` : "#f1f5f9",
+                                border: `1.5px solid ${isActive ? border : "#cbd5e1"}`,
+                                borderRadius: 20, padding: "4px 10px 4px 8px",
+                                cursor: "pointer", outline: "none",
+                                transition: "all 0.15s",
+                                opacity: isActive ? 1 : 0.45,
+                            }}
+                            title={isActive ? `ซ่อน ${label}` : `แสดง ${label}`}
+                        >
+                            <span style={{
+                                width: 10, height: 10, borderRadius: "50%", flexShrink: 0,
+                                background: isActive ? `linear-gradient(135deg, ${dotFrom}, ${dotTo})` : "#94a3b8",
+                                boxShadow: isActive ? `0 0 5px ${border}80` : "none",
+                            }} />
+                            <span style={{ fontSize: 11, fontWeight: 600, color: isActive ? color : "#94a3b8", whiteSpace: "nowrap" }}>
+                                {label}
+                            </span>
+                            {isActive && (
+                                <span style={{ fontSize: 9, color: "white", background: border, borderRadius: 6, padding: "1px 5px", marginLeft: 2, fontWeight: 700 }}>ON</span>
+                            )}
+                        </button>
+                    );
+                })}
+            </div>
+
             <ResponsiveContainer width="100%" height={500}>
                 <BarChart
                     data={chartData}
@@ -288,7 +360,7 @@ export default function RsmPowerAuthorityChart({
                     <Tooltip content={<CustomTooltip />} cursor={{ fill: "rgba(148,163,184,0.06)" }} />
 
                     {/* ── กลุ่มที่ 1: Power Authority ── */}
-                    <Bar dataKey="Yes" stackId="pa" name="มีบัตรการไฟฟ้า"
+                    <Bar dataKey="Yes" stackId="pa" name="มีบัตรการไฟฟ้า" hide={!activeGroups.has("PA")}
                         style={{ cursor: "pointer" }}
                         onClick={(data: any) => { if (data?.RBM) onPowerAuthorityClick?.(data.RBM, "Yes"); }}>
                         {chartData.map((entry, idx) => {
@@ -311,7 +383,7 @@ export default function RsmPowerAuthorityChart({
                                   </text>;
                         }} />
                     </Bar>
-                    <Bar dataKey="No" stackId="pa" name="ไม่มีบัตรการไฟฟ้า" radius={[5, 5, 0, 0]}
+                    <Bar dataKey="No" stackId="pa" name="ไม่มีบัตรการไฟฟ้า" radius={[5, 5, 0, 0]} hide={!activeGroups.has("PA")}
                         style={{ cursor: "pointer" }}
                         onClick={(data: any) => { if (data?.RBM) onPowerAuthorityClick?.(data.RBM, "No"); }}>
                         {chartData.map((entry, idx) => {
@@ -341,7 +413,7 @@ export default function RsmPowerAuthorityChart({
                     </Bar>
 
                     {/* ── กลุ่มที่ 2: Course G ── */}
-                    <Bar dataKey="CourseG" stackId="cg" name="Course G อบรมแล้ว">
+                    <Bar dataKey="CourseG" stackId="cg" name="Course G อบรมแล้ว" hide={!activeGroups.has("CG")}>
                         {chartData.map((_, idx) => <Cell key={`cg-${idx}`} fill="url(#paGradCG)" />)}
                         <LabelList dataKey="CourseG" content={(props: any) => {
                             const { x, y, width, height, value, index } = props;
@@ -358,7 +430,7 @@ export default function RsmPowerAuthorityChart({
                                   </text>;
                         }} />
                     </Bar>
-                    <Bar dataKey="CourseGNo" stackId="cg" name="Course G ยังไม่อบรม" radius={[5, 5, 0, 0]}>
+                    <Bar dataKey="CourseGNo" stackId="cg" name="Course G ยังไม่อบรม" radius={[5, 5, 0, 0]} hide={!activeGroups.has("CG")}>
                         {chartData.map((_, idx) => <Cell key={`cgno-${idx}`} fill="url(#paGradCGNo)" />)}
                         <LabelList dataKey="CourseGNo" content={(props: any) => {
                             const { x, y, width, height, value, index } = props;
@@ -384,7 +456,7 @@ export default function RsmPowerAuthorityChart({
                     </Bar>
 
                     {/* ── กลุ่มที่ 3: Course EC ── */}
-                    <Bar dataKey="CourseEC" stackId="cec" name="Course EC อบรมแล้ว">
+                    <Bar dataKey="CourseEC" stackId="cec" name="Course EC อบรมแล้ว" hide={!activeGroups.has("CEC")}>
                         {chartData.map((_, idx) => <Cell key={`cec-${idx}`} fill="url(#paGradCEC)" />)}
                         <LabelList dataKey="CourseEC" content={(props: any) => {
                             const { x, y, width, height, value, index } = props;
@@ -401,7 +473,7 @@ export default function RsmPowerAuthorityChart({
                                   </text>;
                         }} />
                     </Bar>
-                    <Bar dataKey="CourseECNo" stackId="cec" name="Course EC ยังไม่อบรม" radius={[5, 5, 0, 0]}>
+                    <Bar dataKey="CourseECNo" stackId="cec" name="Course EC ยังไม่อบรม" radius={[5, 5, 0, 0]} hide={!activeGroups.has("CEC")}>
                         {chartData.map((_, idx) => <Cell key={`cecno-${idx}`} fill="url(#paGradCECNo)" />)}
                         <LabelList dataKey="CourseECNo" content={(props: any) => {
                             const { x, y, width, height, value, index } = props;
@@ -427,6 +499,7 @@ export default function RsmPowerAuthorityChart({
                     </Bar>
                 </BarChart>
             </ResponsiveContainer>
+            </div>{/* end position:relative wrapper */}
 
             {/* ── Legend Badges (below chart, paired by group) ───────── */}
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginTop: 4, maxWidth: 720, marginLeft: "auto", marginRight: "auto" }}>
