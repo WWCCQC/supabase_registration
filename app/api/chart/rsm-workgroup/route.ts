@@ -167,9 +167,10 @@ export async function GET(request: Request) {
         totalRbm: counts.Total.size
       }))
       .sort((a, b) => {
-        // เรียงตาม HRBM (พื้นที่) ก่อน แล้วตาม RBM ภายในพื้นที่เดียวกัน
-        const hrbmCmp = a.HRBM.localeCompare(b.HRBM, "th", { sensitivity: "base" });
-        if (hrbmCmp !== 0) return hrbmCmp;
+        // เรียงตาม RBM แบบ R1, R2, ..., R8 (ดึงตัวเลขหลัง R ตัวแรกเท่านั้น)
+        const numA = parseInt(a.RBM.match(/^R(\d+)/i)?.[1] ?? "0", 10);
+        const numB = parseInt(b.RBM.match(/^R(\d+)/i)?.[1] ?? "0", 10);
+        if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
         return a.RBM.localeCompare(b.RBM, "th", { sensitivity: "base" });
       })
       .slice(0, 20); // แสดงแค่ top 20 RBM
