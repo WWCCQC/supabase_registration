@@ -236,6 +236,24 @@ export default function RsmPowerAuthorityChart({
         );
     };
 
+    // เรียง chart ตาม active group: 1 กลุ่ม → มากไปน้อย, หลายกลุ่ม → R1→R8
+    const sortedChartData = React.useMemo(() => {
+        const data = [...chartData];
+        if (activeGroups.size === 1) {
+            const only = [...activeGroups][0];
+            if (only === "PA")  return data.sort((a, b) => (b.Yes || 0) - (a.Yes || 0));
+            if (only === "CG")  return data.sort((a, b) => (b.CourseG || 0) - (a.CourseG || 0));
+            if (only === "CEC") return data.sort((a, b) => (b.CourseEC || 0) - (a.CourseEC || 0));
+        }
+        // default: เรียงตามตัวเลขใน RBM (R1→R8)
+        return data.sort((a, b) => {
+            const numA = parseInt(a.RBM.match(/^R(\d+)/i)?.[1] ?? "0", 10);
+            const numB = parseInt(b.RBM.match(/^R(\d+)/i)?.[1] ?? "0", 10);
+            if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
+            return a.RBM.localeCompare(b.RBM, "th", { sensitivity: "base" });
+        });
+    }, [chartData, activeGroups]);
+
     // ─── Loading ───────────────────────────────────────────────────
     if (chartLoading) {
         return (
@@ -323,7 +341,7 @@ export default function RsmPowerAuthorityChart({
 
             <ResponsiveContainer width="100%" height={500}>
                 <BarChart
-                    data={chartData}
+                    data={sortedChartData}
                     margin={{ top: 36, right: 24, left: 10, bottom: 40 }}
                     barCategoryGap="18%"
                     barGap={5}
@@ -363,7 +381,7 @@ export default function RsmPowerAuthorityChart({
                     <Bar dataKey="Yes" stackId="pa" name="มีบัตรการไฟฟ้า" hide={!activeGroups.has("PA")}
                         style={{ cursor: "pointer" }}
                         onClick={(data: any) => { if (data?.RBM) onPowerAuthorityClick?.(data.RBM, "Yes"); }}>
-                        {chartData.map((entry, idx) => {
+                        {sortedChartData.map((entry, idx) => {
                             const sel = selectedRsm === entry.RBM && selectedPowerAuthority === "Yes";
                             const dim = (selectedRsm && selectedRsm !== entry.RBM) || (selectedPowerAuthority && selectedPowerAuthority !== "Yes");
                             return <Cell key={`cy-${idx}`} fill={sel ? YES_COLOR.selected : "url(#paGradYes)"} opacity={dim ? 0.3 : 1} style={{ cursor: "pointer" }} onMouseDown={(e: any) => { e.stopPropagation(); onPowerAuthorityClick?.(entry.RBM, "Yes"); }} />;
@@ -371,7 +389,7 @@ export default function RsmPowerAuthorityChart({
                         <LabelList dataKey="Yes" content={(props: any) => {
                             const { x, y, width, height, value, index } = props;
                             if (!value || value === 0 || height < 18) return null;
-                            const tot = (chartData[index]?.Yes || 0) + (chartData[index]?.No || 0);
+                            const tot = (sortedChartData[index]?.Yes || 0) + (sortedChartData[index]?.No || 0);
                             const pct = tot > 0 ? `${((value / tot) * 100).toFixed(0)}%` : "";
                             const cx = x + width / 2;
                             const cy = y + height / 2;
@@ -386,7 +404,7 @@ export default function RsmPowerAuthorityChart({
                     <Bar dataKey="No" stackId="pa" name="ไม่มีบัตรการไฟฟ้า" radius={[5, 5, 0, 0]} hide={!activeGroups.has("PA")}
                         style={{ cursor: "pointer" }}
                         onClick={(data: any) => { if (data?.RBM) onPowerAuthorityClick?.(data.RBM, "No"); }}>
-                        {chartData.map((entry, idx) => {
+                        {sortedChartData.map((entry, idx) => {
                             const sel = selectedRsm === entry.RBM && selectedPowerAuthority === "No";
                             const dim = (selectedRsm && selectedRsm !== entry.RBM) || (selectedPowerAuthority && selectedPowerAuthority !== "No");
                             return <Cell key={`cn-${idx}`} fill={sel ? NO_COLOR.selected : "url(#paGradNo)"} opacity={dim ? 0.3 : 1} style={{ cursor: "pointer" }} onMouseDown={(e: any) => { e.stopPropagation(); onPowerAuthorityClick?.(entry.RBM, "No"); }} />;
@@ -394,7 +412,7 @@ export default function RsmPowerAuthorityChart({
                         <LabelList dataKey="No" content={(props: any) => {
                             const { x, y, width, height, value, index } = props;
                             if (!value || value === 0 || height < 18) return null;
-                            const tot = (chartData[index]?.Yes || 0) + (chartData[index]?.No || 0);
+                            const tot = (sortedChartData[index]?.Yes || 0) + (sortedChartData[index]?.No || 0);
                             const pct = tot > 0 ? `${((value / tot) * 100).toFixed(0)}%` : "";
                             const cx = x + width / 2;
                             const cy = y + height / 2;
@@ -414,11 +432,11 @@ export default function RsmPowerAuthorityChart({
 
                     {/* ── กลุ่มที่ 2: Course G ── */}
                     <Bar dataKey="CourseG" stackId="cg" name="Course G อบรมแล้ว" hide={!activeGroups.has("CG")}>
-                        {chartData.map((_, idx) => <Cell key={`cg-${idx}`} fill="url(#paGradCG)" />)}
+                        {sortedChartData.map((_, idx) => <Cell key={`cg-${idx}`} fill="url(#paGradCG)" />)}
                         <LabelList dataKey="CourseG" content={(props: any) => {
                             const { x, y, width, height, value, index } = props;
                             if (!value || value === 0 || height < 18) return null;
-                            const tot = (chartData[index]?.CourseG || 0) + (chartData[index]?.CourseGNo || 0);
+                            const tot = (sortedChartData[index]?.CourseG || 0) + (sortedChartData[index]?.CourseGNo || 0);
                             const pct = tot > 0 ? `${((value / tot) * 100).toFixed(0)}%` : "";
                             const cx = x + width / 2;
                             const cy = y + height / 2;
@@ -431,11 +449,11 @@ export default function RsmPowerAuthorityChart({
                         }} />
                     </Bar>
                     <Bar dataKey="CourseGNo" stackId="cg" name="Course G ยังไม่อบรม" radius={[5, 5, 0, 0]} hide={!activeGroups.has("CG")}>
-                        {chartData.map((_, idx) => <Cell key={`cgno-${idx}`} fill="url(#paGradCGNo)" />)}
+                        {sortedChartData.map((_, idx) => <Cell key={`cgno-${idx}`} fill="url(#paGradCGNo)" />)}
                         <LabelList dataKey="CourseGNo" content={(props: any) => {
                             const { x, y, width, height, value, index } = props;
                             if (!value || value === 0 || height < 18) return null;
-                            const tot = (chartData[index]?.CourseG || 0) + (chartData[index]?.CourseGNo || 0);
+                            const tot = (sortedChartData[index]?.CourseG || 0) + (sortedChartData[index]?.CourseGNo || 0);
                             const pct = tot > 0 ? `${((value / tot) * 100).toFixed(0)}%` : "";
                             const cx = x + width / 2;
                             const cy = y + height / 2;
@@ -449,7 +467,7 @@ export default function RsmPowerAuthorityChart({
                         {/* Total Course G บนสุด */}
                         <LabelList content={(props: any) => {
                             const { x, y, width, index } = props;
-                            const tot = (chartData[index]?.CourseG || 0) + (chartData[index]?.CourseGNo || 0);
+                            const tot = (sortedChartData[index]?.CourseG || 0) + (sortedChartData[index]?.CourseGNo || 0);
                             if (!tot) return null;
                             return <text x={x + width / 2} y={y - 7} textAnchor="middle" fill={CG_COLOR.text} fontSize={11} fontWeight="bold">{tot}</text>;
                         }} />
@@ -457,11 +475,11 @@ export default function RsmPowerAuthorityChart({
 
                     {/* ── กลุ่มที่ 3: Course EC ── */}
                     <Bar dataKey="CourseEC" stackId="cec" name="Course EC อบรมแล้ว" hide={!activeGroups.has("CEC")}>
-                        {chartData.map((_, idx) => <Cell key={`cec-${idx}`} fill="url(#paGradCEC)" />)}
+                        {sortedChartData.map((_, idx) => <Cell key={`cec-${idx}`} fill="url(#paGradCEC)" />)}
                         <LabelList dataKey="CourseEC" content={(props: any) => {
                             const { x, y, width, height, value, index } = props;
                             if (!value || value === 0 || height < 18) return null;
-                            const tot = (chartData[index]?.CourseEC || 0) + (chartData[index]?.CourseECNo || 0);
+                            const tot = (sortedChartData[index]?.CourseEC || 0) + (sortedChartData[index]?.CourseECNo || 0);
                             const pct = tot > 0 ? `${((value / tot) * 100).toFixed(0)}%` : "";
                             const cx = x + width / 2;
                             const cy = y + height / 2;
@@ -474,11 +492,11 @@ export default function RsmPowerAuthorityChart({
                         }} />
                     </Bar>
                     <Bar dataKey="CourseECNo" stackId="cec" name="Course EC ยังไม่อบรม" radius={[5, 5, 0, 0]} hide={!activeGroups.has("CEC")}>
-                        {chartData.map((_, idx) => <Cell key={`cecno-${idx}`} fill="url(#paGradCECNo)" />)}
+                        {sortedChartData.map((_, idx) => <Cell key={`cecno-${idx}`} fill="url(#paGradCECNo)" />)}
                         <LabelList dataKey="CourseECNo" content={(props: any) => {
                             const { x, y, width, height, value, index } = props;
                             if (!value || value === 0 || height < 18) return null;
-                            const tot = (chartData[index]?.CourseEC || 0) + (chartData[index]?.CourseECNo || 0);
+                            const tot = (sortedChartData[index]?.CourseEC || 0) + (sortedChartData[index]?.CourseECNo || 0);
                             const pct = tot > 0 ? `${((value / tot) * 100).toFixed(0)}%` : "";
                             const cx = x + width / 2;
                             const cy = y + height / 2;
@@ -492,7 +510,7 @@ export default function RsmPowerAuthorityChart({
                         {/* Total Course EC บนสุด */}
                         <LabelList content={(props: any) => {
                             const { x, y, width, index } = props;
-                            const tot = (chartData[index]?.CourseEC || 0) + (chartData[index]?.CourseECNo || 0);
+                            const tot = (sortedChartData[index]?.CourseEC || 0) + (sortedChartData[index]?.CourseECNo || 0);
                             if (!tot) return null;
                             return <text x={x + width / 2} y={y - 7} textAnchor="middle" fill={CEC_COLOR.text} fontSize={11} fontWeight="bold">{tot}</text>;
                         }} />
