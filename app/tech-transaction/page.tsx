@@ -18,6 +18,33 @@ interface TransactionItem {
   [key: string]: any;
 }
 
+const MONTH_ORDER = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December'
+];
+
+const MONTH_ALIAS_TO_INDEX = MONTH_ORDER.reduce<Record<string, number>>((acc, month, index) => {
+  acc[month.toLowerCase()] = index;
+  acc[month.slice(0, 3).toLowerCase()] = index;
+  return acc;
+}, {});
+
+const TECH_TRANSACTION_CHART_YEAR = '2026';
+const TECH_TRANSACTION_MONTH_LIMIT = 7;
+
+function getMonthIndex(month: string): number {
+  const normalized = String(month || '').trim().toLowerCase();
+  return MONTH_ALIAS_TO_INDEX[normalized] ?? -1;
+}
+
+function compareMonthNames(a: string, b: string): number {
+  const monthA = getMonthIndex(a);
+  const monthB = getMonthIndex(b);
+  const safeMonthA = monthA >= 0 ? monthA : Number.MAX_SAFE_INTEGER;
+  const safeMonthB = monthB >= 0 ? monthB : Number.MAX_SAFE_INTEGER;
+  return safeMonthA - safeMonthB;
+}
+
 function TechTransactionContent() {
   const [data, setData] = useState<TransactionItem[]>([]);
   const [allData, setAllData] = useState<TransactionItem[]>([]);
@@ -402,19 +429,13 @@ function TechTransactionContent() {
 
       console.log('📥 Total transactions for filters:', allTransactions.length);
 
-      // Month order for sorting
-      const monthOrder = [
-        'January', 'February', 'March', 'April', 'May', 'June',
-        'July', 'August', 'September', 'October', 'November', 'December'
-      ];
-
       // Extract unique values and sort
       const years = [...new Set(allTransactions.map((item: any) => item.Year).filter(Boolean))].sort();
 
       // Sort months by calendar order
       const uniqueMonths = [...new Set(allTransactions.map((item: any) => item.Month).filter(Boolean))];
       const months = uniqueMonths.sort((a: any, b: any) => {
-        return monthOrder.indexOf(a) - monthOrder.indexOf(b);
+        return compareMonthNames(a, b);
       });
 
       // Convert weeks to strings for consistent comparison
@@ -781,16 +802,17 @@ function TechTransactionContent() {
     }
 
     // Group by Month and Year
-    const monthGroups: { [key: string]: { new: number; resigned: number; year: string } } = {};
+    const monthGroups: { [key: string]: { new: number; resigned: number; year: string; monthIndex: number } } = {};
 
     chartSourceData.forEach(item => {
-      const month = item.Month || '';
-      const year = String(item.Year || '');
+      const month = (item.Month || '').trim();
+      const year = String(item.Year || '').trim();
+      if (!month || !year) return;
       const monthYearKey = `${month} ${year}`;
       const register = item.Register || '';
 
       if (!monthGroups[monthYearKey]) {
-        monthGroups[monthYearKey] = { new: 0, resigned: 0, year };
+        monthGroups[monthYearKey] = { new: 0, resigned: 0, year, monthIndex: getMonthIndex(month) };
       }
 
       if (register.includes('างใหม่')) {
@@ -800,37 +822,54 @@ function TechTransactionContent() {
       }
     });
 
-    // Month order for sorting
-    const monthOrder = [
-      'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December'
-    ];
-
     // Convert to array and sort by year then month order
     const chartArray = Object.entries(monthGroups)
       .map(([monthYear, counts]) => {
-        const parts = monthYear.split(' ');
-        const month = parts[0];
-        const year = parts[1] || '';
+        const monthOnly = counts.monthIndex >= 0 ? MONTH_ORDER[counts.monthIndex] : monthYear.split(' ')[0];
         return {
-          month: monthYear,
-          monthOnly: month,
-          year,
+          month: `${monthOnly} ${counts.year}`,
+          monthOnly,
+          year: counts.year,
+          monthIndex: counts.monthIndex,
           'ช่างลาออก': counts.resigned,
           'ช่างใหม่': counts.new
         };
       })
       .sort((a, b) => {
-        // Sort by year first, then by month
         if (a.year !== b.year) {
           return Number(a.year) - Number(b.year);
         }
-        return monthOrder.indexOf(a.monthOnly) - monthOrder.indexOf(b.monthOnly);
+        const monthA = a.monthIndex >= 0 ? a.monthIndex : Number.MAX_SAFE_INTEGER;
+        const monthB = b.monthIndex >= 0 ? b.monthIndex : Number.MAX_SAFE_INTEGER;
+        return monthA - monthB;
       });
 
     console.log('📊 Monthly chart data prepared:', chartArray.length, 'months');
     return chartArray;
   }, [allData, selectedYears, selectedMonths, selectedWeeks, selectedDates, selectedCard]);
+
+  const monthlyChart2026Data = useMemo(() => {
+    return MONTH_ORDER
+      .slice(0, TECH_TRANSACTION_MONTH_LIMIT)
+      .map((month, monthIndex) => {
+        const existing = monthlyChartData.find(
+          item => item.year === TECH_TRANSACTION_CHART_YEAR && item.monthIndex === monthIndex
+        );
+
+        return {
+          month: `${month} ${TECH_TRANSACTION_CHART_YEAR}`,
+          monthOnly: month,
+          year: TECH_TRANSACTION_CHART_YEAR,
+          monthIndex,
+          'ช่างใหม่': existing?.['ช่างใหม่'] ?? 0,
+          'ช่างลาออก': existing?.['ช่างลาออก'] ?? 0
+        };
+      })
+      .filter(item => (
+        selectedMonths.length === 0 ||
+        selectedMonths.some(month => getMonthIndex(month) === item.monthIndex)
+      ));
+  }, [monthlyChartData, selectedMonths]);
 
   // Prepare RSM chart data
   const rsmChartData = useMemo(() => {
@@ -2133,6 +2172,7 @@ function TechTransactionContent() {
                     style={{ fontSize: '12px' }}
                     domain={[0, 'auto']}
                     ticks={[0, 5, 10, 15, 20]}
+                    tick={false}
                   />
                   <Tooltip
                     contentStyle={{
@@ -2180,7 +2220,7 @@ function TechTransactionContent() {
             </div>
 
             {/* Monthly Bar Chart */}
-            {monthlyChartData.length > 0 && (
+            {monthlyChart2026Data.length > 0 && (
               <div style={{
                 backgroundColor: '#f9fafb',
                 borderRadius: '12px',
@@ -2198,7 +2238,7 @@ function TechTransactionContent() {
                 </h2>
                 <ResponsiveContainer width="100%" height={500}>
                   <ComposedChart
-                    data={monthlyChartData.filter(item => item.year === '2026').map(item => ({
+                    data={monthlyChart2026Data.map(item => ({
                       name: `${item.monthOnly?.substring(0, 3) || item.month.substring(0, 3)} ${item.year?.slice(-2) || ''}`.trim(),
                       month: item.month,
                       newTech: item['ช่างใหม่'],
@@ -2209,7 +2249,7 @@ function TechTransactionContent() {
                   >
                     <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                     <XAxis dataKey="name" />
-                    <YAxis yAxisId="left" />
+                    <YAxis yAxisId="left" tick={false} />
                     <YAxis yAxisId="right" orientation="right" tick={false} />
                     <Tooltip
                       content={({ active, payload }: any) => {
@@ -2286,8 +2326,7 @@ function TechTransactionContent() {
                       name="Net Change"
                       label={(props: any) => {
                         const { x, y, value, index } = props;
-                        const filtered2026 = monthlyChartData.filter(item => item.year === '2026');
-                        const data = filtered2026[index];
+                        const data = monthlyChart2026Data[index];
                         if (!data) return null;
 
                         const netChange = data['ช่างใหม่'] - data['ช่างลาออก'];
@@ -2331,7 +2370,7 @@ function TechTransactionContent() {
 
         {/* Monthly Technician Comparison Chart (Total vs Resigned) + Provider Pie Chart */}
         {(() => {
-          // ข้อมูลจำนวนช่างทั้งหมดแต่ละเดือน (hard-coded สำหรับเดือนก่อนหน้า, real-time สำหรับเดือนปัจจุบัน)
+          // ข้อมูลจำนวนช่างทั้งหมดแต่ละเดือน (hard-coded)
           const monthlyTechnicianData = [
             { month: 'January 2025', total: 2632 },
             { month: 'February 2025', total: 2660 },
@@ -2349,7 +2388,9 @@ function TechTransactionContent() {
             { month: 'February 2026', total: 2950 },
             { month: 'March 2026', total: 2985 },
             { month: 'April 2026', total: 2965 },
-            { month: 'May 2026', total: currentTechnicianCount } // real-time จากตาราง technicians
+            { month: 'May 2026', total: 2882 },
+            { month: 'June 2026', total: 2780 },
+            { month: 'July 2026', total: currentTechnicianCount },
           ];
 
           // คำนวณจำนวนช่างลาออกจาก monthlyChartData
@@ -2453,6 +2494,7 @@ function TechTransactionContent() {
                     <YAxis
                       stroke="#6b7280"
                       style={{ fontSize: '12px' }}
+                      tick={false}
                     />
                     <Tooltip
                       contentStyle={{
@@ -2631,6 +2673,7 @@ function TechTransactionContent() {
                   <YAxis
                     stroke="#6b7280"
                     style={{ fontSize: '12px' }}
+                    tick={false}
                   />
                   <Tooltip
                     contentStyle={{
