@@ -129,45 +129,29 @@ function BlacklistContent() {
         'July', 'August', 'September', 'October', 'November', 'December'
       ];
 
-      // Count Blacklist records by Year + Month
-      const yearMonthCounts: { [key: string]: number } = {};
+      // Count Blacklist records by Month, only for year 2026
+      const monthCounts: { [key: string]: number } = {};
       let blacklistTotal = 0;
 
       allTransactions.forEach((item: any) => {
         const register = String(item.Register || '');
         if (register.toLowerCase().includes('blacklist')) {
           const month = item.Month || 'Unknown';
-          const year = item.Year || 'Unknown';
-          if (month !== 'Unknown' && year !== 'Unknown') {
-            const key = `${month} ${year}`;
-            yearMonthCounts[key] = (yearMonthCounts[key] || 0) + 1;
+          const year = String(item.Year || '').trim();
+          if (month !== 'Unknown' && year === '2026') {
+            monthCounts[month] = (monthCounts[month] || 0) + 1;
             blacklistTotal++;
           }
         }
       });
 
-      console.log(`🔴 Total Blacklist found: ${blacklistTotal}`);
-      console.log('📊 Blacklist by Year-Month:', yearMonthCounts);
+      console.log(`🔴 Total Blacklist found (2026): ${blacklistTotal}`);
+      console.log('📊 Blacklist by Month (2026):', monthCounts);
 
-      // Convert to array and sort by Year then Month
-      const chartData = Object.entries(yearMonthCounts)
-        .map(([key, count]) => {
-          const parts = key.split(' ');
-          const month = parts[0];
-          const year = parseInt(parts[1]) || 0;
-          return {
-            month: key,
-            count,
-            year,
-            monthIndex: monthOrder.indexOf(month)
-          };
-        })
-        .sort((a, b) => {
-          // Sort by year first, then by month
-          if (a.year !== b.year) return a.year - b.year;
-          return a.monthIndex - b.monthIndex;
-        })
-        .map(({ month, count }) => ({ month, count }));
+      // Convert to array and sort strictly by calendar month order
+      const chartData = monthOrder
+        .filter((month) => monthCounts[month] !== undefined)
+        .map((month) => ({ month, count: monthCounts[month] }));
 
       setTransactionBlacklistData(chartData);
     } catch (err) {
