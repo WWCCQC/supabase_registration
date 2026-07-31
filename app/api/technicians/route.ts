@@ -4,11 +4,7 @@ export const fetchCache = "force-no-store";
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { mapCtmToThaiName } from "@/lib/ctmMapping";
-
-function sanitizeQ(s?: string | null) {
-  if (!s) return "";
-  return s.replace(/[,%]/g, " ").trim();
-}
+import { applyTechnicianGeneralSearch } from "@/lib/technicianSearch";
 
 export async function GET(req: Request) {
   try {
@@ -31,7 +27,7 @@ export async function GET(req: Request) {
     const f_power_authority = url.searchParams.get("power_authority") || "";
     const f_card_expire_date = url.searchParams.get("card_expire_date") || "";
     const f_training_type = url.searchParams.get("training_type") || "";
-    const q = sanitizeQ(url.searchParams.get("q"));
+    const q = url.searchParams.get("q");
 
     const from = (page - 1) * pageSize;
     const to = from + pageSize - 1;
@@ -88,24 +84,7 @@ export async function GET(req: Request) {
       }
     }
 
-    if (q) {
-      // Check if query matches a service column name (e.g., "iot" -> "svc_iot")
-      const qLower = q.toLowerCase();
-      const matchedServiceCol = serviceColumns.find(col =>
-        col.toLowerCase().includes(qLower) || col.replace('svc_', '').toLowerCase() === qLower
-      );
-
-      if (matchedServiceCol) {
-        // If query matches a service column, search for "Pass" in that column
-        console.log(`🎯 Query "${q}" matches service column "${matchedServiceCol}" - searching for Pass`);
-        countQuery = countQuery.eq(matchedServiceCol, "Pass");
-      } else {
-        // Regular text search across all columns
-        const pattern = `%${q}%`;
-        const ors = cols.map(c => `${c}.ilike.${pattern}`).join(",");
-        countQuery = countQuery.or(ors);
-      }
-    }
+    countQuery = applyTechnicianGeneralSearch(countQuery, q);
 
     const { count, error: countError } = await countQuery;
 
@@ -133,25 +112,7 @@ export async function GET(req: Request) {
       }
     }
 
-    if (q) {
-      // Check if query matches a service column name (e.g., "iot" -> "svc_iot")
-      const qLower = q.toLowerCase();
-      const matchedServiceCol = serviceColumns.find(col =>
-        col.toLowerCase().includes(qLower) || col.replace('svc_', '').toLowerCase() === qLower
-      );
-
-      if (matchedServiceCol) {
-        // If query matches a service column, search for "Pass" in that column
-        console.log(`🎯 Query "${q}" matches service column "${matchedServiceCol}" - searching for Pass`);
-        dataQuery = dataQuery.eq(matchedServiceCol, "Pass");
-      } else {
-        // Regular text search across all columns
-        const pattern = `%${q}%`;
-        const ors = cols.map(c => `${c}.ilike.${pattern}`).join(",");
-        dataQuery = dataQuery.or(ors);
-        console.log('🔍 Search query (q):', q, '- Searching in', cols.length, 'columns');
-      }
-    }
+    dataQuery = applyTechnicianGeneralSearch(dataQuery, q);
 
     dataQuery = dataQuery.order(sort, { ascending, nullsFirst: true }).range(from, to);
 
