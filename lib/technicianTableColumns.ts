@@ -1,0 +1,18 @@
+export const TECHNICIAN_TABLE_COLUMNS = [
+  "national_id",
+  "tech_id",
+  "card_expire_date",
+  "full_name",
+  "doc_tech_card_url",
+  "workgroup_status",
+  "work_type",
+  "provider",
+  "area",
+  "rsm",
+  "ctm",
+  "depot_code",
+  "depot_name",
+  "province",
+  "power_authority",
+  "car_license_plate",
+] as const;

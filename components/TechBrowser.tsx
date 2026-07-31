@@ -3,6 +3,7 @@ import React from "react";
 import dynamic from "next/dynamic";
 import { createClient } from '@supabase/supabase-js';
 import { getFieldLabel, SECTION_LABELS, KPI_LABELS } from "../lib/fieldLabels";
+import { TECHNICIAN_TABLE_COLUMNS } from "../lib/technicianTableColumns";
 import { useAuth } from "@/lib/useAuth";
 import PivotTableComponent from "./tables/PivotTable";
 import TechnicianCountTable from "./tables/TechnicianCountTable";
@@ -169,23 +170,7 @@ function calculateWorkExperience(cardRegisterDate: string): string {
 }
 
 /** คอลัมน์ที่ “ตาราง” ต้องแสดง (ซ่อน ctm โดยเอาออก) */
-const COLS = [
-  "national_id",
-  "tech_id",
-  "card_expire_date",
-  "full_name",
-  "doc_tech_card_url",
-  "workgroup_status",
-  "work_type",
-  "provider",
-  "area",
-  "rsm",
-  "ctm",
-  "depot_code",
-  "depot_name",
-  "province",
-  "power_authority",
-] as const;
+const COLS = TECHNICIAN_TABLE_COLUMNS;
 
 /** ความกว้างต่อคอลัมน์ (px) */
 const WIDTHS: Partial<Record<(typeof COLS)[number], number>> = {
@@ -204,6 +189,7 @@ const WIDTHS: Partial<Record<(typeof COLS)[number], number>> = {
   province: 160,
   power_authority: 140,
   card_expire_date: 130,
+  car_license_plate: 140,
 };
 
 /* ---------- Component ---------- */
