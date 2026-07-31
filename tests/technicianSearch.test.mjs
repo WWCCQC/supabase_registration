@@ -16,7 +16,7 @@ test("searches representative values from every technician data group", () => {
     "tech_first_name_en",
     "card_register_date",
     "car_license_plate",
-    "power_card_expire_date",
+    "card_expire_date_alt",
     "doc_driver_license_url",
     "address",
     "course_h",
@@ -25,12 +25,10 @@ test("searches representative values from every technician data group", () => {
   }
 });
 
-test("adds the qualification condition without dropping general matches", () => {
+test("preserves exact qualification-name search behavior", () => {
   const expression = buildTechnicianSearchExpression("iot");
 
-  assert.ok(expression);
-  assert.match(expression, /svc_iot\.eq\.Pass/);
-  assert.match(expression, /full_name\.ilike\./);
+  assert.equal(expression, "svc_iot.eq.Pass");
 });
 
 test("quotes PostgREST reserved characters in a search value", () => {
@@ -44,10 +42,36 @@ test("adds a timestamp range only for a complete ISO date", () => {
   const expression = buildTechnicianSearchExpression("2026-07-31");
 
   assert.ok(expression);
+  for (const column of [
+    "birth_date",
+    "power_card_start_date",
+    "power_card_expire_date",
+  ]) {
+    assert.match(expression, new RegExp(`${column}\\.eq\\.2026-07-31`));
+    assert.doesNotMatch(expression, new RegExp(`${column}\\.ilike\\.`));
+  }
   assert.match(
     expression,
     /and\(updated_at\.gte\.2026-07-31T00:00:00\.000Z,updated_at\.lt\.2026-08-01T00:00:00\.000Z\)/,
   );
+});
+
+test("searches typed date columns by year or month without ILIKE", () => {
+  const yearExpression = buildTechnicianSearchExpression("2026");
+  const monthExpression = buildTechnicianSearchExpression("2026-07");
+
+  assert.ok(yearExpression);
+  assert.ok(monthExpression);
+  assert.match(
+    yearExpression,
+    /and\(birth_date\.gte\.2026-01-01,birth_date\.lt\.2027-01-01\)/,
+  );
+  assert.match(
+    monthExpression,
+    /and\(power_card_expire_date\.gte\.2026-07-01,power_card_expire_date\.lt\.2026-08-01\)/,
+  );
+  assert.doesNotMatch(yearExpression, /birth_date\.ilike\./);
+  assert.doesNotMatch(monthExpression, /power_card_expire_date\.ilike\./);
 });
 
 test("returns null for an empty search", () => {

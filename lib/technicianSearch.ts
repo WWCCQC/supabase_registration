@@ -1,4 +1,4 @@
-export const TECHNICIAN_SEARCHABLE_COLUMNS = [
+export const TECHNICIAN_TEXT_SEARCH_COLUMNS = [
   "area",
   "provider",
   "HRBM",
@@ -31,7 +31,6 @@ export const TECHNICIAN_SEARCHABLE_COLUMNS = [
   "gender",
   "full_name",
   "national_id",
-  "birth_date",
   "age",
   "degree",
   "car_brand_code",
@@ -42,8 +41,6 @@ export const TECHNICIAN_SEARCHABLE_COLUMNS = [
   "car_type",
   "equip_carryboy",
   "power_authority",
-  "power_card_start_date",
-  "power_card_expire_date",
   "sso_number",
   "safety_officer_executive",
   "safety_officer_supervisor",
@@ -86,6 +83,18 @@ export const TECHNICIAN_SEARCHABLE_COLUMNS = [
   "course_g",
   "course_ec",
   "course_h",
+] as const;
+
+export const TECHNICIAN_DATE_SEARCH_COLUMNS = [
+  "birth_date",
+  "power_card_start_date",
+  "power_card_expire_date",
+] as const;
+
+export const TECHNICIAN_SEARCHABLE_COLUMNS = [
+  ...TECHNICIAN_TEXT_SEARCH_COLUMNS,
+  ...TECHNICIAN_DATE_SEARCH_COLUMNS,
+  "updated_at",
 ] as const;
 
 const QUALIFICATION_COLUMNS = [
@@ -133,17 +142,43 @@ function getQualificationColumn(term: string) {
   });
 }
 
-function getUpdatedAtCondition(term: string) {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(term)) return null;
+type DateRange = {
+  start: Date;
+  end: Date;
+  exactDate: string | null;
+};
 
-  const start = new Date(`${term}T00:00:00.000Z`);
-  if (Number.isNaN(start.getTime()) || start.toISOString().slice(0, 10) !== term) {
+function getDateRange(term: string): DateRange | null {
+  const match = term.match(/^(\d{4})(?:-(\d{2})(?:-(\d{2}))?)?$/);
+  if (!match) return null;
+
+  const year = Number(match[1]);
+  const month = match[2] ? Number(match[2]) : 1;
+  const day = match[3] ? Number(match[3]) : 1;
+  const start = new Date(Date.UTC(year, month - 1, day));
+
+  if (
+    start.getUTCFullYear() !== year ||
+    start.getUTCMonth() !== month - 1 ||
+    start.getUTCDate() !== day
+  ) {
     return null;
   }
 
   const end = new Date(start);
-  end.setUTCDate(end.getUTCDate() + 1);
-  return `and(updated_at.gte.${start.toISOString()},updated_at.lt.${end.toISOString()})`;
+  if (match[3]) {
+    end.setUTCDate(end.getUTCDate() + 1);
+  } else if (match[2]) {
+    end.setUTCMonth(end.getUTCMonth() + 1);
+  } else {
+    end.setUTCFullYear(end.getUTCFullYear() + 1);
+  }
+
+  return {
+    start,
+    end,
+    exactDate: match[3] ? term : null,
+  };
 }
 
 export function buildTechnicianSearchExpression(
@@ -152,19 +187,28 @@ export function buildTechnicianSearchExpression(
   const term = rawTerm?.trim();
   if (!term) return null;
 
+  const qualificationColumn = getQualificationColumn(term);
+  if (qualificationColumn) {
+    return `${qualificationColumn}.eq.Pass`;
+  }
+
   const pattern = quotePostgrestValue(term);
-  const conditions = TECHNICIAN_SEARCHABLE_COLUMNS.map(
+  const conditions: string[] = TECHNICIAN_TEXT_SEARCH_COLUMNS.map(
     (column) => `${column}.ilike.${pattern}`,
   );
 
-  const qualificationColumn = getQualificationColumn(term);
-  if (qualificationColumn) {
-    conditions.push(`${qualificationColumn}.eq.Pass`);
-  }
-
-  const updatedAtCondition = getUpdatedAtCondition(term);
-  if (updatedAtCondition) {
-    conditions.push(updatedAtCondition);
+  const dateRange = getDateRange(term);
+  if (dateRange) {
+    for (const column of TECHNICIAN_DATE_SEARCH_COLUMNS) {
+      conditions.push(
+        dateRange.exactDate
+          ? `${column}.eq.${dateRange.exactDate}`
+          : `and(${column}.gte.${dateRange.start.toISOString().slice(0, 10)},${column}.lt.${dateRange.end.toISOString().slice(0, 10)})`,
+      );
+    }
+    conditions.push(
+      `and(updated_at.gte.${dateRange.start.toISOString()},updated_at.lt.${dateRange.end.toISOString()})`,
+    );
   }
 
   return conditions.join(",");
