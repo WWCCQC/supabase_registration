@@ -45,7 +45,7 @@ export async function GET(req: Request) {
       "national_id", "tech_id", "full_name", "gender", "age", "degree",
       "doc_tech_card_url", "phone", "email", "workgroup_status", "work_type",
       "provider", "area", "RBM", "CBM", "depot_code", "depot_name", "province",
-      "power_authority", ...serviceColumns
+      "power_authority", "car_license_plate", ...serviceColumns
     ] as const;
 
     // sort params - map rsm/ctm to RBM/CBM
@@ -148,6 +148,7 @@ export async function GET(req: Request) {
       province: r.province ?? r.ctm_province ?? null,
       power_authority: r.power_authority ?? null,
       card_expire_date: r.card_expire_date ?? null,
+      car_license_plate: r.car_license_plate ?? null,
       // Service columns
       svc_install: r.svc_install ?? null,
       svc_repair: r.svc_repair ?? null,
