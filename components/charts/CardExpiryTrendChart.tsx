@@ -50,6 +50,75 @@ type CardExpiryTrendChartProps = {
   onMonthClick?: (month: number | null) => void;
 };
 
+// ── 3D helpers ─────────────────────────────────────────────────────
+const BAR_DEPTH = 9;
+
+const EXPIRE = { base: "#f97316", light: "#fdba74", dark: "#b8480a", text: "#c2410c" };
+const RENEW = { base: "#22c55e", light: "#86efac", dark: "#15803d", text: "#15803d" };
+
+/**
+ * แท่งกราฟ 3 มิติ (isometric): หน้าหน้า + หน้าบน + ด้านข้าง
+ * วาดหน้าบนเฉพาะแท่งบนสุดของ stack เท่านั้น
+ */
+function Bar3D(props: any) {
+  const {
+    x = 0,
+    y = 0,
+    width = 0,
+    height = 0,
+    payload,
+    tone,
+    showTop,
+    selectedMonth,
+  } = props;
+
+  if (!width || !height || height <= 0) return null;
+
+  const d = Math.min(BAR_DEPTH, width * 0.24);
+  const dim = selectedMonth != null && selectedMonth !== payload?.month;
+  const selected = selectedMonth != null && selectedMonth === payload?.month;
+  const id = tone === "renew" ? "renew" : "expire";
+
+  return (
+    <g opacity={dim ? 0.38 : 1} style={{ transition: "opacity 0.2s" }}>
+      {/* ด้านข้าง (ขวา) */}
+      <polygon
+        points={`${x + width},${y} ${x + width + d},${y - d} ${x + width + d},${
+          y + height - d
+        } ${x + width},${y + height}`}
+        fill={`url(#ce-${id}-side)`}
+      />
+      {/* หน้าบน — เฉพาะแท่งบนสุด */}
+      {showTop && (
+        <polygon
+          points={`${x},${y} ${x + d},${y - d} ${x + width + d},${y - d} ${
+            x + width
+          },${y}`}
+          fill={`url(#ce-${id}-top)`}
+        />
+      )}
+      {/* หน้าหน้า */}
+      <rect
+        x={x}
+        y={y}
+        width={width}
+        height={height}
+        fill={`url(#ce-${id}-front)`}
+        stroke={selected ? "#1f2937" : "rgba(255,255,255,0.35)"}
+        strokeWidth={selected ? 1.6 : 0.6}
+      />
+      {/* ไฮไลต์แสงด้านซ้ายของหน้าหน้า */}
+      <rect
+        x={x}
+        y={y}
+        width={Math.min(3, width * 0.12)}
+        height={height}
+        fill="rgba(255,255,255,0.28)"
+      />
+    </g>
+  );
+}
+
 const DETAIL_HEADERS: { key: keyof DetailRow; label: string }[] = [
   { key: "tech_id", label: "Tech ID" },
   { key: "full_name", label: "ชื่อ-นามสกุล" },
@@ -220,27 +289,110 @@ export default function CardExpiryTrendChart({ selectedMonth, onMonthClick }: Ca
       <div style={{ display: "flex", gap: 16, alignItems: "stretch", flexWrap: "wrap" }}>
       {/* ── Left: chart ───────────────────────────────── */}
       <div style={{ flex: "1 1 520px", minWidth: 0 }}>
-      {/* Legend */}
-      <div style={{ display: "flex", justifyContent: "center", gap: 20, marginBottom: 8, fontSize: 12 }}>
-        <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
-          <span style={{ display: "inline-block", width: 12, height: 12, borderRadius: 2, background: "#f97316" }} />
-          บัตรหมดอายุ
-        </span>
-        <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
-          <span style={{ display: "inline-block", width: 12, height: 12, borderRadius: 2, background: "#22c55e" }} />
-          ลงทะเบียนอบรมช่างต่อบัตร
-        </span>
+      {/* Legend — ชิป 3 มิติ */}
+      <div style={{ display: "flex", justifyContent: "center", gap: 10, marginBottom: 10, fontSize: 12 }}>
+        {[
+          { label: "บัตรหมดอายุ", c: EXPIRE },
+          { label: "ลงทะเบียนอบรมช่างต่อบัตร", c: RENEW },
+        ].map(({ label, c }) => (
+          <span
+            key={label}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 7,
+              padding: "5px 12px",
+              borderRadius: 999,
+              fontWeight: 600,
+              color: "#334155",
+              background: "linear-gradient(180deg, #ffffff 0%, #f1f5f9 100%)",
+              border: "1px solid #e2e8f0",
+              boxShadow:
+                "0 1px 0 rgba(255,255,255,0.9) inset, 0 2px 5px -2px rgba(15,23,42,0.22)",
+            }}
+          >
+            <span
+              style={{
+                display: "inline-block",
+                width: 12,
+                height: 12,
+                borderRadius: 4,
+                background: `linear-gradient(160deg, ${c.light} 0%, ${c.base} 55%, ${c.dark} 100%)`,
+                boxShadow: `0 1px 0 rgba(255,255,255,0.6) inset, 0 2px 4px -1px ${c.base}b0`,
+              }}
+            />
+            {label}
+          </span>
+        ))}
       </div>
 
       {/* Chart */}
       <ResponsiveContainer width="100%" height={350}>
-        <BarChart data={visibleData} margin={{ top: 20, right: 20, left: 0, bottom: 5 }} onClick={handleChartClick} style={{ cursor: "pointer" }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
+        <BarChart data={visibleData} margin={{ top: 30, right: 26, left: 0, bottom: 5 }} onClick={handleChartClick} style={{ cursor: "pointer" }}>
+          {/* ไล่เฉดสำหรับหน้าแต่ละด้านของแท่ง 3 มิติ */}
+          <defs>
+            {[
+              { id: "expire", c: EXPIRE },
+              { id: "renew", c: RENEW },
+            ].map(({ id, c }) => (
+              <React.Fragment key={id}>
+                <linearGradient id={`ce-${id}-front`} x1="0" y1="0" x2="0.35" y2="1">
+                  <stop offset="0%" stopColor={c.light} />
+                  <stop offset="45%" stopColor={c.base} />
+                  <stop offset="100%" stopColor={c.dark} />
+                </linearGradient>
+                <linearGradient id={`ce-${id}-top`} x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stopColor="#ffffff" />
+                  <stop offset="55%" stopColor={c.light} />
+                  <stop offset="100%" stopColor={c.base} />
+                </linearGradient>
+                <linearGradient id={`ce-${id}-side`} x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0%" stopColor={c.dark} />
+                  <stop offset="100%" stopColor={c.base} stopOpacity={0.75} />
+                </linearGradient>
+              </React.Fragment>
+            ))}
+          </defs>
+          <CartesianGrid strokeDasharray="4 6" stroke="#e8ecf2" vertical={false} />
           <XAxis
             dataKey="shortLabel"
-            tick={{ fontSize: 12, fill: "#6b7280" }}
-            axisLine={{ stroke: "#e5e7eb" }}
+            axisLine={{ stroke: "#d8dee8" }}
             tickLine={false}
+            interval={0}
+            height={34}
+            tick={(tickProps: any) => {
+              const { x, y, payload } = tickProps;
+              const item = visibleData[payload?.index ?? -1];
+              const isCurrent = item?.month === currentMonth;
+              return (
+                <g transform={`translate(${x},${y})`}>
+                  {isCurrent && (
+                    <rect
+                      x={-23}
+                      y={5}
+                      width={46}
+                      height={19}
+                      rx={9.5}
+                      fill="#fee2e2"
+                      stroke="#fecaca"
+                      style={{ filter: "drop-shadow(0 2px 3px rgba(185,28,28,0.25))" }}
+                    />
+                  )}
+                  <text
+                    x={0}
+                    y={19}
+                    textAnchor="middle"
+                    style={{
+                      fontSize: 11,
+                      fontWeight: isCurrent ? 800 : 600,
+                      fill: isCurrent ? "#b91c1c" : "#64748b",
+                    }}
+                  >
+                    {payload?.value}
+                  </text>
+                </g>
+              );
+            }}
           />
           <YAxis
             tick={false}
@@ -249,84 +401,199 @@ export default function CardExpiryTrendChart({ selectedMonth, onMonthClick }: Ca
             width={0}
           />
           <Tooltip
+            cursor={{ fill: "rgba(148,163,184,0.14)", radius: 6 }}
             content={({ active, payload }) => {
               if (!active || !payload?.length) return null;
               const data = payload[0].payload as ChartItem;
               const isCurrent = data.month === currentMonth;
               const isPast = data.month < currentMonth;
+              const pct = data.count > 0 ? (data.renewCount / data.count) * 100 : 0;
+              const rowStyle: React.CSSProperties = {
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: 14,
+                marginTop: 6,
+                fontSize: 12,
+                color: "#cbd5e1",
+              };
               return (
                 <div
                   style={{
-                    background: "white",
-                    border: "1px solid #e5e7eb",
-                    borderRadius: 8,
-                    padding: "10px 14px",
-                    boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
-                    fontSize: 13,
+                    background:
+                      "linear-gradient(140deg, rgba(15,23,42,0.97) 0%, rgba(30,41,59,0.97) 100%)",
+                    backdropFilter: "blur(12px)",
+                    border: "1px solid rgba(255,255,255,0.14)",
+                    borderRadius: 14,
+                    padding: "12px 16px",
+                    boxShadow:
+                      "0 1px 0 rgba(255,255,255,0.12) inset, 0 18px 40px -14px rgba(0,0,0,0.75)",
+                    minWidth: 230,
+                    fontFamily: "Inter, 'Noto Sans Thai', sans-serif",
                   }}
                 >
-                  <div style={{ fontWeight: 600, marginBottom: 4, color: "#1f2937" }}>
-                    {data.monthLabel}
-                    {isCurrent && <span style={{ color: "#ef4444", marginLeft: 6 }}>← เดือนนี้</span>}
-                    {isPast && <span style={{ color: "#9ca3af", marginLeft: 6 }}>(ผ่านไปแล้ว)</span>}
+                  <div
+                    style={{
+                      fontWeight: 700,
+                      fontSize: 13,
+                      color: "#f8fafc",
+                      paddingBottom: 7,
+                      borderBottom: "1px solid rgba(255,255,255,0.12)",
+                    }}
+                  >
+                    🪪 {data.monthLabel}
+                    {isCurrent && (
+                      <span style={{ color: "#fca5a5", marginLeft: 6, fontSize: 11 }}>← เดือนนี้</span>
+                    )}
+                    {isPast && (
+                      <span style={{ color: "#94a3b8", marginLeft: 6, fontSize: 11 }}>(ผ่านไปแล้ว)</span>
+                    )}
                   </div>
-                  <div style={{ color: "#6b7280" }}>
-                    บัตรช่างหมดอายุ: <strong style={{ color: isCurrent ? "#ef4444" : "#1f2937" }}>{data.count}</strong> คน
+                  <div style={rowStyle}>
+                    <span>บัตรช่างหมดอายุ</span>
+                    <strong style={{ color: "#ffffff", fontSize: 13 }}>{data.count} คน</strong>
                   </div>
-                  <div style={{ color: "#6b7280", marginTop: 2 }}>
-                    ลงทะเบียนอบรมช่างต่อบัตร: <strong style={{ color: "#16a34a" }}>{data.renewCount}</strong> คน
+                  <div style={rowStyle}>
+                    <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                      <i
+                        style={{
+                          width: 8,
+                          height: 8,
+                          borderRadius: 3,
+                          background: RENEW.base,
+                          display: "inline-block",
+                        }}
+                      />
+                      ต่อบัตรแล้ว
+                    </span>
+                    <strong style={{ color: "#86efac", fontSize: 13 }}>{data.renewCount} คน</strong>
                   </div>
-                  <div style={{ color: "#6b7280", marginTop: 2 }}>
-                    ยังไม่ลงทะเบียน: <strong style={{ color: "#f97316" }}>{data.notRenewedCount}</strong> คน
+                  <div style={rowStyle}>
+                    <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                      <i
+                        style={{
+                          width: 8,
+                          height: 8,
+                          borderRadius: 3,
+                          background: EXPIRE.base,
+                          display: "inline-block",
+                        }}
+                      />
+                      ยังไม่ลงทะเบียน
+                    </span>
+                    <strong style={{ color: "#fdba74", fontSize: 13 }}>
+                      {data.notRenewedCount} คน
+                    </strong>
+                  </div>
+                  <div
+                    style={{
+                      marginTop: 9,
+                      height: 6,
+                      borderRadius: 999,
+                      background: "rgba(255,255,255,0.12)",
+                      overflow: "hidden",
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: `${pct}%`,
+                        height: "100%",
+                        borderRadius: 999,
+                        background: `linear-gradient(90deg, ${RENEW.light}, ${RENEW.base})`,
+                      }}
+                    />
+                  </div>
+                  <div style={{ marginTop: 5, fontSize: 10.5, color: "#94a3b8" }}>
+                    อัตราต่อบัตร {pct.toFixed(1)}% · คลิกเพื่อดูรายชื่อ
                   </div>
                 </div>
               );
             }}
           />
-          <Bar dataKey="renewCount" stackId="a" fill="#22c55e" maxBarSize={50}>
+          <Bar
+            dataKey="renewCount"
+            stackId="a"
+            fill={RENEW.base}
+            maxBarSize={46}
+            shape={(p: any) => (
+              <Bar3D
+                {...p}
+                tone="renew"
+                showTop={(p?.payload?.notRenewedCount ?? 0) === 0}
+                selectedMonth={selectedMonth}
+              />
+            )}
+          >
             <LabelList
               dataKey="renewCount"
               position="center"
-              style={{ fontSize: 10, fontWeight: 700, fill: "#fff" }}
+              style={{
+                fontSize: 10,
+                fontWeight: 800,
+                fill: "#fff",
+                paintOrder: "stroke",
+                stroke: "rgba(6,78,36,0.55)",
+                strokeWidth: 2.4,
+              }}
               formatter={(value: unknown) => (Number(value) > 0 ? String(value) : "")}
             />
-            {visibleData.map((entry) => (
-              <Cell
-                key={`renew-${entry.month}`}
-                fill="#22c55e"
-                opacity={selectedMonth != null && selectedMonth !== entry.month ? 0.35 : 1}
-              />
-            ))}
           </Bar>
-          <Bar dataKey="notRenewedCount" stackId="a" fill="#f97316" maxBarSize={50} radius={[4, 4, 0, 0]}>
+          <Bar
+            dataKey="notRenewedCount"
+            stackId="a"
+            fill={EXPIRE.base}
+            maxBarSize={46}
+            shape={(p: any) => (
+              <Bar3D {...p} tone="expire" showTop selectedMonth={selectedMonth} />
+            )}
+          >
             <LabelList
               dataKey="notRenewedCount"
               position="center"
-              style={{ fontSize: 10, fontWeight: 700, fill: "#fff" }}
+              style={{
+                fontSize: 10,
+                fontWeight: 800,
+                fill: "#fff",
+                paintOrder: "stroke",
+                stroke: "rgba(120,53,15,0.5)",
+                strokeWidth: 2.4,
+              }}
               formatter={(value: unknown) => (Number(value) > 0 ? String(value) : "")}
             />
             <LabelList
               position="top"
-              style={{ fontSize: 11, fontWeight: 600, fill: "#374151" }}
               content={({ x, y, width, index }: any) => {
                 const d = visibleData[index];
                 if (!d || d.count === 0) return null;
+                const cx = Number(x) + Number(width) / 2 + BAR_DEPTH / 2;
+                const cy = Number(y) - BAR_DEPTH - 9;
+                const dim = selectedMonth != null && selectedMonth !== d.month;
+                const label = String(d.count);
+                const w = label.length * 7 + 14;
                 return (
-                  <text x={Number(x) + Number(width) / 2} y={Number(y) - 6} textAnchor="middle" style={{ fontSize: 11, fontWeight: 600, fill: "#374151" }}>
-                    {d.count}
-                  </text>
+                  <g opacity={dim ? 0.4 : 1}>
+                    <rect
+                      x={cx - w / 2}
+                      y={cy - 12}
+                      width={w}
+                      height={18}
+                      rx={9}
+                      fill="#ffffff"
+                      stroke="#e2e8f0"
+                      style={{ filter: "drop-shadow(0 2px 4px rgba(15,23,42,0.18))" }}
+                    />
+                    <text
+                      x={cx}
+                      y={cy + 1}
+                      textAnchor="middle"
+                      style={{ fontSize: 11, fontWeight: 800, fill: "#334155" }}
+                    >
+                      {label}
+                    </text>
+                  </g>
                 );
               }}
             />
-            {visibleData.map((entry) => (
-              <Cell
-                key={`expire-${entry.month}`}
-                fill={getBarColor(entry.month)}
-                opacity={selectedMonth != null && selectedMonth !== entry.month ? 0.35 : 1}
-                stroke={selectedMonth === entry.month ? "#1f2937" : "none"}
-                strokeWidth={selectedMonth === entry.month ? 2 : 0}
-              />
-            ))}
           </Bar>
         </BarChart>
       </ResponsiveContainer>
@@ -337,17 +604,34 @@ export default function CardExpiryTrendChart({ selectedMonth, onMonthClick }: Ca
         style={{
           flex: "1 1 300px",
           minWidth: 280,
-          background: "linear-gradient(160deg, #fff7ed 0%, #ffffff 60%)",
+          background: "linear-gradient(165deg, #fff7ed 0%, #ffffff 55%, #fffbf6 100%)",
           border: "1px solid #fed7aa",
-          borderRadius: 14,
+          borderRadius: 16,
           padding: "16px 18px",
           display: "flex",
           flexDirection: "column",
           gap: 12,
+          boxShadow:
+            "0 1px 0 rgba(255,255,255,0.9) inset, 0 8px 20px -8px rgba(154,52,18,0.28), 0 18px 40px -22px rgba(15,23,42,0.35)",
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <span style={{ fontSize: 18 }}>📊</span>
+        <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
+          <span
+            style={{
+              fontSize: 15,
+              width: 28,
+              height: 28,
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              borderRadius: 9,
+              background: "linear-gradient(160deg, #ffedd5 0%, #fed7aa 100%)",
+              boxShadow:
+                "0 1px 0 rgba(255,255,255,0.9) inset, 0 2px 5px rgba(194,65,12,0.28)",
+            }}
+          >
+            📊
+          </span>
           <span style={{ fontSize: 14, fontWeight: 700, color: "#9a3412" }}>
             สรุปเชิงวิเคราะห์
           </span>
@@ -356,10 +640,12 @@ export default function CardExpiryTrendChart({ selectedMonth, onMonthClick }: Ca
         {/* อัตราต่อบัตรรวม */}
         <div
           style={{
-            background: "#fff",
+            background: "linear-gradient(180deg, #ffffff 0%, #fffaf5 100%)",
             border: "1px solid #fde4cc",
-            borderRadius: 10,
-            padding: "10px 12px",
+            borderRadius: 12,
+            padding: "11px 13px",
+            boxShadow:
+              "0 1px 0 rgba(255,255,255,0.95) inset, 0 4px 10px -6px rgba(154,52,18,0.35)",
           }}
         >
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
@@ -368,13 +654,29 @@ export default function CardExpiryTrendChart({ selectedMonth, onMonthClick }: Ca
               {renewRate.toFixed(1)}%
             </span>
           </div>
-          <div style={{ height: 8, background: "#f1f5f9", borderRadius: 999, overflow: "hidden", marginTop: 6 }}>
+          <div
+            style={{
+              height: 9,
+              background: "linear-gradient(180deg, #dfe4ea 0%, #eef1f5 100%)",
+              boxShadow:
+                "0 1px 2px rgba(15,23,42,0.18) inset, 0 1px 0 rgba(255,255,255,0.85)",
+              borderRadius: 999,
+              overflow: "hidden",
+              marginTop: 7,
+            }}
+          >
             <div
               style={{
                 width: `${Math.min(100, renewRate)}%`,
                 height: "100%",
-                background: renewRate >= 50 ? "#22c55e" : "linear-gradient(90deg, #f97316, #ea580c)",
+                background:
+                  renewRate >= 50
+                    ? `linear-gradient(180deg, ${RENEW.light} 0%, ${RENEW.base} 55%, ${RENEW.dark} 100%)`
+                    : `linear-gradient(180deg, ${EXPIRE.light} 0%, ${EXPIRE.base} 55%, ${EXPIRE.dark} 100%)`,
+                boxShadow:
+                  "0 1px 0 rgba(255,255,255,0.55) inset, 0 -1px 2px rgba(0,0,0,0.25) inset",
                 borderRadius: 999,
+                transition: "width 0.9s cubic-bezier(.22,1,.36,1)",
               }}
             />
           </div>
@@ -431,35 +733,76 @@ export default function CardExpiryTrendChart({ selectedMonth, onMonthClick }: Ca
       {summary && (
         <div
           style={{
-            marginTop: 12,
+            marginTop: 14,
             display: "flex",
             justifyContent: "center",
-            gap: 24,
+            gap: 12,
             flexWrap: "wrap",
           }}
         >
-          <div style={{ textAlign: "center" }}>
-            <div style={{ fontSize: 11, color: "#9ca3af", textTransform: "uppercase", letterSpacing: 0.5 }}>
-              รวมหมดอายุทั้งปี {summary.year}
+          {[
+            {
+              label: `รวมหมดอายุทั้งปี ${summary.year}`,
+              value: summary.totalExpiring,
+              color: "#1f2937",
+              tint: "#f8fafc",
+              border: "#e2e8f0",
+              glow: "15,23,42",
+            },
+            {
+              label: "หมดอายุเดือนนี้",
+              value: chartData.find((d) => d.month === currentMonth)?.count || 0,
+              color: "#dc2626",
+              tint: "#fef2f2",
+              border: "#fecaca",
+              glow: "220,38,38",
+            },
+            {
+              label: "รวมลงทะเบียนอบรมช่างต่อบัตร",
+              value: summary.totalRenew,
+              color: "#15803d",
+              tint: "#f0fdf4",
+              border: "#bbf7d0",
+              glow: "22,163,74",
+            },
+          ].map((tile) => (
+            <div
+              key={tile.label}
+              style={{
+                textAlign: "center",
+                minWidth: 150,
+                padding: "10px 16px",
+                borderRadius: 14,
+                background: `linear-gradient(180deg, #ffffff 0%, ${tile.tint} 100%)`,
+                border: `1px solid ${tile.border}`,
+                boxShadow: `0 1px 0 rgba(255,255,255,0.95) inset, 0 -2px 0 rgba(${tile.glow},0.12) inset, 0 6px 14px -8px rgba(${tile.glow},0.45)`,
+              }}
+            >
+              <div
+                style={{
+                  fontSize: 10.5,
+                  color: "#94a3b8",
+                  textTransform: "uppercase",
+                  letterSpacing: 0.6,
+                  fontWeight: 700,
+                }}
+              >
+                {tile.label}
+              </div>
+              <div
+                style={{
+                  fontSize: 21,
+                  fontWeight: 800,
+                  color: tile.color,
+                  marginTop: 3,
+                  fontVariantNumeric: "tabular-nums",
+                  textShadow: "0 1px 0 rgba(255,255,255,0.8)",
+                }}
+              >
+                {tile.value.toLocaleString()}
+              </div>
             </div>
-            <div style={{ fontSize: 20, fontWeight: 700, color: "#1f2937" }}>{summary.totalExpiring.toLocaleString()}</div>
-          </div>
-          <div style={{ textAlign: "center" }}>
-            <div style={{ fontSize: 11, color: "#9ca3af", textTransform: "uppercase", letterSpacing: 0.5 }}>
-              หมดอายุเดือนนี้
-            </div>
-            <div style={{ fontSize: 20, fontWeight: 700, color: "#ef4444" }}>
-              {(chartData.find((d) => d.month === currentMonth)?.count || 0).toLocaleString()}
-            </div>
-          </div>
-          <div style={{ textAlign: "center" }}>
-            <div style={{ fontSize: 11, color: "#9ca3af", textTransform: "uppercase", letterSpacing: 0.5 }}>
-              รวมลงทะเบียนอบรมช่างต่อบัตร
-            </div>
-            <div style={{ fontSize: 20, fontWeight: 700, color: "#16a34a" }}>
-              {summary.totalRenew.toLocaleString()}
-            </div>
-          </div>
+          ))}
         </div>
       )}
 
