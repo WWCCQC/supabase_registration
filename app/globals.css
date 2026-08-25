@@ -53,7 +53,10 @@ html, body {
 
 .sidebar {
   width: 240px;
-  background: linear-gradient(180deg, #12239E 0%, #0d1a6e 100%);
+  /* พาเนล 3 มิติ: แสงเรืองมุมบนซ้าย + ไล่เฉดน้ำเงินลึกลงล่าง */
+  background:
+    radial-gradient(130% 55% at 0% 0%, rgba(120,145,255,0.38) 0%, rgba(120,145,255,0) 58%),
+    linear-gradient(180deg, #1b30bf 0%, #12239E 42%, #0a1256 100%);
   color: #ffffff;
   display: flex;
   flex-direction: column;
@@ -64,11 +67,254 @@ html, body {
   z-index: 100;
   transition: width 0.25s ease;
   overflow: hidden;
+  box-shadow:
+    inset -1px 0 0 rgba(255,255,255,0.10),
+    inset 1px 0 0 rgba(255,255,255,0.06),
+    8px 0 28px -10px rgba(4,8,40,0.75);
 }
 
 .sidebar-collapsed {
   width: 64px;
 }
+
+/* ===== Sidebar 3D — header / brand ===== */
+.sidebar-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 14px 14px;
+  min-height: 64px;
+  border-bottom: 1px solid rgba(255,255,255,0.10);
+  box-shadow: 0 1px 0 rgba(255,255,255,0.07);
+}
+.sidebar-collapsed .sidebar-head {
+  justify-content: center;
+  padding: 14px 8px;
+}
+
+.sidebar-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.sidebar-logo {
+  width: 36px;
+  height: 36px;
+  flex: 0 0 36px;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  background: linear-gradient(160deg, #8ea0ff 0%, #3a53e8 55%, #2035c4 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.55),
+    inset 0 -2px 0 rgba(6,12,60,0.45),
+    0 6px 14px -4px rgba(46,70,225,0.85);
+}
+
+.sidebar-title {
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: 0.2px;
+  background: linear-gradient(180deg, #ffffff 0%, #c7d2fe 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  white-space: nowrap;
+}
+
+.sidebar-subtitle {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(199,210,254,0.62);
+  white-space: nowrap;
+}
+
+.sidebar-toggle {
+  width: 30px;
+  height: 30px;
+  flex: 0 0 30px;
+  border: 1px solid rgba(255,255,255,0.16);
+  border-radius: 10px;
+  color: #e0e7ff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(180deg, rgba(255,255,255,0.20) 0%, rgba(255,255,255,0.06) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.30),
+    0 3px 8px -3px rgba(4,8,40,0.8);
+  transition: transform 0.16s ease, box-shadow 0.16s ease, background 0.16s ease;
+}
+.sidebar-toggle:hover {
+  color: #ffffff;
+  background: linear-gradient(180deg, rgba(255,255,255,0.30) 0%, rgba(255,255,255,0.12) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.42),
+    0 6px 14px -4px rgba(4,8,40,0.9);
+  transform: translateY(-1px);
+}
+.sidebar-toggle:active {
+  transform: translateY(1px);
+  box-shadow: inset 0 2px 6px rgba(4,8,40,0.7);
+}
+
+/* ===== Sidebar 3D — navigation ===== */
+.sidebar-nav {
+  padding: 10px 10px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,0.22) transparent;
+}
+.sidebar-nav::-webkit-scrollbar { width: 6px; }
+.sidebar-nav::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.18);
+  border-radius: 999px;
+}
+.sidebar-collapsed .sidebar-nav { padding: 10px 8px 16px; }
+
+.snav-label {
+  margin: 10px 6px 2px;
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(199,210,254,0.5);
+  white-space: nowrap;
+}
+
+.snav-divider {
+  height: 1px;
+  margin: 10px 6px 4px;
+  background: linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.22), rgba(255,255,255,0.02));
+  box-shadow: 0 1px 0 rgba(4,8,40,0.5);
+}
+
+.snav-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 9px 12px;
+  border-radius: 12px;
+  text-decoration: none;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: #c7d2fe;
+  background: linear-gradient(180deg, rgba(255,255,255,0.055) 0%, rgba(255,255,255,0.015) 100%);
+  border: 1px solid rgba(255,255,255,0.07);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.08),
+    0 2px 4px -2px rgba(4,8,40,0.6);
+  white-space: nowrap;
+  overflow: hidden;
+  transition:
+    transform 0.18s cubic-bezier(.22,1,.36,1),
+    box-shadow 0.18s ease,
+    background 0.18s ease,
+    color 0.18s ease;
+}
+.snav-item:hover {
+  color: #ffffff;
+  background: linear-gradient(180deg, rgba(255,255,255,0.16) 0%, rgba(255,255,255,0.06) 100%);
+  border-color: rgba(255,255,255,0.18);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.22),
+    0 8px 18px -8px rgba(0,0,0,0.75);
+  transform: translateY(-1px);
+}
+.snav-item:active {
+  transform: translateY(1px);
+  box-shadow: inset 0 2px 6px rgba(4,8,40,0.65);
+}
+
+.snav-item.is-active {
+  color: #ffffff;
+  font-weight: 700;
+  background: linear-gradient(180deg, #5b78ff 0%, #2b46e8 52%, #1b2fc0 100%);
+  border-color: rgba(255,255,255,0.30);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.45),
+    inset 0 -2px 0 rgba(6,12,60,0.45),
+    0 10px 20px -10px rgba(70,104,255,0.95),
+    0 2px 4px rgba(4,8,40,0.55);
+}
+.snav-item.is-active::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 58%;
+  border-radius: 0 3px 3px 0;
+  background: linear-gradient(180deg, #e0e7ff, #a5b4fc);
+  box-shadow: 0 0 10px rgba(165,180,252,0.95);
+}
+
+.snav-icon {
+  width: 28px;
+  height: 28px;
+  flex: 0 0 28px;
+  border-radius: 9px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: inherit;
+  background: linear-gradient(160deg, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0.04) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.28),
+    0 2px 4px -1px rgba(4,8,40,0.6);
+  transition: background 0.18s ease, box-shadow 0.18s ease, color 0.18s ease;
+}
+.snav-icon svg {
+  width: 16px;
+  height: 16px;
+  fill: currentColor;
+}
+.snav-item.is-active .snav-icon {
+  color: #1e34c8;
+  background: linear-gradient(160deg, #ffffff 0%, #dbe3ff 100%);
+  box-shadow:
+    inset 0 -1px 0 rgba(30,52,200,0.28),
+    0 3px 7px -2px rgba(4,8,40,0.7);
+}
+
+.snav-text {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.snav-ext {
+  width: 11px;
+  height: 11px;
+  opacity: 0.55;
+  flex-shrink: 0;
+}
+
+/* โหมดย่อ — เหลือแต่ไอคอนกลางแท่ง */
+.sidebar-collapsed .snav-item {
+  justify-content: center;
+  gap: 0;
+  padding: 9px 0;
+}
+.sidebar-collapsed .snav-item.is-active::before { display: none; }
 
 .sidebar-main {
   flex: 1;
