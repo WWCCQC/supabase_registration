@@ -7,7 +7,7 @@ export default function LiveClock() {
   React.useEffect(() => {
     // Set initial time
     setCurrentTime(new Date());
-    
+
     // Update time every second
     const interval = setInterval(() => {
       setCurrentTime(new Date());
@@ -19,43 +19,33 @@ export default function LiveClock() {
   // Return placeholder during SSR or until client hydration
   if (!currentTime) {
     return (
-      <div style={{ 
-        fontSize: 16, 
-        color: 'white',
-        fontWeight: 500,
-        padding: '8px 16px',
-        background: 'rgba(255, 255, 255, 0.1)',
-        borderRadius: '8px',
-        border: '1px solid rgba(255, 255, 255, 0.2)',
-        minWidth: '200px',
-        textAlign: 'center'
-      }}>
+      <div
+        className="topbar-chip"
+        style={{ fontSize: 14, minWidth: 210, justifyContent: "center" }}
+      >
         กำลังโหลด...
       </div>
     );
   }
 
   return (
-    <div style={{ 
-      fontSize: 16, 
-      color: 'white',
-      fontWeight: 500,
-      padding: '8px 16px',
-      background: 'rgba(255, 255, 255, 0.1)',
-      borderRadius: '8px',
-      border: '1px solid rgba(255, 255, 255, 0.2)',
-      minWidth: '200px',
-      textAlign: 'center'
-    }}>
-      {currentTime.toLocaleDateString('en-GB', { 
-        day: '2-digit', 
-        month: '2-digit', 
-        year: 'numeric' 
-      })} {currentTime.toLocaleTimeString('th-TH', { 
-        hour: '2-digit', 
-        minute: '2-digit',
-        second: '2-digit'
-      })}
+    <div
+      className="topbar-chip"
+      style={{ fontSize: 14, minWidth: 210, justifyContent: "center" }}
+    >
+      <span style={{ opacity: 0.8 }}>⏱️</span>
+      <strong>
+        {currentTime.toLocaleDateString("en-GB", {
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric",
+        })}{" "}
+        {currentTime.toLocaleTimeString("th-TH", {
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+        })}
+      </strong>
     </div>
   );
 }

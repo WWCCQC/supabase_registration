@@ -361,71 +361,231 @@ html, body {
   max-width: 100% !important;
 }
 
-/* ===== Nav Tabs ===== */
+/* ===== Nav Tabs (3 มิติ — เข้าชุดกับ TopBar / Sidebar) ===== */
 .navtabs {
   display: flex;
-  background-color: #ffffff;
-  border-bottom: 2px solid #e5e7eb;
-  padding: 0 16px;
-  gap: 0;
+  align-items: center;
+  background: linear-gradient(180deg, #ffffff 0%, #eef2f9 100%);
+  border-bottom: 1px solid #dbe2ec;
+  padding: 9px 16px;
+  gap: 8px;
   flex-shrink: 0;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.9),
+    inset 0 -1px 0 rgba(15,23,42,0.05),
+    0 4px 10px -8px rgba(15,23,42,0.35);
 }
 
 .navtab-item {
-  padding: 12px 24px;
-  font-size: 14px;
-  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 20px;
+  font-size: 13px;
+  font-weight: 700;
   font-family: inherit;
-  color: #6b7280;
-  background: none;
-  border: none;
-  border-bottom: 3px solid transparent;
+  letter-spacing: 0.06em;
+  color: #475569;
   cursor: pointer;
-  transition: all 0.2s ease;
   white-space: nowrap;
-  letter-spacing: 0.5px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #ffffff 0%, #eff3f9 100%);
+  border: 1px solid #dde4ee;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.95),
+    0 1px 2px rgba(15,23,42,0.10),
+    0 4px 10px -6px rgba(15,23,42,0.25);
+  transition:
+    transform 0.16s cubic-bezier(.22,1,.36,1),
+    box-shadow 0.16s ease,
+    background 0.16s ease,
+    color 0.16s ease;
 }
 
 .navtab-item:hover {
   color: #12239E;
-  background-color: #f0f4ff;
+  background: linear-gradient(180deg, #ffffff 0%, #e6edff 100%);
+  border-color: #c3d0f5;
+  transform: translateY(-1px);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.95),
+    0 8px 16px -8px rgba(18,35,158,0.55);
 }
 
-.navtab-active {
-  color: #12239E;
-  border-bottom-color: #12239E;
+.navtab-item:active {
+  transform: translateY(1px);
+  box-shadow: inset 0 2px 5px rgba(15,23,42,0.22);
+}
+
+.navtab-active,
+.navtab-active:hover {
+  color: #ffffff;
+  background: linear-gradient(180deg, #5b78ff 0%, #2b46e8 52%, #1b2fc0 100%);
+  border-color: rgba(255,255,255,0.35);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.45),
+    inset 0 -2px 0 rgba(6,12,60,0.40),
+    0 8px 18px -8px rgba(43,70,232,0.9),
+    0 2px 4px rgba(15,23,42,0.20);
+}
+
+.navtab-ext {
+  width: 11px;
+  height: 11px;
+  opacity: 0.5;
+  flex-shrink: 0;
 }
 
 @media (max-width: 480px) {
+  .navtabs { padding: 8px 12px; gap: 6px; }
   .navtab-item {
-    padding: 10px 16px;
-    font-size: 13px;
+    padding: 7px 14px;
+    font-size: 12px;
   }
 }
 
-/* ===== Top Bar ===== */
+/* ===== Top Bar (3 มิติ — เข้าชุดกับ Sidebar) ===== */
 .topbar {
-  height: 52px;
-  background-color: #12239E;
+  position: relative;
+  height: 56px;
+  /* ไล่เฉดแนวตั้ง + แสงเรืองมุมซ้าย ให้ดูเป็นแท่งนูน */
+  background:
+    radial-gradient(90% 180% at 0% 0%, rgba(120,145,255,0.35) 0%, rgba(120,145,255,0) 60%),
+    linear-gradient(180deg, #1b30bf 0%, #12239E 55%, #0d1a72 100%);
   display: flex;
   align-items: center;
   justify-content: flex-end;
   padding: 0 20px;
-  gap: 16px;
+  gap: 14px;
   flex-shrink: 0;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  z-index: 20;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.20),
+    inset 0 -1px 0 rgba(4,8,40,0.55),
+    0 10px 24px -12px rgba(4,8,40,0.85),
+    0 2px 6px -2px rgba(4,8,40,0.5);
+}
+
+/* เส้นไฮไลต์บาง ๆ ใต้ TopBar ให้เห็นความหนา */
+.topbar::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(120,145,255,0), rgba(146,168,255,0.55), rgba(120,145,255,0));
+}
+
+/* ชิปข้อมูลใน TopBar (เวลาอัปเดต / นาฬิกา) */
+.topbar-chip {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 12px;
+  border-radius: 11px;
+  font-size: 12px;
+  color: #dbe3ff;
+  white-space: nowrap;
+  background: linear-gradient(180deg, rgba(255,255,255,0.16) 0%, rgba(255,255,255,0.05) 100%);
+  border: 1px solid rgba(255,255,255,0.16);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.28),
+    0 3px 8px -3px rgba(4,8,40,0.75);
+}
+.topbar-chip strong {
+  color: #ffffff;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.topbar-user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 5px 6px 5px 12px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.14) 0%, rgba(255,255,255,0.04) 100%);
+  border: 1px solid rgba(255,255,255,0.14);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.26),
+    0 3px 8px -3px rgba(4,8,40,0.7);
+}
+.topbar-user-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: #ffffff;
+  line-height: 1.2;
+}
+.topbar-user-role {
+  font-size: 10.5px;
+  color: rgba(199,210,254,0.85);
+  line-height: 1.2;
+}
+.topbar-avatar {
+  width: 30px;
+  height: 30px;
+  flex: 0 0 30px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 800;
+  color: #1e34c8;
+  background: linear-gradient(160deg, #ffffff 0%, #c7d2fe 100%);
+  box-shadow:
+    inset 0 -2px 0 rgba(30,52,200,0.28),
+    0 3px 7px -2px rgba(4,8,40,0.75);
+}
+
+.topbar-logout {
+  padding: 6px 13px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #ffffff;
+  cursor: pointer;
+  white-space: nowrap;
+  background: linear-gradient(180deg, #f87171 0%, #dc2626 55%, #b91c1c 100%);
+  border: 1px solid rgba(255,255,255,0.22);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.40),
+    inset 0 -2px 0 rgba(90,10,10,0.40),
+    0 5px 12px -5px rgba(220,38,38,0.95);
+  transition: transform 0.16s ease, box-shadow 0.16s ease, filter 0.16s ease;
+}
+.topbar-logout:hover {
+  filter: brightness(1.06);
+  transform: translateY(-1px);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.45),
+    0 8px 18px -6px rgba(220,38,38,1);
+}
+.topbar-logout:active {
+  transform: translateY(1px);
+  box-shadow: inset 0 2px 6px rgba(90,10,10,0.65);
 }
 
 .topbar-mobile-toggle {
   display: none;
-  background: transparent;
-  border: none;
+  background: linear-gradient(180deg, rgba(255,255,255,0.20) 0%, rgba(255,255,255,0.06) 100%);
+  border: 1px solid rgba(255,255,255,0.16);
+  border-radius: 10px;
   color: #ffffff;
   cursor: pointer;
-  padding: 4px;
+  padding: 5px;
   margin-right: auto;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.30),
+    0 3px 8px -3px rgba(4,8,40,0.8);
+  transition: transform 0.16s ease, box-shadow 0.16s ease;
+}
+.topbar-mobile-toggle:active {
+  transform: translateY(1px);
+  box-shadow: inset 0 2px 6px rgba(4,8,40,0.7);
 }
 
 @media (max-width: 768px) {

@@ -40,21 +40,11 @@ const TopBar: React.FC<TopBarProps> = ({ onToggleSidebar, sidebarCollapsed }) =>
   return (
     <div className="topbar">
       {/* Data last updated — left side */}
-      <div style={{
-        marginRight: 'auto',
-        display: 'flex',
-        alignItems: 'center',
-        gap: '6px',
-        color: '#c7d2fe',
-        fontSize: '12px',
-        whiteSpace: 'nowrap',
-      }}>
-        <span style={{ opacity: 0.75 }}>🕐</span>
+      <div className="topbar-chip" style={{ marginRight: 'auto' }}>
+        <span style={{ opacity: 0.8 }}>🕐</span>
         <span>
           Data updated as{' '}
-          <span style={{ color: '#ffffff', fontWeight: 600 }}>
-            {lastUpdated ? formatEnDateTime(lastUpdated) : '—'}
-          </span>
+          <strong>{lastUpdated ? formatEnDateTime(lastUpdated) : '—'}</strong>
         </span>
       </div>
 
@@ -77,40 +67,27 @@ const TopBar: React.FC<TopBarProps> = ({ onToggleSidebar, sidebarCollapsed }) =>
       <LiveClock />
 
       {/* User info */}
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: '12px',
-        color: '#ffffff',
-        fontSize: '13px',
-      }}>
-        <div style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'flex-end',
-          lineHeight: '1.3',
-        }}>
-          <span style={{ fontWeight: '600', fontSize: '13px' }}>{user?.full_name}</span>
-          <span style={{ fontSize: '11px', color: '#c7d2fe' }}>
-            ({user?.role === 'admin' ? 'ผู้ดูแลระบบ' : user?.role === 'manager' ? 'ผู้จัดการ' : 'ผู้ใช้'})
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <div className="topbar-user">
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'flex-end',
+          }}>
+            <span className="topbar-user-name">{user?.full_name}</span>
+            <span className="topbar-user-role">
+              {user?.role === 'admin' ? 'ผู้ดูแลระบบ' : user?.role === 'manager' ? 'ผู้จัดการ' : 'ผู้ใช้'}
+            </span>
+          </div>
+          <span className="topbar-avatar">
+            {(user?.full_name ?? '?').trim().charAt(0).toUpperCase() || '?'}
           </span>
         </div>
-        <button 
+        <button
+          className="topbar-logout"
           onClick={async () => {
             await fetch('/api/auth/logout', { method: 'POST' });
             window.location.href = '/login';
-          }}
-          style={{
-            padding: '5px 12px',
-            backgroundColor: 'rgba(220, 38, 38, 0.85)',
-            color: 'white',
-            border: '1px solid rgba(220, 38, 38, 0.3)',
-            borderRadius: '6px',
-            cursor: 'pointer',
-            fontSize: '11px',
-            fontWeight: '500',
-            transition: 'all 0.2s',
-            whiteSpace: 'nowrap',
           }}
         >
           ออกจากระบบ
