@@ -11,6 +11,7 @@ export async function GET(req: Request) {
   try {
     const url = new URL(req.url);
     const powerAuthority = url.searchParams.get("power_authority") || "";
+    const rbm = (url.searchParams.get("rbm") || "").trim();
 
     if (!powerAuthority) {
       return NextResponse.json({ error: "power_authority is required" }, { status: 400 });
@@ -24,10 +25,15 @@ export async function GET(req: Request) {
     let hasMore = true;
 
     while (hasMore) {
-      const { data, error } = await supabase
+      let query = supabase
         .from("technicians")
         .select(COLS)
-        .eq("power_authority", powerAuthority)
+        .eq("power_authority", powerAuthority);
+
+      // filter รายพื้นที่ (optional) — ใช้เมื่อคลิกตัวเลขในตาราง RBM Status by Power
+      if (rbm) query = query.eq("RBM", rbm);
+
+      const { data, error } = await query
         .order("RBM", { ascending: true, nullsFirst: false })
         .order("provider", { ascending: true, nullsFirst: false })
         .range(from, from + PAGE_SIZE - 1);

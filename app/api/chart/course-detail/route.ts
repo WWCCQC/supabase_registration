@@ -16,6 +16,7 @@ export async function GET(req: Request) {
     const url = new URL(req.url);
     const course = url.searchParams.get("course") ?? ""; // "g" | "ec"
     const status = url.searchParams.get("status") ?? ""; // "pass" | "notpass"
+    const rbm = (url.searchParams.get("rbm") ?? "").trim(); // filter รายพื้นที่ (optional)
 
     if (!course || !status) {
       return NextResponse.json({ error: "course and status are required" }, { status: 400 });
@@ -35,6 +36,8 @@ export async function GET(req: Request) {
         .order("RBM", { ascending: true, nullsFirst: false })
         .order("provider", { ascending: true, nullsFirst: false })
         .range(from, from + PAGE_SIZE - 1);
+
+      if (rbm) query = query.eq("RBM", rbm);
 
       if (status === "pass") {
         query = query.ilike(col, "pass");

@@ -41,15 +41,15 @@ const CtmProviderChart = dynamic(() => import("./charts/CtmProviderChart"), {
   )
 });
 
-// Dynamic import สำหรับ RsmPowerAuthorityChart
-const RsmPowerAuthorityChart = dynamic(() => import("./charts/RsmPowerAuthorityChart"), {
-  ssr: false,
-  loading: () => (
-    <div style={{ padding: 24, textAlign: "center" }}>
-      <div style={{ fontSize: 16, color: "#666" }}>กำลังโหลด Power Authority Chart...</div>
-    </div>
-  )
-});
+// Dynamic import สำหรับ RsmPowerAuthorityChart — ซ่อนไว้ก่อน (ไม่โหลด bundle)
+// const RsmPowerAuthorityChart = dynamic(() => import("./charts/RsmPowerAuthorityChart"), {
+//   ssr: false,
+//   loading: () => (
+//     <div style={{ padding: 24, textAlign: "center" }}>
+//       <div style={{ fontSize: 16, color: "#666" }}>กำลังโหลด Power Authority Chart...</div>
+//     </div>
+//   )
+// });
 
 // Dynamic import สำหรับ PivotTable
 const PivotTable = dynamic(() => import("./tables/PivotTable"), {
@@ -87,6 +87,36 @@ const TrainingRadarChart = dynamic(() => import("./charts/TrainingRadarChart"), 
   loading: () => (
     <div style={{ padding: 24, textAlign: "center" }}>
       <div style={{ fontSize: 16, color: "#666" }}>กำลังโหลด Training Radar Chart...</div>
+    </div>
+  )
+});
+
+// Dynamic import สำหรับ PowerAuthorityGaugeSection
+const PowerAuthorityGaugeSection = dynamic(() => import("./charts/PowerAuthorityGaugeSection"), {
+  ssr: false,
+  loading: () => (
+    <div style={{ padding: 24, textAlign: "center" }}>
+      <div style={{ fontSize: 16, color: "#666" }}>กำลังโหลด Power Authority Gauge...</div>
+    </div>
+  )
+});
+
+// Dynamic import สำหรับ CourseGGaugeSection
+const CourseGGaugeSection = dynamic(() => import("./charts/CourseGGaugeSection"), {
+  ssr: false,
+  loading: () => (
+    <div style={{ padding: 24, textAlign: "center" }}>
+      <div style={{ fontSize: 16, color: "#666" }}>กำลังโหลด Course G Gauge...</div>
+    </div>
+  )
+});
+
+// Dynamic import สำหรับ CourseECGaugeSection
+const CourseECGaugeSection = dynamic(() => import("./charts/CourseECGaugeSection"), {
+  ssr: false,
+  loading: () => (
+    <div style={{ padding: 24, textAlign: "center" }}>
+      <div style={{ fontSize: 16, color: "#666" }}>กำลังโหลด Course EC Gauge...</div>
     </div>
   )
 });
@@ -1613,7 +1643,29 @@ export default function TechBrowser() {
           </div>
         </div>
 
-        {/* RSM Power Authority Status Chart - เต็มบรรทัด */}
+        {/* Gauge + RBM Table — แสดงเหนือ RBM Status by Power Authority */}
+        <PowerAuthorityGaugeSection
+          chartData={chartData}
+          chartSummary={chartSummary}
+          chartLoading={chartLoading}
+        />
+
+        {/* Course G Gauge + RBM Table — แสดงเหนือ RBM Status by Power Authority, Course G, Course EC */}
+        <CourseGGaugeSection
+          chartData={chartData}
+          chartSummary={chartSummary}
+          chartLoading={chartLoading}
+        />
+
+        {/* Course EC Gauge + RBM Table */}
+        <CourseECGaugeSection
+          chartData={chartData}
+          chartSummary={chartSummary}
+          chartLoading={chartLoading}
+        />
+
+        {/* RSM Power Authority Status Chart — ซ่อนไว้ก่อน (ไม่โหลด/ไม่แสดง)
+            เปิดใช้อีกครั้งได้โดยเอาคอมเมนต์ออก และเปิด dynamic import ด้านบน
         <div style={{ marginTop: "20px" }}>
           <div style={{
             background: "white",
@@ -1641,6 +1693,7 @@ export default function TechBrowser() {
             />
           </div>
         </div>
+        */}
 
         {/* แถวที่ 3: Card Expiry Trend (เต็มแถว) */}
         <div className="chart-flex-row" style={{ marginTop: "20px" }}>
