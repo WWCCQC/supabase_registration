@@ -1699,20 +1699,34 @@ export default function TechBrowser() {
         <div className="chart-flex-row" style={{ marginTop: "20px" }}>
           {/* Card Expiry Trend Chart */}
           <div className="chart-flex-item" style={{
-            background: "white",
-            borderRadius: 12,
+            background: "linear-gradient(180deg, #ffffff 0%, #f8fafc 100%)",
+            borderRadius: 16,
             padding: 20,
-            boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
-            border: "1px solid #e5e7eb",
+            border: "1px solid rgba(226,232,240,0.9)",
+            boxShadow: "0 1px 0 rgba(255,255,255,0.9) inset, 0 1px 2px rgba(15,23,42,0.06), 0 8px 20px -6px rgba(15,23,42,0.14), 0 18px 40px -18px rgba(15,23,42,0.20)",
             position: "relative"
           }}>
             <h3 style={{
-              margin: "0 0 12px 0",
-              fontSize: 18,
-              fontWeight: 600,
-              color: "#1f2937"
+              margin: "0 0 14px 0",
+              fontSize: 16,
+              fontWeight: 700,
+              color: "#1f2937",
+              display: "flex",
+              alignItems: "center",
+              gap: 8
             }}>
-              📋 แนวโน้มบัตรช่างใกล้หมดอายุ ({new Date().getFullYear()})
+              <span style={{
+                fontSize: 15,
+                width: 28,
+                height: 28,
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                borderRadius: 9,
+                background: "linear-gradient(160deg, #ffedd5 0%, #fed7aa 100%)",
+                boxShadow: "0 1px 0 rgba(255,255,255,0.9) inset, 0 2px 5px rgba(194,65,12,0.28)"
+              }}>🪪</span>
+              แนวโน้มบัตรช่างใกล้หมดอายุ ({new Date().getFullYear()})
             </h3>
             <CardExpiryTrendChart
               selectedMonth={selectedExpiryMonth}

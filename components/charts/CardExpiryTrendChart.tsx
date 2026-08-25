@@ -10,9 +10,6 @@ import {
   Tooltip,
   ResponsiveContainer,
   LabelList,
-  Cell,
-  ReferenceLine,
-  Legend,
 } from "recharts";
 
 type ChartItem = {
@@ -248,10 +245,6 @@ export default function CardExpiryTrendChart({ selectedMonth, onMonthClick }: Ca
 
   // แสดงเฉพาะเดือนที่มีบัตรหมดอายุ (ซ่อนเดือนที่ไม่มีข้อมูล)
   const visibleData = chartData.filter((d) => d.count > 0);
-
-  function getBarColor(_month: number): string {
-    return "#f97316";
-  }
 
   function handleChartClick(data: any) {
     if (!data) return;
