@@ -5,6 +5,9 @@ import React from 'react';
 const TABS = ['TOL', 'SOLAR', 'ROLLOUT', 'CORPORATE'] as const;
 export type NavTab = typeof TABS[number];
 
+// SOLAR, ROLLOUT, CORPORATE hidden from navbar per request
+const VISIBLE_TABS: readonly NavTab[] = ['TOL'];
+
 interface NavTabsProps {
   activeTab: NavTab;
   onTabChange: (tab: NavTab) => void;
@@ -13,7 +16,7 @@ interface NavTabsProps {
 const NavTabs: React.FC<NavTabsProps> = ({ activeTab, onTabChange }) => {
   return (
     <div className="navtabs">
-      {TABS.map((tab) => (
+      {VISIBLE_TABS.map((tab) => (
         <button
           key={tab}
           className={`navtab-item ${activeTab === tab ? 'navtab-active' : ''}`}

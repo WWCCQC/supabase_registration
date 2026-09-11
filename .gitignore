@@ -3,3 +3,4 @@
 .env.local
 .worktrees/
 .claude/
+.DS_Store
