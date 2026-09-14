@@ -148,6 +148,19 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle }) => {
                 </span>
               )}
             </a>
+
+            <Link
+              href="/manual"
+              className={itemClass(false)}
+              title="คู่มือ"
+            >
+              <span className="snav-icon">
+                <svg viewBox="0 0 24 24">
+                  <path d="M18 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 18H6V4h5v8l2.5-1.5L16 12V4h2v16z" />
+                </svg>
+              </span>
+              {!collapsed && <span className="snav-text">คู่มือ</span>}
+            </Link>
           </>
         )}
       </nav>
