@@ -113,6 +113,7 @@ export default function AllconnectCompareDashboard() {
     ...region,
     withWorkLabel: region.withWork > 0 ? formatRegionBarLabel(region.withWork, region.total) : '',
     withoutWorkLabel: region.withoutWork > 0 ? formatRegionBarLabel(region.withoutWork, region.total) : '',
+    totalLabel: region.total > 0 ? number(region.total) : '',
   })) ?? [];
   const selectedTitle = rbm || 'ทุกพื้นที่ RBM';
   const staleSearch = query !== search.trim();
@@ -167,9 +168,9 @@ export default function AllconnectCompareDashboard() {
               {chartRegions.length ? <div className={styles.barCanvas}>
                 <div className={styles.barChartInner} style={{ height: Math.max(310, chartRegions.length * 38) }}>
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={chartRegions} layout="vertical" margin={{ top: 8, right: 20, bottom: 8, left: 0 }} barSize={22}>
+                  <BarChart data={chartRegions} layout="vertical" margin={{ top: 8, right: 48, bottom: 8, left: 0 }} barSize={22}>
                     <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e8ebef" />
-                    <XAxis type="number" allowDecimals={false} tick={{ fontSize: 11, fill: '#6b7280' }} axisLine={false} tickLine={false} />
+                    <XAxis type="number" allowDecimals={false} tick={false} axisLine={false} tickLine={false} />
                     <YAxis type="category" dataKey="rbm" width={115} tick={{ fontSize: 11, fill: '#374151' }} axisLine={false} tickLine={false} />
                     <Tooltip formatter={value => `${number(Number(value))} ราย`} contentStyle={{ borderRadius: 6, fontSize: 13 }} />
                     <Bar dataKey="withWork" name="พบงาน" stackId="technicians" fill={COLORS.withWork} isAnimationActive={false}>
@@ -178,7 +179,9 @@ export default function AllconnectCompareDashboard() {
                     <Bar dataKey="withoutWork" name="ไม่พบงาน" stackId="technicians" fill={COLORS.withoutWork} isAnimationActive={false}>
                       <LabelList dataKey="withoutWorkLabel" position="center" fill="#fff" fontSize={10} fontWeight={600} />
                     </Bar>
-                    <Bar dataKey="pending" name="รอเปรียบเทียบ" stackId="technicians" fill={COLORS.pending} isAnimationActive={false} />
+                    <Bar dataKey="pending" name="รอเปรียบเทียบ" stackId="technicians" fill={COLORS.pending} isAnimationActive={false}>
+                      <LabelList dataKey="totalLabel" position="right" fill="#374151" fontSize={11} fontWeight={700} />
+                    </Bar>
                   </BarChart>
                 </ResponsiveContainer>
                 </div>
