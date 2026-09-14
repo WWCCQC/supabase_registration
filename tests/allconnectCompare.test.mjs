@@ -1,6 +1,13 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { parseCompareParams } from '../lib/allconnectCompare.ts';
+import { formatRegionBarLabel, parseCompareParams } from '../lib/allconnectCompare.ts';
+
+test('region bar labels show technician count and share of the RBM total', () => {
+  assert.equal(formatRegionBarLabel(127, 408), '127 (31.1%)');
+  assert.equal(formatRegionBarLabel(281, 408), '281 (68.9%)');
+  assert.equal(formatRegionBarLabel(0, 408), '0 (0.0%)');
+  assert.equal(formatRegionBarLabel(0, 0), '0 (-)');
+});
 
 test('comparison defaults to the first page of technicians without work', () => {
   assert.deepEqual(parseCompareParams(new URLSearchParams()), {

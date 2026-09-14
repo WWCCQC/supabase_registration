@@ -43,6 +43,11 @@ export interface CompareDashboard {
   pagination: { total: number; page: number; pageSize: number; totalPages: number };
 }
 
+export function formatRegionBarLabel(value: number, total: number) {
+  const share = total > 0 ? `${(value * 100 / total).toFixed(1)}%` : '-';
+  return `${value.toLocaleString('en-US')} (${share})`;
+}
+
 export function parseCompareParams(params: URLSearchParams) {
   const status = params.get('status') ?? 'without_work';
   if (!WORK_STATUSES.includes(status as WorkStatusFilter)) {

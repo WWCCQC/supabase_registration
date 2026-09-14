@@ -43,7 +43,8 @@
 .legend { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 8px; color: #637080; font-size: 12px; }
 .legend span { display: inline-flex; align-items: center; gap: 6px; }
 .legend i, .breakdown i { display: inline-block; width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
-.barCanvas { width: 100%; min-width: 0; }
+.barCanvas { width: 100%; min-width: 0; overflow-x: auto; }
+.barChartInner { width: 100%; min-width: 720px; }
 .donutCanvas { height: 225px; width: 100%; position: relative; }
 .donutLabel { position: absolute; inset: 0; pointer-events: none; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 2px; }
 .donutLabel strong { font-size: 28px; font-weight: 650; }

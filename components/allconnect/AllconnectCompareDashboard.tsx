@@ -2,11 +2,11 @@
 
 import { useEffect, useState } from 'react';
 import {
-  Bar, BarChart, CartesianGrid, Cell, Pie, PieChart,
+  Bar, BarChart, CartesianGrid, Cell, LabelList, Pie, PieChart,
   ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from 'recharts';
 import { AlertCircle, ChevronLeft, ChevronRight, Download, RefreshCw, Search, X } from 'lucide-react';
-import type { CompareDashboard, CompareRow, WorkStatus, WorkStatusFilter } from '@/lib/allconnectCompare';
+import { formatRegionBarLabel, type CompareDashboard, type CompareRow, type WorkStatus, type WorkStatusFilter } from '@/lib/allconnectCompare';
 import styles from './AllconnectCompareDashboard.module.css';
 
 const number = (value: number) => value.toLocaleString('th-TH');
@@ -109,6 +109,11 @@ export default function AllconnectCompareDashboard() {
     { name: 'ไม่พบงาน', value: summary.withoutWork, color: COLORS.withoutWork },
     { name: 'รอเปรียบเทียบ', value: summary.pending, color: COLORS.pending },
   ].filter(item => item.value > 0) : [];
+  const chartRegions = data?.regions.map(region => ({
+    ...region,
+    withWorkLabel: region.withWork > 0 ? formatRegionBarLabel(region.withWork, region.total) : '',
+    withoutWorkLabel: region.withoutWork > 0 ? formatRegionBarLabel(region.withoutWork, region.total) : '',
+  })) ?? [];
   const selectedTitle = rbm || 'ทุกพื้นที่ RBM';
   const staleSearch = query !== search.trim();
   const busy = loading || staleSearch;
@@ -159,18 +164,24 @@ export default function AllconnectCompareDashboard() {
             <section className={styles.regionChart}>
               <div className={styles.sectionHeading}><h2>ช่างที่พบงาน / ไม่พบงาน รายพื้นที่</h2><span>ทุกพื้นที่ RBM · ราย</span></div>
               <div className={styles.legend}><span><i style={{ background: COLORS.withWork }} />พบงาน</span><span><i style={{ background: COLORS.withoutWork }} />ไม่พบงาน</span>{data.regions.some(region => region.pending > 0) && <span><i style={{ background: COLORS.pending }} />รอเปรียบเทียบ</span>}</div>
-              {data.regions.length ? <div className={styles.barCanvas} style={{ height: Math.max(310, data.regions.length * 38) }}>
+              {chartRegions.length ? <div className={styles.barCanvas}>
+                <div className={styles.barChartInner} style={{ height: Math.max(310, chartRegions.length * 38) }}>
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={data.regions} layout="vertical" margin={{ top: 8, right: 20, bottom: 8, left: 0 }} barSize={18}>
+                  <BarChart data={chartRegions} layout="vertical" margin={{ top: 8, right: 20, bottom: 8, left: 0 }} barSize={22}>
                     <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e8ebef" />
                     <XAxis type="number" allowDecimals={false} tick={{ fontSize: 11, fill: '#6b7280' }} axisLine={false} tickLine={false} />
                     <YAxis type="category" dataKey="rbm" width={115} tick={{ fontSize: 11, fill: '#374151' }} axisLine={false} tickLine={false} />
                     <Tooltip formatter={value => `${number(Number(value))} ราย`} contentStyle={{ borderRadius: 6, fontSize: 13 }} />
-                    <Bar dataKey="withWork" name="พบงาน" stackId="technicians" fill={COLORS.withWork} isAnimationActive={false} />
-                    <Bar dataKey="withoutWork" name="ไม่พบงาน" stackId="technicians" fill={COLORS.withoutWork} isAnimationActive={false} />
+                    <Bar dataKey="withWork" name="พบงาน" stackId="technicians" fill={COLORS.withWork} isAnimationActive={false}>
+                      <LabelList dataKey="withWorkLabel" position="center" fill="#fff" fontSize={10} fontWeight={600} />
+                    </Bar>
+                    <Bar dataKey="withoutWork" name="ไม่พบงาน" stackId="technicians" fill={COLORS.withoutWork} isAnimationActive={false}>
+                      <LabelList dataKey="withoutWorkLabel" position="center" fill="#fff" fontSize={10} fontWeight={600} />
+                    </Bar>
                     <Bar dataKey="pending" name="รอเปรียบเทียบ" stackId="technicians" fill={COLORS.pending} isAnimationActive={false} />
                   </BarChart>
                 </ResponsiveContainer>
+                </div>
               </div> : <div className={styles.empty}>ไม่พบข้อมูลช่าง</div>}
             </section>
             <section className={styles.coverageChart}>
