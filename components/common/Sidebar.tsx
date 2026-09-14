@@ -4,6 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/useAuth';
+import { ChartNoAxesCombined } from 'lucide-react';
 
 interface SidebarProps {
   collapsed: boolean;
@@ -101,6 +102,21 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle }) => {
                 </svg>
               </span>
               {!collapsed && <span className="snav-text">Tech-Transaction</span>}
+            </Link>
+
+            <Link
+              href="/allconnect-compare-tech"
+              className={itemClass(pathname === '/allconnect-compare-tech')}
+              title="All connect compare tech"
+            >
+              <span className="snav-icon">
+                <ChartNoAxesCombined style={{ fill: 'none' }} aria-hidden="true" />
+              </span>
+              {!collapsed && (
+                <span className="snav-text" style={{ whiteSpace: 'normal', overflow: 'visible', lineHeight: 1.4 }}>
+                  All connect compare tech
+                </span>
+              )}
             </Link>
 
             {collapsed ? (
