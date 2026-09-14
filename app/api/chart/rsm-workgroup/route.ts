@@ -2,6 +2,8 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0; // Disable caching completely
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
+import { isPowerAuthorityEligible } from "@/lib/powerAuthorityEligibility";
+import { isCourseECEligible } from "@/lib/courseECEligibility";
 
 export async function GET(request: Request) {
   try {
@@ -25,7 +27,7 @@ export async function GET(request: Request) {
     while (hasMore) {
       let query = supabase
         .from("technicians")
-        .select("RBM, HRBM, provider, power_authority, course_g, course_ec, national_id")
+        .select("RBM, HRBM, provider, power_authority, course_g, course_ec, national_id, area, workgroup_status, province, depot_code")
         .order("tech_id", { ascending: true })
         .range(from, from + pageSize - 1);
       
@@ -68,7 +70,7 @@ export async function GET(request: Request) {
     }
 
     // จัดกลุ่มข้อมูลตาม RSM และ power_authority using UNIQUE national_id counting
-    const groupedData: Record<string, { Yes: Set<string>; No: Set<string>; CourseG: Set<string>; CourseEC: Set<string>; Total: Set<string>; HRBM: string }> = {};
+    const groupedData: Record<string, { Yes: Set<string>; No: Set<string>; CourseG: Set<string>; CourseEC: Set<string>; CourseECTotal: Set<string>; Total: Set<string>; HRBM: string }> = {};
     
     // ตัวแปรสำหรับนับข้อมูลทั้งหมด using unique national_id
     const allNationalIds = new Set<string>();
@@ -86,6 +88,7 @@ export async function GET(request: Request) {
     allData.forEach((row: any) => {
       const rsm = String(row.RBM || "").trim();
       const powerAuthority = String(row.power_authority || "").trim();
+      const powerEligible = isPowerAuthorityEligible(row);
       const nationalId = String(row.national_id || "").trim();
       
       // Skip records without national_id
@@ -106,9 +109,9 @@ export async function GET(request: Request) {
         
         // นับ Yes/No จากข้อมูลทั้งหมด (ไม่ว่าจะมี RSM หรือไม่)
         const cleanAuthority = powerAuthority.toLowerCase();
-        if (cleanAuthority === "yes" || cleanAuthority === "y") {
+        if (powerEligible && (cleanAuthority === "yes" || cleanAuthority === "y")) {
           allYesNationalIds.add(nationalId);
-        } else if (cleanAuthority === "no" || cleanAuthority === "n") {
+        } else if (powerEligible && (cleanAuthority === "no" || cleanAuthority === "n")) {
           allNoNationalIds.add(nationalId);
         }
       } else {
@@ -120,7 +123,7 @@ export async function GET(request: Request) {
       // สร้าง groupedData entry สำหรับ RSM นี้ (ถ้ายังไม่มี)
       if (!groupedData[rsm]) {
         const hrbm = String(row.HRBM || "").trim();
-        groupedData[rsm] = { Yes: new Set<string>(), No: new Set<string>(), CourseG: new Set<string>(), CourseEC: new Set<string>(), Total: new Set<string>(), HRBM: hrbm };
+        groupedData[rsm] = { Yes: new Set<string>(), No: new Set<string>(), CourseG: new Set<string>(), CourseEC: new Set<string>(), CourseECTotal: new Set<string>(), Total: new Set<string>(), HRBM: hrbm };
       }
 
       // นับ total ทุก national_id ต่อ RBM (สำหรับคำนวณ % ยังไม่อบรม)
@@ -133,7 +136,10 @@ export async function GET(request: Request) {
         groupedData[rsm].CourseG.add(nationalId);
         allCourseGNationalIds.add(nationalId);
       }
-      if (cec === "pass") {
+      if (isCourseECEligible(row)) {
+        groupedData[rsm].CourseECTotal.add(nationalId);
+      }
+      if (isCourseECEligible(row) && cec === "pass") {
         groupedData[rsm].CourseEC.add(nationalId);
         allCourseECNationalIds.add(nationalId);
       }
@@ -144,9 +150,9 @@ export async function GET(request: Request) {
       // แปลง power_authority เป็น Yes/No (เข้มงวด: ต้องตรงกับ Yes/No เท่านั้น)
       const cleanAuthority = powerAuthority.toLowerCase();
 
-      if (cleanAuthority === "yes" || cleanAuthority === "y") {
+      if (powerEligible && (cleanAuthority === "yes" || cleanAuthority === "y")) {
         groupedData[rsm].Yes.add(nationalId);
-      } else if (cleanAuthority === "no" || cleanAuthority === "n") {
+      } else if (powerEligible && (cleanAuthority === "no" || cleanAuthority === "n")) {
         groupedData[rsm].No.add(nationalId);
       }
       // หมายเหตุ: ถ้า power_authority ไม่ใช่ Yes/No จะไม่ถูกนับ (เข้มงวด)
@@ -163,7 +169,7 @@ export async function GET(request: Request) {
         CourseG: counts.CourseG.size,
         CourseGNo: counts.Total.size - counts.CourseG.size,
         CourseEC: counts.CourseEC.size,
-        CourseECNo: counts.Total.size - counts.CourseEC.size,
+        CourseECNo: counts.CourseECTotal.size - counts.CourseEC.size,
         totalRbm: counts.Total.size
       }))
       .sort((a, b) => {

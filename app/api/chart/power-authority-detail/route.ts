@@ -3,8 +3,9 @@ export const revalidate = 0;
 
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
+import { isPowerAuthorityEligible } from "@/lib/powerAuthorityEligibility";
 
-const COLS = "HRBM,RBM,CBM,provider,depot_code,depot_name,tech_id,full_name,power_authority";
+const COLS = "HRBM,RBM,CBM,provider,depot_code,depot_name,tech_id,full_name,power_authority,area,workgroup_status,province";
 const PAGE_SIZE = 1000;
 
 export async function GET(req: Request) {
@@ -43,7 +44,7 @@ export async function GET(req: Request) {
       }
 
       if (data && data.length > 0) {
-        allRows.push(...data);
+        allRows.push(...data.filter(isPowerAuthorityEligible));
         from += PAGE_SIZE;
         hasMore = data.length === PAGE_SIZE;
       } else {

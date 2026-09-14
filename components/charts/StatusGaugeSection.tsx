@@ -125,6 +125,7 @@ export type StatusGaugeSectionProps = {
   totalPass?: number;
   totalFail?: number;
   loading?: boolean;
+  gaugeNote?: React.ReactNode;
 
   title: string;
   titleIcon: string;
@@ -650,6 +651,7 @@ export default function StatusGaugeSection({
   totalPass: totalPassProp,
   totalFail: totalFailProp,
   loading,
+  gaugeNote,
   title,
   titleIcon,
   titleIconBg,
@@ -945,6 +947,22 @@ export default function StatusGaugeSection({
             </div>
           </>
         )}
+        {gaugeNote ? (
+          <div
+            style={{
+              width: "100%",
+              marginTop: 22,
+              paddingTop: 14,
+              borderTop: "1px solid #e2e8f0",
+              color: "#475569",
+              fontSize: 12,
+              lineHeight: 1.8,
+              overflowWrap: "anywhere",
+            }}
+          >
+            {gaugeNote}
+          </div>
+        ) : null}
       </div>
 
       {/* ── RIGHT: RBM Status Table ── */}

@@ -3,6 +3,7 @@ export const revalidate = 0;
 
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
+import { isCourseECEligible } from "@/lib/courseECEligibility";
 
 // course=g  → filter by course_g = "Pass"  / course_g != "Pass"
 // course=ec → filter by course_ec = "Pass" / course_ec != "Pass"
@@ -50,7 +51,7 @@ export async function GET(req: Request) {
       if (error) return NextResponse.json({ error: error.message }, { status: 400 });
 
       if (data && data.length > 0) {
-        allRows.push(...data);
+        allRows.push(...(col === "course_ec" ? data.filter(isCourseECEligible) : data));
         from += PAGE_SIZE;
         hasMore = data.length === PAGE_SIZE;
       } else {

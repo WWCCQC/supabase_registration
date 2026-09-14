@@ -46,6 +46,16 @@ export default function PowerAuthorityGaugeSection({
       totalFail={chartSummary?.totalNo}
       loading={chartLoading}
       title="Status by Power Authority"
+      gaugeNote={
+        <>
+          <strong style={{ color: "#334155" }}>หมายเหตุ : คำนวนจาก</strong>
+          <ul style={{ margin: "6px 0 0", paddingLeft: 18 }}>
+            <li>UPC: เฉพาะ “หัวหน้า”</li>
+            <li>BMA: “หัวหน้า” และ “ลูกน้อง” ยกเว้นปทุมธานี เฉพาะ “หัวหน้า”</li>
+            <li>ตัด depot_code WW-BM-0093(บจก.พัฒน์ภูมิ) และ WW-BM-0029(หจก.พันธวัฒน์)</li>
+          </ul>
+        </>
+      }
       titleIcon="⚡"
       titleIconBg="linear-gradient(160deg, #fef9c3 0%, #fde68a 100%)"
       titleIconShadow="0 1px 0 rgba(255,255,255,0.8) inset, 0 2px 5px rgba(180,131,10,0.28)"

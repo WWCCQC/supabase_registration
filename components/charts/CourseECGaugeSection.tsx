@@ -51,6 +51,14 @@ export default function CourseECGaugeSection({
       totalFail={totalFail}
       loading={chartLoading}
       title="Status by Course EC"
+      gaugeNote={
+        <>
+          <strong style={{ color: "#334155" }}>หมายเหตุ : คำนวนจาก</strong>
+          <ul style={{ margin: "6px 0 0", paddingLeft: 18 }}>
+            <li>ตัด depot_code WW-BM-0093(บจก.พัฒน์ภูมิ) และ WW-BM-0029(หจก.พันธวัฒน์)</li>
+          </ul>
+        </>
+      }
       titleIcon="📙"
       titleIconBg="linear-gradient(160deg, #dcfce7 0%, #bbf7d0 100%)"
       titleIconShadow="0 1px 0 rgba(255,255,255,0.85) inset, 0 2px 5px rgba(22,163,74,0.28)"
