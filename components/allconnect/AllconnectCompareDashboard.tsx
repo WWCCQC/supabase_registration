@@ -198,13 +198,12 @@ export default function AllconnectCompareDashboard() {
             <div className={styles.sectionHeading}><h2>สรุปพื้นที่ RBM</h2><span>{number(data.regions.length)} พื้นที่</span></div>
             <div className={styles.tableScroll} tabIndex={0} role="region" aria-label="ตารางสรุปพื้นที่ RBM">
               <table className={`${styles.table} ${styles.regionalTable}`}>
-                <thead><tr><th scope="col">พื้นที่ RBM</th><th scope="col">ช่างทั้งหมด</th><th scope="col">พบงาน</th><th scope="col">ไม่พบงาน</th><th scope="col">รอเปรียบเทียบ</th><th scope="col">สัดส่วนที่พบงาน</th><th scope="col">รายการงาน</th></tr></thead>
+                <thead><tr><th scope="col">พื้นที่ RBM</th><th scope="col">ช่างทั้งหมด</th><th scope="col">พบงาน</th><th scope="col">ไม่พบงาน</th><th scope="col">สัดส่วนที่พบงาน</th><th scope="col">จำนวนงาน</th></tr></thead>
                 <tbody>{data.regions.map(region => <tr key={region.rbm} className={rbm === region.rbm ? styles.selectedRow : undefined}>
                   <th scope="row"><button className={styles.regionLink} type="button" onClick={() => selectRegion(region.rbm)} aria-pressed={rbm === region.rbm}>{region.rbm}</button></th>
                   <td>{number(region.total)}</td>
                   <td><button className={styles.greenLink} type="button" onClick={() => selectRegion(region.rbm, 'with_work')} aria-label={`ช่างที่พบงาน ${region.rbm}`}>{number(region.withWork)}</button></td>
                   <td><button className={styles.redLink} type="button" onClick={() => selectRegion(region.rbm, 'without_work')} aria-label={`ช่างที่ไม่พบงาน ${region.rbm}`}>{number(region.withoutWork)}</button></td>
-                  <td>{number(region.pending)}</td>
                   <td><div className={styles.coverageCell}><meter min={0} max={100} value={region.coverage ?? 0} aria-label={`สัดส่วนที่พบงาน ${region.rbm}`} /><span>{percent(region.coverage)}</span></div></td>
                   <td>{number(region.jobCount)}</td>
                 </tr>)}</tbody>
