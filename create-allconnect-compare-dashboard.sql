@@ -1,6 +1,6 @@
 -- Read-only dashboard over the current allconnect import snapshot.
 -- IDs remain text: trim boundary whitespace, never cast to a number.
-CREATE FUNCTION public.allconnect_compare_dashboard(
+CREATE OR REPLACE FUNCTION public.allconnect_compare_dashboard(
   p_rbm text DEFAULT NULL,
   p_status text DEFAULT 'without_work',
   p_search text DEFAULT '',
@@ -27,6 +27,7 @@ WITH source_meta AS (
 ), source_tech AS (
   SELECT nullif(btrim(t.tech_id), '') AS tech_id,
          coalesce(nullif(btrim(t.full_name), ''), nullif(btrim(concat_ws(' ', t.tech_first_name, t.tech_last_name)), ''), '-') AS full_name,
+         coalesce(nullif(btrim(t.card_register_date), ''), '') AS card_register_date,
          coalesce(nullif(btrim(t."RBM"), ''), 'ไม่ระบุพื้นที่') AS rbm,
          coalesce(t."CBM", '') AS cbm,
          coalesce(t.provider, '') AS provider,
@@ -39,6 +40,10 @@ WITH source_meta AS (
            ORDER BY t.updated_at DESC NULLS LAST, t.national_id, t."RBM", t.full_name
          ) AS id_rank
   FROM public.technicians t
+  WHERE btrim(t.provider_group_type) IN ('Install', 'Install-Repair')
+    AND btrim(t.workgroup_status) = 'หัวหน้า'
+    AND btrim(t.provider) IN ('WW-Provider', 'เถ้าแก่เทค')
+    AND btrim(t.job_accept_type) IN ('Multi Skill', 'Install')
 ), tech AS (
   -- Repeated IDs count once, using the most recently updated registration.
   SELECT * FROM source_tech WHERE tech_id IS NULL OR id_rank = 1
@@ -66,6 +71,19 @@ WITH source_meta AS (
          count(*) FILTER (WHERE work_status = 'pending') AS pending,
          coalesce(sum(job_count), 0) AS job_count
   FROM compared GROUP BY rbm
+), depots AS (
+  SELECT rbm,
+         coalesce(nullif(btrim(depot_code), ''), '-') AS depot_code,
+         coalesce(nullif(btrim(depot_name), ''), '-') AS depot_name,
+         coalesce(jsonb_agg(jsonb_build_object('techId', tech_id, 'fullName', full_name)
+           ORDER BY full_name, tech_id) FILTER (WHERE work_status = 'without_work'), '[]'::jsonb) AS without_work_technicians,
+         count(*) AS total,
+         count(*) FILTER (WHERE work_status = 'with_work') AS with_work,
+         count(*) FILTER (WHERE work_status = 'without_work') AS without_work,
+         count(*) FILTER (WHERE work_status = 'pending') AS pending,
+         coalesce(sum(job_count), 0) AS job_count
+  FROM compared
+  GROUP BY rbm, coalesce(nullif(btrim(depot_code), ''), '-'), coalesce(nullif(btrim(depot_name), ''), '-')
 ), filtered AS (
   SELECT * FROM scoped
   WHERE (coalesce(p_status, 'all') = 'all' OR work_status = p_status)
@@ -103,8 +121,18 @@ SELECT jsonb_build_object(
     'pending', r.pending, 'jobCount', r.job_count,
     'coverage', round(100.0 * r.with_work / nullif(r.with_work + r.without_work, 0), 1)
   ) ORDER BY substring(r.rbm FROM '^R([0-9]+)')::integer NULLS LAST, r.rbm) FROM regions r), '[]'::jsonb),
+  'depots', coalesce((SELECT jsonb_agg(jsonb_build_object(
+    'rbm', d.rbm, 'depotCode', d.depot_code, 'depotName', d.depot_name,
+    'withoutWorkTechnicians', d.without_work_technicians,
+    'total', d.total, 'withWork', d.with_work, 'withoutWork', d.without_work,
+    'pending', d.pending, 'jobCount', d.job_count,
+    'coverage', round(100.0 * d.with_work / nullif(d.with_work + d.without_work, 0), 1)
+  ) ORDER BY d.without_work DESC, d.total DESC,
+             substring(d.rbm FROM '^R([0-9]+)')::integer NULLS LAST,
+             d.rbm, d.depot_code, d.depot_name) FROM depots d), '[]'::jsonb),
   'rows', coalesce((SELECT jsonb_agg(jsonb_build_object(
-    'techId', p.tech_id, 'fullName', p.full_name, 'rbm', p.rbm, 'cbm', p.cbm,
+    'techId', p.tech_id, 'fullName', p.full_name, 'cardRegisterDate', p.card_register_date,
+    'rbm', p.rbm, 'cbm', p.cbm,
     'provider', p.provider, 'depotCode', p.depot_code, 'depotName', p.depot_name,
     'province', p.province, 'technicianStatus', p.technician_status,
     'jobCount', p.job_count, 'workStatus', p.work_status

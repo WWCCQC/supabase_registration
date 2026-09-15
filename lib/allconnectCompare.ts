@@ -13,9 +13,17 @@ export interface CompareSummary {
 
 export interface CompareRegion extends CompareSummary { rbm: string }
 
+export interface CompareDepot extends CompareSummary {
+  rbm: string;
+  depotCode: string;
+  depotName: string;
+  withoutWorkTechnicians: { techId: string; fullName: string }[];
+}
+
 export interface CompareRow {
   techId: string | null;
   fullName: string;
+  cardRegisterDate: string;
   rbm: string;
   cbm: string;
   provider: string;
@@ -39,6 +47,7 @@ export interface CompareDashboard {
   };
   summary: CompareSummary;
   regions: CompareRegion[];
+  depots: CompareDepot[];
   rows: CompareRow[];
   pagination: { total: number; page: number; pageSize: number; totalPages: number };
 }
@@ -46,6 +55,24 @@ export interface CompareDashboard {
 export function formatRegionBarLabel(value: number, total: number) {
   const share = total > 0 ? `${(value * 100 / total).toFixed(1)}%` : '-';
   return `${value.toLocaleString('en-US')} (${share})`;
+}
+
+export function calculateWorkingDays(cardRegisterDate: string, currentDate = new Date()) {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(cardRegisterDate.trim());
+  if (!match || Number.isNaN(currentDate.getTime())) return null;
+
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const start = Date.UTC(year, month - 1, day);
+  const parsed = new Date(start);
+  if (parsed.getUTCFullYear() !== year || parsed.getUTCMonth() !== month - 1 || parsed.getUTCDate() !== day) {
+    return null;
+  }
+
+  const today = Date.UTC(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate());
+  const days = Math.floor((today - start) / 86_400_000);
+  return days >= 0 ? days : null;
 }
 
 export function parseCompareParams(params: URLSearchParams) {

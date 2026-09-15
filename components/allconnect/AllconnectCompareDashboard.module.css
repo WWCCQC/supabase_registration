@@ -21,7 +21,9 @@
 .dashboard select { height: 38px; border: 1px solid #d5dce5; border-radius: 5px; padding: 0 30px 0 10px; background: #fff; color: #273444; min-width: 160px; max-width: 100%; }
 .scopeCaption { color: #687382; padding-bottom: 8px; font-size: 13px; }
 .scopeCaption strong { color: #374151; font-variant-numeric: tabular-nums; }
-.loadStatus { margin-left: auto; color: #657386; font-size: 12px; padding-bottom: 8px; }
+.loadStatus { margin-left: auto; color: #657386; font-size: 12px; padding-bottom: 3px; line-height: 1.7; }
+.scopeNotes { margin: 0; padding-left: 18px; }
+.scopeNotes li::marker { color: #159574; }
 .textButton { display: inline-flex; gap: 5px; align-items: center; color: #445264; padding: 8px 0; background: none; border: 0; }
 .metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; padding: 22px 0; }
 .metric { padding: 16px 18px; border: 1px solid #e0e5eb; border-top: 3px solid #74839b; border-radius: 6px; min-width: 0; display: flex; flex-direction: column; gap: 5px; }
@@ -64,6 +66,24 @@
 .table tbody .selectedRow { background: #edf6f7; }
 .regionalTable { min-width: 760px; }
 .regionalTable th:not(:first-child), .regionalTable td { text-align: right; font-variant-numeric: tabular-nums; }
+.depotTableScroll { max-height: 480px; }
+.depotTable { min-width: 1040px; }
+.depotTable thead th { position: sticky; top: 0; z-index: 1; }
+.depotTable th:nth-child(n + 4), .depotTable td:nth-child(n + 4) { text-align: right; font-variant-numeric: tabular-nums; }
+.depotTable th:nth-child(3) { min-width: 240px; }
+.depotRow { cursor: pointer; }
+.depotToggle { display: inline-flex; align-items: center; gap: 6px; border: 0; background: none; padding: 4px 0; color: inherit; font: inherit; }
+.depotToggle svg { flex-shrink: 0; }
+.depotToggle:focus-visible { outline: 2px solid #256b89; outline-offset: 3px; }
+.depotTable .depotDetails > td { padding: 12px 24px 18px 48px; background: #f0f7f6; }
+.depotTechnicians { width: 100%; max-width: 680px; border-collapse: collapse; border-left: 3px solid #bcd7cf; }
+.depotTable .depotTechnicians th { position: static; background: #e3eeeb; }
+.depotTable .depotTechnicians th, .depotTable .depotTechnicians td { padding: 8px 14px; text-align: left; white-space: normal; overflow-wrap: anywhere; }
+.depotTechnicians th:first-child { width: 160px; }
+.depotTable .depotTechnicians tbody td { color: #c34855; }
+.depotEmpty { padding: 8px 0; color: #657386; }
+.greenValue { color: #128166; font-weight: 600; }
+.redValue { color: #c34855; font-weight: 600; }
 .regionLink, .greenLink, .redLink { border: 0; background: none; padding: 3px 0; font-weight: 600 !important; font-variant-numeric: tabular-nums; }
 .regionLink { color: #276d8c; text-align: left; white-space: nowrap; }
 .greenLink { color: #128166; }
@@ -84,9 +104,11 @@
 .searchInput button { display: flex; align-items: center; border: 0; background: none; padding: 3px; color: #637080; }
 .exportButton { margin-left: auto; display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 38px; padding: 8px 14px; border: 1px solid #bcd7cf; border-radius: 5px; background: #f0f8f5; color: #21795f; }
 .exportButton:hover:not(:disabled) { background: #e5f2ec; }
-.detailTable { min-width: 1500px; }
+.detailTable { min-width: 1740px; }
 .detailTable td { max-width: 260px; overflow-wrap: anywhere; }
-.detailTable th:nth-child(2), .detailTable th:nth-child(4), .detailTable th:nth-child(7) { min-width: 180px; }
+.detailTable th:nth-child(2), .detailTable th:nth-child(6), .detailTable th:nth-child(9) { min-width: 180px; }
+.detailTable th:nth-child(3) { min-width: 120px; }
+.detailTable th:nth-child(4) { min-width: 90px; }
 .detailTable th:last-child, .detailTable td:last-child { text-align: right; }
 .idCell { font-variant-numeric: tabular-nums; white-space: nowrap; color: #256b89; font-weight: 600; }
 .badge { display: inline-block; padding: 3px 8px; border-radius: 4px; white-space: nowrap; font-size: 11px; }
@@ -116,4 +138,4 @@
   .layout :global(.topbar-user-name) { max-width: 130px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 }
 @media (max-width: 1150px) { .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); } .charts { grid-template-columns: minmax(0, 1fr); } .coverageChart { border-left: 0; border-top: 1px solid #e3e7ed; padding: 22px 0 0; } .donutCanvas { max-width: 300px; margin: auto; } }
-@media (max-width: 600px) { .dashboard { padding: 18px 12px; } .header h1 { font-size: 22px; } .header p { font-size: 12px; } .scopeBar { gap: 12px; } .scopeBar > label { width: 100%; } .loadStatus { margin-left: 0; } .metrics { gap: 10px; } .metric { padding: 12px; } .metric > strong { font-size: 28px; } .metric > span { font-size: 12px; } .sectionHeading h2 { font-size: 15px; } .searchLabel { max-width: none; flex-basis: 100%; min-width: 0; } .tableControls > label:not(.searchLabel) { flex: 1; } .tableControls select { min-width: 130px; } .exportButton { font-size: 12px; padding: 8px 10px; } .pagination { gap: 12px; } .pagination > label { margin-left: 0; } .pageButtons { width: 100%; justify-content: center; } }
+@media (max-width: 600px) { .dashboard { padding: 18px 12px; } .header h1 { font-size: 22px; } .header p { font-size: 12px; } .scopeBar { gap: 12px; } .scopeBar > label { width: 100%; } .loadStatus { margin-left: 0; width: 100%; } .metrics { gap: 10px; } .metric { padding: 12px; } .metric > strong { font-size: 28px; } .metric > span { font-size: 12px; } .sectionHeading h2 { font-size: 15px; } .searchLabel { max-width: none; flex-basis: 100%; min-width: 0; } .tableControls > label:not(.searchLabel) { flex: 1; } .tableControls select { min-width: 130px; } .exportButton { font-size: 12px; padding: 8px 10px; } .pagination { gap: 12px; } .pagination > label { margin-left: 0; } .pageButtons { width: 100%; justify-content: center; } }

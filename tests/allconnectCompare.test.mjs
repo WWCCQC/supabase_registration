@@ -1,6 +1,20 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { formatRegionBarLabel, parseCompareParams } from '../lib/allconnectCompare.ts';
+import { calculateWorkingDays, formatRegionBarLabel, parseCompareParams } from '../lib/allconnectCompare.ts';
+
+test('working days subtract a valid register date from the current calendar date', () => {
+  const today = new Date(2026, 8, 15, 12, 0, 0);
+  assert.equal(calculateWorkingDays('2026-09-01', today), 14);
+  assert.equal(calculateWorkingDays('2026-09-15', today), 0);
+  assert.equal(calculateWorkingDays('2024-02-29', new Date(2024, 2, 1, 12, 0, 0)), 1);
+});
+
+test('working days are blank when the register date cannot be subtracted', () => {
+  const today = new Date(2026, 8, 15, 12, 0, 0);
+  for (const value of ['', 'not-a-date', '2026-02-30', '2026-09-16']) {
+    assert.equal(calculateWorkingDays(value, today), null);
+  }
+});
 
 test('region bar labels show technician count and share of the RBM total', () => {
   assert.equal(formatRegionBarLabel(127, 408), '127 (31.1%)');

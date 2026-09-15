@@ -1,12 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Fragment, useEffect, useState } from 'react';
 import {
   Bar, BarChart, CartesianGrid, Cell, LabelList, Pie, PieChart,
   ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from 'recharts';
-import { AlertCircle, ChevronLeft, ChevronRight, Download, RefreshCw, Search, X } from 'lucide-react';
-import { formatRegionBarLabel, type CompareDashboard, type CompareRow, type WorkStatus, type WorkStatusFilter } from '@/lib/allconnectCompare';
+import { AlertCircle, ChevronDown, ChevronLeft, ChevronRight, Download, RefreshCw, Search, X } from 'lucide-react';
+import { calculateWorkingDays, formatRegionBarLabel, type CompareDashboard, type CompareRow, type WorkStatus, type WorkStatusFilter } from '@/lib/allconnectCompare';
 import styles from './AllconnectCompareDashboard.module.css';
 
 const number = (value: number) => value.toLocaleString('th-TH');
@@ -42,6 +42,16 @@ export default function AllconnectCompareDashboard() {
   const [error, setError] = useState('');
   const [exportError, setExportError] = useState('');
   const [exporting, setExporting] = useState(false);
+  const [expandedDepots, setExpandedDepots] = useState<Set<string>>(new Set());
+
+  function toggleDepot(key: string) {
+    setExpandedDepots(previous => {
+      const next = new Set(previous);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  }
 
   useEffect(() => {
     const timer = setTimeout(() => { setQuery(search.trim()); setPage(1); }, 300);
@@ -84,12 +94,12 @@ export default function AllconnectCompareDashboard() {
         rows.push(...result.rows);
       }
       const XLSX = await import('xlsx');
-      const headings = ['รหัสช่าง', 'ชื่อช่าง', 'RBM', 'CBM', 'ผู้ให้บริการ', 'รหัสศูนย์', 'ชื่อศูนย์', 'จังหวัด', 'สถานะช่าง', 'ผลเปรียบเทียบ', 'รายการงาน'];
+      const headings = ['รหัสช่าง', 'ชื่อช่าง', 'วันเข้าทำงาน', 'วันทำงาน', 'RBM', 'CBM', 'ผู้ให้บริการ', 'รหัสศูนย์', 'ชื่อศูนย์', 'จังหวัด', 'สถานะช่าง', 'ผลเปรียบเทียบ', 'รายการงาน'];
       const worksheet = XLSX.utils.aoa_to_sheet([headings, ...rows.map(row => [
-        row.techId ?? '', row.fullName, row.rbm, row.cbm, row.provider,
+        row.techId ?? '', row.fullName, row.cardRegisterDate, calculateWorkingDays(row.cardRegisterDate) ?? '', row.rbm, row.cbm, row.provider,
         row.depotCode, row.depotName, row.province, row.technicianStatus, WORK_LABELS[row.workStatus], row.jobCount,
       ])]);
-      worksheet['!cols'] = headings.map((_, index) => ({ wch: [1, 3, 6].includes(index) ? 32 : 20 }));
+      worksheet['!cols'] = headings.map((_, index) => ({ wch: [1, 5, 8].includes(index) ? 32 : 20 }));
       const workbook = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(workbook, worksheet, 'Technicians');
       XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet([
@@ -115,6 +125,7 @@ export default function AllconnectCompareDashboard() {
     withoutWorkLabel: region.withoutWork > 0 ? formatRegionBarLabel(region.withoutWork, region.total) : '',
     totalLabel: region.total > 0 ? number(region.total) : '',
   })) ?? [];
+  const visibleDepots = data?.depots.filter(depot => !rbm || depot.rbm === rbm) ?? [];
   const selectedTitle = rbm || 'ทุกพื้นที่ RBM';
   const staleSearch = query !== search.trim();
   const busy = loading || staleSearch;
@@ -143,7 +154,17 @@ export default function AllconnectCompareDashboard() {
         </label>
         <span className={styles.scopeCaption}>Allconnect <strong>{data ? number(data.dataset.totalRows) : '-'}</strong> รายการ</span>
         {rbm && <button type="button" className={styles.textButton} onClick={() => selectRegion('')}><X size={16} /> ล้างพื้นที่</button>}
-        <span className={styles.loadStatus} role="status" aria-live="polite">{busy ? 'กำลังโหลดข้อมูล...' : error ? 'โหลดไม่สำเร็จ' : 'ข้อมูลพร้อมใช้งาน'}</span>
+        <div className={styles.loadStatus} role="status" aria-live="polite">
+          {busy ? 'กำลังโหลดข้อมูล...' : error ? 'โหลดไม่สำเร็จ' : (
+            <ul className={styles.scopeNotes}>
+              <li>All connect เป็นงานติดตั้งเดือนกันยายน</li>
+              <li>ข้อมูลช่าง = ช่าง Install, Install-Repair</li>
+              <li>provider = WW-Provider, เถ้าแก่เทค</li>
+              <li>job_accept_type = Multi Skill, Install</li>
+              <li>status = หัวหน้า</li>
+            </ul>
+          )}
+        </div>
       </div>
 
       {error && <div className={styles.error} role="alert"><AlertCircle size={20} /><span>{error}</span><button type="button" onClick={() => setRevision(value => value + 1)}>ลองอีกครั้ง</button></div>}
@@ -225,6 +246,42 @@ export default function AllconnectCompareDashboard() {
             </div>
           </section>
 
+          <section className={styles.section}>
+            <div className={styles.sectionHeading}><h2>สรุปตาม Depot</h2><span>{number(visibleDepots.length)} Depot · {selectedTitle}</span></div>
+            <div className={`${styles.tableScroll} ${styles.depotTableScroll}`} tabIndex={0} role="region" aria-label="ตารางสรุปตาม Depot">
+              <table className={`${styles.table} ${styles.depotTable}`}>
+                <thead><tr><th scope="col">พื้นที่ RBM</th><th scope="col">รหัส Depot</th><th scope="col">ชื่อ Depot</th><th scope="col">ช่างทั้งหมด</th><th scope="col">พบงาน</th><th scope="col">ไม่พบงาน</th><th scope="col">สัดส่วนที่พบงาน</th><th scope="col">จำนวนงาน</th></tr></thead>
+                <tbody>{visibleDepots.map(depot => {
+                  const key = JSON.stringify([depot.rbm, depot.depotCode, depot.depotName]);
+                  const expanded = expandedDepots.has(key);
+                  const detailId = `depot-${encodeURIComponent(key)}`;
+                  return <Fragment key={key}><tr className={styles.depotRow} onClick={() => toggleDepot(key)}>
+                  <td>{depot.rbm}</td>
+                  <td className={styles.idCell}><button type="button" className={styles.depotToggle} aria-expanded={expanded} aria-controls={detailId} aria-label={`ช่างที่ไม่พบงาน ${depot.depotCode} ${depot.rbm}`} onClick={event => { event.stopPropagation(); toggleDepot(key); }}>
+                    {expanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}{depot.depotCode}
+                  </button></td>
+                  <td>{depot.depotName}</td>
+                  <td>{number(depot.total)}</td>
+                  <td className={styles.greenValue}>{number(depot.withWork)}</td>
+                  <td className={styles.redValue}>{number(depot.withoutWork)}</td>
+                  <td><div className={styles.coverageCell}><meter min={0} max={100} value={depot.coverage ?? 0} aria-label={`สัดส่วนที่พบงาน ${depot.depotCode}`} /><span>{percent(depot.coverage)}</span></div></td>
+                  <td>{number(depot.jobCount)}</td>
+                </tr>
+                {expanded && <tr className={styles.depotDetails} id={detailId}><td colSpan={8}>
+                  {depot.withoutWorkTechnicians.length > 0 ? <table className={styles.depotTechnicians} aria-label={`ช่างที่ไม่พบงาน ${depot.depotCode}`}>
+                    <thead><tr><th scope="col">รหัสพนักงาน</th><th scope="col">ชื่อ</th></tr></thead>
+                    <tbody>{depot.withoutWorkTechnicians.map(technician => <tr key={technician.techId}>
+                      <td>{technician.techId}</td><td>{technician.fullName}</td>
+                    </tr>)}</tbody>
+                  </table> : <div className={styles.depotEmpty}>ไม่มีช่างที่ไม่พบงานใน Depot นี้</div>}
+                </td></tr>}
+                </Fragment>;
+                })}</tbody>
+              </table>
+              {visibleDepots.length === 0 && <div className={styles.empty}>ไม่พบข้อมูล Depot ในพื้นที่ที่เลือก</div>}
+            </div>
+          </section>
+
           <section className={styles.section} aria-label="รายละเอียดช่าง">
             <div className={styles.sectionHeading}><h2>รายละเอียดช่าง <span className={styles.headingCount}>{number(data.pagination.total)} ราย</span></h2><span>{selectedTitle}</span></div>
             <div className={styles.tableControls}>
@@ -235,10 +292,13 @@ export default function AllconnectCompareDashboard() {
             {exportError && <p className={styles.error} role="alert">{exportError}</p>}
             <div className={styles.tableScroll} tabIndex={0} role="region" aria-label="ตารางรายละเอียดช่าง">
               <table className={`${styles.table} ${styles.detailTable}`}>
-                <thead><tr><th scope="col">รหัสช่าง</th><th scope="col">ชื่อช่าง</th><th scope="col">RBM</th><th scope="col">CBM</th><th scope="col">ผู้ให้บริการ</th><th scope="col">รหัสศูนย์</th><th scope="col">ชื่อศูนย์</th><th scope="col">จังหวัด</th><th scope="col">สถานะช่าง</th><th scope="col">ผลเปรียบเทียบ</th><th scope="col">รายการงาน</th></tr></thead>
-                <tbody>{data.rows.map((row, index) => <tr key={`${row.techId ?? 'missing'}-${index}`}>
-                  <td className={styles.idCell}>{row.techId ?? '-'}</td><td>{row.fullName}</td><td>{row.rbm}</td><td>{row.cbm || '-'}</td><td>{row.provider || '-'}</td><td>{row.depotCode || '-'}</td><td>{row.depotName || '-'}</td><td>{row.province || '-'}</td><td>{row.technicianStatus || '-'}</td><td><span className={`${styles.badge} ${styles[row.workStatus]}`}>{WORK_LABELS[row.workStatus]}</span></td><td>{number(row.jobCount)}</td>
-                </tr>)}</tbody>
+                <thead><tr><th scope="col">รหัสช่าง</th><th scope="col">ชื่อช่าง</th><th scope="col">วันเข้าทำงาน</th><th scope="col">วันทำงาน</th><th scope="col">RBM</th><th scope="col">CBM</th><th scope="col">ผู้ให้บริการ</th><th scope="col">รหัสศูนย์</th><th scope="col">ชื่อศูนย์</th><th scope="col">จังหวัด</th><th scope="col">สถานะช่าง</th><th scope="col">ผลเปรียบเทียบ</th><th scope="col">รายการงาน</th></tr></thead>
+                <tbody>{data.rows.map((row, index) => {
+                  const workingDays = calculateWorkingDays(row.cardRegisterDate);
+                  return <tr key={`${row.techId ?? 'missing'}-${index}`}>
+                    <td className={styles.idCell}>{row.techId ?? '-'}</td><td>{row.fullName}</td><td>{row.cardRegisterDate || '-'}</td><td>{workingDays === null ? '' : number(workingDays)}</td><td>{row.rbm}</td><td>{row.cbm || '-'}</td><td>{row.provider || '-'}</td><td>{row.depotCode || '-'}</td><td>{row.depotName || '-'}</td><td>{row.province || '-'}</td><td>{row.technicianStatus || '-'}</td><td><span className={`${styles.badge} ${styles[row.workStatus]}`}>{WORK_LABELS[row.workStatus]}</span></td><td>{number(row.jobCount)}</td>
+                  </tr>;
+                })}</tbody>
               </table>
               {data.rows.length === 0 && <div className={styles.empty}>{data.dataset.totalRows === 0 && status === 'without_work' ? 'ยังไม่มีข้อมูล Allconnect สำหรับระบุช่างที่ไม่พบงาน' : 'ไม่พบช่างตามเงื่อนไขที่เลือก'}</div>}
             </div>
