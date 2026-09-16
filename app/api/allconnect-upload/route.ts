@@ -104,7 +104,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true }, { headers });
   } catch (error) {
     const code = error && typeof error === 'object' && 'code' in error ? error.code : undefined;
-    if (body.action === 'commit' && code === '40001') return errorResponse('STALE_SNAPSHOT');
+    if (body.action === 'commit' && code === 'PT409') return errorResponse('STALE_SNAPSHOT');
     if ((body.action === 'chunk' || body.action === 'commit') && (code === '23505' || code === '23514')) {
       return errorResponse('INVALID_REQUEST');
     }

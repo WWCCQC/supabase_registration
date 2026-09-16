@@ -319,9 +319,23 @@ test('abort deletes only the requested batch', async t => {
   assert.deepEqual([...calls[0].url.searchParams], [['batch_id', `eq.${batchId}`]]);
 });
 
-test('database constraint, stale snapshot and unexpected errors have safe status mappings', async t => {
+test('PostgREST PT409 stale conflict returns safe 409 without retrying or deleting staging', async t => {
+  const { post, calls } = routeHarness(t, [{ status: 409, body: {
+    code: 'PT409', details: null, hint: null, message: 'Allconnect snapshot changed during upload',
+  } }]);
+  const result = await post({ action: 'commit', batchId, expectedSnapshot: snapshot });
+  assert.equal(result.status, 409);
+  assert.equal(result.body.code, 'STALE_SNAPSHOT');
+  assert.match(result.body.error, /[\u0e00-\u0e7f]/);
+  assert.ok(!JSON.stringify(result.body).includes('Allconnect snapshot changed during upload'));
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].url.pathname, '/rest/v1/rpc/replace_allconnect_import');
+  assert.equal(calls[0].method, 'POST');
+  assert.deepEqual(calls[0].body, { p_batch_id: batchId, p_expected_snapshot: snapshot });
+});
+
+test('database constraint and unexpected errors have safe status mappings', async t => {
   const cases = [
-    ['commit', '40001', 409, 'STALE_SNAPSHOT'],
     ['commit', '23514', 400, 'INVALID_REQUEST'],
     ['chunk', '23505', 400, 'INVALID_REQUEST'],
     ['chunk', '23514', 400, 'INVALID_REQUEST'],

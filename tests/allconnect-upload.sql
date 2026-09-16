@@ -78,7 +78,9 @@ BEGIN
   BEGIN
     PERFORM public.replace_allconnect_import(stale_batch, snapshot);
     RAISE EXCEPTION 'Stale snapshot should fail';
-  EXCEPTION WHEN serialization_failure THEN NULL;
+  EXCEPTION WHEN SQLSTATE 'PT409' THEN NULL;
+  WHEN OTHERS THEN
+    RAISE EXCEPTION 'Expected stale SQLSTATE PT409, got %', SQLSTATE;
   END;
   IF (SELECT jsonb_agg(to_jsonb(a) ORDER BY a.uuid) FROM public.allconnect a) IS DISTINCT FROM live_rows
     OR (SELECT count(*) FROM public.allconnect_import_rows WHERE batch_id = stale_batch) <> 1 THEN

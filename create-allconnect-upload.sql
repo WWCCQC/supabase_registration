@@ -32,7 +32,7 @@ BEGIN
 
   SELECT max(a.updated_at) INTO v_current_snapshot FROM public.allconnect a;
   IF v_current_snapshot IS DISTINCT FROM p_expected_snapshot THEN
-    RAISE EXCEPTION 'Allconnect snapshot changed during upload' USING ERRCODE = '40001';
+    RAISE EXCEPTION 'Allconnect snapshot changed during upload' USING ERRCODE = 'PT409';
   END IF;
 
   SELECT count(*), min(row_number), max(row_number)

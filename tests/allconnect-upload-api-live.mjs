@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { parse } from 'dotenv';
 import jwt from 'jsonwebtoken';
@@ -35,15 +35,32 @@ async function liveSnapshot() {
   return { count, snapshot: data[0]?.updated_at ?? null };
 }
 
+async function liveFingerprint() {
+  const before = await liveSnapshot();
+  const hash = createHash('sha256');
+  // Hash all source and audit columns without logging rows or trusting the API row cap.
+  for (let offset = 0; offset < before.count; offset += 500) {
+    const { data } = await checked(db.from('allconnect').select('*').order('uuid').range(offset, offset + 499));
+    assert.equal(data.length, Math.min(500, before.count - offset), 'fingerprint must include every live row');
+    for (const row of data) {
+      hash.update(JSON.stringify(Object.fromEntries(Object.entries(row).sort(([a], [b]) => a.localeCompare(b)))));
+      hash.update('\n');
+    }
+  }
+  assert.deepEqual(await liveSnapshot(), before, 'snapshot must remain stable during fingerprinting');
+  return { ...before, fingerprint: hash.digest('hex') };
+}
+
 async function stagingCount(ids) {
   const { count } = await checked(db.from('allconnect_import_rows').select('*', { count: 'exact', head: true }).in('batch_id', ids));
   return count;
 }
 
-async function post(label, body, status, token = admin, raw = false) {
+async function post(label, body, status, token = admin, raw = false, timeoutMs = 30000) {
+  const started = performance.now();
   const response = await fetch(new URL('/api/allconnect-upload', baseUrl), {
     method: 'POST', headers: { 'Content-Type': 'application/json', ...(token ? { Cookie: `auth-token=${token}` } : {}) },
-    body: raw ? body : JSON.stringify(body), signal: AbortSignal.timeout(30000),
+    body: raw ? body : JSON.stringify(body), signal: AbortSignal.timeout(timeoutMs),
   });
   assert.equal(response.status, status, label);
   const cacheDirectives = response.headers.get('cache-control')?.split(',').map(value => value.trim()) ?? [];
@@ -57,11 +74,13 @@ async function post(label, body, status, token = admin, raw = false) {
     assert.equal(typeof result.code, 'string', label);
     assert.match(result.error, /[\u0e00-\u0e7f]/, label);
   }
-  evidence.push({ check: label, status });
+  const elapsedMs = Math.round(performance.now() - started);
+  assert.ok(elapsedMs < timeoutMs, `${label}: response exceeded ${timeoutMs}ms`);
+  evidence.push({ check: label, status, elapsedMs });
   return result;
 }
 
-const before = await liveSnapshot();
+const before = await liveFingerprint();
 try {
   await post('no cookie', { action: 'start' }, 401, null);
   await post('manager', { action: 'start' }, 403, sign('manager'));
@@ -97,9 +116,13 @@ try {
   const { data: staged } = await checked(db.from('allconnect_import_rows').select('row_number').eq('batch_id', started.batchId).order('row_number'));
   assert.deepEqual(staged.map(item => item.row_number), [1, 2]);
   await post('duplicate row numbers', chunk, 400);
-  // Do not probe stale commits here: the deployed RPC's custom 40001 triggers
-  // PostgREST retries that survive client cancellation. Route mapping is unit-tested.
-  evidence.push({ check: 'live stale commit', notRun: 'Known deployed 40001 retry issue; see task-3-report.md' });
+  // Run only after deploying the PT409 migration; the old SQLSTATE retries indefinitely.
+  const staleSnapshot = '1900-01-01T00:00:00Z';
+  assert.notEqual(Date.parse(started.expectedSnapshot), Date.parse(staleSnapshot));
+  const conflict = await post('live stale commit', {
+    action: 'commit', batchId: started.batchId, expectedSnapshot: staleSnapshot,
+  }, 409, admin, false, 5000);
+  assert.equal(conflict.code, 'STALE_SNAPSHOT');
   assert.equal(await stagingCount([started.batchId]), 2);
   await post('admin abort', { action: 'abort', batchId: started.batchId }, 200);
   assert.equal(await stagingCount([started.batchId]), 0);
@@ -109,7 +132,7 @@ try {
   await checked(db.from('allconnect_import_rows').delete().in('batch_id', batches));
   const remaining = await stagingCount(batches);
   assert.equal(remaining, 0, 'temporary staging rows must be cleaned');
-  const after = await liveSnapshot();
-  assert.deepEqual(after, before, 'live Allconnect count and snapshot must remain unchanged');
+  const after = await liveFingerprint();
+  assert.deepEqual(after, before, 'live Allconnect count, snapshot and full-row fingerprint must remain unchanged');
   console.log(JSON.stringify({ evidence, before, after, temporaryStagingRowsRemaining: remaining }, null, 2));
 }
