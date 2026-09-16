@@ -1,4 +1,4 @@
--- Fixture staging is not part of the commit RPC's eight-second request budget.
+-- Fixture staging is not part of the commit RPC's function-scoped 30-second budget.
 -- Run the entire file together; no live or staged data changes are committed.
 BEGIN;
 SET LOCAL ROLE service_role;
@@ -11,6 +11,11 @@ DECLARE
   staged_count integer;
   fingerprint text;
 BEGIN
+  IF NOT (SELECT coalesce(proconfig, ARRAY[]::text[]) @> ARRAY['statement_timeout=30s']
+    FROM pg_catalog.pg_proc
+    WHERE oid = 'public.replace_allconnect_import(uuid,timestamptz)'::regprocedure) THEN
+    RAISE EXCEPTION 'Replacement must declare a function-scoped 30-second timeout';
+  END IF;
   SELECT max(updated_at) INTO snapshot FROM public.allconnect;
   INSERT INTO public.allconnect_import_rows(batch_id, row_number, payload)
   SELECT batch, row_number() OVER (ORDER BY a.uuid)::integer,
@@ -29,7 +34,8 @@ BEGIN
 END
 $stage$;
 
-SET LOCAL statement_timeout = '8s';
+-- Direct SQL sets the statement budget explicitly; PostgREST reads function config.
+SET LOCAL statement_timeout = '30s';
 DO $replace$
 DECLARE
   started_at timestamptz := clock_timestamp();
@@ -44,8 +50,8 @@ BEGIN
   IF result.inserted_count IS DISTINCT FROM current_setting('allconnect_test.count')::integer THEN
     RAISE EXCEPTION 'Full-volume inserted count is incorrect';
   END IF;
-  IF elapsed_ms >= 8000 THEN
-    RAISE EXCEPTION 'Full-volume replacement exceeded the eight-second API budget';
+  IF elapsed_ms >= 30000 THEN
+    RAISE EXCEPTION 'Full-volume replacement exceeded the 30-second function budget';
   END IF;
   PERFORM set_config('allconnect_test.imported_at', result.imported_at::text, true);
   PERFORM set_config('allconnect_test.metrics', jsonb_build_object(

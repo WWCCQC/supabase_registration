@@ -126,6 +126,11 @@ BEGIN
     WHERE oid = 'public.replace_allconnect_import(uuid,timestamptz)'::regprocedure) THEN
     RAISE EXCEPTION 'Replacement must be SECURITY INVOKER with an empty search_path';
   END IF;
+  IF NOT (SELECT coalesce(proconfig, ARRAY[]::text[]) @> ARRAY['statement_timeout=30s']
+    FROM pg_catalog.pg_proc
+    WHERE oid = 'public.replace_allconnect_import(uuid,timestamptz)'::regprocedure) THEN
+    RAISE EXCEPTION 'Replacement must declare a function-scoped 30-second timeout';
+  END IF;
   FOREACH role_name IN ARRAY ARRAY['anon', 'authenticated'] LOOP
     FOREACH privilege_name IN ARRAY ARRAY['SELECT', 'INSERT', 'UPDATE', 'DELETE', 'TRUNCATE', 'REFERENCES', 'TRIGGER'] LOOP
       IF has_table_privilege(role_name, 'public.allconnect_import_rows', privilege_name) THEN

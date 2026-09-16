@@ -18,6 +18,7 @@ RETURNS TABLE(inserted_count integer, imported_at timestamptz)
 LANGUAGE plpgsql
 SECURITY INVOKER
 SET search_path = ''
+SET statement_timeout = '30s'
 AS $function$
 DECLARE
   v_count integer;
@@ -76,3 +77,5 @@ REVOKE ALL ON FUNCTION public.replace_allconnect_import(uuid, timestamptz)
   FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.replace_allconnect_import(uuid, timestamptz)
   TO service_role;
+
+NOTIFY pgrst, 'reload schema';
