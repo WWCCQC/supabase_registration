@@ -57,6 +57,11 @@ export function formatRegionBarLabel(value: number, total: number) {
   return `${value.toLocaleString('en-US')} (${share})`;
 }
 
+export function calculateWithoutWorkCoverage(withWork: number, withoutWork: number) {
+  const comparedTotal = withWork + withoutWork;
+  return comparedTotal > 0 ? Math.round(withoutWork * 1000 / comparedTotal) / 10 : null;
+}
+
 export function calculateWorkingDays(cardRegisterDate: string, currentDate = new Date()) {
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(cardRegisterDate.trim());
   if (!match || Number.isNaN(currentDate.getTime())) return null;

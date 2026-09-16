@@ -1,6 +1,12 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { calculateWorkingDays, formatRegionBarLabel, parseCompareParams } from '../lib/allconnectCompare.ts';
+import { calculateWithoutWorkCoverage, calculateWorkingDays, formatRegionBarLabel, parseCompareParams } from '../lib/allconnectCompare.ts';
+
+test('without-work coverage uses only technicians with a comparison result', () => {
+  assert.equal(calculateWithoutWorkCoverage(854, 91), 9.6);
+  assert.equal(calculateWithoutWorkCoverage(0, 4), 100);
+  assert.equal(calculateWithoutWorkCoverage(0, 0), null);
+});
 
 test('working days subtract a valid register date from the current calendar date', () => {
   const today = new Date(2026, 8, 15, 12, 0, 0);

@@ -6,7 +6,7 @@ import {
   ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from 'recharts';
 import { AlertCircle, ChevronDown, ChevronLeft, ChevronRight, Download, RefreshCw, Search, X } from 'lucide-react';
-import { calculateWorkingDays, formatRegionBarLabel, type CompareDashboard, type CompareRow, type WorkStatus, type WorkStatusFilter } from '@/lib/allconnectCompare';
+import { calculateWithoutWorkCoverage, calculateWorkingDays, formatRegionBarLabel, type CompareDashboard, type CompareRow, type WorkStatus, type WorkStatusFilter } from '@/lib/allconnectCompare';
 import styles from './AllconnectCompareDashboard.module.css';
 
 const number = (value: number) => value.toLocaleString('th-TH');
@@ -177,8 +177,9 @@ export default function AllconnectCompareDashboard() {
           <section className={styles.metrics} aria-label={`สรุป ${selectedTitle}`}>
             <article className={styles.metric}><span>ช่างทั้งหมด</span><strong>{number(data.summary.total)}</strong><small>{selectedTitle}</small></article>
             <article className={`${styles.metric} ${styles.green}`}><span>ช่างที่พบงาน</span><strong>{number(data.summary.withWork)}</strong><small>พบรหัสใน Allconnect</small></article>
-            <article className={`${styles.metric} ${styles.red}`}><span>ช่างที่ไม่พบงาน</span><strong>{number(data.summary.withoutWork)}</strong><small>ไม่พบรหัสในข้อมูลปัจจุบัน</small></article>
             <article className={`${styles.metric} ${styles.teal}`}><span>สัดส่วนช่างที่พบงาน</span><strong>{percent(data.summary.coverage)}</strong><small>{number(data.summary.jobCount)} รายการงานที่จับคู่ได้</small></article>
+            <article className={`${styles.metric} ${styles.red}`}><span>ช่างที่ไม่พบงาน</span><strong>{number(data.summary.withoutWork)}</strong><small>ไม่พบรหัสในข้อมูลปัจจุบัน</small></article>
+            <article className={`${styles.metric} ${styles.red}`}><span>สัดส่วนช่างที่ไม่พบงาน</span><strong>{percent(calculateWithoutWorkCoverage(data.summary.withWork, data.summary.withoutWork))}</strong><small>{number(data.summary.withoutWork)} รายจากช่างที่เปรียบเทียบได้</small></article>
           </section>
           {data.summary.pending > 0 && <p className={styles.notice}>รอเปรียบเทียบ {number(data.summary.pending)} ราย {data.dataset.totalRows > 0 ? '(ไม่มีรหัสช่าง)' : '(ยังไม่มีข้อมูล Allconnect)'}</p>}
 
