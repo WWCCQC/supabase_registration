@@ -1,0 +1,12 @@
+.panel { padding: 16px 0; display: grid; gap: 10px; border-top: 1px solid #e3e7ed; }
+.row { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; min-width: 0; }
+.button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 40px; padding: 8px 14px; border: 1px solid #128166; border-radius: 5px; background: #128166; color: white; font: inherit; cursor: pointer; }
+.button:disabled { opacity: .6; cursor: wait; }
+.button:focus-visible { outline: 2px solid #237e9a; outline-offset: 3px; }
+.filename { color: #596575; overflow-wrap: anywhere; min-width: 0; }
+.progress { display: grid; grid-template-columns: minmax(0, 1fr) 48px; align-items: center; gap: 12px; max-width: 620px; }
+.progress progress { width: 100%; accent-color: #128166; }
+.status, .error { font-size: 13px; line-height: 1.6; overflow-wrap: anywhere; }
+.status { color: #128166; }
+.error { color: #a83143; }
+@media (max-width: 600px) { .row { flex-direction: column; align-items: stretch; } }

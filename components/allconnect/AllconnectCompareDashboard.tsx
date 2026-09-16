@@ -8,6 +8,7 @@ import {
 import { AlertCircle, ChevronDown, ChevronLeft, ChevronRight, Download, RefreshCw, Search, X } from 'lucide-react';
 import { calculateWithoutWorkCoverage, calculateWorkingDays, formatRegionBarLabel, type CompareDashboard, type CompareRow, type WorkStatus, type WorkStatusFilter } from '@/lib/allconnectCompare';
 import styles from './AllconnectCompareDashboard.module.css';
+import AllconnectUpload from './AllconnectUpload';
 
 const number = (value: number) => value.toLocaleString('th-TH');
 const percent = (value: number | null) => value === null ? '-' : `${value.toFixed(1)}%`;
@@ -145,6 +146,7 @@ export default function AllconnectCompareDashboard() {
         </div>
       </header>
 
+      <AllconnectUpload onComplete={() => setRevision(value => value + 1)} />
       <div className={styles.scopeBar}>
         <label>พื้นที่ RBM
           <select value={rbm} onChange={event => selectRegion(event.target.value)}>
