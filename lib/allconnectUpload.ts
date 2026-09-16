@@ -27,3 +27,40 @@ export function calculateUploadPercent(cursor: number, fileSize: number) {
   if (fileSize <= 0) return 0;
   return Math.min(95, Math.round(Math.max(0, cursor) * 95 / fileSize));
 }
+
+export function parseUploadAction(value: unknown): 'start' | 'chunk' | 'commit' | 'abort' {
+  if (value !== 'start' && value !== 'chunk' && value !== 'commit' && value !== 'abort') {
+    throw new Error('Invalid upload action');
+  }
+  return value;
+}
+
+export function validateBatchId(value: unknown): string {
+  if (typeof value !== 'string' || value.length !== 36 ||
+      !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/.test(value)) {
+    throw new Error('Invalid batch ID');
+  }
+  return value;
+}
+
+export function validateChunkPayload(value: unknown) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error('Invalid upload payload');
+  const input = value as { batchId?: unknown; startRow?: unknown; rows?: unknown };
+  const batchId = validateBatchId(input.batchId);
+  if (typeof input.startRow !== 'number' || !Number.isSafeInteger(input.startRow) || input.startRow < 1) {
+    throw new Error('Invalid start row');
+  }
+  if (!Array.isArray(input.rows) || input.rows.length < 1 || input.rows.length > ALLCONNECT_BATCH_SIZE) {
+    throw new Error('Invalid batch size');
+  }
+  if (input.startRow + input.rows.length - 1 > 2147483647) throw new Error('Invalid end row');
+  const rows = input.rows.map(value => {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error('Invalid row');
+    const keys = Object.keys(value);
+    if (keys.length !== ALLCONNECT_HEADERS.length || keys.some((key, index) => key !== ALLCONNECT_HEADERS[index])) {
+      throw new Error('Invalid row columns');
+    }
+    return normalizeAllconnectRow(value as Record<string, unknown>);
+  });
+  return { batchId, startRow: input.startRow, rows };
+}
