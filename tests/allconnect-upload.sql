@@ -1,5 +1,6 @@
 -- Run the whole file together. All live-data changes are rolled back.
 BEGIN;
+SET LOCAL statement_timeout = '8s';
 SET LOCAL ROLE service_role;
 
 DO $test$
@@ -8,12 +9,17 @@ DECLARE
   batch uuid := gen_random_uuid();
   malformed_batch uuid := gen_random_uuid();
   stale_batch uuid := gen_random_uuid();
+  volume_batch uuid := gen_random_uuid();
   invalid_batch uuid;
   base_payload jsonb;
   live_rows jsonb;
   result record;
   role_name text;
   privilege_name text;
+  original_count integer;
+  source_fingerprint text;
+  replacement_started_at timestamptz;
+  replacement_ms numeric;
 BEGIN
   SELECT max(updated_at) INTO snapshot FROM public.allconnect;
   SELECT to_jsonb(a) - ARRAY['uuid', 'created_at', 'updated_at']
@@ -21,6 +27,15 @@ BEGIN
   IF base_payload IS NULL THEN
     RAISE EXCEPTION 'Regression requires an existing Allconnect source row';
   END IF;
+
+  -- Exercise one full upload chunk; full-snapshot timing has separate fixture setup.
+  INSERT INTO public.allconnect_import_rows(batch_id, row_number, payload)
+  SELECT volume_batch, row_number() OVER (ORDER BY a.uuid)::integer,
+    to_jsonb(a) - ARRAY['uuid', 'created_at', 'updated_at']
+  FROM public.allconnect a ORDER BY a.uuid LIMIT 200;
+  SELECT count(*), md5(string_agg(md5(payload::text), '' ORDER BY md5(payload::text)))
+    INTO original_count, source_fingerprint
+  FROM public.allconnect_import_rows WHERE batch_id = volume_batch;
 
   INSERT INTO public.allconnect_import_rows(batch_id, row_number, payload) VALUES
     (batch, 1, base_payload || '{"HANDLER_ID":"TEST-001"}'::jsonb),
@@ -121,8 +136,35 @@ BEGIN
       RAISE EXCEPTION '% must not execute replacement', role_name;
     END IF;
   END LOOP;
+
+  replacement_started_at := clock_timestamp();
+  SELECT * INTO STRICT result FROM public.replace_allconnect_import(volume_batch, result.imported_at);
+  replacement_ms := extract(epoch FROM clock_timestamp() - replacement_started_at) * 1000;
+  IF result.inserted_count IS DISTINCT FROM original_count
+    OR (SELECT count(*) FROM public.allconnect) <> original_count THEN
+    RAISE EXCEPTION 'Representative-volume replacement row count is incorrect';
+  END IF;
+  IF (SELECT md5(string_agg(md5((to_jsonb(a) - ARRAY['uuid', 'created_at', 'updated_at'])::text), ''
+      ORDER BY md5((to_jsonb(a) - ARRAY['uuid', 'created_at', 'updated_at'])::text)))
+    FROM public.allconnect a) IS DISTINCT FROM source_fingerprint THEN
+    RAISE EXCEPTION 'Representative-volume replacement changed source values';
+  END IF;
+  IF result.imported_at IS NULL OR EXISTS (
+    SELECT 1 FROM public.allconnect
+    WHERE uuid IS NULL OR created_at IS DISTINCT FROM result.imported_at
+      OR updated_at IS DISTINCT FROM result.imported_at
+  ) OR EXISTS (SELECT 1 FROM public.allconnect_import_rows WHERE batch_id = volume_batch) THEN
+    RAISE EXCEPTION 'Representative-volume audit fields or staging cleanup are incorrect';
+  END IF;
+  IF replacement_ms >= 1000 THEN
+    RAISE EXCEPTION 'One upload chunk took % ms; repeated composite evaluation may have returned', replacement_ms;
+  END IF;
+  PERFORM set_config('allconnect_test.metrics', jsonb_build_object(
+    'rows', original_count, 'replacement_ms', replacement_ms
+  )::text, true);
 END
 $test$;
 
-SELECT 'PASS: atomic Allconnect replacement and rollback' AS result;
+SELECT 'PASS: atomic Allconnect replacement and rollback' AS result,
+  current_setting('allconnect_test.metrics')::jsonb AS metrics;
 ROLLBACK;

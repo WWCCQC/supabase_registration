@@ -55,12 +55,15 @@ BEGIN
     RAISE EXCEPTION 'Staged payload columns do not match allconnect' USING ERRCODE = '23514';
   END IF;
 
-  DELETE FROM public.allconnect;
+  -- An explicit predicate is required by safeupdate on PostgREST connections.
+  DELETE FROM public.allconnect WHERE true;
   INSERT INTO public.allconnect
-  SELECT (jsonb_populate_record(
+  SELECT r.*
+  FROM public.allconnect_import_rows s
+  CROSS JOIN LATERAL jsonb_populate_record(
     NULL::public.allconnect,
     s.payload || jsonb_build_object('uuid', gen_random_uuid(), 'created_at', v_imported_at, 'updated_at', v_imported_at)
-  )).* FROM public.allconnect_import_rows s
+  ) AS r
   WHERE s.batch_id = p_batch_id ORDER BY s.row_number;
 
   GET DIAGNOSTICS v_count = ROW_COUNT;
