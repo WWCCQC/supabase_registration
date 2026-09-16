@@ -670,9 +670,9 @@ export default function StatusGaugeSection({
     totalFailProp ?? rows.reduce((s, d) => s + (d.fail || 0), 0);
   const grandTotal = totalPass + totalFail;
   const passPercent =
-    grandTotal > 0 ? ((totalPass / grandTotal) * 100).toFixed(1) : "0.0";
+    grandTotal > 0 ? ((totalPass / grandTotal) * 100).toFixed(2) : "0.00";
   const failPercent =
-    grandTotal > 0 ? ((totalFail / grandTotal) * 100).toFixed(1) : "0.0";
+    grandTotal > 0 ? ((totalFail / grandTotal) * 100).toFixed(2) : "0.00";
 
   // Sort by RBM number
   const sortedData = [...rows].sort((a, b) => {
@@ -890,7 +890,7 @@ export default function StatusGaugeSection({
                     fontVariantNumeric: "tabular-nums",
                   }}
                 >
-                  {passCount.toFixed(1)}%
+                  {passCount.toFixed(2)}%
                 </div>
                 <div
                   style={{
@@ -930,7 +930,7 @@ export default function StatusGaugeSection({
                     fontVariantNumeric: "tabular-nums",
                   }}
                 >
-                  {failCount.toFixed(1)}%
+                  {failCount.toFixed(2)}%
                 </div>
                 <div
                   style={{
@@ -1139,7 +1139,7 @@ export default function StatusGaugeSection({
               {sortedData.map((row, idx) => {
                 const rowTotal = row.pass + row.fail;
                 const rowPassPct =
-                  rowTotal > 0 ? ((row.pass / rowTotal) * 100).toFixed(1) : "0.0";
+                  rowTotal > 0 ? ((row.pass / rowTotal) * 100).toFixed(2) : "0.00";
                 const pctNum = parseFloat(rowPassPct);
                 const baseBg =
                   idx % 2 === 0
