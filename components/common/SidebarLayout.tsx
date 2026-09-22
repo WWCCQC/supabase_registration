@@ -10,9 +10,16 @@ interface SidebarLayoutProps {
   className?: string;
   activeTab?: NavTab;
   onTabChange?: (tab: NavTab) => void;
+  navigation?: React.ReactNode;
 }
 
-const SidebarLayout: React.FC<SidebarLayoutProps> = ({ children, className = '', activeTab = 'TOL', onTabChange }) => {
+const SidebarLayout: React.FC<SidebarLayoutProps> = ({
+  children,
+  className = '',
+  activeTab = 'TOL',
+  onTabChange,
+  navigation,
+}) => {
   const [collapsed, setCollapsed] = useState(false);
 
   return (
@@ -20,7 +27,9 @@ const SidebarLayout: React.FC<SidebarLayoutProps> = ({ children, className = '',
       <Sidebar collapsed={collapsed} onToggle={() => setCollapsed(v => !v)} />
       <main className={`sidebar-main ${collapsed ? 'sidebar-main-collapsed' : ''}`}>
         <TopBar onToggleSidebar={() => setCollapsed(v => !v)} sidebarCollapsed={collapsed} />
-        <NavTabs activeTab={activeTab} onTabChange={onTabChange ?? (() => {})} />
+        {navigation ?? (
+          <NavTabs activeTab={activeTab} onTabChange={onTabChange ?? (() => {})} />
+        )}
         <div className="sidebar-content">
           {children}
         </div>
