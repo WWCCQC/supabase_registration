@@ -26,24 +26,22 @@ WITH source_meta AS (
   GROUP BY 1
 ), source_tech AS (
   SELECT nullif(btrim(t.tech_id), '') AS tech_id,
-         coalesce(nullif(btrim(t.full_name), ''), nullif(btrim(concat_ws(' ', t.tech_first_name, t.tech_last_name)), ''), '-') AS full_name,
-         coalesce(nullif(btrim(t.card_register_date), ''), '') AS card_register_date,
-         coalesce(nullif(btrim(t."RBM"), ''), 'ไม่ระบุพื้นที่') AS rbm,
-         coalesce(t."CBM", '') AS cbm,
-         coalesce(t.provider, '') AS provider,
+         coalesce(nullif(btrim(concat_ws(' ', t.tech_name, t.tech_surename)), ''), '-') AS full_name,
+         coalesce(nullif(btrim(t.register_date), ''), '') AS card_register_date,
+         coalesce(nullif(btrim(t.rbm), ''), 'ไม่ระบุพื้นที่') AS rbm,
+         coalesce(t.cbm, '') AS cbm,
+         coalesce(t.company_type, '') AS provider,
          coalesce(t.depot_code, '') AS depot_code,
          coalesce(t.depot_name, '') AS depot_name,
          coalesce(t.province, '') AS province,
-         coalesce(t.workgroup_status, t.status, '') AS technician_status,
+         coalesce(t.workgroup_status, '') AS technician_status,
          row_number() OVER (
            PARTITION BY nullif(btrim(t.tech_id), '')
-           ORDER BY t.updated_at DESC NULLS LAST, t.national_id, t."RBM", t.full_name
+           ORDER BY t.update_at DESC NULLS LAST, t.uuid
          ) AS id_rank
-  FROM public.technicians t
-  WHERE btrim(t.provider_group_type) IN ('Install', 'Install-Repair')
+  FROM public.allconnect_technicians t
+  WHERE btrim(t.type_of_work) = 'Installation'
     AND btrim(t.workgroup_status) = 'หัวหน้า'
-    AND btrim(t.provider) IN ('WW-Provider', 'เถ้าแก่เทค')
-    AND btrim(t.job_accept_type) IN ('Multi Skill', 'Install')
 ), tech AS (
   -- Repeated IDs count once, using the most recently updated registration.
   SELECT * FROM source_tech WHERE tech_id IS NULL OR id_rank = 1

@@ -63,12 +63,14 @@ export function calculateWithoutWorkCoverage(withWork: number, withoutWork: numb
 }
 
 export function calculateWorkingDays(cardRegisterDate: string, currentDate = new Date()) {
-  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(cardRegisterDate.trim());
-  if (!match || Number.isNaN(currentDate.getTime())) return null;
+  const value = cardRegisterDate.trim();
+  const isoMatch = /^(\d{4})-(\d{2})-(\d{2})(?:[T\s].*)?$/.exec(value);
+  const thaiExportMatch = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(value);
+  if ((!isoMatch && !thaiExportMatch) || Number.isNaN(currentDate.getTime())) return null;
 
-  const year = Number(match[1]);
-  const month = Number(match[2]);
-  const day = Number(match[3]);
+  const year = Number(isoMatch?.[1] ?? thaiExportMatch?.[3]);
+  const month = Number(isoMatch?.[2] ?? thaiExportMatch?.[2]);
+  const day = Number(isoMatch?.[3] ?? thaiExportMatch?.[1]);
   const start = Date.UTC(year, month - 1, day);
   const parsed = new Date(start);
   if (parsed.getUTCFullYear() !== year || parsed.getUTCMonth() !== month - 1 || parsed.getUTCDate() !== day) {

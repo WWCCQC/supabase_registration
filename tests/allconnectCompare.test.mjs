@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { readFileSync } from 'node:fs';
 import { calculateWithoutWorkCoverage, calculateWorkingDays, formatRegionBarLabel, parseCompareParams } from '../lib/allconnectCompare.ts';
 
 test('without-work coverage uses only technicians with a comparison result', () => {
@@ -13,6 +14,21 @@ test('working days subtract a valid register date from the current calendar date
   assert.equal(calculateWorkingDays('2026-09-01', today), 14);
   assert.equal(calculateWorkingDays('2026-09-15', today), 0);
   assert.equal(calculateWorkingDays('2024-02-29', new Date(2024, 2, 1, 12, 0, 0)), 1);
+  assert.equal(calculateWorkingDays('27/02/2024', new Date(2024, 2, 1, 12, 0, 0)), 3);
+});
+
+test('dashboard comparison reads only Installation leaders from allconnect_technicians', () => {
+  const sql = readFileSync(new URL('../create-allconnect-compare-dashboard.sql', import.meta.url), 'utf8');
+  assert.match(sql, /FROM public\.allconnect_technicians t/);
+  assert.match(sql, /btrim\(t\.type_of_work\) = 'Installation'/);
+  assert.match(sql, /btrim\(t\.workgroup_status\) = 'หัวหน้า'/);
+  assert.doesNotMatch(sql, /FROM public\.technicians t/);
+  for (const obsolete of ['provider_group_type', "job_accept_type) IN", "t.provider) IN"]) {
+    assert.equal(sql.includes(obsolete), false, `obsolete technician filter remains: ${obsolete}`);
+  }
+  for (const mapping of ['t.tech_name', 't.tech_surename', 't.register_date', 't.rbm', 't.cbm', 't.company_type', 't.depot_code', 't.depot_name']) {
+    assert.equal(sql.includes(mapping), true, `missing source mapping: ${mapping}`);
+  }
 });
 
 test('working days are blank when the register date cannot be subtracted', () => {

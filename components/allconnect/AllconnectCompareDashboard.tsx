@@ -9,6 +9,8 @@ import { AlertCircle, ChevronDown, ChevronLeft, ChevronRight, Download, RefreshC
 import { calculateWithoutWorkCoverage, calculateWorkingDays, formatRegionBarLabel, type CompareDashboard, type CompareRow, type WorkStatus, type WorkStatusFilter } from '@/lib/allconnectCompare';
 import styles from './AllconnectCompareDashboard.module.css';
 import AllconnectUpload from './AllconnectUpload';
+import TechniciansUpload from './TechniciansUpload';
+import sourceStyles from './AllconnectSources.module.css';
 
 const number = (value: number) => value.toLocaleString('th-TH');
 const percent = (value: number | null) => value === null ? '-' : `${value.toFixed(1)}%`;
@@ -146,7 +148,10 @@ export default function AllconnectCompareDashboard() {
         </div>
       </header>
 
-      <AllconnectUpload onComplete={() => setRevision(value => value + 1)} />
+      <div className={sourceStyles.uploads}>
+        <AllconnectUpload onComplete={() => setRevision(value => value + 1)} />
+        <TechniciansUpload onComplete={() => setRevision(value => value + 1)} />
+      </div>
       <div className={styles.scopeBar}>
         <label>พื้นที่ RBM
           <select value={rbm} onChange={event => selectRegion(event.target.value)}>
@@ -159,11 +164,10 @@ export default function AllconnectCompareDashboard() {
         <div className={styles.loadStatus} role="status" aria-live="polite">
           {busy ? 'กำลังโหลดข้อมูล...' : error ? 'โหลดไม่สำเร็จ' : (
             <ul className={styles.scopeNotes}>
-              <li>All connect เป็นงานติดตั้งเดือนกันยายน</li>
-              <li>ข้อมูลช่าง = ช่าง Install, Install-Repair</li>
-              <li>provider = WW-Provider, เถ้าแก่เทค</li>
-              <li>job_accept_type = Multi Skill, Install</li>
-              <li>status = หัวหน้า</li>
+              <li>All connect เป็นข้อมูลงานติดตั้งปัจจุบัน</li>
+              <li>ข้อมูลช่าง = ตาราง allconnect_technicians</li>
+              <li>type_of_work = Installation</li>
+              <li>workgroup_status = หัวหน้า</li>
             </ul>
           )}
         </div>
