@@ -9,10 +9,10 @@
 .dashboard button:disabled { opacity: .45; cursor: default; }
 .dashboard button:focus-visible, .dashboard input:focus-visible, .dashboard select:focus-visible { outline: 2px solid #087e8b; outline-offset: 3px; }
 .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(165px, 1fr)); gap: 12px; }
-.cards .card { text-align: left; padding: 18px; display: flex; flex-direction: column; gap: 10px; border-top: 4px solid #667481; min-height: 148px; }
-.card span { min-height: 42px; overflow-wrap: anywhere; }
-.card strong { font-size: 30px; }
-.card small { color: #626e78; }
+.cards .card { text-align: left; padding: 7px 10px; display: flex; flex-direction: column; gap: 2px; border-top: 4px solid #667481; height: 100px; min-height: 100px; overflow: hidden; }
+.card span { min-height: 24px; overflow-wrap: anywhere; font-size: 16px; line-height: 18px; }
+.card strong { font-size: 24px; line-height: 28px; }
+.card small { color: #626e78; font-size: 12px; line-height: 14px; }
 .card[data-tone='0'] { border-top-color: #09816c; }
 .card[data-tone='1'] { border-top-color: #cc8a16; }
 .card[data-tone='2'] { border-top-color: #ce475a; }

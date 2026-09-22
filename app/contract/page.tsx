@@ -40,7 +40,6 @@ export default function ContractPage() {
           aria-labelledby={`contract-tab-${activeTab.toLowerCase().replaceAll(' ', '-')}`}
           className={styles.page}
         >
-          <h1>Contract</h1>
           {activeTab === 'Track C' && <ContractDashboard />}
         </section>
       </SidebarLayout>

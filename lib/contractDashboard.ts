@@ -1,13 +1,13 @@
 export type ContractRow = Record<string, string | null>;
 export const contractColumns = [
-  ['partner_name', 'ชื่อคู่สัญญา'], ['depot_code', 'รหัส Depot'],
-  ['active_status', 'สถานะใช้งาน'], ['contract_status', 'สถานะสัญญา'],
+  ['rbm', 'RBM'], ['company_registration_no', 'เลขทะเบียนบริษัท'],
+  ['partner_name', 'ชื่อคู่สัญญา'], ['depot_code', 'Depot'],
+  ['active_status', 'สถานะ Active'], ['contract_status', 'สถานะสัญญา'],
   ['contract_start_date', 'วันเริ่มสัญญา'], ['contract_end_date', 'วันสิ้นสุดสัญญา'],
-  ['contract_no', 'เลขที่สัญญา'], ['rbm', 'RBM'],
+  ['contract_no', 'เลขที่สัญญา'],
   ['total_contract_guarantee_amount', 'วงเงินค้ำประกันรวม'],
   ['contract_technician_team_count', 'จำนวนทีมช่าง'], ['bg_status', 'สถานะ BG'],
-  ['installation_status', 'เหตุผลย่อย'], ['email', 'อีเมล'],
-  ['company_registration_no', 'เลขทะเบียนบริษัท'],
+  ['installation_status', 'เหตุผล'], ['email', 'อีเมล'],
 ] as const;
 export const contractValue = (value: string | null | undefined) => value?.trim() || 'ไม่ระบุ';
 export function groupContracts(rows: ContractRow[], column: string) {
