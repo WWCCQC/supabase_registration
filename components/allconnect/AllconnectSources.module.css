@@ -1,11 +1,12 @@
-.uploads { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; align-items: start; }
+.uploads { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.uploads > section { padding: 0; border-top: 0; min-width: 0; }
 .sources { width: 100%; border-collapse: collapse; margin-top: 20px; }
 .sources th, .sources td { padding: 16px 12px; border-bottom: 1px solid #e3e7ed; text-align: left; }
 .sources th { color: #596575; background: #f6f8fa; font-weight: 600; }
 .sources td { overflow-wrap: anywhere; }
 .pending { padding: 18px 0; color: #657386; border-bottom: 1px solid #e3e7ed; }
 @media (max-width: 600px) {
-  .uploads { grid-template-columns: minmax(0, 1fr); gap: 0; }
+  .uploads { flex-direction: column; align-items: stretch; gap: 0; }
   .sources { font-size: 12px; table-layout: fixed; }
   .sources th, .sources td { padding: 12px 6px; }
 }

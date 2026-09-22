@@ -15,7 +15,7 @@ async function request(body: Record<string, unknown>, signal?: AbortSignal) {
   return result;
 }
 
-export default function TechniciansUpload({ onComplete }: { onComplete: () => void }) {
+export default function TechniciansUpload({ onComplete, updatedAt }: { onComplete: () => void; updatedAt: string }) {
   const { isAdmin } = useAuth();
   const input = useRef<HTMLInputElement>(null);
   const active = useRef(false);
@@ -89,6 +89,7 @@ export default function TechniciansUpload({ onComplete }: { onComplete: () => vo
       <button type="button" className={styles.button} disabled={busy} onClick={() => input.current?.click()}><Upload size={18} /> Upload Technicians</button>
       <span className={styles.filename}>{filename}</span>
     </div>
+    <div className={styles.updatedAt}>อัปเดตล่าสุด (เวลาไทย): {updatedAt}</div>
     {filename && <>
       <div className={styles.progress}><progress aria-label="ความคืบหน้าการอัปโหลดช่าง" max={100} value={percent} /><strong>{percent}%</strong></div>
       <div role={error ? 'alert' : 'status'} aria-live="polite" className={error ? styles.error : styles.status}>{message}</div>

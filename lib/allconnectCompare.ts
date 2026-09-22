@@ -17,7 +17,12 @@ export interface CompareDepot extends CompareSummary {
   rbm: string;
   depotCode: string;
   depotName: string;
-  withoutWorkTechnicians: { techId: string; fullName: string }[];
+  withoutWorkTechnicians: {
+    techId: string;
+    fullName: string;
+    typeOfWork: string;
+    jobAcceptType: string;
+  }[];
 }
 
 export interface CompareRow {
@@ -40,6 +45,7 @@ export interface CompareDashboard {
     totalRows: number;
     importedAt: string | null;
     updatedAt: string | null;
+    techniciansUpdatedAt: string | null;
     missingHandlerRows: number;
     unknownHandlers: number;
     missingTechIds: number;

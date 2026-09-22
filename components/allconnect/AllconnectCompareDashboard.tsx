@@ -138,20 +138,17 @@ export default function AllconnectCompareDashboard() {
       <header className={styles.header}>
         <div>
           <h1>All connect compare tech</h1>
-          <p>ช่างในทะเบียนเทียบกับงานติดตั้งในข้อมูล Allconnect ปัจจุบัน</p>
         </div>
         <div className={styles.headerActions}>
-          <div className={styles.importTime}>ข้อมูลนำเข้าล่าสุด (เวลาไทย)<strong>{dateTime(data?.dataset.importedAt ?? null)}</strong></div>
+          <div className={sourceStyles.uploads}>
+            <AllconnectUpload updatedAt={dateTime(data?.dataset.updatedAt ?? null)} onComplete={() => setRevision(value => value + 1)} />
+            <TechniciansUpload updatedAt={dateTime(data?.dataset.techniciansUpdatedAt ?? null)} onComplete={() => setRevision(value => value + 1)} />
+          </div>
           <button className={styles.iconButton} type="button" onClick={() => setRevision(value => value + 1)} disabled={loading} title="รีเฟรชข้อมูล" aria-label="รีเฟรชข้อมูล">
             <RefreshCw size={18} className={loading ? styles.spinning : undefined} />
           </button>
         </div>
       </header>
-
-      <div className={sourceStyles.uploads}>
-        <AllconnectUpload onComplete={() => setRevision(value => value + 1)} />
-        <TechniciansUpload onComplete={() => setRevision(value => value + 1)} />
-      </div>
       <div className={styles.scopeBar}>
         <label>พื้นที่ RBM
           <select value={rbm} onChange={event => selectRegion(event.target.value)}>
@@ -159,7 +156,7 @@ export default function AllconnectCompareDashboard() {
             {data?.regions.map(region => <option key={region.rbm} value={region.rbm}>{region.rbm}</option>)}
           </select>
         </label>
-        <span className={styles.scopeCaption}>Allconnect <strong>{data ? number(data.dataset.totalRows) : '-'}</strong> รายการ</span>
+        <label className={styles.globalSearchLabel}><span>ค้นหาข้อมูลช่าง</span><div className={styles.searchInput}><Search size={17} aria-hidden="true" /><input value={search} maxLength={200} onChange={event => setSearch(event.target.value)} placeholder="ชื่อ รหัสช่าง RBM ศูนย์ หรือจังหวัด" aria-label="ค้นหาข้อมูลช่าง" />{search && <button type="button" title="ล้างคำค้นหา" aria-label="ล้างคำค้นหา" onClick={() => setSearch('')}><X size={16} /></button>}</div></label>
         {rbm && <button type="button" className={styles.textButton} onClick={() => selectRegion('')}><X size={16} /> ล้างพื้นที่</button>}
         <div className={styles.loadStatus} role="status" aria-live="polite">
           {busy ? 'กำลังโหลดข้อมูล...' : error ? 'โหลดไม่สำเร็จ' : (
@@ -276,10 +273,10 @@ export default function AllconnectCompareDashboard() {
                 </tr>
                 {expanded && <tr className={styles.depotDetails} id={detailId}><td colSpan={8}>
                   {depot.withoutWorkTechnicians.length > 0 ? <table className={styles.depotTechnicians} aria-label={`ช่างที่ไม่พบงาน ${depot.depotCode}`}>
-                    <thead><tr><th scope="col">รหัสพนักงาน</th><th scope="col">ชื่อ</th></tr></thead>
-                    <tbody>{depot.withoutWorkTechnicians.map(technician => <tr key={technician.techId}>
-                      <td>{technician.techId}</td><td>{technician.fullName}</td>
-                    </tr>)}</tbody>
+                     <thead><tr><th scope="col">รหัสพนักงาน</th><th scope="col">ชื่อ</th><th scope="col">ประเภทงาน</th><th scope="col">ประเภทการรับงาน</th></tr></thead>
+                     <tbody>{depot.withoutWorkTechnicians.map(technician => <tr key={technician.techId}>
+                       <td>{technician.techId}</td><td>{technician.fullName}</td><td>{technician.typeOfWork || '-'}</td><td>{technician.jobAcceptType || '-'}</td>
+                     </tr>)}</tbody>
                   </table> : <div className={styles.depotEmpty}>ไม่มีช่างที่ไม่พบงานใน Depot นี้</div>}
                 </td></tr>}
                 </Fragment>;
@@ -291,9 +288,8 @@ export default function AllconnectCompareDashboard() {
 
           <section className={styles.section} aria-label="รายละเอียดช่าง">
             <div className={styles.sectionHeading}><h2>รายละเอียดช่าง <span className={styles.headingCount}>{number(data.pagination.total)} ราย</span></h2><span>{selectedTitle}</span></div>
-            <div className={styles.tableControls}>
-              <label className={styles.searchLabel}><span>ค้นหาช่าง</span><div className={styles.searchInput}><Search size={17} aria-hidden="true" /><input value={search} maxLength={200} onChange={event => setSearch(event.target.value)} placeholder="รหัสช่าง ชื่อ ศูนย์ หรือจังหวัด" aria-label="ค้นหาช่าง" />{search && <button type="button" title="ล้างคำค้นหา" aria-label="ล้างคำค้นหา" onClick={() => setSearch('')}><X size={16} /></button>}</div></label>
-              <label>ผลเปรียบเทียบ<select value={status} onChange={event => { setStatus(event.target.value as WorkStatusFilter); setPage(1); }}><option value="without_work">ไม่พบงาน</option><option value="with_work">พบงาน</option><option value="pending">รอเปรียบเทียบ</option><option value="all">ทั้งหมด</option></select></label>
+             <div className={styles.tableControls}>
+               <label>ผลเปรียบเทียบ<select value={status} onChange={event => { setStatus(event.target.value as WorkStatusFilter); setPage(1); }}><option value="without_work">ไม่พบงาน</option><option value="with_work">พบงาน</option><option value="pending">รอเปรียบเทียบ</option><option value="all">ทั้งหมด</option></select></label>
               <button className={styles.exportButton} type="button" onClick={exportExcel} disabled={exporting || busy || data.pagination.total === 0}><Download size={17} />{exporting ? 'กำลังส่งออก...' : 'Export Excel'}</button>
             </div>
             {exportError && <p className={styles.error} role="alert">{exportError}</p>}

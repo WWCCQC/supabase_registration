@@ -3,7 +3,7 @@ BEGIN;
 CREATE TEMP TABLE compare_allconnect_technicians (
   tech_id text, tech_name text, tech_surename text, register_date text,
   rbm text, cbm text, company_type text, depot_code text, depot_name text,
-  province text, workgroup_status text, type_of_work text,
+  province text, workgroup_status text, type_of_work text, job_accept_type text,
   update_at timestamptz, uuid text
 ) ON COMMIT DROP;
 CREATE TEMP TABLE compare_allconnect (
@@ -23,19 +23,23 @@ $setup$;
 
 INSERT INTO compare_allconnect_technicians (
   tech_id, tech_name, tech_surename, register_date, rbm, cbm, company_type,
-  depot_code, depot_name, province, workgroup_status, type_of_work, update_at, uuid
+  depot_code, depot_name, province, workgroup_status, type_of_work, job_accept_type, update_at, uuid
 ) VALUES
-  (' 001 ', 'ช่างเก่า', 'หนึ่ง', '01/01/2020', 'R9_OLD', 'OLD', 'Old company', 'D-OLD', 'Old depot', 'กรุงเทพฯ', 'หัวหน้า', 'Installation', '2000-01-01', 'old'),
-  ('001', 'ช่างใหม่', 'หนึ่ง', '15/01/2026', 'R1_A', 'CBM-A', 'Company A', 'D-A', 'Depot Alpha', 'กรุงเทพฯ', 'หัวหน้า', 'Installation', '2026-01-01', 'new'),
-  ('1', 'เลขศูนย์', 'สำคัญ', '16/01/2026', 'R2_B', 'CBM-B', 'Company B', 'D-B', 'Depot Beta', 'นนทบุรี', 'หัวหน้า', 'Installation', '2026-01-01', 'one'),
-  ('ABC', 'ตัวอักษร', 'ใหญ่', '17/01/2026', 'R1_A', 'CBM-A', 'Company A', 'D-A', 'Depot Alpha', 'กรุงเทพฯ', 'หัวหน้า', 'Installation', '2026-01-01', 'alpha'),
-  (NULL, 'ไม่มี', 'รหัส', '', 'R3_C', 'CBM-C', 'Company C', 'D-C', 'Depot Gamma', 'ชลบุรี', 'หัวหน้า', 'Installation', '2026-01-01', 'missing'),
-  ('NONE', 'ไม่มีงาน', 'ตัวอย่าง', '18/01/2026', 'R10_D', 'CBM-D', 'Company D', 'D-D', 'Depot Delta', 'เชียงใหม่', 'หัวหน้า', 'Installation', '2026-01-01', 'none'),
-  ('MEMBER', 'ต้อง', 'ไม่แสดง', '19/01/2026', 'R99_EXCLUDED', 'CBM-X', 'Company X', 'D-X', 'Depot X', 'ภูเก็ต', 'ลูกน้อง', 'Installation', '2026-01-01', 'member'),
-  ('REPAIR', 'ต้อง', 'ไม่แสดง', '19/01/2026', 'R99_EXCLUDED', 'CBM-X', 'Company X', 'D-X', 'Depot X', 'ภูเก็ต', 'หัวหน้า', 'Repair', '2026-01-01', 'repair');
+  (' 001 ', 'ช่างเก่า', 'หนึ่ง', '01/01/2020', 'R9_OLD', 'OLD', 'Old company', 'D-OLD', 'Old depot', 'กรุงเทพฯ', 'หัวหน้า', 'Installation', 'เก่า', '2000-01-01', 'old'),
+  ('001', 'ช่างใหม่', 'หนึ่ง', '15/01/2026', 'R1_A', 'CBM-A', 'Company A', 'D-A', 'Depot Alpha', 'กรุงเทพฯ', 'หัวหน้า', 'Installation', 'ประจำ', '2026-09-12 07:08:09+00', 'new'),
+  ('1', 'เลขศูนย์', 'สำคัญ', '16/01/2026', 'R2_B', 'CBM-B', 'Company B', 'D-B', 'Depot Beta', 'นนทบุรี', 'หัวหน้า', 'Installation', 'ประจำ', '2026-01-01', 'one'),
+  ('ABC', 'ตัวอักษร', 'ใหญ่', '17/01/2026', 'R1_A', 'CBM-A', 'Company A', 'D-A', 'Depot Alpha', 'กรุงเทพฯ', 'หัวหน้า', 'Installation', 'ประจำ', '2026-01-01', 'alpha'),
+  (NULL, 'ไม่มี', 'รหัส', '', 'R3_C', 'CBM-C', 'Company C', 'D-C', 'Depot Gamma', 'ชลบุรี', 'หัวหน้า', 'Installation', 'ประจำ', '2026-01-01', 'missing'),
+  ('NONE', 'ไม่มีงาน', 'ตัวอย่าง', '18/01/2026', 'R10_D', 'CBM-D', 'Company D', 'D-D', 'Depot Delta', 'เชียงใหม่', 'หัวหน้า', 'Installation', 'ประจำ', '2026-01-01', 'none'),
+  ('MEMBER', 'ต้อง', 'ไม่แสดง', '19/01/2026', 'R99_EXCLUDED', 'CBM-X', 'Company X', 'D-X', 'Depot X', 'ภูเก็ต', 'ลูกน้อง', 'Installation', 'ประจำ', '2026-01-01', 'member'),
+  ('REPAIR', 'ต้อง', 'ไม่แสดง', '19/01/2026', 'R99_EXCLUDED', 'CBM-X', 'Company X', 'D-X', 'Depot X', 'ภูเก็ต', 'หัวหน้า', 'Repair', 'ประจำ', '2026-01-01', 'repair');
 
-INSERT INTO compare_allconnect ("HANDLER_ID") VALUES
-  ('001'), (' 001 '), (' ABC '), ('REPAIR'), (NULL);
+INSERT INTO compare_allconnect ("HANDLER_ID", created_at, updated_at) VALUES
+  ('001', '2026-09-10 01:02:03+00', '2026-09-11 04:05:06+00'),
+  (' 001 ', '2026-09-10 01:02:03+00', '2026-09-11 04:05:06+00'),
+  (' ABC ', '2026-09-10 01:02:03+00', '2026-09-11 04:05:06+00'),
+  ('REPAIR', '2026-09-10 01:02:03+00', '2026-09-11 04:05:06+00'),
+  (NULL, '2026-09-10 01:02:03+00', '2026-09-11 04:05:06+00');
 
 DO $tests$
 DECLARE d jsonb;
@@ -49,6 +53,10 @@ BEGIN
      OR (d->'dataset'->>'duplicateTechIds')::int <> 1
      OR (d->'dataset'->>'missingTechIds')::int <> 1 THEN
     RAISE EXCEPTION 'Data quality counts incorrect: %', d->'dataset';
+  END IF;
+  IF (d->'dataset'->>'updatedAt')::timestamptz <> '2026-09-11 04:05:06+00'::timestamptz
+     OR (d->'dataset'->>'techniciansUpdatedAt')::timestamptz <> '2026-09-12 07:08:09+00'::timestamptz THEN
+    RAISE EXCEPTION 'Source update timestamps must be tracked separately: %', d->'dataset';
   END IF;
   IF EXISTS (SELECT 1 FROM jsonb_array_elements(d->'rows') r WHERE r->>'techId' IN ('MEMBER', 'REPAIR')) THEN
     RAISE EXCEPTION 'Non-leader and non-Installation technicians must be excluded';
@@ -74,6 +82,17 @@ BEGIN
   IF d->'depots'->0->>'depotCode' NOT IN ('D-B', 'D-D')
      OR (d->'depots'->0->>'withoutWork')::int <> 1 THEN
     RAISE EXCEPTION 'Depot totals incorrect: %', d->'depots';
+  END IF;
+  IF NOT EXISTS (
+    SELECT 1
+    FROM jsonb_array_elements(d->'depots') depot
+    CROSS JOIN LATERAL jsonb_array_elements(depot->'withoutWorkTechnicians') technician
+    WHERE technician->>'techId' = '1'
+      AND technician->>'fullName' = 'เลขศูนย์ สำคัญ'
+      AND technician->>'typeOfWork' = 'Installation'
+      AND technician->>'jobAcceptType' = 'ประจำ'
+  ) THEN
+    RAISE EXCEPTION 'Expanded Depot technician fields incorrect: %', d->'depots';
   END IF;
 
   d := pg_temp.compare_dashboard('R2_B', 'without_work', 'เลขศูนย์', 99, 1);

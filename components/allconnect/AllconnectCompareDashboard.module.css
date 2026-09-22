@@ -11,7 +11,7 @@
 .header { display: flex; justify-content: space-between; gap: 20px; align-items: center; flex-wrap: wrap; padding-bottom: 22px; }
 .header h1 { font-size: 25px; font-weight: 700; line-height: 1.4; overflow-wrap: anywhere; }
 .header p { margin-top: 6px; color: #697382; line-height: 1.7; }
-.headerActions { display: flex; gap: 12px; align-items: center; }
+.headerActions { display: flex; gap: 12px; align-items: center; justify-content: flex-end; flex-wrap: wrap; }
 .importTime { font-size: 12px; color: #697382; line-height: 1.8; }
 .importTime strong { display: block; color: #384452; font-weight: 500; }
 .iconButton { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; flex: 0 0 36px; padding: 0; color: #445264; border: 1px solid #d8dee5; border-radius: 5px; background: #fff; }
@@ -21,6 +21,7 @@
 .dashboard select { height: 38px; border: 1px solid #d5dce5; border-radius: 5px; padding: 0 30px 0 10px; background: #fff; color: #273444; min-width: 160px; max-width: 100%; }
 .scopeCaption { color: #687382; padding-bottom: 8px; font-size: 13px; }
 .scopeCaption strong { color: #374151; font-variant-numeric: tabular-nums; }
+.globalSearchLabel { flex: 1; min-width: 260px; max-width: 520px; }
 .loadStatus { margin-left: auto; color: #657386; font-size: 12px; padding-bottom: 3px; line-height: 1.7; }
 .scopeNotes { margin: 0; padding-left: 18px; }
 .scopeNotes li::marker { color: #159574; }

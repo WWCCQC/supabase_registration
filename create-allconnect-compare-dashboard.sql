@@ -15,9 +15,10 @@ SET search_path = ''
 AS $function$
 WITH source_meta AS (
   SELECT count(*) AS total_rows,
-         count(*) FILTER (WHERE nullif(btrim(a."HANDLER_ID"), '') IS NULL) AS missing_handler_rows,
-         max(a.created_at) AS imported_at,
-         max(a.updated_at) AS updated_at
+          count(*) FILTER (WHERE nullif(btrim(a."HANDLER_ID"), '') IS NULL) AS missing_handler_rows,
+          max(a.created_at) AS imported_at,
+          max(a.updated_at) AS updated_at,
+          (SELECT max(t.update_at) FROM public.allconnect_technicians t) AS technicians_updated_at
   FROM public.allconnect a
 ), jobs AS (
   SELECT nullif(btrim(a."HANDLER_ID"), '') AS handler_id, count(*) AS job_count
@@ -31,10 +32,12 @@ WITH source_meta AS (
          coalesce(nullif(btrim(t.rbm), ''), 'ไม่ระบุพื้นที่') AS rbm,
          coalesce(t.cbm, '') AS cbm,
          coalesce(t.company_type, '') AS provider,
-         coalesce(t.depot_code, '') AS depot_code,
-         coalesce(t.depot_name, '') AS depot_name,
-         coalesce(t.province, '') AS province,
-         coalesce(t.workgroup_status, '') AS technician_status,
+          coalesce(t.depot_code, '') AS depot_code,
+          coalesce(t.depot_name, '') AS depot_name,
+          coalesce(t.province, '') AS province,
+          coalesce(t.type_of_work, '') AS type_of_work,
+          coalesce(t.job_accept_type, '') AS job_accept_type,
+          coalesce(t.workgroup_status, '') AS technician_status,
          row_number() OVER (
            PARTITION BY nullif(btrim(t.tech_id), '')
            ORDER BY t.update_at DESC NULLS LAST, t.uuid
@@ -73,7 +76,10 @@ WITH source_meta AS (
   SELECT rbm,
          coalesce(nullif(btrim(depot_code), ''), '-') AS depot_code,
          coalesce(nullif(btrim(depot_name), ''), '-') AS depot_name,
-         coalesce(jsonb_agg(jsonb_build_object('techId', tech_id, 'fullName', full_name)
+          coalesce(jsonb_agg(jsonb_build_object(
+            'techId', tech_id, 'fullName', full_name,
+            'typeOfWork', type_of_work, 'jobAcceptType', job_accept_type
+          )
            ORDER BY full_name, tech_id) FILTER (WHERE work_status = 'without_work'), '[]'::jsonb) AS without_work_technicians,
          count(*) AS total,
          count(*) FILTER (WHERE work_status = 'with_work') AS with_work,
@@ -103,7 +109,8 @@ WITH source_meta AS (
 )
 SELECT jsonb_build_object(
   'dataset', (SELECT jsonb_build_object(
-    'totalRows', m.total_rows, 'importedAt', m.imported_at, 'updatedAt', m.updated_at,
+     'totalRows', m.total_rows, 'importedAt', m.imported_at, 'updatedAt', m.updated_at,
+     'techniciansUpdatedAt', m.technicians_updated_at,
     'missingHandlerRows', m.missing_handler_rows,
     'unknownHandlers', (SELECT count(*) FROM jobs j WHERE NOT EXISTS (SELECT 1 FROM tech t WHERE t.tech_id = j.handler_id)),
     'missingTechIds', (SELECT count(*) FROM tech WHERE tech_id IS NULL),

@@ -4,6 +4,7 @@
 .button:disabled { opacity: .6; cursor: wait; }
 .button:focus-visible { outline: 2px solid #237e9a; outline-offset: 3px; }
 .filename { color: #596575; overflow-wrap: anywhere; min-width: 0; }
+.updatedAt { color: #697382; font-size: 12px; line-height: 1.6; }
 .progress { display: grid; grid-template-columns: minmax(0, 1fr) 48px; align-items: center; gap: 12px; max-width: 620px; }
 .progress progress { width: 100%; accent-color: #128166; }
 .status, .error { font-size: 13px; line-height: 1.6; overflow-wrap: anywhere; }
