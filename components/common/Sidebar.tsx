@@ -4,7 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/useAuth';
-import { ChartNoAxesCombined } from 'lucide-react';
+import { ChartNoAxesCombined, ClipboardCheck } from 'lucide-react';
 
 interface SidebarProps {
   collapsed: boolean;
@@ -104,20 +104,22 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle }) => {
               {!collapsed && <span className="snav-text">Tech-Transaction</span>}
             </Link>
 
-            <Link
-              href="/allconnect-compare-tech"
-              className={itemClass(pathname === '/allconnect-compare-tech')}
-              title="All connect compare tech"
-            >
-              <span className="snav-icon">
-                <ChartNoAxesCombined style={{ fill: 'none' }} aria-hidden="true" />
-              </span>
-              {!collapsed && (
-                <span className="snav-text" style={{ whiteSpace: 'normal', overflow: 'visible', lineHeight: 1.4 }}>
-                  All connect compare tech
+            {isAdmin() && (
+              <Link
+                href="/allconnect-compare-tech"
+                className={itemClass(pathname === '/allconnect-compare-tech')}
+                title="All connect compare tech"
+              >
+                <span className="snav-icon">
+                  <ChartNoAxesCombined style={{ fill: 'none' }} aria-hidden="true" />
                 </span>
-              )}
-            </Link>
+                {!collapsed && (
+                  <span className="snav-text" style={{ whiteSpace: 'normal', overflow: 'visible', lineHeight: 1.4 }}>
+                    All connect compare tech
+                  </span>
+                )}
+              </Link>
+            )}
 
             {collapsed ? (
               <div className="snav-divider" />
@@ -160,6 +162,24 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle }) => {
               {!collapsed && (
                 <span className="snav-text">
                   อบรมช่างใหม่
+                  <ExternalIcon />
+                </span>
+              )}
+            </a>
+
+            <a
+              href="https://script.google.com/macros/s/AKfycbyq-8jdXTjN7LiIRRGlOerUa3LdmCrQtJvNvIIcq9WfRltqnHSrwMK2QaG5kohjO5DrWQ/exec"
+              target="_blank"
+              rel="noopener noreferrer"
+              className={itemClass(false)}
+              title="Equipment Inspection"
+            >
+              <span className="snav-icon">
+                <ClipboardCheck style={{ fill: 'none' }} aria-hidden="true" />
+              </span>
+              {!collapsed && (
+                <span className="snav-text">
+                  Equipment Inspection
                   <ExternalIcon />
                 </span>
               )}
