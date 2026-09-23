@@ -11,6 +11,41 @@ const rbmRank = (value: string) => { const index = rbmOrder.indexOf(value.trim()
 const contractStatusOrder = ['สัญญา Active', 'ต่อสัญญา', 'ยกเลิกสัญญา', 'อยู่ระหว่างยกเลิกสัญญา', 'หมดอายุ'];
 const number = (value: number) => value.toLocaleString('th-TH');
 
+function AnimatedCardNumber({ value }: { value: number }) {
+  const [displayed, setDisplayed] = useState(0);
+
+  useEffect(() => {
+    const motion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    let frame = 0;
+    const finish = () => {
+      if (motion.matches) {
+        cancelAnimationFrame(frame);
+        setDisplayed(value);
+      }
+    };
+    if (motion.matches || value === 0) {
+      setDisplayed(value);
+      return;
+    }
+    setDisplayed(0);
+    const started = performance.now();
+    const animate = (now: number) => {
+      const progress = Math.min(1, (now - started) / 2600);
+      const eased = 1 - Math.pow(1 - progress, 2);
+      setDisplayed(progress === 1 ? value : Math.floor(value * eased));
+      if (progress < 1) frame = requestAnimationFrame(animate);
+    };
+    frame = requestAnimationFrame(animate);
+    motion.addEventListener('change', finish);
+    return () => {
+      cancelAnimationFrame(frame);
+      motion.removeEventListener('change', finish);
+    };
+  }, [value]);
+
+  return <strong aria-label={number(value)}>{number(displayed)}</strong>;
+}
+
 export default function ContractDashboard() {
   const [rows, setRows] = useState<ContractRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -72,8 +107,8 @@ export default function ContractDashboard() {
     {error && <div role="alert" className={styles.error}>{error}</div>}
     {loading ? <p role="status">กำลังโหลดข้อมูลสัญญา...</p> : error ? null : <>
       <div className={styles.cards}>
-        <button className={styles.card} onClick={() => { setFilters({}); setQuery(''); setPage(1); }}><span>คู่สัญญาทั้งหมด</span><strong>{number(filtered.length)}</strong><small>ราย</small></button>
-        {statuses.map(([status, count], index) => <button key={status} className={styles.card} data-tone={index % 5} aria-pressed={filters.contract_status === status} onClick={() => changeFilter('contract_status', filters.contract_status === status ? '' : status)}><span>{status}</span><strong>{number(count)}</strong><small>{filtered.length ? (count / filtered.length * 100).toFixed(1) : '0.0'}% ของทั้งหมด</small></button>)}
+        <button className={styles.card} onClick={() => { setFilters({}); setQuery(''); setPage(1); }}><span>คู่สัญญาทั้งหมด</span><AnimatedCardNumber value={filtered.length} /><small>ราย</small></button>
+        {statuses.map(([status, count], index) => <button key={status} className={styles.card} data-tone={index % 5} aria-pressed={filters.contract_status === status} onClick={() => changeFilter('contract_status', filters.contract_status === status ? '' : status)}><span>{status}</span><AnimatedCardNumber value={count} /><small>{filtered.length ? (count / filtered.length * 100).toFixed(1) : '0.0'}% ของทั้งหมด</small></button>)}
       </div>
       <div className={styles.filters}>
         <label className={styles.search}>ค้นหาทุกคอลัมน์<div><Search size={17} /><input value={query} placeholder="ชื่อคู่สัญญา เลขที่สัญญา Depot…" onChange={event => { setQuery(event.target.value); setPage(1); }} /></div></label>
