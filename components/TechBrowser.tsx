@@ -1,5 +1,6 @@
 "use client";
 import React from "react";
+import { createPortal } from "react-dom";
 import dynamic from "next/dynamic";
 import { createClient } from '@supabase/supabase-js';
 import { getFieldLabel, SECTION_LABELS, KPI_LABELS } from "../lib/fieldLabels";
@@ -2096,7 +2097,7 @@ export default function TechBrowser() {
       )}
 
       {/* Detail Popup — PORTFOLIO (FULL WIDTH) */}
-      {detailOpen && (
+      {detailOpen && createPortal(
         <div
           onClick={() => setDetailOpen(false)}
           style={{
@@ -2106,39 +2107,46 @@ export default function TechBrowser() {
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            zIndex: 60,
+            zIndex: 200,
             padding: 12,
+            boxSizing: "border-box",
           }}
         >
           <div
             onClick={(e) => e.stopPropagation()}
             className="detail-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="technician-detail-title"
             style={{
               background: "#fff",
               borderRadius: 12,
               padding: 24,
               overflow: "auto",
+              minWidth: 0,
+              maxWidth: "min(1600px, 100%)",
+              maxHeight: "calc(100dvh - 24px)",
+              boxSizing: "border-box",
               boxShadow: "0 20px 40px rgba(0,0,0,.3)",
             }}
           >
             {/* Header sticky */}
             <div style={{ position: "sticky", top: 0, background: "#fff", paddingBottom: 12, marginBottom: 12, zIndex: 1 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <div>
-                  <h3 style={{ margin: 0, fontSize: 20, fontWeight: 600, color: "#1f2937" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 16 }}>
+                <div style={{ minWidth: 0, overflowWrap: "anywhere" }}>
+                  <h3 id="technician-detail-title" style={{ margin: 0, fontSize: 20, fontWeight: 600, color: "#1f2937" }}>
                     ข้อมูลช่าง: {detailRow?.full_name || detailRow?.tech_id || detailRow?.national_id || "-"}
                   </h3>
-                  <p style={{ margin: "4px 0 0 0", fontSize: 14, color: "#6b7280" }}>
-                    {detailLoading
-                      ? "กำลังโหลดรายละเอียด..."
-                      : detailError
-                        ? "เกิดข้อผิดพลาด"
-                        : `แสดงข้อมูลทั้งหมด ${Object.keys(detailRow || {}).length} ฟิลด์จาก Supabase`}
-                  </p>
+                  {(detailLoading || detailError) && (
+                    <p style={{ margin: "4px 0 0 0", fontSize: 14, color: "#6b7280" }}>
+                      {detailLoading ? "กำลังโหลดรายละเอียด..." : "เกิดข้อผิดพลาด"}
+                    </p>
+                  )}
                 </div>
                 <button
                   onClick={() => setDetailOpen(false)}
-                  style={{ background: "transparent", border: "none", fontSize: 24, cursor: "pointer", color: "#6b7280" }}
+                  aria-label="ปิดข้อมูลช่าง"
+                  style={{ background: "transparent", border: "none", fontSize: 24, cursor: "pointer", color: "#6b7280", flexShrink: 0, width: 40, height: 40 }}
                 >
                   ×
                 </button>
@@ -2281,7 +2289,8 @@ export default function TechBrowser() {
               </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
 
@@ -2325,19 +2334,21 @@ function PhotoCard({ row }: { row: Row }) {
   const url = pick(row, ["doc_tech_card_url", "tech_card_url"]);
   return (
     <div style={{
-      border: "1px solid #e5e7eb",
-      borderRadius: 12,
-      padding: 12,
-      background: "#fff",
-      boxShadow: "0 1px 2px rgba(0,0,0,.04)",
-      width: 300
+      border: "1px solid #dce2e8",
+      borderRadius: 8,
+      padding: 16,
+      background: "#f8fafc",
+      boxShadow: "0 16px 32px -16px rgba(15,23,42,.28), 0 3px 8px rgba(15,23,42,.06), inset 0 1px 0 #fff",
+      width: "100%",
+      maxWidth: 320,
+      boxSizing: "border-box"
     }}>
-      <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 8 }}>{getFieldLabel("doc_tech_card_url")}</div>
+      <div style={{ fontSize: 12, fontWeight: 600, color: "#6b7280", marginBottom: 12 }}>{getFieldLabel("doc_tech_card_url")}</div>
       {url ? (
         <img
           src={proxyImg(String(url), false)}
           alt="tech card"
-          style={{ width: "100%", height: "auto", borderRadius: 8, border: "1px solid #e5e7eb" }}
+          style={{ display: "block", width: "100%", height: "auto", objectFit: "contain", borderRadius: 6, border: "1px solid #dce2e8", boxSizing: "border-box", background: "#fff", boxShadow: "0 8px 16px -6px rgba(15,23,42,.25), 0 2px 4px rgba(15,23,42,.08)" }}
         />
       ) : (
         <div style={{
