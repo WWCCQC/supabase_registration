@@ -5,6 +5,7 @@ import { createClient } from '@supabase/supabase-js';
 import ProtectedRoute from '@/components/common/ProtectedRoute';
 import SidebarLayout from '@/components/common/SidebarLayout';
 import * as XLSX from 'xlsx';
+import { RefreshCw } from 'lucide-react';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell, LabelList, PieChart, Pie, ComposedChart, AreaChart, Area } from 'recharts';
 
 interface TransactionItem {
@@ -29,8 +30,7 @@ const MONTH_ALIAS_TO_INDEX = MONTH_ORDER.reduce<Record<string, number>>((acc, mo
   return acc;
 }, {});
 
-const TECH_TRANSACTION_CHART_YEAR = '2026';
-const TECH_TRANSACTION_MONTH_LIMIT = 7;
+const currentThaiYear = () => new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Bangkok', year: 'numeric' }).format(new Date());
 
 function getMonthIndex(month: string): number {
   const normalized = String(month || '').trim().toLowerCase();
@@ -53,6 +53,8 @@ function TechTransactionContent() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
+  const [chartUpdatedAt, setChartUpdatedAt] = useState<Date | null>(null);
+  const [chartRefreshing, setChartRefreshing] = useState(false);
 
   // DB counts for accurate statistics
   const [dbTotalTransactions, setDbTotalTransactions] = useState<number>(0);
@@ -320,6 +322,7 @@ function TechTransactionContent() {
   };
 
   const fetchAllData = async () => {
+    setChartRefreshing(true);
     try {
       console.log('📥 Fetching all transaction data directly from DB...');
 
@@ -355,7 +358,7 @@ function TechTransactionContent() {
 
         if (batchError) {
           console.error('❌ Error fetching batch', currentBatch, ':', batchError);
-          break;
+          throw batchError;
         }
 
         if (batchData && batchData.length > 0) {
@@ -372,14 +375,10 @@ function TechTransactionContent() {
           hasMore = false;
         }
 
-        // Safety limit
-        if (currentBatch > 10) {
-          console.warn('⚠️ Reached batch limit of 10');
-          break;
-        }
       }
 
       setAllData(allRecords);
+      setChartUpdatedAt(new Date());
 
       // Debug: Check what months are in the data
       const monthsInData = [...new Set(allRecords.map((item: any) => item.Month).filter(Boolean))];
@@ -388,6 +387,9 @@ function TechTransactionContent() {
       console.log('🗓️ First 5 records:', allRecords.slice(0, 5));
     } catch (err: any) {
       console.error('❌ Error fetching all data:', err);
+      setError('โหลดข้อมูลกราฟไม่สำเร็จ กรุณารีเฟรชข้อมูลอีกครั้ง');
+    } finally {
+      setChartRefreshing(false);
     }
   };
 
@@ -763,8 +765,8 @@ function TechTransactionContent() {
     const isFiltered = selectedYears.length > 0 || selectedMonths.length > 0 || selectedWeeks.length > 0 || selectedDates.length > 0;
     let finalChartArray = chartArray;
     if (!isFiltered) {
-      const now = new Date();
-      const currentYM = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+      const parts = new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Bangkok', year: 'numeric', month: '2-digit' }).formatToParts(new Date());
+      const currentYM = `${parts.find(part => part.type === 'year')?.value}-${parts.find(part => part.type === 'month')?.value}`;
       finalChartArray = chartArray.filter(item => item.date.startsWith(currentYM));
     }
 
@@ -805,7 +807,8 @@ function TechTransactionContent() {
     const monthGroups: { [key: string]: { new: number; resigned: number; year: string; monthIndex: number } } = {};
 
     chartSourceData.forEach(item => {
-      const month = (item.Month || '').trim();
+      const rawMonth = (item.Month || '').trim();
+      const month = MONTH_ORDER[getMonthIndex(rawMonth)] || rawMonth;
       const year = String(item.Year || '').trim();
       if (!month || !year) return;
       const monthYearKey = `${month} ${year}`;
@@ -848,18 +851,18 @@ function TechTransactionContent() {
     return chartArray;
   }, [allData, selectedYears, selectedMonths, selectedWeeks, selectedDates, selectedCard]);
 
-  const monthlyChart2026Data = useMemo(() => {
-    return MONTH_ORDER
-      .slice(0, TECH_TRANSACTION_MONTH_LIMIT)
+  const monthlyComparisonData = useMemo(() => {
+    const years = selectedYears.length ? [...selectedYears].sort((a, b) => Number(a) - Number(b)) : [currentThaiYear()];
+    return years.flatMap(year => MONTH_ORDER
       .map((month, monthIndex) => {
         const existing = monthlyChartData.find(
-          item => item.year === TECH_TRANSACTION_CHART_YEAR && item.monthIndex === monthIndex
+          item => item.year === year && item.monthIndex === monthIndex
         );
 
         return {
-          month: `${month} ${TECH_TRANSACTION_CHART_YEAR}`,
+          month: `${month} ${year}`,
           monthOnly: month,
-          year: TECH_TRANSACTION_CHART_YEAR,
+          year,
           monthIndex,
           'ช่างใหม่': existing?.['ช่างใหม่'] ?? 0,
           'ช่างลาออก': existing?.['ช่างลาออก'] ?? 0
@@ -868,8 +871,8 @@ function TechTransactionContent() {
       .filter(item => (
         selectedMonths.length === 0 ||
         selectedMonths.some(month => getMonthIndex(month) === item.monthIndex)
-      ));
-  }, [monthlyChartData, selectedMonths]);
+      )));
+  }, [monthlyChartData, selectedMonths, selectedYears]);
 
   // Prepare RSM chart data
   const rsmChartData = useMemo(() => {
@@ -1150,7 +1153,7 @@ function TechTransactionContent() {
           color: '#1f2937',
           marginBottom: '24px'
         }}>
-          Tech-Transaction (2026) : update ทุกวันเวลา 8.00 น.
+          Tech-Transaction ({currentThaiYear()})
         </h1>
 
 
@@ -2121,11 +2124,17 @@ function TechTransactionContent() {
           </button>
         </div>
 
-        {/* Charts Section - Side by Side */}
-        {chartData.length > 0 && (
+        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '12px', marginBottom: '12px' }}>
+        {chartUpdatedAt && <p style={{ fontSize: '12px', color: '#64748b', margin: 0 }}>
+          ข้อมูลกราฟโหลดล่าสุด: {chartUpdatedAt.toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' })} (เวลาไทย)
+        </p>}
+        <button type="button" disabled={chartRefreshing} onClick={() => { fetchAllData(); fetchFilterOptions(); }} title="รีเฟรชข้อมูลกราฟ" aria-label="รีเฟรชข้อมูลกราฟ" style={{ padding: '8px', border: '1px solid #d1d5db', borderRadius: '6px', background: 'white', cursor: chartRefreshing ? 'wait' : 'pointer' }}><RefreshCw size={18} /></button>
+        </div>
+        {/* Give each timeline enough space for every period. */}
+        {(chartData.length > 0 || monthlyComparisonData.length > 0) && (
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(500px, 1fr))',
+            gridTemplateColumns: 'minmax(0, 1fr)',
             gap: '24px',
             marginBottom: '32px'
           }}>
@@ -2150,17 +2159,22 @@ function TechTransactionContent() {
                   color: '#1e3a8a',
                   margin: 0
                 }}>
-                  (แสดงข้อมูลเดือนปัจจุบัน)
+                  {selectedYears.length || selectedMonths.length || selectedWeeks.length || selectedDates.length
+                    ? '(แสดงข้อมูลตามตัวกรองที่เลือก)'
+                    : '(แสดงข้อมูลเดือนปัจจุบันตามเวลาไทย)'}
                 </p>
               </div>
-              <ResponsiveContainer width="100%" height={500}>
+              {chartData.length === 0 ? <p style={{ color: '#64748b' }}>ไม่พบข้อมูลรายวันในช่วงที่เลือก</p> : <div style={{ overflowX: 'auto' }}>
+              <div style={{ minWidth: Math.max(680, chartData.length * 48) }}>
+              <ResponsiveContainer width="100%" height={380}>
                 <LineChart
                   data={chartData}
-                  margin={{ top: 160, right: 30, left: 20, bottom: 80 }}
+                  margin={{ top: 35, right: 30, left: 10, bottom: 15 }}
                 >
                   <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                   <XAxis
                     dataKey="date"
+                    interval={0}
                     stroke="#6b7280"
                     style={{ fontSize: '11px' }}
                     angle={-45}
@@ -2217,10 +2231,12 @@ function TechTransactionContent() {
                   />
                 </LineChart>
               </ResponsiveContainer>
+              </div>
+              </div>}
             </div>
 
             {/* Monthly Bar Chart */}
-            {monthlyChart2026Data.length > 0 && (
+            {monthlyComparisonData.length > 0 && (
               <div style={{
                 backgroundColor: '#f9fafb',
                 borderRadius: '12px',
@@ -2236,21 +2252,23 @@ function TechTransactionContent() {
                 }}>
                   ช่างใหม่ vs ช่างลาออก รายเดือน
                 </h2>
-                <ResponsiveContainer width="100%" height={500}>
+                <div style={{ overflowX: 'auto' }}>
+                <div style={{ minWidth: Math.max(960, monthlyComparisonData.length * 95) }}>
+                <ResponsiveContainer width="100%" height={420}>
                   <ComposedChart
-                    data={monthlyChart2026Data.map(item => ({
+                    data={monthlyComparisonData.map(item => ({
                       name: `${item.monthOnly?.substring(0, 3) || item.month.substring(0, 3)} ${item.year?.slice(-2) || ''}`.trim(),
                       month: item.month,
                       newTech: item['ช่างใหม่'],
                       resignation: item['ช่างลาออก'],
                       netChange: item['ช่างใหม่'] - item['ช่างลาออก']
                     }))}
-                    margin={{ top: 5, right: 30, left: 20, bottom: 20 }}
+                    margin={{ top: 55, right: 20, left: 10, bottom: 20 }}
                   >
                     <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                    <XAxis dataKey="name" />
-                    <YAxis yAxisId="left" tick={false} />
-                    <YAxis yAxisId="right" orientation="right" tick={false} />
+                    <XAxis dataKey="name" interval={0} tick={{ fontSize: 12 }} />
+                    <YAxis yAxisId="left" tick={false} width={15} />
+                    <YAxis yAxisId="right" orientation="right" tick={false} width={15} />
                     <Tooltip
                       content={({ active, payload }: any) => {
                         if (active && payload && payload.length) {
@@ -2326,7 +2344,7 @@ function TechTransactionContent() {
                       name="Net Change"
                       label={(props: any) => {
                         const { x, y, value, index } = props;
-                        const data = monthlyChart2026Data[index];
+                        const data = monthlyComparisonData[index];
                         if (!data) return null;
 
                         const netChange = data['ช่างใหม่'] - data['ช่างลาออก'];
@@ -2363,6 +2381,8 @@ function TechTransactionContent() {
                     />
                   </ComposedChart>
                 </ResponsiveContainer>
+                </div>
+                </div>
               </div>
             )}
           </div>
