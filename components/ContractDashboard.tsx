@@ -76,7 +76,10 @@ export default function ContractDashboard() {
     return (aIndex === -1 ? contractStatusOrder.length : aIndex) - (bIndex === -1 ? contractStatusOrder.length : bIndex);
   }), [filtered]);
   const reasons = useMemo(() => groupContracts(filtered, 'installation_status'), [filtered]);
-  const pages = Math.max(1, Math.ceil(filtered.length / size));
+  // ค่าเริ่มต้นแสดงเฉพาะ Active; เมื่อมีการค้นหาหรือใช้ตัวกรอง จะแสดงทุกสถานะตามเงื่อนไข
+  const isFiltering = query.trim() !== '' || Object.values(filters).some(Boolean);
+  const tableRows = useMemo(() => isFiltering ? filtered : filtered.filter(row => contractValue(row.active_status).toLowerCase() === 'active'), [filtered, isFiltering]);
+  const pages = Math.max(1, Math.ceil(tableRows.length / size));
   const current = Math.min(page, pages);
   const changeFilter = (key: string, value: string) => { setFilters(previous => ({ ...previous, [key]: value })); setPage(1); };
   const exportExcel = async () => {
@@ -86,10 +89,10 @@ export default function ContractDashboard() {
       const XLSX = await import('xlsx');
       const sheet = XLSX.utils.aoa_to_sheet([
         contractColumns.map(([, label]) => label),
-        ...filtered.map(row => contractColumns.map(([key]) => String(row[key] ?? ''))),
+        ...tableRows.map(row => contractColumns.map(([key]) => String(row[key] ?? ''))),
       ]);
       sheet['!cols'] = contractColumns.map(([key, label]) => ({
-        wch: Math.min(60, Math.max(16, label.length + 2, ...filtered.map(row => String(row[key] ?? '').length + 2))),
+        wch: Math.min(60, Math.max(16, label.length + 2, ...tableRows.map(row => String(row[key] ?? '').length + 2))),
       }));
       sheet['!autofilter'] = { ref: sheet['!ref']! };
       const workbook = XLSX.utils.book_new();
@@ -116,9 +119,9 @@ export default function ContractDashboard() {
         <button title="ล้างตัวกรอง" aria-label="ล้างตัวกรอง" onClick={() => { setFilters({}); setQuery(''); setPage(1); }}><X size={18} /></button>
       </div>
        <section className={styles.reasons}><h3>รายละเอียดสถานะสัญญา · {number(filtered.length)} ราย</h3>{reasons.length ? <div className={styles.bars}>{reasons.map(([reason, count]) => <div key={reason} className={styles.barRow}><span>{reason}</span><div className={styles.track}><div style={{ width: `${count / filtered.length * 100}%` }} /></div><strong>{number(count)} <small>({(count / filtered.length * 100).toFixed(1)}%)</small></strong></div>)}</div> : <p>ไม่พบข้อมูลตามเงื่อนไข</p>}</section>
-      <section><div className={styles.header}><h3>รายละเอียดสัญญา</h3><div className={styles.tableActions}><span>{number(filtered.length)} รายการ</span><button type="button" onClick={exportExcel} disabled={loading || exporting || !filtered.length}><Download size={17} aria-hidden="true" />{exporting ? 'กำลังส่งออก...' : 'Export Excel'}</button></div></div>
+      <section><div className={styles.header}><h3>รายละเอียดสัญญา</h3><div className={styles.tableActions}><span>{number(tableRows.length)} รายการ</span><button type="button" onClick={exportExcel} disabled={loading || exporting || !tableRows.length}><Download size={17} aria-hidden="true" />{exporting ? 'กำลังส่งออก...' : 'Export Excel'}</button></div></div>
         {exportError && <p role="alert" className={styles.error}>{exportError}</p>}
-        <div className={styles.tableWrap} tabIndex={0} role="region" aria-label="ตารางรายละเอียดสัญญา"><table><thead><tr>{contractColumns.map(([key, label]) => <th key={key} title={key}>{label}</th>)}</tr></thead><tbody>{filtered.slice((current - 1) * size, current * size).map(row => <tr key={row.company_registration_no}>{contractColumns.map(([key]) => <td key={key}>{contractValue(row[key])}</td>)}</tr>)}{!filtered.length && <tr><td colSpan={contractColumns.length}>ไม่พบข้อมูลตามเงื่อนไข</td></tr>}</tbody></table></div>
+        <div className={styles.tableWrap} tabIndex={0} role="region" aria-label="ตารางรายละเอียดสัญญา"><table><thead><tr>{contractColumns.map(([key, label]) => <th key={key} title={key}>{label}</th>)}</tr></thead><tbody>{tableRows.slice((current - 1) * size, current * size).map(row => <tr key={row.company_registration_no}>{contractColumns.map(([key]) => <td key={key}>{contractValue(row[key])}</td>)}</tr>)}{!tableRows.length && <tr><td colSpan={contractColumns.length}>ไม่พบข้อมูลตามเงื่อนไข</td></tr>}</tbody></table></div>
         <div className={styles.footer}><label>แถวต่อหน้า <select value={size} onChange={event => { setSize(Number(event.target.value)); setPage(1); }}>{[25, 50, 100].map(value => <option key={value}>{value}</option>)}</select></label><span>หน้า {current} / {pages}</span><button title="หน้าก่อนหน้า" aria-label="หน้าก่อนหน้า" disabled={current === 1} onClick={() => setPage(current - 1)}><ChevronLeft size={18} /></button><button title="หน้าถัดไป" aria-label="หน้าถัดไป" disabled={current === pages} onClick={() => setPage(current + 1)}><ChevronRight size={18} /></button></div>
       </section>
     </>}
