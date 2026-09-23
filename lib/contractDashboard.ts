@@ -7,7 +7,7 @@ export const contractColumns = [
   ['contract_no', 'เลขที่สัญญา'],
   ['total_contract_guarantee_amount', 'วงเงินค้ำประกันรวม'],
   ['contract_technician_team_count', 'จำนวนทีมช่าง'], ['bg_status', 'สถานะ BG'],
-  ['installation_status', 'เหตุผล'], ['email', 'อีเมล'],
+  ['installation_status', 'เหตุผล'],
 ] as const;
 export const contractValue = (value: string | null | undefined) => value?.trim() || 'ไม่ระบุ';
 export function groupContracts(rows: ContractRow[], column: string) {

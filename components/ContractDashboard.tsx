@@ -78,7 +78,14 @@ export default function ContractDashboard() {
   const reasons = useMemo(() => groupContracts(filtered, 'installation_status'), [filtered]);
   // ค่าเริ่มต้นแสดงเฉพาะ Active; เมื่อมีการค้นหาหรือใช้ตัวกรอง จะแสดงทุกสถานะตามเงื่อนไข
   const isFiltering = query.trim() !== '' || Object.values(filters).some(Boolean);
-  const tableRows = useMemo(() => isFiltering ? filtered : filtered.filter(row => contractValue(row.active_status).toLowerCase() === 'active'), [filtered, isFiltering]);
+  // เปิดหน้าปกติ: แสดงเฉพาะ Active และเรียง RBM จากน้อยไปมาก / ค้นหาหรือกรอง: แสดงทุกสถานะตามลำดับเดิม
+  const tableRows = useMemo(() => isFiltering ? filtered : filtered
+    .filter(row => contractValue(row.active_status).toLowerCase() === 'active')
+    .sort((a, b) => {
+      const aRbm = contractValue(a.rbm);
+      const bRbm = contractValue(b.rbm);
+      return rbmRank(aRbm) - rbmRank(bRbm) || aRbm.localeCompare(bRbm, 'th', { numeric: true });
+    }), [filtered, isFiltering]);
   const pages = Math.max(1, Math.ceil(tableRows.length / size));
   const current = Math.min(page, pages);
   const changeFilter = (key: string, value: string) => { setFilters(previous => ({ ...previous, [key]: value })); setPage(1); };
