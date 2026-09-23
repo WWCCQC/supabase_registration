@@ -14,6 +14,11 @@ test('Contract appears in the main sidebar menu and links to its page', () => {
   assert.ok(contractLinkStart > mainMenuStart, 'Contract must be in the main menu');
   assert.ok(contractLinkStart < managedMenuStart, 'Contract must appear before the managed-data section');
   assert.match(sidebar.slice(contractLinkStart, managedMenuStart), />Contract</);
+  const adminGuardStart = sidebar.lastIndexOf('{isAdmin() && (', contractLinkStart);
+  const previousLinkEnd = sidebar.lastIndexOf('</Link>', contractLinkStart);
+  const adminGuardEnd = sidebar.indexOf(')}', contractLinkStart);
+  assert.ok(adminGuardStart > previousLinkEnd, 'Contract menu must have an admin-only guard');
+  assert.ok(adminGuardEnd > contractLinkStart && adminGuardEnd < managedMenuStart);
 });
 
 test('Contract page provides the three requested tabs with Track C selected first', () => {
@@ -26,5 +31,5 @@ test('Contract page provides the three requested tabs with Track C selected firs
   assert.match(page, /role="tablist"/);
   assert.match(page, /role="tab"/);
   assert.match(page, /aria-selected=/);
-  assert.match(page, /ProtectedRoute/);
+  assert.match(page, /<ProtectedRoute requiredRole="admin">/);
 });

@@ -69,16 +69,18 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle }) => {
           {!collapsed && <span className="snav-text">หน้าหลัก</span>}
         </Link>
 
-        <Link
-          href="/contract"
-          className={itemClass(pathname === '/contract')}
-          title="Contract"
-        >
-          <span className="snav-icon">
-            <FileText style={{ fill: 'none' }} aria-hidden="true" />
-          </span>
-          {!collapsed && <span className="snav-text">Contract</span>}
-        </Link>
+        {isAdmin() && (
+          <Link
+            href="/contract"
+            className={itemClass(pathname === '/contract')}
+            title="Contract"
+          >
+            <span className="snav-icon">
+              <FileText style={{ fill: 'none' }} aria-hidden="true" />
+            </span>
+            {!collapsed && <span className="snav-text">Contract</span>}
+          </Link>
+        )}
 
         {/* Admin/Manager section */}
         {(isAdmin() || isManager()) && (

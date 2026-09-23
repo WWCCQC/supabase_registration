@@ -12,7 +12,10 @@ export async function GET(request: NextRequest) {
   try {
     if (!token) throw new Error('Missing token');
     const { payload } = await jwtVerify(token, new TextEncoder().encode(secret), { algorithms: ['HS256'] });
-    if (!payload.userId || !['admin', 'manager', 'user'].includes(String(payload.role))) throw new Error('Invalid user');
+    if (!payload.userId) throw new Error('Invalid user');
+    if (payload.role !== 'admin') {
+      return NextResponse.json({ error: 'ไม่มีสิทธิ์เข้าถึงข้อมูลสัญญา' }, { status: 403, headers });
+    }
   } catch {
     return NextResponse.json({ error: 'กรุณาเข้าสู่ระบบใหม่' }, { status: 401, headers });
   }

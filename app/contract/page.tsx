@@ -32,7 +32,7 @@ export default function ContractPage() {
   );
 
   return (
-    <ProtectedRoute>
+    <ProtectedRoute requiredRole="admin">
       <SidebarLayout navigation={navigation}>
         <section
           id="contract-tab-panel"
