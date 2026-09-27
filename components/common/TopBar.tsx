@@ -9,43 +9,14 @@ interface TopBarProps {
   sidebarCollapsed: boolean;
 }
 
-function formatEnDateTime(isoString: string): string {
-  const d = new Date(isoString);
-  const date = d.toLocaleDateString('en-GB', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    timeZone: 'Asia/Bangkok',
-  });
-  const time = d.toLocaleTimeString('en-GB', {
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-    timeZone: 'Asia/Bangkok',
-  });
-  return `${date} ${time}`;
-}
-
 const TopBar: React.FC<TopBarProps> = ({ onToggleSidebar, sidebarCollapsed }) => {
   const { user } = useAuth();
-  const [lastUpdated, setLastUpdated] = React.useState<string | null>(null);
-
-  React.useEffect(() => {
-    fetch('/api/meta/last-updated')
-      .then((r) => r.json())
-      .then((d) => { if (d.lastUpdated) setLastUpdated(d.lastUpdated); })
-      .catch(() => {});
-  }, []);
 
   return (
     <div className="topbar">
-      {/* Data last updated — left side */}
+      {/* Office label — left side */}
       <div className="topbar-chip" style={{ marginRight: 'auto' }}>
-        <span style={{ opacity: 0.8 }}>🕐</span>
-        <span>
-          Data updated as{' '}
-          <strong>{lastUpdated ? formatEnDateTime(lastUpdated) : '—'}</strong>
-        </span>
+        <span style={{ fontWeight: 700 }}>W&amp;W : Strategic Assurance Office/Last-Mile Service Management</span>
       </div>
 
       {/* Mobile hamburger */}

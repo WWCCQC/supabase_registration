@@ -8,6 +8,7 @@ import { TECHNICIAN_TABLE_COLUMNS } from "../lib/technicianTableColumns";
 import { useAuth } from "@/lib/useAuth";
 import PivotTableComponent from "./tables/PivotTable";
 import TechnicianCountTable from "./tables/TechnicianCountTable";
+import DataUpdatedChip from "./common/DataUpdatedChip";
 import WorkgroupCountTable from "./tables/WorkgroupCountTable";
 import {
   BarChart,
@@ -1213,6 +1214,7 @@ export default function TechBrowser() {
           <div style={{ fontSize: "14px", fontWeight: 700, color: "rgba(255,255,255,0.92)", letterSpacing: "0.3px" }}>
             📊 ข้อมูลสรุป (Dashboard)
           </div>
+          <DataUpdatedChip style={{ marginLeft: "auto" }} />
         </div>
 
         {/* Row 1: All cards in single row */}
