@@ -4,7 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/useAuth';
-import { ChartNoAxesCombined, ClipboardCheck, FileText } from 'lucide-react';
+import { ChartNoAxesCombined, ClipboardCheck, FileText, UsersRound } from 'lucide-react';
 
 interface SidebarProps {
   collapsed: boolean;
@@ -67,6 +67,17 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle }) => {
             </svg>
           </span>
           {!collapsed && <span className="snav-text">หน้าหลัก</span>}
+        </Link>
+
+        <Link
+          href="/admin-directory"
+          className={itemClass(pathname === '/admin-directory')}
+          title="รายชื่อแอดมิน"
+        >
+          <span className="snav-icon">
+            <UsersRound style={{ fill: 'none' }} aria-hidden="true" />
+          </span>
+          {!collapsed && <span className="snav-text">รายชื่อแอดมิน</span>}
         </Link>
 
         {isAdmin() && (

@@ -11,6 +11,7 @@ const PROTECTED_PATHS = [
   '/chart',
   '/blacklist',
   '/admin',
+  '/admin-directory',
   '/ww-provider'
 ];
 
@@ -73,7 +74,7 @@ export async function middleware(request: NextRequest) {
     const userRole = (payload as any).role;
 
     // เช็ค role permissions
-    if (ADMIN_ONLY_PATHS.some(path => pathname.startsWith(path))) {
+    if (ADMIN_ONLY_PATHS.some(path => pathname === path || pathname.startsWith(`${path}/`))) {
       if (userRole !== 'admin') {
         // User/Manager ไม่ได้เข้าหน้า admin - ส่งไปหน้าหลัก
         return NextResponse.redirect(new URL('/', request.url));
@@ -126,6 +127,8 @@ export const config = {
     '/blacklist/:path*',
     '/admin',
     '/admin/:path*',
+    '/admin-directory',
+    '/admin-directory/:path*',
     '/test-login',
     '/test-login/:path*'
   ],
