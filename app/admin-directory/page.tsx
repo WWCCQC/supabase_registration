@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import * as XLSX from 'xlsx';
 import ProtectedRoute from '@/components/common/ProtectedRoute';
 import SidebarLayout from '@/components/common/SidebarLayout';
+import SalesDirectory from './SalesDirectory';
 import styles from './page.module.css';
 
 type AdminTab = 'tol' | 'sales';
@@ -403,7 +404,7 @@ function AdminDirectoryContent() {
               )}
           </div>
         ) : (
-          <div className={styles.emptyState}>ยังไม่มีข้อมูลแอดมินงานขาย</div>
+          <SalesDirectory />
         )}
 
         {preview && (
