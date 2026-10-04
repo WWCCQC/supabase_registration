@@ -1,6 +1,8 @@
 'use client';
+/* eslint-disable @next/next/no-img-element */
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import * as XLSX from 'xlsx';
 import ProtectedRoute from '@/components/common/ProtectedRoute';
 import SidebarLayout from '@/components/common/SidebarLayout';
@@ -13,11 +15,13 @@ type TolAdmin = {
   uuid: string;
   staff_code: string | null;
   new_image: string | null;
+  image: string | null;
   region: string | null;
   province: string | null;
   depot_code: string | null;
   sub_name: string | null;
   staff_name: string | null;
+  phone_no: string | null;
   function_admin: string | null;
   training_date: string | null;
 };
@@ -36,7 +40,7 @@ function toImageSrc(url: string, size: number): string {
     : url;
 }
 
-const columns: { key: Exclude<keyof TolAdmin, 'uuid' | 'staff_code'>; label: string }[] = [
+const columns: { key: Exclude<keyof TolAdmin, 'uuid' | 'staff_code' | 'phone_no' | 'image'>; label: string }[] = [
   { key: 'new_image', label: 'Picture' },
   { key: 'region', label: 'RBM' },
   { key: 'province', label: 'Province' },
@@ -63,7 +67,9 @@ function AdminDirectoryContent() {
   const [admins, setAdmins] = useState<TolAdmin[]>([]);
   const [query, setQuery] = useState('');
   const [page, setPage] = useState(1);
-  const [preview, setPreview] = useState<{ src: string; name: string } | null>(null);
+  const [selectedAdmin, setSelectedAdmin] = useState<TolAdmin | null>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const openerRef = useRef<HTMLTableRowElement | null>(null);
   const [updatedAt, setUpdatedAt] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -180,11 +186,29 @@ function AdminDirectoryContent() {
   useEffect(() => { setPage(1); }, [query]);
 
   useEffect(() => {
-    if (!preview) return;
-    const onKey = (event: KeyboardEvent) => { if (event.key === 'Escape') setPreview(null); };
+    if (!selectedAdmin) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    closeButtonRef.current?.focus();
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setSelectedAdmin(null);
+      if (event.key === 'Tab') {
+        event.preventDefault();
+        closeButtonRef.current?.focus();
+      }
+    };
     window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [preview]);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener('keydown', onKey);
+      openerRef.current?.focus();
+    };
+  }, [selectedAdmin]);
+
+  const openAdmin = (admin: TolAdmin, row: HTMLTableRowElement) => {
+    openerRef.current = row;
+    setSelectedAdmin(admin);
+  };
 
   const handleExport = () => {
     const rows = filteredAdmins.map((admin) =>
@@ -278,11 +302,11 @@ function AdminDirectoryContent() {
               <table className={`${styles.table} ${styles.summaryTable}`}>
                 <thead>
                   <tr>
-                    <th>region</th>
-                    <th className={styles.num}>depot_code</th>
+                    <th>RBM</th>
+                    <th className={styles.num}>Depot</th>
                     <th className={styles.num}>จำนวนแอดมิน</th>
-                    <th className={styles.groupStart}>depot_code</th>
-                    <th>sub_name</th>
+                    <th className={styles.groupStart}>Depot</th>
+                    <th>Depot name</th>
                     <th className={styles.num}>จำนวนแอดมิน</th>
                   </tr>
                 </thead>
@@ -334,7 +358,7 @@ function AdminDirectoryContent() {
                   className={styles.search}
                   value={query}
                   onChange={(event) => setQuery(event.target.value)}
-                  placeholder="ชื่อ, บริษัท, Depot, จังหวัด, Region หรือ Function"
+                  placeholder="ชื่อ, บริษัท, Depot, จังหวัด, RBM หรือ Function"
                   type="search"
                 />
               </div>
@@ -362,18 +386,23 @@ function AdminDirectoryContent() {
                     </thead>
                     <tbody>
                       {pagedAdmins.map((admin) => (
-                        <tr key={admin.uuid}>
+                        <tr
+                          key={admin.uuid}
+                          className={styles.clickableRow}
+                          role="button"
+                          tabIndex={0}
+                          aria-label={`ดูข้อมูลแอดมิน ${admin.staff_name || admin.staff_code || ''}`}
+                          onClick={(event) => openAdmin(admin, event.currentTarget)}
+                          onKeyDown={(event) => {
+                            if (event.key === 'Enter' || event.key === ' ') {
+                              event.preventDefault();
+                              openAdmin(admin, event.currentTarget);
+                            }
+                          }}
+                        >
                           <td>
                             {admin.new_image ? (
-                              <button
-                                type="button"
-                                className={styles.thumbButton}
-                                onClick={() => setPreview({ src: toImageSrc(admin.new_image!, 1600), name: admin.staff_name || '' })}
-                                aria-label={`ขยายรูป ${admin.staff_name || ''}`}
-                              >
-                                {/* eslint-disable-next-line @next/next/no-img-element */}
-                                <img src={toImageSrc(admin.new_image, 160)} alt={admin.staff_name || 'admin'} className={styles.thumb} loading="lazy" referrerPolicy="no-referrer" />
-                              </button>
+                              <img src={toImageSrc(admin.new_image, 160)} alt={admin.staff_name || 'admin'} className={styles.thumb} loading="lazy" referrerPolicy="no-referrer" />
                             ) : <span className={styles.noImage}>—</span>}
                           </td>
                           <td>{admin.region || '—'}</td>
@@ -407,15 +436,52 @@ function AdminDirectoryContent() {
           <SalesDirectory />
         )}
 
-        {preview && (
-          <div className={styles.lightbox} role="dialog" aria-modal="true" aria-label="รูปแอดมิน" onClick={() => setPreview(null)}>
-            <figure className={styles.lightboxInner} onClick={(event) => event.stopPropagation()}>
-              <button type="button" className={styles.lightboxClose} onClick={() => setPreview(null)} aria-label="ปิด">×</button>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={preview.src} alt={preview.name || 'admin'} referrerPolicy="no-referrer" />
-              {preview.name && <figcaption>{preview.name}</figcaption>}
-            </figure>
-          </div>
+        {selectedAdmin && createPortal(
+          <div className={styles.detailOverlay} onClick={() => setSelectedAdmin(null)}>
+            <div
+              className={styles.detailModal}
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="admin-detail-title"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <header className={styles.detailHeader}>
+                <h2 id="admin-detail-title">ข้อมูลแอดมิน: {selectedAdmin.staff_name || selectedAdmin.staff_code || '—'}</h2>
+                <button ref={closeButtonRef} type="button" onClick={() => setSelectedAdmin(null)} aria-label="ปิดข้อมูลแอดมิน">×</button>
+              </header>
+              <div className={styles.detailBody}>
+                <div className={styles.detailPhotoCard}>
+                  <span>รูปแอดมิน</span>
+                  {(selectedAdmin.new_image || selectedAdmin.image) ? (
+                    <img
+                      src={toImageSrc((selectedAdmin.new_image || selectedAdmin.image)!, 1200)}
+                      alt={`รูป ${selectedAdmin.staff_name || 'แอดมิน'}`}
+                      referrerPolicy="no-referrer"
+                    />
+                  ) : <div className={styles.detailNoImage}>ไม่มีรูปภาพ</div>}
+                </div>
+                <div className={styles.detailFields}>
+                  {([
+                    ['รหัสพนักงาน', selectedAdmin.staff_code],
+                    ['ชื่อ นามสกุล', selectedAdmin.staff_name],
+                    ['เบอร์โทรศัพท์', selectedAdmin.phone_no],
+                    ['RBM', selectedAdmin.region],
+                    ['Province', selectedAdmin.province],
+                    ['Depot', selectedAdmin.depot_code],
+                    ['Depot name', selectedAdmin.sub_name],
+                    ['Function', selectedAdmin.function_admin],
+                    ['Training date', selectedAdmin.training_date],
+                  ] as const).map(([label, value]) => (
+                    <div className={styles.detailField} key={label}>
+                      <span>{label}</span>
+                      <strong>{value?.trim() || '—'}</strong>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>,
+          document.body,
         )}
       </section>
     </SidebarLayout>

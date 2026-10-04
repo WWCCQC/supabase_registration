@@ -45,6 +45,7 @@
 .salesSummary {
   display: flex;
   flex-wrap: wrap;
+  justify-content: flex-end;
   gap: 8px;
   margin-bottom: 16px;
 }
@@ -122,6 +123,13 @@
 .table .name { color: #172033; font-weight: 700; }
 .table tbody tr:hover { background: #f8faff; }
 
+.clickableRow { cursor: pointer; }
+.clickableRow:focus-visible {
+  outline: 3px solid #818cf8;
+  outline-offset: -3px;
+  background: #eef2ff;
+}
+
 .message,
 .error,
 .emptyState {
@@ -138,6 +146,13 @@
 .kpiGrid {
   display: grid;
   grid-template-columns: minmax(200px, 1fr) minmax(240px, 1.2fr) minmax(320px, 2fr);
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.salesKpiGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 16px;
   margin-bottom: 20px;
 }
@@ -396,6 +411,125 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
+.detailOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.65);
+}
+
+.detailModal {
+  width: min(1500px, 96vw);
+  max-height: calc(100dvh - 24px);
+  overflow-y: auto;
+  padding: 24px;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+}
+
+.detailHeader {
+  position: sticky;
+  top: -24px;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+  padding: 0 0 14px;
+  background: #fff;
+}
+
+.detailHeader h2 {
+  margin: 0;
+  color: #1f2937;
+  font-size: 20px;
+  overflow-wrap: anywhere;
+}
+
+.detailHeader button {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border: 0;
+  background: transparent;
+  color: #6b7280;
+  font-size: 28px;
+  cursor: pointer;
+}
+
+.detailHeader button:focus-visible {
+  outline: 3px solid #818cf8;
+  border-radius: 8px;
+}
+
+.detailBody {
+  display: grid;
+  grid-template-columns: minmax(240px, 320px) minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+
+.detailPhotoCard {
+  padding: 16px;
+  border: 1px solid #dce2e8;
+  border-radius: 10px;
+  background: #f8fafc;
+  box-shadow: 0 16px 32px -16px rgba(15, 23, 42, 0.28), 0 3px 8px rgba(15, 23, 42, 0.06);
+}
+
+.detailPhotoCard > span,
+.detailField > span {
+  display: block;
+  margin-bottom: 8px;
+  color: #6b7280;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.detailPhotoCard img {
+  display: block;
+  width: 100%;
+  max-height: 65vh;
+  object-fit: contain;
+  border: 1px solid #dce2e8;
+  border-radius: 7px;
+  background: #fff;
+  box-shadow: 0 8px 16px -6px rgba(15, 23, 42, 0.25);
+}
+
+.detailNoImage {
+  padding: 80px 16px;
+  text-align: center;
+  color: #94a3b8;
+}
+
+.detailFields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 12px;
+}
+
+.detailField {
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  background: #f9fafb;
+}
+
+.detailField strong {
+  display: block;
+  color: #111827;
+  font-size: 15px;
+  overflow-wrap: anywhere;
+}
+
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
 @media (max-width: 640px) {
@@ -404,6 +538,18 @@
   .heading h1 { font-size: 24px; }
   .card { padding: 12px; }
   .kpiGrid { grid-template-columns: 1fr; }
+  .salesKpiGrid { grid-template-columns: 1fr; }
   /* On narrow screens horizontal scrolling matters more than sticky headers. */
   .tableWrap { overflow-x: auto; }
+  .detailOverlay { padding: 0; }
+  .detailModal {
+    width: 100vw;
+    height: 100dvh;
+    max-height: none;
+    padding: 16px;
+    border-radius: 0;
+  }
+  .detailHeader { top: -16px; }
+  .detailBody { grid-template-columns: 1fr; }
+  .detailPhotoCard { max-width: 320px; }
 }

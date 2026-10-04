@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
     for (let from = 0; ; from += pageSize) {
       const { data: page, error } = await supabase
         .from('admin_tol')
-        .select('uuid,staff_code,new_image,region,province,depot_code,sub_name,staff_name,function_admin,training_date')
+        .select('uuid,staff_code,new_image,image,region,province,depot_code,sub_name,staff_name,phone_no,function_admin,training_date')
         .order('uuid', { ascending: true })
         .range(from, from + pageSize - 1);
       if (error) throw error;
