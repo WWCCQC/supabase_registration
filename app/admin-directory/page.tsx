@@ -36,19 +36,25 @@ function toImageSrc(url: string, size: number): string {
 }
 
 const columns: { key: Exclude<keyof TolAdmin, 'uuid' | 'staff_code'>; label: string }[] = [
-  { key: 'new_image', label: 'new_image' },
-  { key: 'region', label: 'region' },
-  { key: 'province', label: 'province' },
-  { key: 'depot_code', label: 'depot_code' },
-  { key: 'sub_name', label: 'sub_name' },
-  { key: 'staff_name', label: 'staff_name' },
-  { key: 'function_admin', label: 'function_admin' },
-  { key: 'training_date', label: 'training_date' },
+  { key: 'new_image', label: 'Picture' },
+  { key: 'region', label: 'RBM' },
+  { key: 'province', label: 'Province' },
+  { key: 'depot_code', label: 'Depot' },
+  { key: 'sub_name', label: 'Depot name' },
+  { key: 'staff_name', label: 'Name' },
+  { key: 'function_admin', label: 'Function' },
+  { key: 'training_date', label: 'Training date' },
 ];
 
 const tabs: { id: AdminTab; label: string }[] = [
   { id: 'tol', label: 'แอดมินงานติดตั้งและงานซ่อม(TOL)' },
   { id: 'sales', label: 'แอดมินงานขาย' },
+];
+
+const functionTypes: { key: string; label: string; tone: 'both' | 'install' | 'repair' | 'none' }[] = [
+  { key: 'Install&Repair', label: 'ติดตั้งและซ่อม', tone: 'both' },
+  { key: 'Install Only', label: 'ติดตั้งอย่างเดียว', tone: 'install' },
+  { key: 'Repair Only', label: 'ซ่อมอย่างเดียว', tone: 'repair' },
 ];
 
 function AdminDirectoryContent() {
@@ -57,6 +63,7 @@ function AdminDirectoryContent() {
   const [query, setQuery] = useState('');
   const [page, setPage] = useState(1);
   const [preview, setPreview] = useState<{ src: string; name: string } | null>(null);
+  const [updatedAt, setUpdatedAt] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -67,7 +74,10 @@ function AdminDirectoryContent() {
         if (!response.ok) throw new Error('ไม่สามารถโหลดข้อมูลแอดมินได้');
         return response.json();
       })
-      .then((result: { data: TolAdmin[] }) => setAdmins(result.data))
+      .then((result: { data: TolAdmin[]; updatedAt: string | null }) => {
+        setAdmins(result.data);
+        setUpdatedAt(result.updatedAt);
+      })
       .catch((cause) => {
         if (cause.name !== 'AbortError') setError(cause.message);
       })
@@ -77,22 +87,40 @@ function AdminDirectoryContent() {
     return () => controller.abort();
   }, []);
 
+  const sortedAdmins = useMemo(() => {
+    const cmp = (a: string | null, b: string | null) => {
+      const x = a?.trim() || '';
+      const y = b?.trim() || '';
+      if (!x || !y) return x ? -1 : y ? 1 : 0; // blanks last
+      return x.localeCompare(y, 'th', { numeric: true });
+    };
+    return [...admins].sort((a, b) =>
+      cmp(a.region, b.region) || cmp(a.depot_code, b.depot_code) || cmp(a.staff_name, b.staff_name));
+  }, [admins]);
+
   const filteredAdmins = useMemo(() => {
     const term = query.trim().toLocaleLowerCase();
-    if (!term) return admins;
-    return admins.filter((admin) => [
+    if (!term) return sortedAdmins;
+    return sortedAdmins.filter((admin) => [
       admin.staff_name, admin.sub_name, admin.depot_code, admin.province,
       admin.region, admin.function_admin, admin.training_date,
     ].some((value) => value?.toLocaleLowerCase().includes(term)));
-  }, [admins, query]);
+  }, [sortedAdmins, query]);
 
   const totalPages = Math.max(1, Math.ceil(filteredAdmins.length / PAGE_SIZE));
   const currentPage = Math.min(page, totalPages);
   const pagedAdmins = filteredAdmins.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
-  const uniqueAdminCount = useMemo(() => new Set(
-    filteredAdmins.map((admin) => admin.staff_code?.trim() || `row:${admin.uuid}`),
-  ).size, [filteredAdmins]);
+  const updatedLabel = useMemo(() => {
+    if (!updatedAt) return null;
+    const date = new Date(updatedAt);
+    if (Number.isNaN(date.getTime())) return null;
+    return date.toLocaleString('en-GB', {
+      timeZone: 'Asia/Bangkok',
+      day: '2-digit', month: '2-digit', year: 'numeric',
+      hour: '2-digit', minute: '2-digit', hour12: false,
+    });
+  }, [updatedAt]);
 
   const regionSummary = useMemo(() => {
     const clean = (value: string | null) => value?.trim() || '';
@@ -128,6 +156,24 @@ function AdminDirectoryContent() {
       })).sort((a, b) => byText(a.depotCode, b.depotCode)),
     })).sort((a, b) => byText(a.region, b.region));
     return { rows, totalDepots: allDepots.size, totalAdmins: allStaff.size };
+  }, [admins]);
+
+  const overview = useMemo(() => {
+    const clean = (value: string | null) => value?.trim() || '';
+    // One function per person: a staff_code can appear on several rows, keep the first non-empty value.
+    const functionByStaff = new Map<string, string>();
+    for (const admin of admins) {
+      const staff = clean(admin.staff_code) || `row:${admin.uuid}`;
+      const fn = clean(admin.function_admin);
+      if (!functionByStaff.get(staff)) functionByStaff.set(staff, fn);
+    }
+    const counts = new Map<string, number>();
+    for (const fn of functionByStaff.values()) counts.set(fn, (counts.get(fn) ?? 0) + 1);
+    const total = functionByStaff.size;
+    const functions = functionTypes.map((type) => ({ ...type, count: counts.get(type.key) ?? 0 }));
+    const known = functions.reduce((sum, item) => sum + item.count, 0);
+    if (total - known > 0) functions.push({ key: '', label: 'ไม่ระบุ', tone: 'none', count: total - known });
+    return { functions, total };
   }, [admins]);
 
   useEffect(() => { setPage(1); }, [query]);
@@ -169,7 +215,7 @@ function AdminDirectoryContent() {
   );
 
   return (
-    <SidebarLayout navigation={navigation}>
+    <SidebarLayout navigation={navigation} className={styles.stickyLayout}>
       <section
         id={`admin-directory-panel-${activeTab}`}
         role="tabpanel"
@@ -179,14 +225,52 @@ function AdminDirectoryContent() {
         <header className={styles.heading}>
           <div>
             <h1>รายชื่อแอดมิน</h1>
-            <p>{activeTab === 'tol' ? 'แอดมินงานติดตั้งและงานซ่อม(TOL)' : 'แอดมินงานขาย'}</p>
           </div>
-          {activeTab === 'tol' && !loading && !error && (
-            <span className={styles.count}>{uniqueAdminCount.toLocaleString()} รายชื่อ</span>
+          {activeTab === 'tol' && !loading && !error && updatedLabel && (
+            <span className={styles.count}>Data updated as {updatedLabel}</span>
           )}
         </header>
 
         {activeTab === 'tol' && !loading && !error && regionSummary.rows.length > 0 && (
+          <>
+          <div className={styles.kpiGrid}>
+            <article className={`${styles.kpiCard} ${styles.kpiBlue}`}>
+              <span className={styles.kpiLabel}>แอดมินทั้งหมด(คน)</span>
+              <strong className={styles.kpiValue}>{regionSummary.totalAdmins.toLocaleString()}</strong>
+            </article>
+
+            <article className={`${styles.kpiCard} ${styles.kpiTeal}`}>
+              <span className={styles.kpiLabel}>จำนวน depot</span>
+              <strong className={styles.kpiValue}>{regionSummary.totalDepots.toLocaleString()}</strong>
+            </article>
+
+            <article className={`${styles.kpiCard} ${styles.kpiWide}`}>
+              <span className={styles.kpiLabel}>แยกตามหน้าที่</span>
+              <div className={styles.fnBar} role="img" aria-label={overview.functions.map((f) => `${f.label} ${f.count} คน`).join(', ')}>
+                {overview.functions.filter((f) => f.count > 0).map((f) => (
+                  <span
+                    key={f.label}
+                    className={styles[`fn_${f.tone}`]}
+                    style={{ flexGrow: f.count }}
+                    title={`${f.label}: ${f.count.toLocaleString()} คน`}
+                  />
+                ))}
+              </div>
+              <ul className={styles.fnLegend}>
+                {overview.functions.map((f) => (
+                  <li key={f.label}>
+                    <span className={`${styles.fnDot} ${styles[`fn_${f.tone}`]}`} aria-hidden="true" />
+                    <span className={styles.fnName}>{f.label}</span>
+                    <strong>{f.count.toLocaleString()}</strong>
+                    <span className={styles.fnPct}>
+                      {overview.total ? Math.round((f.count / overview.total) * 100) : 0}%
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </article>
+          </div>
+
           <div className={`${styles.card} ${styles.summaryCard}`}>
             <h2 className={styles.sectionTitle}>รายชื่อแอดมินตามพื้นที่</h2>
             <div className={`${styles.tableWrap} ${styles.summaryWrap}`}>
@@ -236,6 +320,7 @@ function AdminDirectoryContent() {
               </table>
             </div>
           </div>
+          </>
         )}
 
         {activeTab === 'tol' ? (

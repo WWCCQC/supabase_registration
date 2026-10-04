@@ -34,7 +34,14 @@ export async function GET(request: NextRequest) {
       data.push(...(page ?? []));
       if (!page || page.length < pageSize) break;
     }
-    return NextResponse.json({ data }, {
+    const { data: latest, error: latestError } = await supabase
+      .from('admin_tol')
+      .select('updated_at')
+      .order('updated_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (latestError) throw latestError;
+    return NextResponse.json({ data, updatedAt: latest?.updated_at ?? null }, {
       headers: { 'Cache-Control': 'private, no-store' },
     });
   } catch (error) {

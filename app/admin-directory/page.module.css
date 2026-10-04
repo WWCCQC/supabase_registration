@@ -4,6 +4,16 @@
   background: #f7f9fc;
 }
 
+/* position: sticky only works when no ancestor is a scroll container,
+   so neutralise the layout's overflow rules on this page only. */
+.stickyLayout { overflow-x: clip; }
+.stickyLayout :global(.sidebar-main) { overflow: clip; }
+.stickyLayout :global(.sidebar-content) { overflow: visible; }
+/* globals.css puts overflow-x: hidden on both html and body, which makes body
+   a scroll container that never scrolls — sticky headers would never stick. */
+:global(html):has(.stickyLayout),
+:global(body):has(.stickyLayout) { overflow-x: clip; }
+
 .heading {
   display: flex;
   justify-content: space-between;
@@ -68,14 +78,21 @@
 .tableWrap {
   max-width: 100%;
   margin-top: 18px;
-  overflow-x: auto;
 }
 
 .table {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
   text-align: left;
+}
+
+.table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 3;
   white-space: nowrap;
+  box-shadow: inset 0 -1px 0 #e2e8f0;
 }
 
 .table th,
@@ -107,6 +124,104 @@
 
 .summaryCard { margin-bottom: 20px; }
 
+/* ===== Overview KPI cards ===== */
+.kpiGrid {
+  display: grid;
+  grid-template-columns: minmax(200px, 1fr) minmax(240px, 1.2fr) minmax(320px, 2fr);
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.kpiCard {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 18px 20px;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 6px 24px rgba(15, 23, 42, 0.05);
+  overflow: hidden;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  animation: kpiIn 0.35s ease both;
+}
+
+.kpiCard::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  background: var(--kpi-accent, #12239e);
+}
+
+.kpiCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.09);
+}
+
+.kpiBlue { --kpi-accent: linear-gradient(180deg, #3b5bff, #12239e); }
+.kpiTeal { --kpi-accent: linear-gradient(180deg, #2dd4bf, #0f766e); animation-delay: 0.05s; }
+.kpiWide { --kpi-accent: linear-gradient(180deg, #a78bfa, #6d28d9); animation-delay: 0.1s; }
+
+.kpiLabel { color: #64748b; font-size: 13px; font-weight: 700; }
+
+.kpiValue {
+  display: block;
+  color: #172033;
+  font-size: 32px;
+  font-weight: 800;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+
+.kpiHint { color: #94a3b8; font-size: 12px; }
+
+.kpiPair { display: flex; align-items: center; gap: 20px; }
+.kpiDivider { width: 1px; align-self: stretch; background: #e2e8f0; }
+
+.fnBar {
+  display: flex;
+  height: 12px;
+  margin: 6px 0 4px;
+  border-radius: 999px;
+  background: #f1f5f9;
+  overflow: hidden;
+}
+
+.fnBar > span { min-width: 4px; transition: filter 0.15s ease; }
+.fnBar > span:hover { filter: brightness(1.1); }
+
+.fn_both { background: linear-gradient(90deg, #4f46e5, #7c3aed); }
+.fn_install { background: linear-gradient(90deg, #0ea5e9, #38bdf8); }
+.fn_repair { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+.fn_none { background: #cbd5e1; }
+
+.fnLegend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.fnLegend li { display: flex; align-items: center; gap: 6px; font-size: 13px; color: #334155; }
+.fnLegend strong { color: #172033; font-variant-numeric: tabular-nums; }
+.fnDot { width: 10px; height: 10px; border-radius: 50%; flex: none; }
+.fnName { color: #475569; }
+.fnPct { color: #94a3b8; font-size: 12px; }
+
+@keyframes kpiIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (max-width: 1100px) {
+  .kpiGrid { grid-template-columns: 1fr 1fr; }
+  .kpiWide { grid-column: 1 / -1; }
+}
+
 .sectionTitle {
   margin: 0;
   color: #172033;
@@ -116,25 +231,11 @@
 .summaryTable { width: 100%; }
 
 .summaryWrap {
-  max-height: 70vh;
-  overflow: auto;
   border: 1px solid #e8edf4;
   border-radius: 10px;
 }
 
-.summaryTable thead th {
-  position: sticky;
-  top: 0;
-  z-index: 2;
-  box-shadow: inset 0 -1px 0 #e2e8f0;
-}
-
-.summaryTable tfoot td {
-  position: sticky;
-  bottom: 0;
-  z-index: 2;
-  box-shadow: inset 0 1px 0 #c7d2fe;
-}
+.summaryTable tfoot td { box-shadow: inset 0 1px 0 #c7d2fe; }
 .table .num { text-align: right; font-variant-numeric: tabular-nums; }
 
 .summaryTable .regionCell {
@@ -292,4 +393,7 @@
   .heading { align-items: flex-start; flex-direction: column; }
   .heading h1 { font-size: 24px; }
   .card { padding: 12px; }
+  .kpiGrid { grid-template-columns: 1fr; }
+  /* On narrow screens horizontal scrolling matters more than sticky headers. */
+  .tableWrap { overflow-x: auto; }
 }
