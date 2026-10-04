@@ -152,15 +152,25 @@ export default function SalesDirectory() {
         </div>
       )}
       {!loading && !error && (
-        <div className={styles.salesKpiGrid}>
-          <article className={`${styles.kpiCard} ${styles.kpiBlue}`}>
-            <span className={styles.kpiLabel}>จำนวนแอดมินงานขาย</span>
-            <strong className={styles.kpiValue}>{admins.length.toLocaleString()}</strong>
-          </article>
-          <article className={`${styles.kpiCard} ${styles.kpiTeal}`}>
-            <span className={styles.kpiLabel}>จำนวนบริษัท</span>
-            <strong className={styles.kpiValue}>{companyCount.toLocaleString()}</strong>
-          </article>
+        <div className={styles.directoryOverview}>
+          <div className={styles.directoryOverviewArt}>
+            <img
+              className={styles.directoryOverviewImage}
+              src="https://sggunyytungtyhezchft.supabase.co/storage/v1/object/public/manual/robot_sales.jpg"
+              alt="หุ่นยนต์งานขาย"
+              loading="lazy"
+            />
+          </div>
+          <div className={styles.salesKpiGrid}>
+            <article className={`${styles.kpiCard} ${styles.kpiBlue}`}>
+              <span className={styles.kpiLabel}>จำนวนแอดมินงานขาย</span>
+              <strong className={styles.kpiValue}>{admins.length.toLocaleString()}</strong>
+            </article>
+            <article className={`${styles.kpiCard} ${styles.kpiTeal}`}>
+              <span className={styles.kpiLabel}>จำนวนบริษัท</span>
+              <strong className={styles.kpiValue}>{companyCount.toLocaleString()}</strong>
+            </article>
+          </div>
         </div>
       )}
       <div className={styles.card}>

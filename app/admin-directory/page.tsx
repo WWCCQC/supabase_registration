@@ -258,6 +258,15 @@ function AdminDirectoryContent() {
 
         {activeTab === 'tol' && !loading && !error && regionSummary.rows.length > 0 && (
           <>
+          <div className={styles.directoryOverview}>
+            <div className={styles.directoryOverviewArt}>
+              <img
+                className={styles.directoryOverviewImage}
+                src="https://sggunyytungtyhezchft.supabase.co/storage/v1/object/public/manual/robot_install_repair.jpg"
+                alt="หุ่นยนต์งานติดตั้งและซ่อม"
+                loading="lazy"
+              />
+            </div>
           <div className={styles.kpiGrid}>
             <article className={`${styles.kpiCard} ${styles.kpiBlue}`}>
               <span className={styles.kpiLabel}>แอดมินทั้งหมด(คน)</span>
@@ -294,6 +303,7 @@ function AdminDirectoryContent() {
                 ))}
               </ul>
             </article>
+          </div>
           </div>
 
           <div className={`${styles.card} ${styles.summaryCard}`}>
