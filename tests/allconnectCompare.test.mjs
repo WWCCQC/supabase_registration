@@ -1,7 +1,31 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { readFileSync } from 'node:fs';
-import { calculateWithoutWorkCoverage, calculateWorkingDays, formatRegionBarLabel, parseCompareParams } from '../lib/allconnectCompare.ts';
+import { calculateWithoutWorkCoverage, calculateWorkingDays, formatCompletedWorkType, formatNoWorkWeek, formatNoWorkPeriods, weeklyJobBackground, formatRegionBarLabel, parseCompareParams, parseCompareJobParams } from '../lib/allconnectCompare.ts';
+
+test('weekly job cells are red for zero and progressively greener for positive quantities', () => {
+  assert.equal(weeklyJobBackground(0), '#fde2e5');
+  assert.equal(weeklyJobBackground(1), 'hsl(148, 45%, 93.5%)');
+  assert.notEqual(weeklyJobBackground(10), weeklyJobBackground(1));
+  assert.equal(weeklyJobBackground(10000), 'hsl(148, 45%, 78.0%)');
+});
+
+test('no-work weeks show Monday-Sunday ranges including month boundaries', () => {
+  const period = { month: '2026-09', weekStart: '2026-08-31', weekEnd: '2026-09-06', weekNumber: 36 };
+  assert.equal(formatNoWorkWeek(period), 'Week 36 (31/08 - 06/09)');
+  assert.equal(formatNoWorkPeriods([period]), '2026-09: Week 36 (31/08 - 06/09)');
+  assert.equal(formatNoWorkPeriods([]), '');
+});
+
+test('completed jobs use only heads from allconnect_technicians with the new source columns', () => {
+  const sql = readFileSync(new URL('../create-allconnect-jobs-dashboard.sql', import.meta.url), 'utf8');
+  assert.match(sql, /FROM public\.allconnect_technicians t\s+WHERE btrim\(t\.workgroup_status\) = 'หัวหน้า'/);
+  assert.doesNotMatch(sql, /public\.technicians\b/);
+  for (const column of ['tech_name', 'tech_surename', 'register_date', 'rbm', 'cbm', 'company_type', 'type_of_work', 'update_at']) {
+    assert.ok(sql.includes(`t.${column}`), column);
+  }
+  assert.doesNotMatch(sql, /t\.type_of_work\s*=/);
+});
 
 test('without-work coverage uses only technicians with a comparison result', () => {
   assert.equal(calculateWithoutWorkCoverage(854, 91), 9.6);
@@ -17,17 +41,18 @@ test('working days subtract a valid register date from the current calendar date
   assert.equal(calculateWorkingDays('27/02/2024', new Date(2024, 2, 1, 12, 0, 0)), 3);
 });
 
-test('dashboard comparison reads only Installation leaders from allconnect_technicians', () => {
-  const sql = readFileSync(new URL('../create-allconnect-compare-dashboard.sql', import.meta.url), 'utf8');
-  assert.match(sql, /FROM public\.allconnect_technicians t/);
-  assert.match(sql, /btrim\(t\.type_of_work\) = 'Installation'/);
-  assert.match(sql, /btrim\(t\.workgroup_status\) = 'หัวหน้า'/);
-  assert.doesNotMatch(sql, /FROM public\.technicians t/);
-  for (const obsolete of ['provider_group_type', "job_accept_type) IN", "t.provider) IN"]) {
-    assert.equal(sql.includes(obsolete), false, `obsolete technician filter remains: ${obsolete}`);
-  }
-  for (const mapping of ['t.tech_name', 't.tech_surename', 't.register_date', 't.rbm', 't.cbm', 't.company_type', 't.depot_code', 't.depot_name']) {
-    assert.equal(sql.includes(mapping), true, `missing source mapping: ${mapping}`);
+test('completed work types distinguish installation, repair, both and no completed work', () => {
+  assert.equal(formatCompletedWorkType(3, 0), 'ติดตั้ง');
+  assert.equal(formatCompletedWorkType(0, 2), 'ซ่อม');
+  assert.equal(formatCompletedWorkType(3, 2), 'ติดตั้งและซ่อม');
+  assert.equal(formatCompletedWorkType(0, 0), '-');
+});
+
+test('job filters accept every month or a valid literal year-month', () => {
+  assert.equal(parseCompareJobParams(new URLSearchParams()).p_month, null);
+  assert.equal(parseCompareJobParams(new URLSearchParams({ month: '2026-09', q: '00123' })).p_month, '2026-09');
+  for (const month of ['2026-13', '2026-00', 'Sep', '2026-9']) {
+    assert.throws(() => parseCompareJobParams(new URLSearchParams({ month })));
   }
 });
 

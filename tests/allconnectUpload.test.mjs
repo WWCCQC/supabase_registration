@@ -15,14 +15,14 @@ import {
   validateUploadFile,
 } from '../lib/allconnectUpload.ts';
 
-test('canonical Allconnect contract contains the 103 ordered source headers', () => {
-  assert.equal(ALLCONNECT_HEADERS.length, 103);
-  assert.deepEqual(ALLCONNECT_HEADERS.slice(0, 4), ['SECTION', 'SGMD', 'GMD', 'RNSO']);
-  assert.deepEqual(ALLCONNECT_HEADERS.slice(-4), ['TDS_REGION', 'TDS_PROVINCE', 'L2_PORT', 'FUSION_SPLICE']);
+test('canonical Allconnect contract contains the 23 ordered techcenter headers', () => {
+  assert.equal(ALLCONNECT_HEADERS.length, 23);
+  assert.deepEqual(ALLCONNECT_HEADERS.slice(0, 4), ['Month', 'PERFORMANCE_DATE', 'Primary_Team_RBM', 'Primary_Team_CBM']);
+  assert.deepEqual(ALLCONNECT_HEADERS.slice(-4), ['Job_Install', 'Job_Repair', 'Status_Tech', 'Team_Fucntion']);
 });
 
 test('header validation accepts a BOM and rejects structural differences', () => {
-  assert.deepEqual(validateAllconnectHeaders(['\uFEFFSECTION', ...ALLCONNECT_HEADERS.slice(1)]), { ok: true });
+  assert.deepEqual(validateAllconnectHeaders(['\uFEFFMonth', ...ALLCONNECT_HEADERS.slice(1)]), { ok: true });
   assert.equal(validateAllconnectHeaders(ALLCONNECT_HEADERS.slice(0, -1)).ok, false);
   assert.equal(validateAllconnectHeaders([...ALLCONNECT_HEADERS, 'EXTRA']).ok, false);
   assert.equal(validateAllconnectHeaders([ALLCONNECT_HEADERS[1], ALLCONNECT_HEADERS[0], ...ALLCONNECT_HEADERS.slice(2)]).ok, false);
@@ -30,11 +30,11 @@ test('header validation accepts a BOM and rejects structural differences', () =>
 });
 
 test('row normalization emits every canonical field as text and no unknown fields', () => {
-  const row = normalizeAllconnectRow({ SECTION: 'BMA', SGMD: 1, UNKNOWN: 'drop' });
+  const row = normalizeAllconnectRow({ Month: '2026-09', Job_Install: 1, UNKNOWN: 'drop' });
   assert.deepEqual(Object.keys(row), [...ALLCONNECT_HEADERS]);
-  assert.equal(row.SECTION, 'BMA');
-  assert.equal(row.SGMD, '1');
-  assert.equal(row.GMD, '');
+  assert.equal(row.Month, '2026-09');
+  assert.equal(row.Job_Install, '1');
+  assert.equal(row.STAFF_ID, '');
   assert.equal('UNKNOWN' in row, false);
 });
 
@@ -68,17 +68,17 @@ test('action parser accepts only the four exact action strings', () => {
 
 test('chunk validation accepts 1 through 200 canonical rows and normalizes text', () => {
   assert.equal(typeof upload.validateChunkPayload, 'function');
-  const row = { ...canonicalRow(), SECTION: null, SGMD: 123, HANDLER_ID: '00123' };
+  const row = { ...canonicalRow(), Month: null, Job_Install: 123, STAFF_ID: '00123' };
   for (const size of [1, 2, 200]) {
     const result = upload.validateChunkPayload({ batchId, startRow: 201, rows: Array(size).fill(row) });
     assert.equal(result.batchId, batchId);
     assert.equal(result.startRow, 201);
     assert.equal(result.rows.length, size);
     assert.deepEqual(Object.keys(result.rows[0]), [...ALLCONNECT_HEADERS]);
-    assert.equal(result.rows[0].SECTION, '');
-    assert.equal(result.rows[0].SGMD, '123');
-    assert.equal(result.rows[0].HANDLER_ID, '00123');
-    assert.equal(row.SECTION, null);
+    assert.equal(result.rows[0].Month, '');
+    assert.equal(result.rows[0].Job_Install, '123');
+    assert.equal(result.rows[0].STAFF_ID, '00123');
+    assert.equal(row.Month, null);
   }
 });
 
@@ -110,13 +110,13 @@ test('chunk validation rejects missing, empty, non-array and oversized rows', ()
   }
 });
 
-test('every chunk row must have exactly the ordered 103 source keys', () => {
+test('every chunk row must have exactly the ordered 23 source keys', () => {
   assert.equal(typeof upload.validateChunkPayload, 'function');
   const entries = Object.entries(canonicalRow());
   for (const row of [null, [], 'row', { HANDLER_ID: '1' },
     Object.fromEntries(entries.slice(1)), { ...canonicalRow(), uuid: batchId },
     Object.fromEntries([entries[1], entries[0], ...entries.slice(2)]),
-    Object.fromEntries(entries.map(([key, value]) => [key === 'Shop_code' ? 'SHOP_CODE' : key, value]))]) {
+    Object.fromEntries(entries.map(([key, value]) => [key === 'Team_Fucntion' ? 'Team_Function' : key, value]))]) {
     assert.throws(() => upload.validateChunkPayload({ batchId, startRow: 1, rows: [canonicalRow(), row] }), /row/i);
   }
 });
@@ -276,7 +276,7 @@ test('start returns null snapshot when no live timestamp exists', async t => {
 test('chunk inserts normalized staging payloads with sequential row numbers, never upserts', async t => {
   const { post, calls } = routeHarness(t, [{ status: 201 }]);
   const result = await post({ action: 'chunk', batchId, startRow: 201, rows: [
-    { ...canonicalRow(), HANDLER_ID: '00123' }, { ...canonicalRow(), SECTION: 42 },
+    { ...canonicalRow(), STAFF_ID: '00123' }, { ...canonicalRow(), Month: 42 },
   ] });
   assert.equal(result.status, 200);
   assert.deepEqual(result.body, { acceptedCount: 2 });
@@ -284,9 +284,9 @@ test('chunk inserts normalized staging payloads with sequential row numbers, nev
   assert.equal(calls[0].method, 'POST');
   assert.equal(calls[0].url.pathname, '/rest/v1/allconnect_import_rows');
   assert.deepEqual(calls[0].body.map(row => [row.batch_id, row.row_number]), [[batchId, 201], [batchId, 202]]);
-  assert.equal(calls[0].body[0].payload.HANDLER_ID, '00123');
-  assert.equal(calls[0].body[1].payload.SECTION, '42');
-  assert.equal(Object.keys(calls[0].body[0].payload).length, 103);
+  assert.equal(calls[0].body[0].payload.STAFF_ID, '00123');
+  assert.equal(calls[0].body[1].payload.Month, '42');
+  assert.equal(Object.keys(calls[0].body[0].payload).length, 23);
   assert.ok(!new Headers(calls[0].headers).get('Prefer')?.includes('resolution=merge'));
 });
 

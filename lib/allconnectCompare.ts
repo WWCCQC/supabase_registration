@@ -8,6 +8,8 @@ export interface CompareSummary {
   withoutWork: number;
   pending: number;
   jobCount: number;
+  installCount: number;
+  repairCount: number;
   coverage: number | null;
 }
 
@@ -25,6 +27,15 @@ export interface CompareDepot extends CompareSummary {
   }[];
 }
 
+export interface NoWorkPeriod {
+  month: string;
+  weekStart: string;
+  weekEnd: string;
+  weekNumber: number;
+}
+
+export interface WeeklyJobPeriod extends NoWorkPeriod { jobCount: number }
+
 export interface CompareRow {
   techId: string | null;
   fullName: string;
@@ -37,7 +48,11 @@ export interface CompareRow {
   province: string;
   technicianStatus: string;
   jobCount: number;
+  installCount: number;
+  repairCount: number;
   workStatus: WorkStatus;
+  noWorkPeriods: NoWorkPeriod[];
+  weeklyJobs: WeeklyJobPeriod[];
 }
 
 export interface CompareDashboard {
@@ -50,6 +65,9 @@ export interface CompareDashboard {
     unknownHandlers: number;
     missingTechIds: number;
     duplicateTechIds: number;
+    months: string[];
+    invalidJobRows: number;
+    workPeriods: NoWorkPeriod[];
   };
   summary: CompareSummary;
   regions: CompareRegion[];
@@ -66,6 +84,28 @@ export function formatRegionBarLabel(value: number, total: number) {
 export function calculateWithoutWorkCoverage(withWork: number, withoutWork: number) {
   const comparedTotal = withWork + withoutWork;
   return comparedTotal > 0 ? Math.round(withoutWork * 1000 / comparedTotal) / 10 : null;
+}
+
+export function formatCompletedWorkType(installCount: number, repairCount: number) {
+  if (installCount > 0 && repairCount > 0) return 'ติดตั้งและซ่อม';
+  if (installCount > 0) return 'ติดตั้ง';
+  if (repairCount > 0) return 'ซ่อม';
+  return '-';
+}
+
+export function formatNoWorkWeek(period: NoWorkPeriod) {
+  const dayMonth = (value: string) => `${value.slice(8, 10)}/${value.slice(5, 7)}`;
+  return `Week ${period.weekNumber} (${dayMonth(period.weekStart)} - ${dayMonth(period.weekEnd)})`;
+}
+
+export function formatNoWorkPeriods(periods: NoWorkPeriod[]) {
+  return periods.map(period => `${period.month}: ${formatNoWorkWeek(period)}`).join('\n');
+}
+
+export function weeklyJobBackground(jobCount: number) {
+  if (jobCount <= 0) return '#fde2e5';
+  const lightness = 96 - Math.min(18, Math.log2(jobCount + 1) * 2.5);
+  return `hsl(148, 45%, ${lightness.toFixed(1)}%)`;
 }
 
 export function calculateWorkingDays(cardRegisterDate: string, currentDate = new Date()) {
@@ -112,4 +152,10 @@ export function parseCompareParams(params: URLSearchParams) {
     p_page: integer('page', 1, 1_000_000),
     p_page_size: integer('pageSize', 50, 500),
   };
+}
+
+export function parseCompareJobParams(params: URLSearchParams) {
+  const month = (params.get('month') ?? '').trim();
+  if (month && !/^\d{4}-(0[1-9]|1[0-2])$/.test(month)) throw new Error('Invalid month');
+  return { ...parseCompareParams(params), p_month: month || null };
 }

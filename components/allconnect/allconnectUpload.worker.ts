@@ -11,6 +11,7 @@ self.onmessage = async (event: MessageEvent) => {
   catch { self.postMessage({ type: 'error', message: 'อ่านไฟล์ไม่สำเร็จ' }); return; }
   Papa.parse<Record<string, string>>(source, {
     header: true,
+    delimitersToGuess: ['|', ',', '\t', ';'],
     dynamicTyping: false,
     skipEmptyLines: 'greedy',
     encoding: 'UTF-8',

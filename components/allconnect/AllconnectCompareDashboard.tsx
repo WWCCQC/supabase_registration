@@ -6,7 +6,7 @@ import {
   ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from 'recharts';
 import { AlertCircle, ChevronDown, ChevronLeft, ChevronRight, Download, RefreshCw, Search, X } from 'lucide-react';
-import { calculateWithoutWorkCoverage, calculateWorkingDays, formatRegionBarLabel, type CompareDashboard, type CompareRow, type WorkStatus, type WorkStatusFilter } from '@/lib/allconnectCompare';
+import { calculateWithoutWorkCoverage, calculateWorkingDays, weeklyJobBackground, formatRegionBarLabel, type CompareDashboard, type CompareRow, type WorkStatus, type WorkStatusFilter } from '@/lib/allconnectCompare';
 import styles from './AllconnectCompareDashboard.module.css';
 import AllconnectUpload from './AllconnectUpload';
 import TechniciansUpload from './TechniciansUpload';
@@ -35,7 +35,8 @@ async function getDashboard(params: URLSearchParams, signal?: AbortSignal): Prom
 export default function AllconnectCompareDashboard() {
   const [data, setData] = useState<CompareDashboard | null>(null);
   const [rbm, setRbm] = useState('');
-  const [status, setStatus] = useState<WorkStatusFilter>('without_work');
+  const [month, setMonth] = useState('');
+  const [status, setStatus] = useState<WorkStatusFilter>('all');
   const [search, setSearch] = useState('');
   const [query, setQuery] = useState('');
   const [page, setPage] = useState(1);
@@ -65,7 +66,7 @@ export default function AllconnectCompareDashboard() {
     const controller = new AbortController();
     setLoading(true);
     setError('');
-    const params = new URLSearchParams({ rbm, status, q: query, page: String(page), pageSize: String(pageSize) });
+    const params = new URLSearchParams({ rbm, month, status, q: query, page: String(page), pageSize: String(pageSize) });
     getDashboard(params, controller.signal)
       .then(result => { if (!controller.signal.aborted) setData(result); })
       .catch(cause => {
@@ -73,7 +74,7 @@ export default function AllconnectCompareDashboard() {
       })
       .finally(() => { if (!controller.signal.aborted) setLoading(false); });
     return () => controller.abort();
-  }, [rbm, status, query, page, pageSize, revision]);
+  }, [rbm, month, status, query, page, pageSize, revision]);
 
   function selectRegion(value: string, workStatus?: WorkStatusFilter) {
     setRbm(value);
@@ -85,28 +86,30 @@ export default function AllconnectCompareDashboard() {
     setExporting(true);
     setExportError('');
     try {
-      const params = new URLSearchParams({ rbm, status, q: query, page: '1', pageSize: '500' });
+      const params = new URLSearchParams({ rbm, month, status, q: query, page: '1', pageSize: '500' });
       const first = await getDashboard(params);
       const rows: CompareRow[] = [...first.rows];
       for (let next = 2; next <= first.pagination.totalPages; next++) {
         params.set('page', String(next));
         const result = await getDashboard(params);
-        if (result.pagination.total !== first.pagination.total || result.dataset.updatedAt !== first.dataset.updatedAt) {
+        if (result.pagination.total !== first.pagination.total || result.dataset.updatedAt !== first.dataset.updatedAt ||
+            result.dataset.techniciansUpdatedAt !== first.dataset.techniciansUpdatedAt) {
           throw new Error('ข้อมูลมีการเปลี่ยนแปลงระหว่างส่งออก กรุณาลองอีกครั้ง');
         }
         rows.push(...result.rows);
       }
       const XLSX = await import('xlsx');
-      const headings = ['รหัสช่าง', 'ชื่อช่าง', 'วันเข้าทำงาน', 'วันทำงาน', 'RBM', 'CBM', 'ผู้ให้บริการ', 'รหัสศูนย์', 'ชื่อศูนย์', 'จังหวัด', 'สถานะช่าง', 'ผลเปรียบเทียบ', 'รายการงาน'];
+      const headings = ['รหัสช่าง', 'ชื่อช่าง', 'วันเข้าทำงาน', 'วันทำงาน', 'RBM', 'ผู้ให้บริการ', 'รหัสศูนย์', 'ชื่อศูนย์', 'ผลเปรียบเทียบ', ...first.dataset.workPeriods.map(period => `${period.month} Week ${period.weekNumber}`)];
       const worksheet = XLSX.utils.aoa_to_sheet([headings, ...rows.map(row => [
-        row.techId ?? '', row.fullName, row.cardRegisterDate, calculateWorkingDays(row.cardRegisterDate) ?? '', row.rbm, row.cbm, row.provider,
-        row.depotCode, row.depotName, row.province, row.technicianStatus, WORK_LABELS[row.workStatus], row.jobCount,
+        row.techId ?? '', row.fullName, row.cardRegisterDate, calculateWorkingDays(row.cardRegisterDate) ?? '', row.rbm, row.provider,
+        row.depotCode, row.depotName, WORK_LABELS[row.workStatus], ...first.dataset.workPeriods.map(period => row.weeklyJobs.find(week => week.month === period.month && week.weekStart === period.weekStart)?.jobCount ?? 0),
       ])]);
-      worksheet['!cols'] = headings.map((_, index) => ({ wch: [1, 5, 8].includes(index) ? 32 : 20 }));
+      worksheet['!cols'] = headings.map((_, index) => ({ wch: [1, 5, 7].includes(index) ? 32 : 20 }));
       const workbook = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(workbook, worksheet, 'Technicians');
       XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet([
         ['พื้นที่', rbm || 'ทุกพื้นที่'], ['ผลเปรียบเทียบ', status === 'all' ? 'ทั้งหมด' : WORK_LABELS[status]],
+        ['เดือน', month || 'ทุกเดือน'], ['ทะเบียนช่าง', 'allconnect_technicians'], ['สถานะช่าง', 'หัวหน้า'],
         ['คำค้นหา', query], ['ข้อมูลนำเข้าล่าสุด (เวลาไทย)', dateTime(first.dataset.importedAt)],
         ['รายการ Allconnect ทั้งหมด', first.dataset.totalRows], ['แถวที่ส่งออก', rows.length],
       ]), 'Filters');
@@ -132,6 +135,8 @@ export default function AllconnectCompareDashboard() {
   const selectedTitle = rbm || 'ทุกพื้นที่ RBM';
   const staleSearch = query !== search.trim();
   const busy = loading || staleSearch;
+  const workPeriods = data?.dataset.workPeriods ?? [];
+  const workMonths = [...new Set(workPeriods.map(period => period.month))];
 
   return (
     <div className={styles.dashboard}>
@@ -150,6 +155,12 @@ export default function AllconnectCompareDashboard() {
         </div>
       </header>
       <div className={styles.scopeBar}>
+        <label>เดือนปิดงาน
+          <select value={month} onChange={event => { setMonth(event.target.value); setPage(1); }}>
+            <option value="">ทุกเดือน</option>
+            {data?.dataset.months.map(value => <option key={value} value={value}>{value}</option>)}
+          </select>
+        </label>
         <label>พื้นที่ RBM
           <select value={rbm} onChange={event => selectRegion(event.target.value)}>
             <option value="">ทุกพื้นที่</option>
@@ -161,10 +172,10 @@ export default function AllconnectCompareDashboard() {
         <div className={styles.loadStatus} role="status" aria-live="polite">
           {busy ? 'กำลังโหลดข้อมูล...' : error ? 'โหลดไม่สำเร็จ' : (
             <ul className={styles.scopeNotes}>
-              <li>All connect เป็นข้อมูลงานติดตั้งปัจจุบัน</li>
-              <li>ข้อมูลช่าง = ตาราง allconnect_technicians</li>
-              <li>type_of_work = Installation</li>
-              <li>workgroup_status = หัวหน้า</li>
+              <li>ข้อมูลช่าง = allconnect_technicians</li>
+              <li>สถานะช่าง = หัวหน้า</li>
+              <li>ช่วงข้อมูล: {month || data?.dataset.months.join(', ') || '-'}</li>
+              <li>งานติดตั้ง / งานซ่อม</li>
             </ul>
           )}
         </div>
@@ -179,9 +190,9 @@ export default function AllconnectCompareDashboard() {
         <div className={busy ? styles.updating : undefined} aria-busy={busy}>
           <section className={styles.metrics} aria-label={`สรุป ${selectedTitle}`}>
             <article className={styles.metric}><span>ช่างทั้งหมด</span><strong>{number(data.summary.total)}</strong><small>{selectedTitle}</small></article>
-            <article className={`${styles.metric} ${styles.green}`}><span>ช่างที่พบงาน</span><strong>{number(data.summary.withWork)}</strong><small>พบรหัสใน Allconnect</small></article>
+            <article className={`${styles.metric} ${styles.green}`}><span>ช่างที่พบงาน</span><strong>{number(data.summary.withWork)}</strong><small>มีงานที่ปิดในช่วงที่เลือก</small></article>
             <article className={`${styles.metric} ${styles.teal}`}><span>สัดส่วนช่างที่พบงาน</span><strong>{percent(data.summary.coverage)}</strong><small>{number(data.summary.jobCount)} รายการงานที่จับคู่ได้</small></article>
-            <article className={`${styles.metric} ${styles.red}`}><span>ช่างที่ไม่พบงาน</span><strong>{number(data.summary.withoutWork)}</strong><small>ไม่พบรหัสในข้อมูลปัจจุบัน</small></article>
+            <article className={`${styles.metric} ${styles.red}`}><span>ช่างที่ไม่พบงาน</span><strong>{number(data.summary.withoutWork)}</strong><small>ไม่มีงานที่ปิดในช่วงที่เลือก</small></article>
             <article className={`${styles.metric} ${styles.red}`}><span>สัดส่วนช่างที่ไม่พบงาน</span><strong>{percent(calculateWithoutWorkCoverage(data.summary.withWork, data.summary.withoutWork))}</strong><small>{number(data.summary.withoutWork)} รายจากช่างที่เปรียบเทียบได้</small></article>
           </section>
           {data.summary.pending > 0 && <p className={styles.notice}>รอเปรียบเทียบ {number(data.summary.pending)} ราย {data.dataset.totalRows > 0 ? '(ไม่มีรหัสช่าง)' : '(ยังไม่มีข้อมูล Allconnect)'}</p>}
@@ -237,14 +248,14 @@ export default function AllconnectCompareDashboard() {
             <div className={styles.sectionHeading}><h2>สรุปพื้นที่ RBM</h2><span>{number(data.regions.length)} พื้นที่</span></div>
             <div className={styles.tableScroll} tabIndex={0} role="region" aria-label="ตารางสรุปพื้นที่ RBM">
               <table className={`${styles.table} ${styles.regionalTable}`}>
-                <thead><tr><th scope="col">พื้นที่ RBM</th><th scope="col">ช่างทั้งหมด</th><th scope="col">พบงาน</th><th scope="col">ไม่พบงาน</th><th scope="col">สัดส่วนที่พบงาน</th><th scope="col">จำนวนงาน</th></tr></thead>
+                <thead><tr><th scope="col">พื้นที่ RBM</th><th scope="col">ช่างทั้งหมด</th><th scope="col">พบงาน</th><th scope="col">ไม่พบงาน</th><th scope="col">สัดส่วนที่พบงาน</th><th scope="col">งานติดตั้ง</th><th scope="col">งานซ่อม</th><th scope="col">งานรวม</th></tr></thead>
                 <tbody>{data.regions.map(region => <tr key={region.rbm} className={rbm === region.rbm ? styles.selectedRow : undefined}>
                   <th scope="row"><button className={styles.regionLink} type="button" onClick={() => selectRegion(region.rbm)} aria-pressed={rbm === region.rbm}>{region.rbm}</button></th>
                   <td>{number(region.total)}</td>
                   <td><button className={styles.greenLink} type="button" onClick={() => selectRegion(region.rbm, 'with_work')} aria-label={`ช่างที่พบงาน ${region.rbm}`}>{number(region.withWork)}</button></td>
                   <td><button className={styles.redLink} type="button" onClick={() => selectRegion(region.rbm, 'without_work')} aria-label={`ช่างที่ไม่พบงาน ${region.rbm}`}>{number(region.withoutWork)}</button></td>
                   <td><div className={styles.coverageCell}><meter min={0} max={100} value={region.coverage ?? 0} aria-label={`สัดส่วนที่พบงาน ${region.rbm}`} /><span>{percent(region.coverage)}</span></div></td>
-                  <td>{number(region.jobCount)}</td>
+                  <td>{number(region.installCount)}</td><td>{number(region.repairCount)}</td><td>{number(region.jobCount)}</td>
                 </tr>)}</tbody>
               </table>
             </div>
@@ -254,7 +265,7 @@ export default function AllconnectCompareDashboard() {
             <div className={styles.sectionHeading}><h2>สรุปตาม Depot</h2><span>{number(visibleDepots.length)} Depot · {selectedTitle}</span></div>
             <div className={`${styles.tableScroll} ${styles.depotTableScroll}`} tabIndex={0} role="region" aria-label="ตารางสรุปตาม Depot">
               <table className={`${styles.table} ${styles.depotTable}`}>
-                <thead><tr><th scope="col">พื้นที่ RBM</th><th scope="col">รหัส Depot</th><th scope="col">ชื่อ Depot</th><th scope="col">ช่างทั้งหมด</th><th scope="col">พบงาน</th><th scope="col">ไม่พบงาน</th><th scope="col">สัดส่วนที่พบงาน</th><th scope="col">จำนวนงาน</th></tr></thead>
+                <thead><tr><th scope="col">พื้นที่ RBM</th><th scope="col">รหัส Depot</th><th scope="col">ชื่อ Depot</th><th scope="col">ช่างทั้งหมด</th><th scope="col">พบงาน</th><th scope="col">ไม่พบงาน</th><th scope="col">สัดส่วนที่พบงาน</th><th scope="col">งานติดตั้ง</th><th scope="col">งานซ่อม</th><th scope="col">งานรวม</th></tr></thead>
                 <tbody>{visibleDepots.map(depot => {
                   const key = JSON.stringify([depot.rbm, depot.depotCode, depot.depotName]);
                   const expanded = expandedDepots.has(key);
@@ -269,9 +280,9 @@ export default function AllconnectCompareDashboard() {
                   <td className={styles.greenValue}>{number(depot.withWork)}</td>
                   <td className={styles.redValue}>{number(depot.withoutWork)}</td>
                   <td><div className={styles.coverageCell}><meter min={0} max={100} value={depot.coverage ?? 0} aria-label={`สัดส่วนที่พบงาน ${depot.depotCode}`} /><span>{percent(depot.coverage)}</span></div></td>
-                  <td>{number(depot.jobCount)}</td>
+                  <td>{number(depot.installCount)}</td><td>{number(depot.repairCount)}</td><td>{number(depot.jobCount)}</td>
                 </tr>
-                {expanded && <tr className={styles.depotDetails} id={detailId}><td colSpan={8}>
+                {expanded && <tr className={styles.depotDetails} id={detailId}><td colSpan={10}>
                   {depot.withoutWorkTechnicians.length > 0 ? <table className={styles.depotTechnicians} aria-label={`ช่างที่ไม่พบงาน ${depot.depotCode}`}>
                      <thead><tr><th scope="col">รหัสพนักงาน</th><th scope="col">ชื่อ</th><th scope="col">ประเภทงาน</th><th scope="col">ประเภทการรับงาน</th></tr></thead>
                      <tbody>{depot.withoutWorkTechnicians.map(technician => <tr key={technician.techId}>
@@ -295,11 +306,23 @@ export default function AllconnectCompareDashboard() {
             {exportError && <p className={styles.error} role="alert">{exportError}</p>}
             <div className={styles.tableScroll} tabIndex={0} role="region" aria-label="ตารางรายละเอียดช่าง">
               <table className={`${styles.table} ${styles.detailTable}`}>
-                <thead><tr><th scope="col">รหัสช่าง</th><th scope="col">ชื่อช่าง</th><th scope="col">วันเข้าทำงาน</th><th scope="col">วันทำงาน</th><th scope="col">RBM</th><th scope="col">CBM</th><th scope="col">ผู้ให้บริการ</th><th scope="col">รหัสศูนย์</th><th scope="col">ชื่อศูนย์</th><th scope="col">จังหวัด</th><th scope="col">สถานะช่าง</th><th scope="col">ผลเปรียบเทียบ</th><th scope="col">รายการงาน</th></tr></thead>
+                <thead>
+                  <tr>{['รหัสช่าง', 'ชื่อช่าง', 'วันเข้าทำงาน', 'วันทำงาน', 'RBM', 'ผู้ให้บริการ', 'รหัสศูนย์', 'ชื่อศูนย์', 'ผลเปรียบเทียบ'].map(label => <th key={label} scope="col" rowSpan={workPeriods.length ? 3 : 1}>{label}</th>)}
+                    {workPeriods.length > 0 && <th className={styles.weekHeader} scope="colgroup" colSpan={workPeriods.length}>ไม่พบงาน</th>}
+                  </tr>
+                  {workPeriods.length > 0 && <>
+                    <tr>{workMonths.map(periodMonth => <th className={styles.weekHeader} scope="colgroup" key={periodMonth} colSpan={workPeriods.filter(period => period.month === periodMonth).length}>{periodMonth}</th>)}</tr>
+                    <tr>{workPeriods.map(period => <th className={styles.weekHeader} scope="col" key={`${period.month}-${period.weekStart}`} title={`${period.weekStart} - ${period.weekEnd}`}>Week {period.weekNumber}</th>)}</tr>
+                  </>}
+                </thead>
                 <tbody>{data.rows.map((row, index) => {
                   const workingDays = calculateWorkingDays(row.cardRegisterDate);
                   return <tr key={`${row.techId ?? 'missing'}-${index}`}>
-                    <td className={styles.idCell}>{row.techId ?? '-'}</td><td>{row.fullName}</td><td>{row.cardRegisterDate || '-'}</td><td>{workingDays === null ? '' : number(workingDays)}</td><td>{row.rbm}</td><td>{row.cbm || '-'}</td><td>{row.provider || '-'}</td><td>{row.depotCode || '-'}</td><td>{row.depotName || '-'}</td><td>{row.province || '-'}</td><td>{row.technicianStatus || '-'}</td><td><span className={`${styles.badge} ${styles[row.workStatus]}`}>{WORK_LABELS[row.workStatus]}</span></td><td>{number(row.jobCount)}</td>
+                    <td className={styles.idCell}>{row.techId ?? '-'}</td><td>{row.fullName}</td><td>{row.cardRegisterDate || '-'}</td><td>{workingDays === null ? '' : number(workingDays)}</td><td>{row.rbm}</td><td>{row.provider || '-'}</td><td>{row.depotCode || '-'}</td><td>{row.depotName || '-'}</td><td><span className={`${styles.badge} ${styles[row.workStatus]}`}>{WORK_LABELS[row.workStatus]}</span></td>
+                    {workPeriods.map(period => {
+                      const count = row.weeklyJobs?.find(week => week.month === period.month && week.weekStart === period.weekStart)?.jobCount ?? 0;
+                      return <td key={`${period.month}-${period.weekStart}`} className={styles.weekCell} style={{ backgroundColor: weeklyJobBackground(count), color: count > 0 ? '#18583c' : '#a52839' }} title={`${period.month} · Week ${period.weekNumber} · ${period.weekStart} - ${period.weekEnd}`} aria-label={`${period.month} Week ${period.weekNumber}: ${number(count)} งาน`}>{number(count)}</td>;
+                    })}
                   </tr>;
                 })}</tbody>
               </table>
@@ -321,6 +344,7 @@ export default function AllconnectCompareDashboard() {
             <span>รายการงานที่ไม่มีรหัสผู้รับงาน <strong>{number(data.dataset.missingHandlerRows)}</strong> รายการ</span>
             {data.dataset.missingTechIds > 0 && <span>ทะเบียนช่างที่ไม่มีรหัส <strong>{number(data.dataset.missingTechIds)}</strong> ราย</span>}
             {data.dataset.duplicateTechIds > 0 && <span>ทะเบียนรหัสซ้ำ ใช้ข้อมูลแก้ไขล่าสุด <strong>{number(data.dataset.duplicateTechIds)}</strong> แถว</span>}
+            {data.dataset.invalidJobRows > 0 && <span>ข้อมูลจำนวนงานที่ไม่ถูกต้อง <strong>{number(data.dataset.invalidJobRows)}</strong> แถว</span>}
           </footer>
         </div>
       )}

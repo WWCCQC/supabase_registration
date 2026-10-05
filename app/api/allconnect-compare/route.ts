@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { jwtVerify } from 'jose';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { parseCompareParams } from '@/lib/allconnectCompare';
+import { parseCompareJobParams } from '@/lib/allconnectCompare';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -23,14 +23,14 @@ export async function GET(request: NextRequest) {
 
   let params;
   try {
-    params = parseCompareParams(request.nextUrl.searchParams);
+    params = parseCompareJobParams(request.nextUrl.searchParams);
   } catch {
     return NextResponse.json({ error: 'ตัวกรองหรือหมายเลขหน้าไม่ถูกต้อง' }, { status: 400, headers });
   }
 
   try {
     const { data, error } = await supabaseAdmin()
-      .rpc('allconnect_compare_dashboard', params)
+      .rpc('allconnect_compare_jobs_dashboard', params)
       .abortSignal(request.signal);
     if (error) throw error;
     if (!data) throw new Error('Comparison returned no data');
