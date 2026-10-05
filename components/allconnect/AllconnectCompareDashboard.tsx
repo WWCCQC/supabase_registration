@@ -121,8 +121,8 @@ export default function AllconnectCompareDashboard() {
 
   const summary = data?.summary;
   const pieData = summary ? [
-    { name: 'พบงาน', value: summary.withWork, color: COLORS.withWork },
-    { name: 'ไม่พบงาน', value: summary.withoutWork, color: COLORS.withoutWork },
+    { name: 'พบปิดงาน', value: summary.withWork, color: COLORS.withWork },
+    { name: 'ไม่พบการปิดงาน', value: summary.withoutWork, color: COLORS.withoutWork },
     { name: 'รอเปรียบเทียบ', value: summary.pending, color: COLORS.pending },
   ].filter(item => item.value > 0) : [];
   const chartRegions = data?.regions.map(region => ({
@@ -189,18 +189,18 @@ export default function AllconnectCompareDashboard() {
       ) : (
         <div className={busy ? styles.updating : undefined} aria-busy={busy}>
           <section className={styles.metrics} aria-label={`สรุป ${selectedTitle}`}>
-            <article className={styles.metric}><span>ช่างทั้งหมด</span><strong>{number(data.summary.total)}</strong><small>{selectedTitle}</small></article>
-            <article className={`${styles.metric} ${styles.green}`}><span>ช่างที่พบงาน</span><strong>{number(data.summary.withWork)}</strong><small>มีงานที่ปิดในช่วงที่เลือก</small></article>
-            <article className={`${styles.metric} ${styles.teal}`}><span>สัดส่วนช่างที่พบงาน</span><strong>{percent(data.summary.coverage)}</strong><small>{number(data.summary.jobCount)} รายการงานที่จับคู่ได้</small></article>
-            <article className={`${styles.metric} ${styles.red}`}><span>ช่างที่ไม่พบงาน</span><strong>{number(data.summary.withoutWork)}</strong><small>ไม่มีงานที่ปิดในช่วงที่เลือก</small></article>
-            <article className={`${styles.metric} ${styles.red}`}><span>สัดส่วนช่างที่ไม่พบงาน</span><strong>{percent(calculateWithoutWorkCoverage(data.summary.withWork, data.summary.withoutWork))}</strong><small>{number(data.summary.withoutWork)} รายจากช่างที่เปรียบเทียบได้</small></article>
+            <article className={styles.metric}><span>จำนวนช่าง(กองงาน)</span><strong>{number(data.summary.total)}</strong></article>
+            <article className={`${styles.metric} ${styles.green}`}><span>จำนวนช่างที่ปิดงาน(กองงาน)</span><strong>{number(data.summary.withWork)}</strong></article>
+            <article className={`${styles.metric} ${styles.teal}`}><span>สัดส่วนที่ปิดงาน</span><strong>{percent(data.summary.coverage)}</strong></article>
+            <article className={`${styles.metric} ${styles.red}`}><span>จำนวนช่างที่ไม่มีการปิดงาน<span className={styles.labelSuffix}>(กองงาน)</span></span><strong>{number(data.summary.withoutWork)}</strong></article>
+            <article className={`${styles.metric} ${styles.red}`}><span>สัดส่วนที่ไม่ปิดงาน</span><strong>{percent(calculateWithoutWorkCoverage(data.summary.withWork, data.summary.withoutWork))}</strong></article>
           </section>
           {data.summary.pending > 0 && <p className={styles.notice}>รอเปรียบเทียบ {number(data.summary.pending)} ราย {data.dataset.totalRows > 0 ? '(ไม่มีรหัสช่าง)' : '(ยังไม่มีข้อมูล Allconnect)'}</p>}
 
           <div className={styles.charts}>
             <section className={styles.regionChart}>
-              <div className={styles.sectionHeading}><h2>ช่างที่พบงาน / ไม่พบงาน รายพื้นที่</h2><span>ทุกพื้นที่ RBM · ราย</span></div>
-              <div className={styles.legend}><span><i style={{ background: COLORS.withWork }} />พบงาน</span><span><i style={{ background: COLORS.withoutWork }} />ไม่พบงาน</span>{data.regions.some(region => region.pending > 0) && <span><i style={{ background: COLORS.pending }} />รอเปรียบเทียบ</span>}</div>
+              <div className={styles.sectionHeading}><h2>ช่างที่พบปิดงาน / ไม่พบการปิดงานงาน รายพื้นที่</h2><span>ทุกพื้นที่ RBM · ราย</span></div>
+              <div className={styles.legend}><span><i style={{ background: COLORS.withWork }} />พบปิดงาน</span><span><i style={{ background: COLORS.withoutWork }} />ไม่พบการปิดงาน</span>{data.regions.some(region => region.pending > 0) && <span><i style={{ background: COLORS.pending }} />รอเปรียบเทียบ</span>}</div>
               {chartRegions.length ? <div className={styles.barCanvas}>
                 <div className={styles.barChartInner} style={{ height: Math.max(310, chartRegions.length * 38) }}>
                 <ResponsiveContainer width="100%" height="100%">
@@ -209,10 +209,10 @@ export default function AllconnectCompareDashboard() {
                     <XAxis type="number" allowDecimals={false} tick={false} axisLine={false} tickLine={false} />
                     <YAxis type="category" dataKey="rbm" width={115} tick={{ fontSize: 11, fill: '#374151' }} axisLine={false} tickLine={false} />
                     <Tooltip formatter={value => `${number(Number(value))} ราย`} contentStyle={{ borderRadius: 6, fontSize: 13 }} />
-                    <Bar dataKey="withWork" name="พบงาน" stackId="technicians" fill={COLORS.withWork} isAnimationActive={false}>
+                    <Bar dataKey="withWork" name="พบปิดงาน" stackId="technicians" fill={COLORS.withWork} isAnimationActive={false}>
                       <LabelList dataKey="withWorkLabel" position="center" fill="#fff" fontSize={10} fontWeight={600} />
                     </Bar>
-                    <Bar dataKey="withoutWork" name="ไม่พบงาน" stackId="technicians" fill={COLORS.withoutWork} isAnimationActive={false}>
+                    <Bar dataKey="withoutWork" name="ไม่พบการปิดงาน" stackId="technicians" fill={COLORS.withoutWork} isAnimationActive={false}>
                       <LabelList dataKey="withoutWorkLabel" position="center" fill="#fff" fontSize={10} fontWeight={600} />
                     </Bar>
                     <Bar dataKey="pending" name="รอเปรียบเทียบ" stackId="technicians" fill={COLORS.pending} isAnimationActive={false}>
@@ -224,7 +224,7 @@ export default function AllconnectCompareDashboard() {
               </div> : <div className={styles.empty}>ไม่พบข้อมูลช่าง</div>}
             </section>
             <section className={styles.coverageChart}>
-              <div className={styles.sectionHeading}><h2>สัดส่วนการพบงาน</h2><span>{selectedTitle}</span></div>
+              <div className={styles.sectionHeading}><h2>สัดส่วนช่างที่พบปิดงาน / ไม่พบการปิดงาน</h2><span>{selectedTitle}</span></div>
               <div className={styles.donutCanvas}>
                 {pieData.length > 0 && <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
@@ -234,11 +234,11 @@ export default function AllconnectCompareDashboard() {
                     <Tooltip formatter={value => `${number(Number(value))} ราย`} />
                   </PieChart>
                 </ResponsiveContainer>}
-                <div className={styles.donutLabel}><strong>{percent(data.summary.coverage)}</strong><span>ช่างที่พบงาน</span></div>
+                <div className={styles.donutLabel}><strong>{percent(data.summary.coverage)}</strong><span>ช่างที่พบปิดงาน</span></div>
               </div>
               <dl className={styles.breakdown}>
-                <div><dt><i style={{ background: COLORS.withWork }} />พบงาน</dt><dd>{number(data.summary.withWork)} ราย</dd></div>
-                <div><dt><i style={{ background: COLORS.withoutWork }} />ไม่พบงาน</dt><dd>{number(data.summary.withoutWork)} ราย</dd></div>
+                <div><dt><i style={{ background: COLORS.withWork }} />พบปิดงาน</dt><dd>{number(data.summary.withWork)} ราย</dd></div>
+                <div><dt><i style={{ background: COLORS.withoutWork }} />ไม่พบการปิดงาน</dt><dd>{number(data.summary.withoutWork)} ราย</dd></div>
                 {data.summary.pending > 0 && <div><dt><i style={{ background: COLORS.pending }} />รอเปรียบเทียบ</dt><dd>{number(data.summary.pending)} ราย</dd></div>}
               </dl>
             </section>

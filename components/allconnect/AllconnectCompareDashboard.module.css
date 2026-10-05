@@ -28,7 +28,8 @@
 .textButton { display: inline-flex; gap: 5px; align-items: center; color: #445264; padding: 8px 0; background: none; border: 0; }
 .metrics { display: grid; grid-template-columns: repeat(5, minmax(180px, 1fr)); gap: 14px; padding: 22px 0; overflow-x: auto; }
 .metric { padding: 16px 18px; border: 1px solid #e0e5eb; border-top: 3px solid #74839b; border-radius: 6px; min-width: 0; display: flex; flex-direction: column; gap: 5px; }
-.metric > span { font-size: 13px; color: #596575; }
+.metric > span { font-size: 13px; color: #596575; min-height: 40px; line-height: 20px; overflow-wrap: anywhere; }
+.labelSuffix { display: inline-block; white-space: nowrap; }
 .metric > strong { font-size: 32px; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.4; overflow-wrap: anywhere; }
 .metric small { font-size: 11px; color: #76808f; line-height: 1.5; overflow-wrap: anywhere; }
 .green { border-top-color: #159574; }
