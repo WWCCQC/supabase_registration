@@ -5,8 +5,8 @@ import {
   Bar, BarChart, CartesianGrid, Cell, LabelList, Pie, PieChart,
   ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from 'recharts';
-import { AlertCircle, ChevronDown, ChevronLeft, ChevronRight, Download, RefreshCw, Search, X } from 'lucide-react';
-import { calculateWithoutWorkCoverage, calculateWorkingDays, weeklyJobBackground, formatRegionBarLabel, type CompareDashboard, type CompareRow, type WorkStatus, type WorkStatusFilter } from '@/lib/allconnectCompare';
+import { AlertCircle, CheckCircle, ChevronDown, ChevronLeft, ChevronRight, Download, RefreshCw, Search, Users, X, XCircle } from 'lucide-react';
+import { calculateWithoutWorkCoverage, calculateWorkingDays, weeklyJobBackground, providerSummaryExportRows, formatRegionBarLabel, type CompareDashboard, type CompareRow, type WorkStatus, type WorkStatusFilter } from '@/lib/allconnectCompare';
 import styles from './AllconnectCompareDashboard.module.css';
 import AllconnectUpload from './AllconnectUpload';
 import TechniciansUpload from './TechniciansUpload';
@@ -15,9 +15,15 @@ import sourceStyles from './AllconnectSources.module.css';
 const number = (value: number) => value.toLocaleString('th-TH');
 const percent = (value: number | null) => value === null ? '-' : `${value.toFixed(1)}%`;
 const WORK_LABELS: Record<WorkStatus, string> = {
-  with_work: 'พบงาน', without_work: 'ไม่พบงาน', pending: 'รอเปรียบเทียบ',
+  with_work: 'ปิดงาน', without_work: 'ไม่มีการปิดงาน', pending: 'รอเปรียบเทียบ',
 };
+const DETAIL_HEADINGS = ['รหัสช่าง', 'ชื่อช่าง', 'จำนวนวันที่เข้าทำงาน', 'RBM', 'Provider', 'Depot', 'Depot Name', 'สถานะการปิดงาน'];
 const COLORS = { withWork: '#159574', withoutWork: '#dc5966', pending: '#a1a8b3' };
+const DETAIL_FILTERS = [
+  { value: 'all', label: 'ข้อมูลช่างทั้งหมด', Icon: Users },
+  { value: 'with_work', label: 'จำนวนช่างที่ปิดงาน', Icon: CheckCircle },
+  { value: 'without_work', label: 'จำนวนช่างที่ไม่มีการปิดงาน', Icon: XCircle },
+] as const;
 
 function dateTime(value: string | null) {
   return value ? new Intl.DateTimeFormat('th-TH', {
@@ -46,6 +52,8 @@ export default function AllconnectCompareDashboard() {
   const [error, setError] = useState('');
   const [exportError, setExportError] = useState('');
   const [exporting, setExporting] = useState(false);
+  const [providerExporting, setProviderExporting] = useState(false);
+  const [providerExportError, setProviderExportError] = useState('');
   const [expandedDepots, setExpandedDepots] = useState<Set<string>>(new Set());
 
   function toggleDepot(key: string) {
@@ -99,16 +107,16 @@ export default function AllconnectCompareDashboard() {
         rows.push(...result.rows);
       }
       const XLSX = await import('xlsx');
-      const headings = ['รหัสช่าง', 'ชื่อช่าง', 'วันเข้าทำงาน', 'วันทำงาน', 'RBM', 'ผู้ให้บริการ', 'รหัสศูนย์', 'ชื่อศูนย์', 'ผลเปรียบเทียบ', ...first.dataset.workPeriods.map(period => `${period.month} Week ${period.weekNumber}`)];
+      const headings = [...DETAIL_HEADINGS, ...first.dataset.workPeriods.map(period => `${period.month} Week ${period.weekNumber}`)];
       const worksheet = XLSX.utils.aoa_to_sheet([headings, ...rows.map(row => [
-        row.techId ?? '', row.fullName, row.cardRegisterDate, calculateWorkingDays(row.cardRegisterDate) ?? '', row.rbm, row.provider,
+        row.techId ?? '', row.fullName, calculateWorkingDays(row.cardRegisterDate) ?? '', row.rbm, row.provider,
         row.depotCode, row.depotName, WORK_LABELS[row.workStatus], ...first.dataset.workPeriods.map(period => row.weeklyJobs.find(week => week.month === period.month && week.weekStart === period.weekStart)?.jobCount ?? 0),
       ])]);
-      worksheet['!cols'] = headings.map((_, index) => ({ wch: [1, 5, 7].includes(index) ? 32 : 20 }));
+      worksheet['!cols'] = headings.map((_, index) => ({ wch: [1, 4, 6].includes(index) ? 32 : 20 }));
       const workbook = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(workbook, worksheet, 'Technicians');
       XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet([
-        ['พื้นที่', rbm || 'ทุกพื้นที่'], ['ผลเปรียบเทียบ', status === 'all' ? 'ทั้งหมด' : WORK_LABELS[status]],
+        ['พื้นที่', rbm || 'ทุกพื้นที่'], ['สถานะการปิดงาน', status === 'all' ? 'ทั้งหมด' : WORK_LABELS[status]],
         ['เดือน', month || 'ทุกเดือน'], ['ทะเบียนช่าง', 'allconnect_technicians'], ['สถานะช่าง', 'หัวหน้า'],
         ['คำค้นหา', query], ['ข้อมูลนำเข้าล่าสุด (เวลาไทย)', dateTime(first.dataset.importedAt)],
         ['รายการ Allconnect ทั้งหมด', first.dataset.totalRows], ['แถวที่ส่งออก', rows.length],
@@ -117,6 +125,33 @@ export default function AllconnectCompareDashboard() {
     } catch (cause) {
       setExportError(cause instanceof Error ? cause.message : 'ส่งออกไม่สำเร็จ');
     } finally { setExporting(false); }
+  }
+
+  async function exportProviderExcel() {
+    if (!data) return;
+    setProviderExporting(true);
+    setProviderExportError('');
+    const depots = data.depots.filter(depot => !rbm || depot.rbm === rbm);
+    try {
+      const XLSX = await import('xlsx');
+      const worksheet = XLSX.utils.aoa_to_sheet(providerSummaryExportRows(depots));
+      worksheet['!cols'] = [{ wch: 20 }, { wch: 18 }, { wch: 45 }, ...Array.from({ length: 7 }, () => ({ wch: 24 }))];
+      depots.forEach((_, index) => {
+        const cell = worksheet[XLSX.utils.encode_cell({ r: index + 1, c: 6 })];
+        if (cell?.t === 'n') cell.z = '0.0%';
+      });
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Provider Summary');
+      XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet([
+        ['พื้นที่ RBM', rbm || 'ทุกพื้นที่'], ['เดือน', month || 'ทุกเดือน'],
+        ['ข้อมูล All connect อัปเดตล่าสุด (เวลาไทย)', dateTime(data.dataset.updatedAt)],
+        ['ข้อมูลช่างอัปเดตล่าสุด (เวลาไทย)', dateTime(data.dataset.techniciansUpdatedAt)],
+        ['จำนวนแถวที่ส่งออก', depots.length],
+      ]), 'Filters');
+      XLSX.writeFile(workbook, `allconnect-provider-summary-${new Date().toISOString().slice(0, 10)}.xlsx`);
+    } catch (cause) {
+      setProviderExportError(cause instanceof Error ? cause.message : 'ส่งออกไม่สำเร็จ');
+    } finally { setProviderExporting(false); }
   }
 
   const summary = data?.summary;
@@ -262,10 +297,11 @@ export default function AllconnectCompareDashboard() {
           </section>
 
           <section className={styles.section}>
-            <div className={styles.sectionHeading}><h2>สรุปตาม Depot</h2><span>{number(visibleDepots.length)} Depot · {selectedTitle}</span></div>
-            <div className={`${styles.tableScroll} ${styles.depotTableScroll}`} tabIndex={0} role="region" aria-label="ตารางสรุปตาม Depot">
+            <div className={styles.sectionHeading}><h2>ตารางสรุปการปิดงานรายพื้นที่ตาม Provider</h2><button className={styles.exportButton} type="button" onClick={exportProviderExcel} disabled={providerExporting || busy || visibleDepots.length === 0} aria-label="Export Excel ตาราง Provider"><Download size={17} />{providerExporting ? 'กำลังส่งออก...' : 'Export Excel'}</button></div>
+            {providerExportError && <p className={styles.error} role="alert">{providerExportError}</p>}
+            <div className={`${styles.tableScroll} ${styles.depotTableScroll}`} tabIndex={0} role="region" aria-label="ตารางสรุปการปิดงานรายพื้นที่ตาม Provider">
               <table className={`${styles.table} ${styles.depotTable}`}>
-                <thead><tr><th scope="col">พื้นที่ RBM</th><th scope="col">รหัส Depot</th><th scope="col">ชื่อ Depot</th><th scope="col">ช่างทั้งหมด</th><th scope="col">พบงาน</th><th scope="col">ไม่พบงาน</th><th scope="col">สัดส่วนที่พบงาน</th><th scope="col">งานติดตั้ง</th><th scope="col">งานซ่อม</th><th scope="col">งานรวม</th></tr></thead>
+                <thead><tr><th scope="col">RBM</th><th scope="col">Depot</th><th scope="col">Depot Name</th><th scope="col">จำนวนกองงานทั้งหมด</th><th scope="col">จำนวนที่ปิดงาน</th><th scope="col">จำนวนที่ไม่มีการปิดงาน</th><th scope="col">สัดส่วนที่พบปิดงาน</th><th scope="col">งานติดตั้ง</th><th scope="col">งานซ่อม</th><th scope="col">จำนวนรวมที่ปิดงาน</th></tr></thead>
                 <tbody>{visibleDepots.map(depot => {
                   const key = JSON.stringify([depot.rbm, depot.depotCode, depot.depotName]);
                   const expanded = expandedDepots.has(key);
@@ -279,7 +315,7 @@ export default function AllconnectCompareDashboard() {
                   <td>{number(depot.total)}</td>
                   <td className={styles.greenValue}>{number(depot.withWork)}</td>
                   <td className={styles.redValue}>{number(depot.withoutWork)}</td>
-                  <td><div className={styles.coverageCell}><meter min={0} max={100} value={depot.coverage ?? 0} aria-label={`สัดส่วนที่พบงาน ${depot.depotCode}`} /><span>{percent(depot.coverage)}</span></div></td>
+                  <td><div className={styles.coverageCell}><meter min={0} max={100} value={depot.coverage ?? 0} aria-label={`สัดส่วนที่พบปิดงาน ${depot.depotCode}`} /><span>{percent(depot.coverage)}</span></div></td>
                   <td>{number(depot.installCount)}</td><td>{number(depot.repairCount)}</td><td>{number(depot.jobCount)}</td>
                 </tr>
                 {expanded && <tr className={styles.depotDetails} id={detailId}><td colSpan={10}>
@@ -297,18 +333,22 @@ export default function AllconnectCompareDashboard() {
             </div>
           </section>
 
-          <section className={styles.section} aria-label="รายละเอียดช่าง">
-            <div className={styles.sectionHeading}><h2>รายละเอียดช่าง <span className={styles.headingCount}>{number(data.pagination.total)} ราย</span></h2><span>{selectedTitle}</span></div>
+          <section className={styles.section} aria-label="ตารางรายละเอียดการปิดงาน-ไม่ปิดงานของช่าง">
+            <div className={styles.sectionHeading}><h2>ตารางรายละเอียดการปิดงาน-ไม่ปิดงานของช่าง</h2><span>{selectedTitle}</span></div>
              <div className={styles.tableControls}>
-               <label>ผลเปรียบเทียบ<select value={status} onChange={event => { setStatus(event.target.value as WorkStatusFilter); setPage(1); }}><option value="without_work">ไม่พบงาน</option><option value="with_work">พบงาน</option><option value="pending">รอเปรียบเทียบ</option><option value="all">ทั้งหมด</option></select></label>
+               <div className={styles.statusFilters} role="group" aria-label="เลือกข้อมูลการปิดงานของช่าง">
+                 {DETAIL_FILTERS.map(({ value, label, Icon }) => <button key={value} type="button" className={`${styles.statusFilter} ${styles[`filter_${value}`]}`} aria-pressed={status === value} disabled={loading} onClick={() => { setStatus(value); setPage(1); }}>
+                   <Icon size={19} aria-hidden="true" /><span>{label}</span>
+                 </button>)}
+               </div>
               <button className={styles.exportButton} type="button" onClick={exportExcel} disabled={exporting || busy || data.pagination.total === 0}><Download size={17} />{exporting ? 'กำลังส่งออก...' : 'Export Excel'}</button>
             </div>
             {exportError && <p className={styles.error} role="alert">{exportError}</p>}
-            <div className={styles.tableScroll} tabIndex={0} role="region" aria-label="ตารางรายละเอียดช่าง">
+            <div className={styles.tableScroll} tabIndex={0} role="region" aria-label="ตารางรายละเอียดการปิดงาน-ไม่ปิดงานของช่าง">
               <table className={`${styles.table} ${styles.detailTable}`}>
                 <thead>
-                  <tr>{['รหัสช่าง', 'ชื่อช่าง', 'วันเข้าทำงาน', 'วันทำงาน', 'RBM', 'ผู้ให้บริการ', 'รหัสศูนย์', 'ชื่อศูนย์', 'ผลเปรียบเทียบ'].map(label => <th key={label} scope="col" rowSpan={workPeriods.length ? 3 : 1}>{label}</th>)}
-                    {workPeriods.length > 0 && <th className={styles.weekHeader} scope="colgroup" colSpan={workPeriods.length}>ไม่พบงาน</th>}
+                  <tr>{DETAIL_HEADINGS.map(label => <th key={label} scope="col" rowSpan={workPeriods.length ? 3 : 1}>{label}</th>)}
+                    {workPeriods.length > 0 && <th className={styles.weekHeader} scope="colgroup" colSpan={workPeriods.length}>จำนวน ปิดงาน/ไม่ปิดงาน</th>}
                   </tr>
                   {workPeriods.length > 0 && <>
                     <tr>{workMonths.map(periodMonth => <th className={styles.weekHeader} scope="colgroup" key={periodMonth} colSpan={workPeriods.filter(period => period.month === periodMonth).length}>{periodMonth}</th>)}</tr>
@@ -318,7 +358,7 @@ export default function AllconnectCompareDashboard() {
                 <tbody>{data.rows.map((row, index) => {
                   const workingDays = calculateWorkingDays(row.cardRegisterDate);
                   return <tr key={`${row.techId ?? 'missing'}-${index}`}>
-                    <td className={styles.idCell}>{row.techId ?? '-'}</td><td>{row.fullName}</td><td>{row.cardRegisterDate || '-'}</td><td>{workingDays === null ? '' : number(workingDays)}</td><td>{row.rbm}</td><td>{row.provider || '-'}</td><td>{row.depotCode || '-'}</td><td>{row.depotName || '-'}</td><td><span className={`${styles.badge} ${styles[row.workStatus]}`}>{WORK_LABELS[row.workStatus]}</span></td>
+                    <td className={styles.idCell}>{row.techId ?? '-'}</td><td>{row.fullName}</td><td>{workingDays === null ? '' : number(workingDays)}</td><td>{row.rbm}</td><td>{row.provider || '-'}</td><td>{row.depotCode || '-'}</td><td>{row.depotName || '-'}</td><td><span className={`${styles.badge} ${styles[row.workStatus]}`}>{WORK_LABELS[row.workStatus]}</span></td>
                     {workPeriods.map(period => {
                       const count = row.weeklyJobs?.find(week => week.month === period.month && week.weekStart === period.weekStart)?.jobCount ?? 0;
                       return <td key={`${period.month}-${period.weekStart}`} className={styles.weekCell} style={{ backgroundColor: weeklyJobBackground(count), color: count > 0 ? '#18583c' : '#a52839' }} title={`${period.month} · Week ${period.weekNumber} · ${period.weekStart} - ${period.weekEnd}`} aria-label={`${period.month} Week ${period.weekNumber}: ${number(count)} งาน`}>{number(count)}</td>;

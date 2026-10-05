@@ -27,6 +27,14 @@ export interface CompareDepot extends CompareSummary {
   }[];
 }
 
+export function providerSummaryExportRows(depots: CompareDepot[]) {
+  return [
+    ['RBM', 'Depot', 'Depot Name', 'จำนวนกองงานทั้งหมด', 'จำนวนที่ปิดงาน', 'จำนวนที่ไม่มีการปิดงาน', 'สัดส่วนที่พบปิดงาน', 'งานติดตั้ง', 'งานซ่อม', 'จำนวนรวมที่ปิดงาน'],
+    ...depots.map(depot => [depot.rbm, depot.depotCode, depot.depotName, depot.total, depot.withWork, depot.withoutWork,
+      depot.coverage === null ? '' : depot.coverage / 100, depot.installCount, depot.repairCount, depot.jobCount]),
+  ];
+}
+
 export interface NoWorkPeriod {
   month: string;
   weekStart: string;

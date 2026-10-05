@@ -1,7 +1,18 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { readFileSync } from 'node:fs';
-import { calculateWithoutWorkCoverage, calculateWorkingDays, formatCompletedWorkType, formatNoWorkWeek, formatNoWorkPeriods, weeklyJobBackground, formatRegionBarLabel, parseCompareParams, parseCompareJobParams } from '../lib/allconnectCompare.ts';
+import { calculateWithoutWorkCoverage, calculateWorkingDays, formatCompletedWorkType, formatNoWorkWeek, formatNoWorkPeriods, weeklyJobBackground, providerSummaryExportRows, formatRegionBarLabel, parseCompareParams, parseCompareJobParams } from '../lib/allconnectCompare.ts';
+
+test('provider export preserves text depot codes, numbers, zero work and percentage values', () => {
+  const rows = providerSummaryExportRows([
+    { rbm: 'R1', depotCode: '001', depotName: 'A', total: 2, withWork: 1, withoutWork: 1, coverage: 50, installCount: 3, repairCount: 4, jobCount: 7 },
+    { rbm: 'R2', depotCode: '002', depotName: 'B', total: 1, withWork: 0, withoutWork: 0, coverage: null, installCount: 0, repairCount: 0, jobCount: 0 },
+  ]);
+  assert.equal(rows[0].length, 10);
+  assert.deepEqual(rows[1], ['R1', '001', 'A', 2, 1, 1, 0.5, 3, 4, 7]);
+  assert.deepEqual(rows[2], ['R2', '002', 'B', 1, 0, 0, '', 0, 0, 0]);
+  assert.equal(providerSummaryExportRows([]).length, 1);
+});
 
 test('large dashboard queries stage only required source columns and parse distinct dates once', () => {
   const sql = readFileSync(new URL('../create-allconnect-jobs-dashboard.sql', import.meta.url), 'utf8');
