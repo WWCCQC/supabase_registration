@@ -3,6 +3,14 @@ import test from 'node:test';
 import { readFileSync } from 'node:fs';
 import { calculateWithoutWorkCoverage, calculateWorkingDays, formatCompletedWorkType, formatNoWorkWeek, formatNoWorkPeriods, weeklyJobBackground, formatRegionBarLabel, parseCompareParams, parseCompareJobParams } from '../lib/allconnectCompare.ts';
 
+test('large dashboard queries stage only required source columns and parse distinct dates once', () => {
+  const sql = readFileSync(new URL('../create-allconnect-jobs-dashboard.sql', import.meta.url), 'utf8');
+  const source = sql.split('WITH job_source AS MATERIALIZED (')[1].split('),')[0];
+  assert.doesNotMatch(source, /SELECT a\.\*/);
+  assert.match(sql, /performance_dates AS MATERIALIZED/);
+  assert.match(sql, /SELECT DISTINCT btrim\("PERFORMANCE_DATE"\)/);
+});
+
 test('weekly job cells are red for zero and progressively greener for positive quantities', () => {
   assert.equal(weeklyJobBackground(0), '#fde2e5');
   assert.equal(weeklyJobBackground(1), 'hsl(148, 45%, 93.5%)');

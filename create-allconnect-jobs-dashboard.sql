@@ -16,18 +16,24 @@ SECURITY INVOKER
 SET search_path = ''
 AS $function$
 WITH job_source AS MATERIALIZED (
-  SELECT a.*,
+  SELECT a."STAFF_ID", a."PERFORMANCE_DATE", a."Job_Install", a."Job_Repair", a.created_at, a.updated_at,
     CASE WHEN btrim(a."Job_Install") ~ '^[0-9]+$' THEN btrim(a."Job_Install")::numeric ELSE 0 END AS install_count,
     CASE WHEN btrim(a."Job_Repair") ~ '^[0-9]+$' THEN btrim(a."Job_Repair")::numeric ELSE 0 END AS repair_count
   FROM public.allconnect a
   WHERE p_month IS NULL OR p_month = '' OR btrim(a."Month") = p_month
-), dated_jobs AS MATERIALIZED (
-  SELECT a.*,
-    CASE WHEN btrim(a."PERFORMANCE_DATE") ~ '^[0-9]{2}/[0-9]{2}/[0-9]{4}$'
-      AND pg_input_is_valid(concat(substring(btrim(a."PERFORMANCE_DATE"), 7, 4), '-', substring(btrim(a."PERFORMANCE_DATE"), 4, 2), '-', substring(btrim(a."PERFORMANCE_DATE"), 1, 2)), 'date')
-      THEN concat(substring(btrim(a."PERFORMANCE_DATE"), 7, 4), '-', substring(btrim(a."PERFORMANCE_DATE"), 4, 2), '-', substring(btrim(a."PERFORMANCE_DATE"), 1, 2))::date
+), performance_dates AS MATERIALIZED (
+  -- Parse once per distinct date instead of repeating it for every job row.
+  SELECT value,
+    CASE WHEN value ~ '^[0-9]{2}/[0-9]{2}/[0-9]{4}$'
+      AND pg_input_is_valid(concat(substring(value, 7, 4), '-', substring(value, 4, 2), '-', substring(value, 1, 2)), 'date')
+      THEN concat(substring(value, 7, 4), '-', substring(value, 4, 2), '-', substring(value, 1, 2))::date
       ELSE NULL END AS work_date
-  FROM job_source a
+  FROM (SELECT DISTINCT btrim("PERFORMANCE_DATE") AS value FROM job_source) dates
+), dated_jobs AS MATERIALIZED (
+  SELECT a."STAFF_ID", d.work_date, sum(a.install_count + a.repair_count) AS completed_jobs
+  FROM job_source a JOIN performance_dates d ON d.value = btrim(a."PERFORMANCE_DATE")
+  WHERE d.work_date IS NOT NULL
+  GROUP BY a."STAFF_ID", d.work_date
 ), work_periods AS (
   -- Only periods present in the uploaded data are eligible for comparison.
   SELECT DISTINCT to_char(work_date, 'YYYY-MM') AS work_month,
@@ -37,7 +43,7 @@ WITH job_source AS MATERIALIZED (
   SELECT nullif(btrim("STAFF_ID"), '') AS tech_id,
     to_char(work_date, 'YYYY-MM') AS work_month,
     date_trunc('week', work_date::timestamp)::date AS week_start,
-    sum(install_count + repair_count) AS completed_jobs
+    sum(completed_jobs) AS completed_jobs
   FROM dated_jobs WHERE work_date IS NOT NULL
   GROUP BY 1, 2, 3
 ), source_meta AS (
