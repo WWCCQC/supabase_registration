@@ -199,7 +199,7 @@ export default function AllconnectCompareDashboard() {
 
           <div className={styles.charts}>
             <section className={styles.regionChart}>
-              <div className={styles.sectionHeading}><h2>ช่างที่พบปิดงาน / ไม่พบการปิดงานงาน รายพื้นที่</h2><span>ทุกพื้นที่ RBM · ราย</span></div>
+              <div className={styles.sectionHeading}><h2>ช่างที่พบปิดงาน / ไม่พบการปิดงานงาน รายพื้นที่</h2></div>
               <div className={styles.legend}><span><i style={{ background: COLORS.withWork }} />พบปิดงาน</span><span><i style={{ background: COLORS.withoutWork }} />ไม่พบการปิดงาน</span>{data.regions.some(region => region.pending > 0) && <span><i style={{ background: COLORS.pending }} />รอเปรียบเทียบ</span>}</div>
               {chartRegions.length ? <div className={styles.barCanvas}>
                 <div className={styles.barChartInner} style={{ height: Math.max(310, chartRegions.length * 38) }}>
@@ -224,7 +224,7 @@ export default function AllconnectCompareDashboard() {
               </div> : <div className={styles.empty}>ไม่พบข้อมูลช่าง</div>}
             </section>
             <section className={styles.coverageChart}>
-              <div className={styles.sectionHeading}><h2>สัดส่วนช่างที่พบปิดงาน / ไม่พบการปิดงาน</h2><span>{selectedTitle}</span></div>
+              <div className={styles.sectionHeading}><h2>สัดส่วนช่างที่พบปิดงาน / ไม่พบการปิดงาน</h2></div>
               <div className={styles.donutCanvas}>
                 {pieData.length > 0 && <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
@@ -245,16 +245,16 @@ export default function AllconnectCompareDashboard() {
           </div>
 
           <section className={styles.section}>
-            <div className={styles.sectionHeading}><h2>สรุปพื้นที่ RBM</h2><span>{number(data.regions.length)} พื้นที่</span></div>
-            <div className={styles.tableScroll} tabIndex={0} role="region" aria-label="ตารางสรุปพื้นที่ RBM">
+            <div className={styles.sectionHeading}><h2>ตารางสรุปการปิดงานรายพื้นที่ RBM</h2><span>{number(data.regions.length)} พื้นที่</span></div>
+            <div className={styles.tableScroll} tabIndex={0} role="region" aria-label="ตารางสรุปการปิดงานรายพื้นที่ RBM">
               <table className={`${styles.table} ${styles.regionalTable}`}>
-                <thead><tr><th scope="col">พื้นที่ RBM</th><th scope="col">ช่างทั้งหมด</th><th scope="col">พบงาน</th><th scope="col">ไม่พบงาน</th><th scope="col">สัดส่วนที่พบงาน</th><th scope="col">งานติดตั้ง</th><th scope="col">งานซ่อม</th><th scope="col">งานรวม</th></tr></thead>
+                <thead><tr><th scope="col">RBM</th><th scope="col">จำนวนกองงานทั้งหมด</th><th scope="col">จำนวนที่ปิดงาน</th><th scope="col">จำนวนที่ไม่มีการปิดงาน</th><th scope="col">สัดส่วนที่พบปิดงาน</th><th scope="col">งานติดตั้ง</th><th scope="col">งานซ่อม</th><th scope="col">จำนวนรวมที่ปิดงาน</th></tr></thead>
                 <tbody>{data.regions.map(region => <tr key={region.rbm} className={rbm === region.rbm ? styles.selectedRow : undefined}>
                   <th scope="row"><button className={styles.regionLink} type="button" onClick={() => selectRegion(region.rbm)} aria-pressed={rbm === region.rbm}>{region.rbm}</button></th>
                   <td>{number(region.total)}</td>
-                  <td><button className={styles.greenLink} type="button" onClick={() => selectRegion(region.rbm, 'with_work')} aria-label={`ช่างที่พบงาน ${region.rbm}`}>{number(region.withWork)}</button></td>
-                  <td><button className={styles.redLink} type="button" onClick={() => selectRegion(region.rbm, 'without_work')} aria-label={`ช่างที่ไม่พบงาน ${region.rbm}`}>{number(region.withoutWork)}</button></td>
-                  <td><div className={styles.coverageCell}><meter min={0} max={100} value={region.coverage ?? 0} aria-label={`สัดส่วนที่พบงาน ${region.rbm}`} /><span>{percent(region.coverage)}</span></div></td>
+                  <td><button className={styles.greenLink} type="button" onClick={() => selectRegion(region.rbm, 'with_work')} aria-label={`จำนวนที่ปิดงาน ${region.rbm}`}>{number(region.withWork)}</button></td>
+                  <td><button className={styles.redLink} type="button" onClick={() => selectRegion(region.rbm, 'without_work')} aria-label={`จำนวนที่ไม่มีการปิดงาน ${region.rbm}`}>{number(region.withoutWork)}</button></td>
+                  <td><div className={styles.coverageCell}><meter min={0} max={100} value={region.coverage ?? 0} aria-label={`สัดส่วนที่พบปิดงาน ${region.rbm}`} /><span>{percent(region.coverage)}</span></div></td>
                   <td>{number(region.installCount)}</td><td>{number(region.repairCount)}</td><td>{number(region.jobCount)}</td>
                 </tr>)}</tbody>
               </table>
