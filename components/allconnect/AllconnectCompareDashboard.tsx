@@ -5,7 +5,7 @@ import {
   Bar, BarChart, CartesianGrid, Cell, LabelList, Pie, PieChart,
   ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from 'recharts';
-import { AlertCircle, CheckCircle, ChevronDown, ChevronLeft, ChevronRight, Download, RefreshCw, Search, Users, X, XCircle } from 'lucide-react';
+import { AlertCircle, Building2, CalendarDays, CheckCircle, ChevronDown, ChevronLeft, ChevronRight, ClipboardX, Download, MapPin, RefreshCw, Search, Users, X, XCircle } from 'lucide-react';
 import { buildExecutiveInsights, calculateWithoutWorkCoverage, calculateWorkingDays, weeklyJobBackground, providerSummaryExportRows, formatRegionBarLabel, type CompareDashboard, type CompareRow, type WorkStatus, type WorkStatusFilter } from '@/lib/allconnectCompare';
 import styles from './AllconnectCompareDashboard.module.css';
 import AllconnectUpload from './AllconnectUpload';
@@ -271,14 +271,17 @@ export default function AllconnectCompareDashboard() {
               <div className={styles.insightSections}>
                 <div className={styles.insightPrimary}>
                   {latestInsightMonth && <div className={styles.insightLead}>
-                    <span>ช่างที่ยังไม่พบการปิดงานถึงสิ้น {monthName(latestInsightMonth.month)} {latestInsightMonth.month.slice(0, 4)}</span>
+                    <div className={styles.insightLeadTop}>
+                      <span className={styles.insightLeadIcon}><ClipboardX size={19} strokeWidth={1.9} aria-hidden="true" /></span>
+                      <span>ช่างที่ยังไม่พบการปิดงานถึงสิ้น {monthName(latestInsightMonth.month)} {latestInsightMonth.month.slice(0, 4)}</span>
+                    </div>
                     <strong>{number(latestInsightMonth.withoutWork)} <small>กองงาน</small></strong>
                     {latestInsightMonth.change !== null && <span>
                       {latestInsightMonth.change < 0 ? `ลดลง ${number(-latestInsightMonth.change)}` : latestInsightMonth.change > 0 ? `เพิ่มขึ้น ${number(latestInsightMonth.change)}` : 'เท่าเดิม'} จากเดือนก่อน
                     </span>}
                   </div>}
-                  <div>
-                    <h3>รายเดือน <small>ยอดสะสมถึงสิ้นเดือน</small></h3>
+                  <div className={styles.insightPanel}>
+                    <h3><span className={styles.insightIcon}><CalendarDays size={16} strokeWidth={2} aria-hidden="true" /></span>รายเดือน <small>ยอดสะสมถึงสิ้นเดือน</small></h3>
                     {insights?.months.length ? <ul className={styles.insightList}>
                       {insights.months.map(item => <li key={item.month} className={styles.insightRow}>
                         <span>{monthName(item.month)} {item.month.slice(0, 4)}</span>
@@ -287,16 +290,16 @@ export default function AllconnectCompareDashboard() {
                     </ul> : <p className={styles.insightEmpty}>ยังไม่มีข้อมูลรายเดือน</p>}
                   </div>
                 </div>
-                <div>
-                  <h3>ไม่มีการปิดงานรายพื้นที่ <small>{month || 'ทุกเดือน'}</small></h3>
+                <div className={styles.insightPanel}>
+                  <h3><span className={styles.insightIcon}><MapPin size={16} strokeWidth={2} aria-hidden="true" /></span>ไม่มีการปิดงานรายพื้นที่ <small>{month || 'ทุกเดือน'}</small></h3>
                   {insights?.regions.length ? <ul className={styles.insightRegionGrid}>
                     {insights.regions.map(region => <li key={region.rbm} className={styles.insightRow}>
                       <span>{region.rbm}</span><strong>{number(region.withoutWork)} กองงาน</strong>
                     </li>)}
                   </ul> : <p className={styles.insightEmpty}>ยังไม่มีข้อมูลพื้นที่</p>}
                 </div>
-                <div>
-                  <h3>5 บริษัทที่มีช่างไม่มีการปิดงานมากที่สุด <small>{month || 'ทุกเดือน'}</small></h3>
+                <div className={styles.insightPanel}>
+                  <h3><span className={styles.insightIcon}><Building2 size={16} strokeWidth={2} aria-hidden="true" /></span>5 บริษัทที่มีช่างไม่มีการปิดงานมากที่สุด <small>{month || 'ทุกเดือน'}</small></h3>
                   {insights?.companies.length ? <ul className={styles.insightCompanies}>
                     {insights.companies.map(company => <li key={company.name}>
                       <span>{company.name}</span><strong>{number(company.withoutWork)} กองงาน</strong>

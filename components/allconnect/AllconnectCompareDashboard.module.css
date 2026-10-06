@@ -51,25 +51,29 @@
 .barChartInner { width: 100%; min-width: 720px; }
 .trendGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; padding: 20px 0 24px; border-top: 1px solid #e3e7ed; }
 .monthlyChart, .insightPlaceholder { min-width: 0; }
-.insightPlaceholder { padding-left: 24px; border-left: 1px solid #e3e7ed; }
-.insightLead { display: flex; flex-direction: column; gap: 5px; padding: 16px 18px; border: 1px solid #f1d4d8; border-radius: 10px; background: linear-gradient(135deg, #fff7f8 0%, #fffafb 100%); color: #80444c; font-size: 12px; line-height: 1.5; }
-.insightLead strong { color: #bd4050; font-size: 28px; line-height: 1.25; font-variant-numeric: tabular-nums; }
+.insightPlaceholder { padding: 20px; border-radius: 22px; background: #edf1f6; box-shadow: inset 5px 5px 12px #dce2ea, inset -5px -5px 12px #fff; }
+.insightLead { display: flex; flex-direction: column; gap: 9px; padding: 18px; border: 1px solid #f9e9ec; border-radius: 17px; background: #faeff1; box-shadow: 6px 6px 15px #d8dde5, -6px -6px 15px #fff; color: #80444c; font-size: 12px; line-height: 1.5; }
+.insightLeadTop { display: flex; align-items: flex-start; gap: 10px; }
+.insightLeadIcon { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 36px; height: 36px; border-radius: 12px; background: #faeff1; box-shadow: 3px 3px 7px #e5cfd4, -3px -3px 7px #fff; color: #b94253; }
+.insightLeadTop > span:last-child { min-width: 0; }
+.insightLead strong { color: #bd4050; font-size: 29px; line-height: 1.25; font-variant-numeric: tabular-nums; }
 .insightLead strong small { font-size: 12px; font-weight: 500; }
-.insightSections { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; gap: 22px; margin-top: 18px; }
+.insightSections { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; gap: 18px; margin-top: 18px; }
 .insightSections > div { min-width: 0; }
 .insightSections > div:last-child { grid-column: 1 / -1; }
-.insightPrimary { display: grid; align-content: start; gap: 20px; }
-.insightSections h3 { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; margin: 0 0 8px; color: #344253; font-size: 13px; line-height: 1.5; }
+.insightPrimary { display: grid; align-content: start; gap: 18px; }
+.insightPanel { min-width: 0; padding: 15px; border: 1px solid #f9fbff; border-radius: 17px; background: #edf1f6; box-shadow: 6px 6px 15px #d8dde5, -6px -6px 15px #fff; }
+.insightSections h3 { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; margin: 0 0 12px; color: #344253; font-size: 13px; line-height: 1.5; }
+.insightIcon { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 29px; height: 29px; margin-right: 1px; border-radius: 9px; background: #edf1f6; box-shadow: 3px 3px 7px #d5dbe4, -3px -3px 7px #fff; color: #b94253; }
 .insightSections h3 small { color: #84909e; font-size: 11px; font-weight: 400; }
 .insightList, .insightRegionGrid, .insightCompanies { margin: 0; padding: 0; list-style: none; }
-.insightList, .insightCompanies { display: grid; gap: 5px; }
-.insightRegionGrid { display: grid; gap: 5px; }
-.insightRow, .insightCompanies li { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; padding: 5px 0; border-bottom: 1px solid #edf0f3; color: #596575; font-size: 12px; line-height: 1.5; }
+.insightList, .insightCompanies, .insightRegionGrid { display: grid; gap: 8px; }
+.insightRow, .insightCompanies li { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-width: 0; padding: 8px 10px; border-radius: 10px; background: #edf1f6; box-shadow: inset 2px 2px 5px #dbe1e9, inset -2px -2px 5px #fff; color: #596575; font-size: 12px; line-height: 1.5; }
 .insightRow strong, .insightCompanies strong { flex-shrink: 0; color: #ba4251; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .insightRow span { min-width: 0; overflow-wrap: anywhere; }
 .insightCompanies { counter-reset: company-rank; }
 .insightCompanies li { counter-increment: company-rank; align-items: start; }
-.insightCompanies li::before { content: counter(company-rank); display: inline-flex; align-items: center; justify-content: center; flex: 0 0 20px; height: 20px; border-radius: 50%; background: #fcebed; color: #b54453; font-size: 11px; font-weight: 700; }
+.insightCompanies li::before { content: counter(company-rank); display: inline-flex; align-items: center; justify-content: center; flex: 0 0 22px; height: 22px; border-radius: 50%; background: #f9eaed; box-shadow: 2px 2px 5px #d9dce3, -2px -2px 5px #fff; color: #b54453; font-size: 11px; font-weight: 700; }
 .insightCompanies li span { flex: 1; min-width: 0; overflow-wrap: anywhere; }
 .insightFootnote, .insightEmpty { margin: 7px 0 0; color: #84909e; font-size: 11px; line-height: 1.5; }
 .monthlyChartInner { width: 100%; height: 320px; }
@@ -182,5 +186,5 @@
   .layout :global(.topbar-user-name) { max-width: 130px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 }
 @media (max-width: 1150px) { .charts { grid-template-columns: minmax(0, 1fr); } .coverageChart { border-left: 0; border-top: 1px solid #e3e7ed; padding: 22px 0 0; } .donutCanvas { max-width: 300px; margin: auto; } }
-@media (max-width: 900px) { .trendGrid { grid-template-columns: minmax(0, 1fr); } .insightPlaceholder { min-height: 100px; border-left: 0; border-top: 1px solid #e3e7ed; padding: 20px 0 0; } }
+@media (max-width: 900px) { .trendGrid { grid-template-columns: minmax(0, 1fr); } .insightPlaceholder { min-height: 100px; } }
 @media (max-width: 600px) { .dashboard { padding: 18px 12px; } .header h1 { font-size: 22px; } .header p { font-size: 12px; } .scopeBar { gap: 12px; } .scopeBar > label { width: 100%; } .loadStatus { margin-left: 0; width: 100%; } .metrics { gap: 10px; } .metric { padding: 12px; } .metric > strong { font-size: 28px; } .metric > span { font-size: 12px; } .sectionHeading h2 { font-size: 15px; } .insightSections { grid-template-columns: minmax(0, 1fr); } .searchLabel { max-width: none; flex-basis: 100%; min-width: 0; } .tableControls > label:not(.searchLabel) { flex: 1; } .tableControls select { min-width: 130px; } .exportButton { font-size: 12px; padding: 8px 10px; } .pagination { gap: 12px; } .pagination > label { margin-left: 0; } .pageButtons { width: 100%; justify-content: center; } }
