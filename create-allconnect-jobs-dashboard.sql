@@ -125,6 +125,47 @@ WITH job_source AS MATERIALIZED (
          coalesce(sum(install_count), 0) AS install_count, coalesce(sum(repair_count), 0) AS repair_count
   FROM compared
   GROUP BY rbm, coalesce(nullif(btrim(depot_code), ''), '-'), coalesce(nullif(btrim(depot_name), ''), '-')
+), dataset_months AS MATERIALIZED (
+  SELECT DISTINCT btrim(a."Month") AS work_month
+  FROM public.allconnect a
+  WHERE btrim(a."Month") ~ '^[0-9]{4}-(0[1-9]|1[0-2])$'
+), monthly_source AS MATERIALIZED (
+  -- Monthly trend ignores p_month so every month stays visible.
+  -- The month comes from PERFORMANCE_DATE (DD/MM/YYYY), not the uploaded Month column.
+  SELECT btrim(a."PERFORMANCE_DATE") AS performance_date, nullif(btrim(a."STAFF_ID"), '') AS handler_id,
+    sum(CASE WHEN btrim(a."Job_Install") ~ '^[0-9]+$' THEN btrim(a."Job_Install")::numeric ELSE 0 END
+      + CASE WHEN btrim(a."Job_Repair") ~ '^[0-9]+$' THEN btrim(a."Job_Repair")::numeric ELSE 0 END) AS completed_jobs
+  FROM public.allconnect a
+  GROUP BY 1, 2
+), monthly_dates AS MATERIALIZED (
+  SELECT value,
+    CASE WHEN value ~ '^[0-9]{2}/[0-9]{2}/[0-9]{4}$'
+      AND pg_input_is_valid(concat(substring(value, 7, 4), '-', substring(value, 4, 2), '-', substring(value, 1, 2)), 'date')
+      THEN concat(substring(value, 7, 4), '-', substring(value, 4, 2), '-', substring(value, 1, 2))::date
+      ELSE NULL END AS work_date
+  FROM (SELECT DISTINCT performance_date AS value FROM monthly_source) dates
+), performance_months AS (
+  SELECT DISTINCT to_char(work_date, 'YYYY-MM') AS work_month
+  FROM monthly_dates WHERE work_date IS NOT NULL
+), monthly_jobs AS MATERIALIZED (
+  SELECT to_char(d.work_date, 'YYYY-MM') AS work_month, s.handler_id
+  FROM monthly_source s JOIN monthly_dates d ON d.value = s.performance_date
+  WHERE d.work_date IS NOT NULL AND s.handler_id IS NOT NULL
+  GROUP BY 1, 2
+  HAVING sum(s.completed_jobs) > 0
+), first_completed_month AS (
+  SELECT handler_id, min(work_month) AS first_work_month
+  FROM monthly_jobs
+  GROUP BY handler_id
+), monthly AS (
+  SELECT m.work_month, count(*) AS total,
+         count(*) FILTER (WHERE s.tech_id IS NOT NULL AND j.first_work_month <= m.work_month) AS with_work,
+         count(*) FILTER (WHERE s.tech_id IS NOT NULL AND (j.first_work_month IS NULL OR j.first_work_month > m.work_month)) AS without_work,
+         count(*) FILTER (WHERE s.tech_id IS NULL) AS pending
+  FROM performance_months m
+  CROSS JOIN (SELECT tech_id FROM scoped) s
+  LEFT JOIN first_completed_month j ON j.handler_id = s.tech_id
+  GROUP BY m.work_month
 ), filtered AS (
   SELECT * FROM scoped
   WHERE (coalesce(p_status, 'all') = 'all' OR work_status = p_status)
@@ -176,7 +217,7 @@ SELECT jsonb_build_object(
       'month', w.work_month, 'weekStart', w.week_start, 'weekEnd', w.week_start + 6,
       'weekNumber', extract(week FROM w.week_start)::integer
     ) ORDER BY w.work_month, w.week_start), '[]'::jsonb) FROM work_periods w),
-    'months', (SELECT coalesce(jsonb_agg(dataset_month ORDER BY dataset_month), '[]'::jsonb) FROM (SELECT DISTINCT btrim("Month") AS dataset_month FROM public.allconnect WHERE btrim("Month") ~ '^[0-9]{4}-(0[1-9]|1[0-2])$') available_months),
+    'months', (SELECT coalesce(jsonb_agg(work_month ORDER BY work_month), '[]'::jsonb) FROM dataset_months),
     'invalidJobRows', (SELECT count(*) FROM job_source WHERE (nullif(btrim("Job_Install"), '') IS NOT NULL AND btrim("Job_Install") !~ '^[0-9]+$') OR (nullif(btrim("Job_Repair"), '') IS NOT NULL AND btrim("Job_Repair") !~ '^[0-9]+$'))
   ) FROM source_meta m),
   'summary', (SELECT jsonb_build_object(
@@ -189,6 +230,11 @@ SELECT jsonb_build_object(
     'pending', r.pending, 'jobCount', r.job_count, 'installCount', r.install_count, 'repairCount', r.repair_count,
     'coverage', round(100.0 * r.with_work / nullif(r.with_work + r.without_work, 0), 1)
   ) ORDER BY substring(r.rbm FROM '^R([0-9]+)')::integer NULLS LAST, r.rbm) FROM regions r), '[]'::jsonb),
+  'monthly', coalesce((SELECT jsonb_agg(jsonb_build_object(
+    'month', mo.work_month, 'total', mo.total, 'withWork', mo.with_work,
+    'withoutWork', mo.without_work, 'pending', mo.pending,
+    'coverage', round(100.0 * mo.with_work / nullif(mo.with_work + mo.without_work, 0), 1)
+  ) ORDER BY mo.work_month) FROM monthly mo), '[]'::jsonb),
   'depots', coalesce((SELECT jsonb_agg(jsonb_build_object(
     'rbm', d.rbm, 'depotCode', d.depot_code, 'depotName', d.depot_name,
     'withoutWorkTechnicians', d.without_work_technicians,

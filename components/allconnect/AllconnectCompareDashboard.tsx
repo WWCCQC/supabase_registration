@@ -6,7 +6,7 @@ import {
   ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from 'recharts';
 import { AlertCircle, CheckCircle, ChevronDown, ChevronLeft, ChevronRight, Download, RefreshCw, Search, Users, X, XCircle } from 'lucide-react';
-import { calculateWithoutWorkCoverage, calculateWorkingDays, weeklyJobBackground, providerSummaryExportRows, formatRegionBarLabel, type CompareDashboard, type CompareRow, type WorkStatus, type WorkStatusFilter } from '@/lib/allconnectCompare';
+import { buildExecutiveInsights, calculateWithoutWorkCoverage, calculateWorkingDays, weeklyJobBackground, providerSummaryExportRows, formatRegionBarLabel, type CompareDashboard, type CompareRow, type WorkStatus, type WorkStatusFilter } from '@/lib/allconnectCompare';
 import styles from './AllconnectCompareDashboard.module.css';
 import AllconnectUpload from './AllconnectUpload';
 import TechniciansUpload from './TechniciansUpload';
@@ -14,6 +14,8 @@ import sourceStyles from './AllconnectSources.module.css';
 
 const number = (value: number) => value.toLocaleString('th-TH');
 const percent = (value: number | null) => value === null ? '-' : `${value.toFixed(1)}%`;
+const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+const monthName = (value: string) => MONTH_NAMES[Number(value.slice(5, 7)) - 1] ?? value;
 const WORK_LABELS: Record<WorkStatus, string> = {
   with_work: 'ปิดงาน', without_work: 'ไม่มีการปิดงาน', pending: 'รอเปรียบเทียบ',
 };
@@ -166,6 +168,12 @@ export default function AllconnectCompareDashboard() {
     withoutWorkLabel: region.withoutWork > 0 ? formatRegionBarLabel(region.withoutWork, region.total) : '',
     totalLabel: region.total > 0 ? number(region.total) : '',
   })) ?? [];
+  const chartMonths = data?.monthly?.map(item => ({
+    ...item,
+    withoutWorkLabel: item.withoutWork > 0 ? formatRegionBarLabel(item.withoutWork, item.total) : '',
+  })) ?? [];
+  const insights = data ? buildExecutiveInsights(data, rbm) : null;
+  const latestInsightMonth = insights?.months.at(-1);
   const visibleDepots = data?.depots.filter(depot => !rbm || depot.rbm === rbm) ?? [];
   const selectedTitle = rbm || 'ทุกพื้นที่ RBM';
   const staleSearch = query !== search.trim();
@@ -231,6 +239,74 @@ export default function AllconnectCompareDashboard() {
             <article className={`${styles.metric} ${styles.red}`}><span>สัดส่วนที่ไม่ปิดงาน</span><strong>{percent(calculateWithoutWorkCoverage(data.summary.withWork, data.summary.withoutWork))}</strong></article>
           </section>
           {data.summary.pending > 0 && <p className={styles.notice}>รอเปรียบเทียบ {number(data.summary.pending)} ราย {data.dataset.totalRows > 0 ? '(ไม่มีรหัสช่าง)' : '(ยังไม่มีข้อมูล Allconnect)'}</p>}
+
+          <div className={styles.trendGrid}>
+            <section className={styles.monthlyChart} aria-label="จำนวนช่างที่ไม่พบการปิดงานรายเดือน (กองงาน)">
+              <div className={styles.sectionHeading}><h2>จำนวนช่างที่ไม่พบการปิดงานรายเดือน (กองงาน)</h2></div>
+              {chartMonths.length ? <div className={styles.barCanvas}>
+                <div className={styles.monthlyChartInner} style={{ minWidth: Math.max(320, chartMonths.length * 110) }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={chartMonths} margin={{ top: 32, right: 16, bottom: 4, left: 0 }} maxBarSize={72}
+                      onClick={state => {
+                        const value = state?.activeLabel;
+                        if (typeof value !== 'string') return;
+                        setMonth(previous => previous === value ? '' : value);
+                        setPage(1);
+                      }}>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e8ebef" />
+                      <XAxis dataKey="month" tickFormatter={monthName} tick={{ fontSize: 12, fill: '#374151' }} axisLine={false} tickLine={false} />
+                      <YAxis allowDecimals={false} tick={false} axisLine={false} tickLine={false} width={0} />
+                      <Tooltip cursor={{ fill: 'rgba(220, 89, 102, 0.08)' }} formatter={value => `${number(Number(value))} ราย`} labelFormatter={label => `เดือน ${label}`} contentStyle={{ borderRadius: 6, fontSize: 13 }} />
+                      <Bar dataKey="withoutWork" name="ไม่พบการปิดงาน" fill={COLORS.withoutWork} isAnimationActive={false} cursor="pointer">
+                        {chartMonths.map(item => <Cell key={item.month} fillOpacity={month && month !== item.month ? 0.35 : 1} />)}
+                        <LabelList dataKey="withoutWorkLabel" position="top" fill="#374151" fontSize={11} fontWeight={600} />
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div> : <div className={styles.empty}>{data.monthly ? 'ยังไม่มีข้อมูลรายเดือน' : 'ยังไม่ได้อัปเดตฟังก์ชันฐานข้อมูลสำหรับข้อมูลรายเดือน'}</div>}
+            </section>
+            <section className={styles.insightPlaceholder} aria-label="Summary insight">
+              <div className={styles.sectionHeading}><h2>Summary insight</h2><span>{selectedTitle}</span></div>
+              <div className={styles.insightSections}>
+                <div className={styles.insightPrimary}>
+                  {latestInsightMonth && <div className={styles.insightLead}>
+                    <span>ช่างที่ยังไม่พบการปิดงานถึงสิ้น {monthName(latestInsightMonth.month)} {latestInsightMonth.month.slice(0, 4)}</span>
+                    <strong>{number(latestInsightMonth.withoutWork)} <small>กองงาน</small></strong>
+                    {latestInsightMonth.change !== null && <span>
+                      {latestInsightMonth.change < 0 ? `ลดลง ${number(-latestInsightMonth.change)}` : latestInsightMonth.change > 0 ? `เพิ่มขึ้น ${number(latestInsightMonth.change)}` : 'เท่าเดิม'} จากเดือนก่อน
+                    </span>}
+                  </div>}
+                  <div>
+                    <h3>รายเดือน <small>ยอดสะสมถึงสิ้นเดือน</small></h3>
+                    {insights?.months.length ? <ul className={styles.insightList}>
+                      {insights.months.map(item => <li key={item.month} className={styles.insightRow}>
+                        <span>{monthName(item.month)} {item.month.slice(0, 4)}</span>
+                        <strong>{number(item.withoutWork)} กองงาน</strong>
+                      </li>)}
+                    </ul> : <p className={styles.insightEmpty}>ยังไม่มีข้อมูลรายเดือน</p>}
+                  </div>
+                </div>
+                <div>
+                  <h3>ไม่มีการปิดงานรายพื้นที่ <small>{month || 'ทุกเดือน'}</small></h3>
+                  {insights?.regions.length ? <ul className={styles.insightRegionGrid}>
+                    {insights.regions.map(region => <li key={region.rbm} className={styles.insightRow}>
+                      <span>{region.rbm}</span><strong>{number(region.withoutWork)} กองงาน</strong>
+                    </li>)}
+                  </ul> : <p className={styles.insightEmpty}>ยังไม่มีข้อมูลพื้นที่</p>}
+                </div>
+                <div>
+                  <h3>5 บริษัทที่มีช่างไม่มีการปิดงานมากที่สุด <small>{month || 'ทุกเดือน'}</small></h3>
+                  {insights?.companies.length ? <ul className={styles.insightCompanies}>
+                    {insights.companies.map(company => <li key={company.name}>
+                      <span>{company.name}</span><strong>{number(company.withoutWork)} กองงาน</strong>
+                    </li>)}
+                  </ul> : <p className={styles.insightEmpty}>ยังไม่มีบริษัทที่พบช่างไม่มีการปิดงาน</p>}
+                  <p className={styles.insightFootnote}>อ้างอิงชื่อบริษัทจาก Depot Name{insights?.unknownCompanyCount ? ` · ไม่ระบุชื่อ ${number(insights.unknownCompanyCount)} กองงาน` : ''}</p>
+                </div>
+              </div>
+            </section>
+          </div>
 
           <div className={styles.charts}>
             <section className={styles.regionChart}>

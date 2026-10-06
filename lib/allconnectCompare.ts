@@ -15,6 +15,15 @@ export interface CompareSummary {
 
 export interface CompareRegion extends CompareSummary { rbm: string }
 
+export interface CompareMonth {
+  month: string;
+  total: number;
+  withWork: number;
+  withoutWork: number;
+  pending: number;
+  coverage: number | null;
+}
+
 export interface CompareDepot extends CompareSummary {
   rbm: string;
   depotCode: string;
@@ -79,9 +88,42 @@ export interface CompareDashboard {
   };
   summary: CompareSummary;
   regions: CompareRegion[];
+  monthly?: CompareMonth[];
   depots: CompareDepot[];
   rows: CompareRow[];
   pagination: { total: number; page: number; pageSize: number; totalPages: number };
+}
+
+export function buildExecutiveInsights(
+  data: {
+    monthly?: Pick<CompareMonth, 'month' | 'total' | 'withoutWork'>[];
+    regions: Pick<CompareRegion, 'rbm' | 'withoutWork'>[];
+    depots: Pick<CompareDepot, 'rbm' | 'depotName' | 'withoutWork'>[];
+  },
+  rbm: string,
+) {
+  const sortedMonths = [...(data.monthly ?? [])].sort((a, b) => a.month.localeCompare(b.month));
+  const months = sortedMonths.map((item, index) => ({
+    ...item,
+    change: index === 0 ? null : item.withoutWork - sortedMonths[index - 1].withoutWork,
+  }));
+  const regions = data.regions.filter(region => !rbm || region.rbm === rbm);
+  const companyCounts = new Map<string, number>();
+  let unknownCompanyCount = 0;
+  for (const depot of data.depots) {
+    if (rbm && depot.rbm !== rbm) continue;
+    const name = depot.depotName.trim();
+    if (!name || name === '-') {
+      unknownCompanyCount += depot.withoutWork;
+      continue;
+    }
+    companyCounts.set(name, (companyCounts.get(name) ?? 0) + depot.withoutWork);
+  }
+  const companies = [...companyCounts].map(([name, withoutWork]) => ({ name, withoutWork }))
+    .filter(item => item.withoutWork > 0)
+    .sort((a, b) => b.withoutWork - a.withoutWork || a.name.localeCompare(b.name, 'th'))
+    .slice(0, 5);
+  return { months, regions, companies, unknownCompanyCount };
 }
 
 export function formatRegionBarLabel(value: number, total: number) {

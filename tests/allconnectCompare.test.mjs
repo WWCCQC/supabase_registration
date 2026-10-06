@@ -1,7 +1,42 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { readFileSync } from 'node:fs';
-import { calculateWithoutWorkCoverage, calculateWorkingDays, formatCompletedWorkType, formatNoWorkWeek, formatNoWorkPeriods, weeklyJobBackground, providerSummaryExportRows, formatRegionBarLabel, parseCompareParams, parseCompareJobParams } from '../lib/allconnectCompare.ts';
+import { buildExecutiveInsights, calculateWithoutWorkCoverage, calculateWorkingDays, formatCompletedWorkType, formatNoWorkWeek, formatNoWorkPeriods, weeklyJobBackground, providerSummaryExportRows, formatRegionBarLabel, parseCompareParams, parseCompareJobParams } from '../lib/allconnectCompare.ts';
+
+test('executive insights show month change and aggregate company counts across depots', () => {
+  const source = {
+    monthly: [
+      { month: '2026-08', total: 20, withWork: 8, withoutWork: 12, pending: 0, coverage: 40 },
+      { month: '2026-09', total: 20, withWork: 14, withoutWork: 6, pending: 0, coverage: 70 },
+    ],
+    regions: [
+      { rbm: 'R1', withoutWork: 4 }, { rbm: 'R2', withoutWork: 2 },
+    ],
+    depots: [
+      { rbm: 'R1', depotName: 'บริษัท ก', withoutWork: 2 },
+      { rbm: 'R1', depotName: 'บริษัท ข', withoutWork: 1 },
+      { rbm: 'R1', depotName: '-', withoutWork: 1 },
+      { rbm: 'R2', depotName: 'บริษัท ก', withoutWork: 1 },
+      { rbm: 'R2', depotName: 'บริษัท ค', withoutWork: 1 },
+    ],
+  };
+
+  const all = buildExecutiveInsights(source, '');
+  assert.deepEqual(all.months.map(item => [item.month, item.withoutWork, item.change]), [
+    ['2026-08', 12, null], ['2026-09', 6, -6],
+  ]);
+  assert.deepEqual(all.regions.map(item => [item.rbm, item.withoutWork]), [['R1', 4], ['R2', 2]]);
+  assert.deepEqual(all.companies.map(item => [item.name, item.withoutWork]), [
+    ['บริษัท ก', 3], ['บริษัท ข', 1], ['บริษัท ค', 1],
+  ]);
+  assert.equal(all.unknownCompanyCount, 1);
+
+  const r1 = buildExecutiveInsights(source, 'R1');
+  assert.deepEqual(r1.regions.map(item => item.rbm), ['R1']);
+  assert.deepEqual(r1.companies.map(item => [item.name, item.withoutWork]), [
+    ['บริษัท ก', 2], ['บริษัท ข', 1],
+  ]);
+});
 
 test('provider export preserves text depot codes, numbers, zero work and percentage values', () => {
   const rows = providerSummaryExportRows([
@@ -20,6 +55,19 @@ test('large dashboard queries stage only required source columns and parse disti
   assert.doesNotMatch(source, /SELECT a\.\*/);
   assert.match(sql, /performance_dates AS MATERIALIZED/);
   assert.match(sql, /SELECT DISTINCT btrim\("PERFORMANCE_DATE"\)/);
+});
+
+test('monthly trend counts heads without completed work through each month independent of the month filter', () => {
+  const sql = readFileSync(new URL('../create-allconnect-jobs-dashboard.sql', import.meta.url), 'utf8');
+  const monthlyCtes = sql.split('monthly_source AS MATERIALIZED (')[1].split('), monthly AS (')[0];
+  assert.doesNotMatch(monthlyCtes.replace(/--.*$/gm, ''), /p_month|"Month"/);
+  assert.match(monthlyCtes, /btrim\(a\."PERFORMANCE_DATE"\)/);
+  assert.match(monthlyCtes, /HAVING sum\(s\.completed_jobs\) > 0/);
+  assert.match(sql, /FROM performance_months m/);
+  assert.match(sql, /CROSS JOIN \(SELECT tech_id FROM scoped\) s/);
+  assert.match(sql, /min\(work_month\) AS first_work_month/);
+  assert.match(sql, /j\.first_work_month <= m\.work_month/);
+  assert.match(sql, /'monthly', coalesce\(/);
 });
 
 test('weekly job cells are red for zero and progressively greener for positive quantities', () => {
