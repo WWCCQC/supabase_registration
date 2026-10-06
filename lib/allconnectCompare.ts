@@ -24,6 +24,12 @@ export interface CompareMonth {
   coverage: number | null;
 }
 
+export interface CompareMonthCompanyType {
+  month: string;
+  companyType: string;
+  withoutWork: number;
+}
+
 export interface CompareDepot extends CompareSummary {
   rbm: string;
   depotCode: string;
@@ -89,6 +95,7 @@ export interface CompareDashboard {
   summary: CompareSummary;
   regions: CompareRegion[];
   monthly?: CompareMonth[];
+  monthlyByCompanyType?: CompareMonthCompanyType[];
   depots: CompareDepot[];
   rows: CompareRow[];
   pagination: { total: number; page: number; pageSize: number; totalPages: number };

@@ -166,6 +166,15 @@ WITH job_source AS MATERIALIZED (
   CROSS JOIN (SELECT tech_id FROM scoped) s
   LEFT JOIN first_completed_month j ON j.handler_id = s.tech_id
   GROUP BY m.work_month
+), monthly_company_types AS (
+  SELECT m.work_month,
+         coalesce(nullif(btrim(s.provider), ''), 'ไม่ระบุประเภท') AS company_type,
+         count(*) FILTER (WHERE s.tech_id IS NOT NULL
+           AND (j.first_work_month IS NULL OR j.first_work_month > m.work_month)) AS without_work
+  FROM performance_months m
+  CROSS JOIN (SELECT tech_id, provider FROM scoped) s
+  LEFT JOIN first_completed_month j ON j.handler_id = s.tech_id
+  GROUP BY m.work_month, coalesce(nullif(btrim(s.provider), ''), 'ไม่ระบุประเภท')
 ), filtered AS (
   SELECT * FROM scoped
   WHERE (coalesce(p_status, 'all') = 'all' OR work_status = p_status)
@@ -235,6 +244,9 @@ SELECT jsonb_build_object(
     'withoutWork', mo.without_work, 'pending', mo.pending,
     'coverage', round(100.0 * mo.with_work / nullif(mo.with_work + mo.without_work, 0), 1)
   ) ORDER BY mo.work_month) FROM monthly mo), '[]'::jsonb),
+  'monthlyByCompanyType', coalesce((SELECT jsonb_agg(jsonb_build_object(
+    'month', mt.work_month, 'companyType', mt.company_type, 'withoutWork', mt.without_work
+  ) ORDER BY mt.company_type, mt.work_month) FROM monthly_company_types mt), '[]'::jsonb),
   'depots', coalesce((SELECT jsonb_agg(jsonb_build_object(
     'rbm', d.rbm, 'depotCode', d.depot_code, 'depotName', d.depot_name,
     'withoutWorkTechnicians', d.without_work_technicians,

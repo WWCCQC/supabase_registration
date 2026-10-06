@@ -70,6 +70,18 @@ test('monthly trend counts heads without completed work through each month indep
   assert.match(sql, /'monthly', coalesce\(/);
 });
 
+test('monthly company type breakdown uses the same cumulative no-work population as the monthly total', () => {
+  const sql = readFileSync(new URL('../create-allconnect-jobs-dashboard.sql', import.meta.url), 'utf8');
+  const breakdown = sql.split('monthly_company_types AS (')[1].split('), filtered AS (')[0];
+  assert.match(sql, /coalesce\(t\.company_type, ''\) AS provider/);
+  assert.match(breakdown, /FROM performance_months m/);
+  assert.match(breakdown, /CROSS JOIN \(SELECT tech_id, provider FROM scoped\) s/);
+  assert.match(breakdown, /s\.tech_id IS NOT NULL/);
+  assert.match(breakdown, /j\.first_work_month IS NULL OR j\.first_work_month > m\.work_month/);
+  assert.match(breakdown, /coalesce\(nullif\(btrim\(s\.provider\), ''\), 'ไม่ระบุประเภท'\)/);
+  assert.match(sql, /'monthlyByCompanyType', coalesce\(/);
+});
+
 test('weekly job cells are red for zero and progressively greener for positive quantities', () => {
   assert.equal(weeklyJobBackground(0), '#fde2e5');
   assert.equal(weeklyJobBackground(1), 'hsl(148, 45%, 93.5%)');

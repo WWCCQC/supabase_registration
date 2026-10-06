@@ -50,7 +50,20 @@
 .barCanvas { width: 100%; min-width: 0; overflow-x: auto; }
 .barChartInner { width: 100%; min-width: 720px; }
 .trendGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; padding: 20px 0 24px; border-top: 1px solid #e3e7ed; }
-.monthlyChart, .insightPlaceholder { min-width: 0; }
+.trendCharts { display: grid; align-content: start; gap: 24px; min-width: 0; }
+.monthlyChart, .companyTypeChart, .insightPlaceholder { min-width: 0; }
+.companyTypeChart { padding-top: 20px; border-top: 1px solid #e3e7ed; }
+.heatmapScroll { width: 100%; overflow-x: auto; }
+.heatmap { width: 100%; min-width: 340px; border-collapse: separate; border-spacing: 6px; font-size: 12px; color: #526071; }
+.heatmap th, .heatmap td { padding: 0; text-align: center; }
+.heatmap th:first-child { width: 36%; text-align: left; }
+.heatmap thead th { padding-bottom: 5px; color: #687586; font-weight: 600; }
+.heatmap tbody th { padding-right: 8px; font-weight: 600; overflow-wrap: anywhere; }
+.heatmapMonth { border: 0; border-radius: 7px; padding: 5px 7px; background: transparent; color: inherit; font: inherit; font-weight: 600; cursor: pointer; white-space: nowrap; }
+.heatmapMonth:hover, .heatmapMonth[aria-pressed="true"] { background: #fcebed; color: #a93d4b; }
+.heatmapMonth:focus-visible { outline: 2px solid #a93d4b; outline-offset: 2px; }
+.heatmapCell { display: flex; align-items: center; justify-content: center; min-height: 42px; border-radius: 8px; background: #f1f3f6; color: #743b44; font-weight: 700; font-variant-numeric: tabular-nums; }
+.heatmap tfoot th, .heatmap tfoot td { padding-top: 9px; border-top: 1px solid #e3e7ed; color: #a93d4b; font-weight: 700; font-variant-numeric: tabular-nums; }
 .insightPlaceholder { padding: 20px; border-radius: 22px; background: #edf1f6; box-shadow: inset 5px 5px 12px #dce2ea, inset -5px -5px 12px #fff; }
 .insightLead { display: flex; flex-direction: column; gap: 9px; padding: 18px; border: 1px solid #f9e9ec; border-radius: 17px; background: #faeff1; box-shadow: 6px 6px 15px #d8dde5, -6px -6px 15px #fff; color: #80444c; font-size: 12px; line-height: 1.5; }
 .insightLeadTop { display: flex; align-items: flex-start; gap: 10px; }

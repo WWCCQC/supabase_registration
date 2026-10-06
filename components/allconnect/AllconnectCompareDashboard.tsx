@@ -172,6 +172,16 @@ export default function AllconnectCompareDashboard() {
     ...item,
     withoutWorkLabel: item.withoutWork > 0 ? formatRegionBarLabel(item.withoutWork, item.total) : '',
   })) ?? [];
+  const monthlyTypes = data?.monthlyByCompanyType ?? [];
+  const companyTypeTotals = new Map<string, number>();
+  const companyTypeCounts = new Map<string, number>();
+  for (const item of monthlyTypes) {
+    companyTypeTotals.set(item.companyType, (companyTypeTotals.get(item.companyType) ?? 0) + item.withoutWork);
+    companyTypeCounts.set(`${item.companyType}\u0000${item.month}`, item.withoutWork);
+  }
+  const companyTypes = [...companyTypeTotals.keys()].sort((a, b) =>
+    (companyTypeTotals.get(b) ?? 0) - (companyTypeTotals.get(a) ?? 0) || a.localeCompare(b, 'th'));
+  const maxCompanyTypeCount = Math.max(0, ...monthlyTypes.map(item => item.withoutWork));
   const insights = data ? buildExecutiveInsights(data, rbm) : null;
   const latestInsightMonth = insights?.months.at(-1);
   const visibleDepots = data?.depots.filter(depot => !rbm || depot.rbm === rbm) ?? [];
@@ -241,6 +251,7 @@ export default function AllconnectCompareDashboard() {
           {data.summary.pending > 0 && <p className={styles.notice}>รอเปรียบเทียบ {number(data.summary.pending)} ราย {data.dataset.totalRows > 0 ? '(ไม่มีรหัสช่าง)' : '(ยังไม่มีข้อมูล Allconnect)'}</p>}
 
           <div className={styles.trendGrid}>
+            <div className={styles.trendCharts}>
             <section className={styles.monthlyChart} aria-label="จำนวนช่างที่ไม่พบการปิดงานรายเดือน (กองงาน)">
               <div className={styles.sectionHeading}><h2>จำนวนช่างที่ไม่พบการปิดงานรายเดือน (กองงาน)</h2></div>
               {chartMonths.length ? <div className={styles.barCanvas}>
@@ -266,6 +277,30 @@ export default function AllconnectCompareDashboard() {
                 </div>
               </div> : <div className={styles.empty}>{data.monthly ? 'ยังไม่มีข้อมูลรายเดือน' : 'ยังไม่ได้อัปเดตฟังก์ชันฐานข้อมูลสำหรับข้อมูลรายเดือน'}</div>}
             </section>
+            <section className={styles.companyTypeChart} aria-label="จำนวนช่างที่ไม่พบการปิดงานรายเดือน แยกตามประเภทช่าง">
+              <div className={styles.sectionHeading}><h2>จำนวนช่างที่ไม่พบการปิดงานรายเดือน แยกตามประเภทช่าง</h2></div>
+              {chartMonths.length && companyTypes.length ? <div className={styles.heatmapScroll}>
+                <table className={styles.heatmap}>
+                  <thead><tr><th scope="col">ประเภทช่าง</th>{chartMonths.map(item => <th scope="col" key={item.month}>
+                    <button type="button" className={styles.heatmapMonth} aria-pressed={month === item.month} onClick={() => { setMonth(previous => previous === item.month ? '' : item.month); setPage(1); }}>
+                      {monthName(item.month)} {item.month.slice(0, 4)}
+                    </button>
+                  </th>)}</tr></thead>
+                  <tbody>{companyTypes.map(companyType => <tr key={companyType}>
+                    <th scope="row">{companyType}</th>
+                    {chartMonths.map(item => {
+                      const count = companyTypeCounts.get(`${companyType}\u0000${item.month}`) ?? 0;
+                      const intensity = maxCompanyTypeCount > 0 ? count / maxCompanyTypeCount : 0;
+                      return <td key={item.month} title={`${companyType} · ${monthName(item.month)} ${item.month.slice(0, 4)}: ${number(count)} กองงาน`}>
+                        <span className={styles.heatmapCell} style={count ? { backgroundColor: `rgba(220, 89, 102, ${(0.12 + intensity * 0.4).toFixed(2)})` } : undefined}>{number(count)}</span>
+                      </td>;
+                    })}
+                  </tr>)}</tbody>
+                  <tfoot><tr><th scope="row">รวมทุกประเภท</th>{chartMonths.map(item => <td key={item.month}>{number(item.withoutWork)}</td>)}</tr></tfoot>
+                </table>
+              </div> : <div className={styles.empty}>{data.monthlyByCompanyType ? 'ยังไม่มีข้อมูลประเภทช่างที่ไม่พบการปิดงาน' : 'ยังไม่ได้อัปเดตฟังก์ชันฐานข้อมูลสำหรับข้อมูลประเภทช่างรายเดือน'}</div>}
+            </section>
+            </div>
             <section className={styles.insightPlaceholder} aria-label="Summary insight">
               <div className={styles.sectionHeading}><h2>Summary insight</h2><span>{selectedTitle}</span></div>
               <div className={styles.insightSections}>
