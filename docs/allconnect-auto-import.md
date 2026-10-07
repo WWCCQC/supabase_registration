@@ -1,14 +1,26 @@
 # Allconnect daily import
 
+Current scheduling status: Google Apps Script project created and its daily trigger activated on 2026-10-07 after the owner completed Google's OAuth authorization. The old Codex automation remains PAUSED. The append-only database functions and imported data remain in place.
+
+## Google Apps Script project
+
+- Project: [allconnect_import](https://script.google.com/home/projects/1fu7AkHfdZwVu7_vGyYwXuDpUSVvyYGffY1n82O5l1kUORQhYG2aoFUwj/edit), in Drive folder `1OWjJm2wJWwpSVernJOPo5YEQw3T5q7Q_`.
+- Source file kept in this repository: `scripts/google-apps-script/allconnect_import/Code.gs`. Do not put credentials in source control.
+- `SUPABASE_SERVICE_ROLE_KEY` is stored in the Google project's Script Properties. Current Google Drive metadata shows only `tqc.dev@gmail.com` as owner. Anyone given edit rights to this project can potentially read the key through code execution, so keep access private.
+- The script selects the newest CSV in source folder `1hWjOpGX2tfW-dCwUMsqXeA7mRMH2LkMR`, downloads byte ranges, checkpoints progress, stages only rows whose `PERFORMANCE_DATE` does not already exist, and calls the append-only RPC. It does not open the whole 70–140 MB file at once. Retries upsert staging rows by `(batch_id,row_number)`; the final database receipt is idempotent.
+- `installAllconnectTrigger` ran successfully. The Triggers page shows exactly one daily time-based `runAllconnectImport` trigger in the 15:00–16:00 Bangkok window. Google time triggers are approximate (roughly ±15 minutes around the requested 15:00), not exact to the minute.
+- The script handles a Google Drive partial-download quirk seen on the real UTF-8-BOM CSV: a byte range starting at zero returns three fewer body bytes while its Content-Range still covers the BOM. Other short responses remain errors. It decodes once per 1 MB range, preserving split Thai UTF-8 characters.
+- Live test at 15:50–15:53 Bangkok on 2026-10-07: processed all 71,862,004 bytes and 134,441 rows; no unseen dates, so inserted 0 rows. Supabase remained at 169,259 live rows with 0 staging rows; one zero-row receipt was recorded. A repeated run returned `Already imported` immediately. This proves scanning, Supabase date lookup, empty append commit, and replay. The Apps Script staging of an actual new date will be exercised when the next new-date CSV arrives; the database append RPC was separately exercised by the earlier 17,425-row import.
+
 ## Current contract (confirmed 2026-10-07)
 
 Import **only complete dates not already present** in `public.allconnect`, using `PERFORMANCE_DATE` (DD/MM/YYYY). Membership is checked against every existing date, not merely MAX(date). Any existing date is skipped in its entirety: no corrections, deletions, updates, UUID changes, or timestamp changes. All occurrences in a new date are retained, including identical rows and missing STAFF_ID. The user confirmed each date in the file is complete.
 
 Folder: `https://drive.google.com/drive/folders/1hWjOpGX2tfW-dCwUMsqXeA7mRMH2LkMR` (`upload_allconnect`). Files are CSV exports, currently pipe-delimited UTF-8 with the canonical 23 columns. Actual date coverage comes from rows, not filenames. Keep the folder private.
 
-## Runtime
+## Previous local runner (paused)
 
-The initial daily scheduler is a Codex chat automation at **15:00 Asia/Bangkok**, using the connected Google Drive plugin and this local Node.js runner. The computer must be awake, the desktop app running, the project available and connections valid. This is not a cloud/server scheduler and does not guarantee execution while the machine is offline. Files placed after the run are handled on a later run. To make this independent of the computer, deploy the runner and supply unattended Drive credentials to a hosted scheduler; none have been provisioned.
+The initial scheduler was a Codex chat automation at **15:00 Asia/Bangkok**, using the connected Google Drive plugin and this local Node.js runner. It is PAUSED. It required the computer to be awake and the desktop app running. The active Google Apps Script above replaces that scheduler.
 
 Use Node 22.6+ with `--experimental-strip-types` (the current installed Node supports it). The project already has Papa Parse, dotenv and the Supabase client. No new package dependency is needed. `.env.local` supplies server credentials; never print it or copy secrets into this file, a prompt, or the browser.
 
@@ -26,7 +38,7 @@ node --experimental-strip-types scripts/import-allconnect-new-dates.mjs /absolut
 
 `sourceId` permits letters, digits, underscore, hyphen, dot and colon. Use the observed Drive file ID and ISO modified time, not an arbitrary filename. Quote shell arguments properly. A source key combines this ID with a SHA-256 of the file. The default CLI mode is read-only.
 
-## Scheduled run procedure
+## Previous Codex automation procedure (currently paused)
 
 1. Read this runbook. Use the connected Google Drive plugin to list only direct, non-trashed CSV children of the specified folder. Folder fetch currently works; a legacy search returned an empty result despite the file being accessible, so do not treat an empty search alone as an empty folder. If listing is capped or incomplete, obtain a complete listing using supported pagination; if unavailable, report the limitation rather than silently treating the listing as complete.
 2. Read successful source keys from Supabase `allconnect_import_runs` in project `sggunyytungtyhezchft`. Only skip a file when its exact file ID + modification time prefix has a successful receipt. Paginate history reads if necessary. Process unseen CSV versions newest-modified first so the latest export supplies missing days; older unseen files can fill dates absent from the newest rolling window. Break modification-time ties deterministically by file ID.
@@ -64,6 +76,6 @@ The SQL security advisor reports no new executable-public-function issue for thi
 - Preserved 151,834 original rows; full-row fingerprint (including UUID and timestamps) matched the baseline exactly.
 - Re-running the same file returned `already_imported` with zero new dates.
 - Verified actual new-date row counts: Sep 30 = 4,779; Oct 4 = 4,217; Oct 5 = 4,240; Oct 6 = 4,189.
-- Codex automation ID `allconnect` is ACTIVE, daily 15:00. Its first unattended scheduled run has not yet occurred; machine/app availability remains required.
+- Codex automation ID `allconnect` was created for daily 15:00, then PAUSED after the user requested reconsidering Google Apps Script. No unattended scheduled run has occurred.
 - 89 JavaScript tests passed with the existing development server available. TypeScript no-emit check passed. SQL rollback regression passed.
 - Updated browser copy and independent expected-count submission are local project changes; no web deployment was performed. The deployed legacy RPC has already been changed to append-only, so existing web clients preserve history.
