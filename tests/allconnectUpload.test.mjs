@@ -369,3 +369,12 @@ test('snapshot read failure, missing RPC result and missing database config retu
   delete process.env.SUPABASE_SERVICE_ROLE_KEY;
   assert.equal((await post({ action: 'abort', batchId })).status, 500);
 });
+
+test('new browser commits send the independently accepted count to append RPC', async t => {
+  const {post,calls}=routeHarness(t,[{body:[{inserted_count:2,skipped_count:3,imported_at:snapshot}]}]);
+  const result=await post({action:'commit',batchId,expectedSnapshot:snapshot,expectedCount:5});
+  assert.equal(result.status,200);
+  assert.equal(result.body.insertedCount,2);
+  assert.equal(calls[0].url.pathname,'/rest/v1/rpc/append_allconnect_new_dates');
+  assert.deepEqual(calls[0].body,{p_batch_id:batchId,p_expected_count:5,p_source_key:`manual:${batchId}`});
+});

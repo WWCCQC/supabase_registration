@@ -28,7 +28,7 @@ function parseBody(value: unknown) {
   const expectedKeys = {
     start: ['action'],
     chunk: ['action', 'batchId', 'startRow', 'rows'],
-    commit: ['action', 'batchId', 'expectedSnapshot'],
+    commit: ['action', 'batchId', 'expectedSnapshot', ...('expectedCount' in input ? ['expectedCount'] : [])],
     abort: ['action', 'batchId'],
   }[action];
   const keys = Object.keys(input);
@@ -48,7 +48,12 @@ function parseBody(value: unknown) {
       throw new Error('Invalid expected snapshot');
     }
   }
-  return { action, batchId, expectedSnapshot };
+  const expectedCount = input.expectedCount;
+  if ('expectedCount' in input && (typeof expectedCount !== 'number' ||
+      !Number.isSafeInteger(expectedCount) || expectedCount < 1 || expectedCount > 2147483647)) {
+    throw new Error('Invalid expected count');
+  }
+  return { action, batchId, expectedSnapshot, expectedCount: expectedCount as number | undefined };
 }
 
 export async function POST(request: NextRequest) {
@@ -91,10 +96,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ acceptedCount: body.rows.length }, { headers });
     }
     if (body.action === 'commit') {
-      const { data, error } = await db.rpc('replace_allconnect_import', {
-        p_batch_id: body.batchId,
-        p_expected_snapshot: body.expectedSnapshot,
-      });
+      // Old deployed clients remain append-only through the compatibility RPC.
+      // New clients additionally verify the independently counted complete file.
+      const { data, error } = body.expectedCount === undefined
+        ? await db.rpc('replace_allconnect_import', {
+          p_batch_id: body.batchId, p_expected_snapshot: body.expectedSnapshot,
+        })
+        : await db.rpc('append_allconnect_new_dates', {
+          p_batch_id: body.batchId, p_expected_count: body.expectedCount,
+          p_source_key: `manual:${body.batchId}`,
+        });
       if (error) throw error;
       if (!data?.[0]) throw new Error('Missing import result');
       return NextResponse.json({ insertedCount: data[0].inserted_count, importedAt: data[0].imported_at }, { headers });

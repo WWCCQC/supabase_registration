@@ -53,7 +53,7 @@ export default function AllconnectUpload({ onComplete, updatedAt }: { onComplete
     controller.current = abort;
     try {
       validateUploadFile(file);
-      // Fatal decoding catches invalid UTF-8 before any replacement can be committed.
+      // Fatal decoding catches invalid UTF-8 before any new dates can be committed.
       const reader = file.stream().pipeThrough(new TextDecoderStream('utf-8', { fatal: true })).getReader();
       let characters = 0;
       try {
@@ -104,10 +104,12 @@ export default function AllconnectUpload({ onComplete, updatedAt }: { onComplete
       if (!checkedHeaders || accepted === 0) throw new Error('ไฟล์ไม่มีข้อมูลสำหรับนำเข้า');
       setPercent(95); setMessage('กำลังบันทึกข้อมูล...');
       commitStarted = true;
-      const result: ImportResult = await request({ action: 'commit', batchId, expectedSnapshot: started.expectedSnapshot }, abort.signal);
+      const result: ImportResult = await request({ action: 'commit', batchId, expectedSnapshot: started.expectedSnapshot, expectedCount: accepted }, abort.signal);
       batchId = undefined;
       setPercent(100); setRows(result.insertedCount);
-      setMessage(`อัปโหลดสำเร็จ ${result.insertedCount.toLocaleString('th-TH')} รายการ`);
+      setMessage(result.insertedCount > 0
+        ? `เพิ่มข้อมูลวันที่ใหม่ ${result.insertedCount.toLocaleString('th-TH')} รายการ โดยเก็บข้อมูลเดิมทั้งหมด`
+        : 'ไม่มีวันที่ใหม่ ข้อมูลเดิมไม่เปลี่ยนแปลง');
       onComplete(result);
     } catch (cause) {
       setError(true);
@@ -134,6 +136,7 @@ export default function AllconnectUpload({ onComplete, updatedAt }: { onComplete
       <span className={styles.filename}>{filename}</span>
     </div>
     <div className={styles.updatedAt}>อัปเดตล่าสุด (เวลาไทย): {updatedAt}</div>
+    <div className={styles.updatedAt}>เพิ่มเฉพาะวันที่ยังไม่มีในระบบ วันที่เดิมจะข้ามทั้งวัน</div>
     {filename && <>
       <div className={styles.progress}><progress aria-label="ความคืบหน้าการอัปโหลด" max={100} value={percent} /><strong>{percent}%</strong></div>
       <div role={error ? 'alert' : 'status'} aria-live="polite" className={error ? styles.error : styles.status}>
