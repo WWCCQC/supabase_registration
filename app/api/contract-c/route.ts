@@ -3,6 +3,7 @@ import { jwtVerify } from 'jose';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 
 export const dynamic = 'force-dynamic';
+export const fetchCache = 'force-no-store';
 
 export async function GET(request: NextRequest) {
   const headers = { 'Cache-Control': 'private, no-store' };
@@ -20,7 +21,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'กรุณาเข้าสู่ระบบใหม่' }, { status: 401, headers });
   }
   try {
-    const client = supabaseAdmin();
+    const client = supabaseAdmin({ noStore: true });
     const rows = [];
     for (let offset = 0; ; offset += 1000) {
       const { data, error } = await client.from('contract_c').select('*')
