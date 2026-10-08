@@ -6,7 +6,7 @@ import {
   ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from 'recharts';
 import { AlertCircle, Building2, CalendarDays, CheckCircle, ChevronDown, ChevronLeft, ChevronRight, ClipboardX, Download, MapPin, RefreshCw, Search, Users, X, XCircle } from 'lucide-react';
-import { buildExecutiveInsights, calculateWithoutWorkCoverage, calculateWorkingDays, weeklyJobBackground, providerSummaryExportRows, formatRegionBarLabel, type CompareDashboard, type CompareRow, type WorkStatus, type WorkStatusFilter } from '@/lib/allconnectCompare';
+import { buildExecutiveInsights, calculateWithoutWorkCoverage, weeklyJobBackground, providerSummaryExportRows, formatRegionBarLabel, type CompareDashboard, type CompareRow, type WorkStatus, type WorkStatusFilter } from '@/lib/allconnectCompare';
 import styles from './AllconnectCompareDashboard.module.css';
 import AllconnectUpload from './AllconnectUpload';
 import TechniciansUpload from './TechniciansUpload';
@@ -19,13 +19,30 @@ const monthName = (value: string) => MONTH_NAMES[Number(value.slice(5, 7)) - 1] 
 const WORK_LABELS: Record<WorkStatus, string> = {
   with_work: 'ปิดงาน', without_work: 'ไม่มีการปิดงาน', pending: 'รอเปรียบเทียบ',
 };
-const DETAIL_HEADINGS = ['รหัสช่าง', 'ชื่อช่าง', 'จำนวนวันที่เข้าทำงาน', 'RBM', 'Provider', 'Depot', 'Depot Name', 'สถานะการปิดงาน'];
+const DETAIL_HEADINGS = ['รหัสช่าง', 'ชื่อช่าง', 'RBM', 'Depot', 'Depot Name', 'สถานะการปิดงาน'];
 const COLORS = { withWork: '#159574', withoutWork: '#dc5966', pending: '#a1a8b3' };
 const DETAIL_FILTERS = [
   { value: 'all', label: 'ข้อมูลช่างทั้งหมด', Icon: Users },
   { value: 'with_work', label: 'จำนวนช่างที่ปิดงาน', Icon: CheckCircle },
   { value: 'without_work', label: 'จำนวนช่างที่ไม่มีการปิดงาน', Icon: XCircle },
 ] as const;
+
+function TrendSparkline({ values, labels }: { values: number[]; labels: string[] }) {
+  if (values.length < 2) return <span className={styles.trendEmpty}>-</span>;
+  const width = 120, height = 34, pad = 4;
+  const max = Math.max(1, ...values);
+  const x = (index: number) => pad + (index * (width - pad * 2)) / (values.length - 1);
+  const y = (value: number) => height - pad - (value / max) * (height - pad * 2);
+  const points = values.map((value, index) => `${x(index).toFixed(1)},${y(value).toFixed(1)}`).join(' ');
+  const allZero = values.every(value => value === 0);
+  const details = values.map((value, index) => `${labels[index]}: ${number(value)} งาน`).join('\n');
+  return (
+    <svg className={styles.sparkline} width={width} height={height} viewBox={`0 0 ${width} ${height}`} role="img" aria-label={`${allZero ? 'ไม่มีงานทุกสัปดาห์ ' : ''}จำนวนงานรายสัปดาห์ ${details.replace(/\n/g, ', ')}`}>
+      <title>{allZero ? `ไม่มีงานทุกสัปดาห์\n${details}` : details}</title>
+      <polyline points={points} fill="none" stroke={allZero ? '#dc5966' : '#167eac'} strokeWidth={1.75} strokeDasharray={allZero ? '4 3' : undefined} strokeLinejoin="round" strokeLinecap="round" />
+    </svg>
+  );
+}
 
 function dateTime(value: string | null) {
   return value ? new Intl.DateTimeFormat('th-TH', {
@@ -111,10 +128,10 @@ export default function AllconnectCompareDashboard() {
       const XLSX = await import('xlsx');
       const headings = [...DETAIL_HEADINGS, ...first.dataset.workPeriods.map(period => `${period.month} Week ${period.weekNumber}`)];
       const worksheet = XLSX.utils.aoa_to_sheet([headings, ...rows.map(row => [
-        row.techId ?? '', row.fullName, calculateWorkingDays(row.cardRegisterDate) ?? '', row.rbm, row.provider,
+        row.techId ?? '', row.fullName, row.rbm,
         row.depotCode, row.depotName, WORK_LABELS[row.workStatus], ...first.dataset.workPeriods.map(period => row.weeklyJobs.find(week => week.month === period.month && week.weekStart === period.weekStart)?.jobCount ?? 0),
       ])]);
-      worksheet['!cols'] = headings.map((_, index) => ({ wch: [1, 4, 6].includes(index) ? 32 : 20 }));
+      worksheet['!cols'] = headings.map((_, index) => ({ wch: [1, 4].includes(index) ? 32 : 20 }));
       const workbook = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(workbook, worksheet, 'Technicians');
       XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet([
@@ -462,6 +479,7 @@ export default function AllconnectCompareDashboard() {
               <table className={`${styles.table} ${styles.detailTable}`}>
                 <thead>
                   <tr>{DETAIL_HEADINGS.map(label => <th key={label} scope="col" rowSpan={workPeriods.length ? 3 : 1}>{label}</th>)}
+                    <th className={styles.trendHeader} scope="col" rowSpan={workPeriods.length ? 3 : 1}>Trend</th>
                     {workPeriods.length > 0 && <th className={styles.weekHeader} scope="colgroup" colSpan={workPeriods.length}>จำนวน ปิดงาน/ไม่ปิดงาน</th>}
                   </tr>
                   {workPeriods.length > 0 && <>
@@ -470,11 +488,12 @@ export default function AllconnectCompareDashboard() {
                   </>}
                 </thead>
                 <tbody>{data.rows.map((row, index) => {
-                  const workingDays = calculateWorkingDays(row.cardRegisterDate);
+                  const weeklyCounts = workPeriods.map(period => row.weeklyJobs?.find(week => week.month === period.month && week.weekStart === period.weekStart)?.jobCount ?? 0);
                   return <tr key={`${row.techId ?? 'missing'}-${index}`}>
-                    <td className={styles.idCell}>{row.techId ?? '-'}</td><td>{row.fullName}</td><td>{workingDays === null ? '' : number(workingDays)}</td><td>{row.rbm}</td><td>{row.provider || '-'}</td><td>{row.depotCode || '-'}</td><td>{row.depotName || '-'}</td><td><span className={`${styles.badge} ${styles[row.workStatus]}`}>{WORK_LABELS[row.workStatus]}</span></td>
-                    {workPeriods.map(period => {
-                      const count = row.weeklyJobs?.find(week => week.month === period.month && week.weekStart === period.weekStart)?.jobCount ?? 0;
+                    <td className={styles.idCell}>{row.techId ?? '-'}</td><td>{row.fullName}</td><td>{row.rbm}</td><td>{row.depotCode || '-'}</td><td>{row.depotName || '-'}</td><td><span className={`${styles.badge} ${styles[row.workStatus]}`}>{WORK_LABELS[row.workStatus]}</span></td>
+                    <td className={styles.trendCell}><TrendSparkline values={weeklyCounts} labels={workPeriods.map(period => `${period.month} Week ${period.weekNumber}`)} /></td>
+                    {workPeriods.map((period, periodIndex) => {
+                      const count = weeklyCounts[periodIndex];
                       return <td key={`${period.month}-${period.weekStart}`} className={styles.weekCell} style={{ backgroundColor: weeklyJobBackground(count), color: count > 0 ? '#18583c' : '#a52839' }} title={`${period.month} · Week ${period.weekNumber} · ${period.weekStart} - ${period.weekEnd}`} aria-label={`${period.month} Week ${period.weekNumber}: ${number(count)} งาน`}>{number(count)}</td>;
                     })}
                   </tr>;

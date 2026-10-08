@@ -165,12 +165,13 @@
 .detailTable .weekHeader { min-width: 50px; padding: 7px 4px; text-align: center; border-left: 1px solid #e0e5eb; }
 .detailTable .weekCell { min-width: 50px; text-align: center; font-weight: 600; font-variant-numeric: tabular-nums; border-left: 1px solid #fff; white-space: nowrap; }
 .detailTable td { max-width: 220px; overflow-wrap: anywhere; }
-.detailTable td:nth-child(4), .detailTable td:nth-child(6), .detailTable td:nth-child(8) { white-space: nowrap; overflow-wrap: normal; }
+.detailTable td:nth-child(3), .detailTable td:nth-child(4), .detailTable td:nth-child(6) { white-space: nowrap; overflow-wrap: normal; }
 .detailTable thead tr:first-child th:nth-child(2) { min-width: 130px; }
-.detailTable thead tr:first-child th:nth-child(7) { min-width: 150px; }
-.detailTable thead tr:first-child th:nth-child(3) { width: 100px; min-width: 80px; max-width: 100px; white-space: normal; }
-.detailTable td:nth-child(3) { text-align: center; font-variant-numeric: tabular-nums; }
-.detailTable thead tr:first-child th:nth-child(5) { min-width: 80px; }
+.detailTable thead tr:first-child th:nth-child(5) { min-width: 150px; }
+.detailTable .trendHeader { min-width: 132px; text-align: center; }
+.detailTable .trendCell { min-width: 132px; padding: 4px 6px; text-align: center; vertical-align: middle; }
+.sparkline { display: block; margin: 0 auto; overflow: visible; }
+.trendEmpty { color: #a1a8b3; }
 .idCell { font-variant-numeric: tabular-nums; white-space: nowrap; color: #256b89; font-weight: 600; }
 .badge { display: inline-block; padding: 3px 8px; border-radius: 4px; white-space: nowrap; font-size: 11px; }
 .with_work { color: #137252; background: #e6f4ed; }
