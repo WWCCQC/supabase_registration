@@ -190,7 +190,9 @@ WITH job_source AS MATERIALIZED (
   FROM page_counts
 ), page_rows AS (
   SELECT * FROM filtered
-  ORDER BY rbm, full_name, tech_id NULLS LAST, depot_code
+  -- Detail table: RBM in natural order (R1, R2 … R10), grouped by Depot, then technician.
+  ORDER BY substring(rbm FROM '^R([0-9]+)')::integer NULLS LAST, rbm NULLS LAST,
+           depot_code NULLS LAST, depot_name NULLS LAST, full_name, tech_id NULLS LAST
   LIMIT (SELECT page_size FROM paging)
   OFFSET (SELECT (page - 1) * page_size FROM paging)
 ), no_work_periods AS MATERIALIZED (
@@ -264,7 +266,8 @@ SELECT jsonb_build_object(
     'jobCount', p.job_count, 'installCount', p.install_count, 'repairCount', p.repair_count, 'workStatus', p.work_status,
     'noWorkPeriods', coalesce((SELECT n.periods FROM no_work_periods n WHERE n.tech_id = p.tech_id), '[]'::jsonb),
     'weeklyJobs', coalesce((SELECT n.periods FROM all_weekly_jobs n WHERE n.tech_id IS NOT DISTINCT FROM p.tech_id), '[]'::jsonb)
-  ) ORDER BY p.rbm, p.full_name, p.tech_id NULLS LAST, p.depot_code) FROM page_rows p), '[]'::jsonb),
+  ) ORDER BY substring(p.rbm FROM '^R([0-9]+)')::integer NULLS LAST, p.rbm NULLS LAST,
+             p.depot_code NULLS LAST, p.depot_name NULLS LAST, p.full_name, p.tech_id NULLS LAST) FROM page_rows p), '[]'::jsonb),
   'pagination', (SELECT jsonb_build_object('total', total, 'page', page, 'pageSize', page_size, 'totalPages', total_pages) FROM paging)
 );
 $function$;

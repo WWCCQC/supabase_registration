@@ -19,7 +19,7 @@ const monthName = (value: string) => MONTH_NAMES[Number(value.slice(5, 7)) - 1] 
 const WORK_LABELS: Record<WorkStatus, string> = {
   with_work: 'ปิดงาน', without_work: 'ไม่มีการปิดงาน', pending: 'รอเปรียบเทียบ',
 };
-const DETAIL_HEADINGS = ['รหัสช่าง', 'ชื่อช่าง', 'RBM', 'Depot', 'Depot Name', 'สถานะการปิดงาน'];
+const DETAIL_HEADINGS = ['RBM', 'Depot', 'Depot Name', 'รหัสช่าง', 'ชื่อช่าง', 'สถานะการปิดงาน'];
 const COLORS = { withWork: '#159574', withoutWork: '#dc5966', pending: '#a1a8b3' };
 const DETAIL_FILTERS = [
   { value: 'all', label: 'ข้อมูลช่างทั้งหมด', Icon: Users },
@@ -128,10 +128,10 @@ export default function AllconnectCompareDashboard() {
       const XLSX = await import('xlsx');
       const headings = [...DETAIL_HEADINGS, ...first.dataset.workPeriods.map(period => `${period.month} Week ${period.weekNumber}`)];
       const worksheet = XLSX.utils.aoa_to_sheet([headings, ...rows.map(row => [
-        row.techId ?? '', row.fullName, row.rbm,
-        row.depotCode, row.depotName, WORK_LABELS[row.workStatus], ...first.dataset.workPeriods.map(period => row.weeklyJobs.find(week => week.month === period.month && week.weekStart === period.weekStart)?.jobCount ?? 0),
+        row.rbm, row.depotCode, row.depotName,
+        row.techId ?? '', row.fullName, WORK_LABELS[row.workStatus], ...first.dataset.workPeriods.map(period => row.weeklyJobs.find(week => week.month === period.month && week.weekStart === period.weekStart)?.jobCount ?? 0),
       ])]);
-      worksheet['!cols'] = headings.map((_, index) => ({ wch: [1, 4].includes(index) ? 32 : 20 }));
+      worksheet['!cols'] = headings.map((_, index) => ({ wch: [2, 4].includes(index) ? 32 : 20 }));
       const workbook = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(workbook, worksheet, 'Technicians');
       XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet([
@@ -490,7 +490,7 @@ export default function AllconnectCompareDashboard() {
                 <tbody>{data.rows.map((row, index) => {
                   const weeklyCounts = workPeriods.map(period => row.weeklyJobs?.find(week => week.month === period.month && week.weekStart === period.weekStart)?.jobCount ?? 0);
                   return <tr key={`${row.techId ?? 'missing'}-${index}`}>
-                    <td className={styles.idCell}>{row.techId ?? '-'}</td><td>{row.fullName}</td><td>{row.rbm}</td><td>{row.depotCode || '-'}</td><td>{row.depotName || '-'}</td><td><span className={`${styles.badge} ${styles[row.workStatus]}`}>{WORK_LABELS[row.workStatus]}</span></td>
+                    <td>{row.rbm}</td><td>{row.depotCode || '-'}</td><td>{row.depotName || '-'}</td><td className={styles.idCell}>{row.techId ?? '-'}</td><td>{row.fullName}</td><td><span className={`${styles.badge} ${styles[row.workStatus]}`}>{WORK_LABELS[row.workStatus]}</span></td>
                     <td className={styles.trendCell}><TrendSparkline values={weeklyCounts} labels={workPeriods.map(period => `${period.month} Week ${period.weekNumber}`)} /></td>
                     {workPeriods.map((period, periodIndex) => {
                       const count = weeklyCounts[periodIndex];
