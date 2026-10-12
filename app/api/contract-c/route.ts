@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
     const rows = [];
     for (let offset = 0; ; offset += 1000) {
       const { data, error } = await client.from('contract_c').select('*')
-        .order('company_registration_no').range(offset, offset + 999).abortSignal(request.signal);
+        .order('corporate_registration_no').range(offset, offset + 999).abortSignal(request.signal);
       if (error) throw error;
       rows.push(...(data ?? []));
       if (!data || data.length < 1000) break;

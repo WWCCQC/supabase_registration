@@ -61,11 +61,10 @@
 .track div { background: #098b83; height: 100%; }
 .barRow strong { text-align: right; }
 .barRow small { font-weight: 400; color: #626e78; }
-.tableWrap { overflow: auto; max-height: 620px; border: 1px solid #dbe1e6; background: white; }
+.tableWrap { overflow-x: auto; overflow-y: visible; border: 1px solid #dbe1e6; background: white; }
 .dashboard .tableWrap table { border-collapse: collapse; table-layout: auto; width: max-content; min-width: 100%; max-width: none; font-size: 13px; }
 .tableWrap th { position: sticky; top: 0; background: #eaf0f4; z-index: 1; text-align: left; }
 .tableWrap th, .tableWrap td { padding: 13px 16px; border-bottom: 1px solid #e4e8ed; white-space: nowrap; overflow-wrap: normal; word-break: normal; vertical-align: middle; }
 .tableWrap tbody tr:nth-child(even) { background: #f8fafb; }
-.footer { display: flex; flex-wrap: wrap; gap: 12px; justify-content: flex-end; align-items: center; padding-top: 16px; font-size: 13px; }
 .error { padding: 16px; background: #fff0f0; color: #a9253d; }
 @media(max-width: 640px) { .barRow { grid-template-columns: 1fr 105px; gap: 8px; } .barRow > span { grid-column: 1 / -1; } .cards { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
