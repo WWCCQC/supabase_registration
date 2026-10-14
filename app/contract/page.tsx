@@ -41,6 +41,7 @@ export default function ContractPage() {
           className={styles.page}
         >
           {activeTab === 'Track C' && <ContractDashboard />}
+          {activeTab === 'Solar' && <ContractDashboard key="solar" source="solar" />}
         </section>
       </SidebarLayout>
     </ProtectedRoute>

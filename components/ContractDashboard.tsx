@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { Download, RefreshCw, Search, X } from 'lucide-react';
-import { ContractRow, contractColumns, contractValue, filterContracts, groupContracts, groupStatusCards, onProcessRows } from '@/lib/contractDashboard';
+import { ContractRow, contractColumns as trackColumns, solarContractColumns, contractValue, filterContracts, groupContracts, groupStatusCards, onProcessRows } from '@/lib/contractDashboard';
 import styles from './ContractDashboard.module.css';
 
 const filterFields = [['rbm', 'RBM'], ['active_status', 'สถานะ Active'], ['contract_status', 'สถานะสัญญา'], ['group_status', 'กลุ่มสถานะ'], ['installation_status', 'เหตุผล'], ['bg_status', 'สถานะ BG']] as const;
@@ -45,7 +45,9 @@ function AnimatedCardNumber({ value }: { value: number }) {
   return <strong aria-label={number(value)}>{number(displayed)}</strong>;
 }
 
-export default function ContractDashboard() {
+export default function ContractDashboard({ source = 'track-c' }: { source?: 'track-c' | 'solar' }) {
+  const isSolar = source === 'solar';
+  const contractColumns = isSolar ? solarContractColumns : trackColumns;
   const [rows, setRows] = useState<ContractRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -57,7 +59,7 @@ export default function ContractDashboard() {
   useEffect(() => {
     const controller = new AbortController();
     setLoading(true); setError('');
-    fetch('/api/contract-c', { signal: controller.signal, cache: 'no-store' })
+    fetch(`/api/contract-c?source=${source}`, { signal: controller.signal, cache: 'no-store' })
       .then(async response => {
         const body = await response.json();
         if (!response.ok) throw new Error(body.error || 'โหลดข้อมูลไม่สำเร็จ');
@@ -65,7 +67,7 @@ export default function ContractDashboard() {
       }).catch(error => { if (!controller.signal.aborted) setError(error.message); })
       .finally(() => { if (!controller.signal.aborted) setLoading(false); });
     return () => controller.abort();
-  }, [revision]);
+  }, [revision, source]);
   const filtered = useMemo(() => filterContracts(rows, query, filters), [rows, query, filters]);
   // การ์ดสรุปนับจากคอลัมน์ group_status โดยไม่นำตัวกรอง group_status มาคิด เพื่อให้การ์ดยังแสดงจำนวนรวมและทุกกลุ่มเสมอ
   const cardRows = useMemo(() => filterContracts(rows, query, { ...filters, group_status: '' }), [rows, query, filters]);
@@ -98,9 +100,9 @@ export default function ContractDashboard() {
       }));
       sheet['!autofilter'] = { ref: sheet['!ref']! };
       const workbook = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(workbook, sheet, 'Track C');
+      XLSX.utils.book_append_sheet(workbook, sheet, isSolar ? 'Solar' : 'Track C');
       const date = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Bangkok' }).format(new Date());
-      XLSX.writeFile(workbook, `contract-c-${date}.xlsx`);
+      XLSX.writeFile(workbook, `contract-${isSolar ? 'solar' : 'c'}-${date}.xlsx`);
     } catch {
       setExportError('ส่งออก Excel ไม่สำเร็จ กรุณาลองอีกครั้ง');
     } finally {
@@ -116,14 +118,14 @@ export default function ContractDashboard() {
         {statuses.map(([status, count], index) => <button key={status} className={styles.card} data-tone={index % 5} aria-pressed={filters.group_status === status} onClick={() => changeFilter('group_status', filters.group_status === status ? '' : status)}><span>{status}</span><AnimatedCardNumber value={count} /><small>{cardRows.length ? (count / cardRows.length * 100).toFixed(1) : '0.0'}% ของทั้งหมด</small></button>)}
       </div>
       <div className={styles.filters}>
-        <label className={styles.search}>ค้นหาทุกคอลัมน์<div><Search size={17} /><input value={query} placeholder="ชื่อคู่สัญญา เลขที่สัญญา Depot…" onChange={event => { setQuery(event.target.value); }} /></div></label>
-        {filterFields.map(([key, label]) => <label key={key}>{label}<select value={filters[key] || ''} onChange={event => changeFilter(key, event.target.value)}><option value="">ทั้งหมด</option>{groupContracts(rows, key).sort(([a], [b]) => key === 'rbm' ? rbmRank(a) - rbmRank(b) : 0).map(([value]) => <option key={value}>{value}</option>)}</select></label>)}
+        <label className={styles.search}>ค้นหาทุกคอลัมน์<div><Search size={17} /><input value={query} placeholder={isSolar ? 'ชื่อคู่สัญญา เลขที่สัญญา เลขทะเบียนบริษัท…' : 'ชื่อคู่สัญญา เลขที่สัญญา Depot…'} onChange={event => { setQuery(event.target.value); }} /></div></label>
+        {filterFields.filter(([key]) => !isSolar || key !== 'bg_status').map(([key, label]) => <label key={key}>{label}<select value={filters[key] || ''} onChange={event => changeFilter(key, event.target.value)}><option value="">ทั้งหมด</option>{groupContracts(rows, key).sort(([a], [b]) => key === 'rbm' ? rbmRank(a) - rbmRank(b) : 0).map(([value]) => <option key={value}>{value}</option>)}</select></label>)}
         <button title="ล้างตัวกรอง" aria-label="ล้างตัวกรอง" onClick={() => { setFilters({}); setQuery(''); }}><X size={18} /></button>
       </div>
        <section className={styles.reasons}><h3>รายละเอียดสถานะสัญญา · {number(reasonRows.length)} ราย</h3>{reasons.length ? <div className={styles.bars}>{reasons.map(([reason, count]) => <div key={reason} className={styles.barRow}><span>{reason}</span><div className={styles.track}><div style={{ width: `${count / reasonRows.length * 100}%` }} /></div><strong>{number(count)} <small>({(count / reasonRows.length * 100).toFixed(1)}%)</small></strong></div>)}</div> : <p>ไม่พบข้อมูลตามเงื่อนไข</p>}</section>
       <section><div className={styles.header}><h3>รายละเอียดสัญญา</h3><div className={styles.tableActions}><span>{number(tableRows.length)} รายการ</span><button type="button" onClick={exportExcel} disabled={loading || exporting || !tableRows.length}><Download size={17} aria-hidden="true" />{exporting ? 'กำลังส่งออก...' : 'Export Excel'}</button></div></div>
         {exportError && <p role="alert" className={styles.error}>{exportError}</p>}
-        <div className={styles.tableWrap} tabIndex={0} role="region" aria-label="ตารางรายละเอียดสัญญา"><table><thead><tr>{contractColumns.map(([key, label]) => <th key={key} title={key}>{label}</th>)}</tr></thead><tbody>{tableRows.map(row => <tr key={row.corporate_registration_no}>{contractColumns.map(([key]) => <td key={key}>{contractValue(row[key])}</td>)}</tr>)}{!tableRows.length && <tr><td colSpan={contractColumns.length}>ไม่พบข้อมูลตามเงื่อนไข</td></tr>}</tbody></table></div>
+        <div className={styles.tableWrap} tabIndex={0} role="region" aria-label="ตารางรายละเอียดสัญญา"><table><thead><tr>{contractColumns.map(([key, label]) => <th key={key} title={key}>{label}</th>)}</tr></thead><tbody>{tableRows.map(row => <tr key={row.uuid || row.corporate_registration_no}>{contractColumns.map(([key]) => <td key={key}>{contractValue(row[key])}</td>)}</tr>)}{!tableRows.length && <tr><td colSpan={contractColumns.length}>ไม่พบข้อมูลตามเงื่อนไข</td></tr>}</tbody></table></div>
       </section>
     </>}
   </div>;

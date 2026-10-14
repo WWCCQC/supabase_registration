@@ -10,6 +10,14 @@ export const contractColumns = [
   ['contract_technician_team_count', 'จำนวนทีมช่าง'], ['bg_status', 'สถานะ BG'],
   ['installation_status', 'เหตุผล'],
 ] as const;
+export const solarContractColumns = [
+  ['rbm', 'RBM'], ['corporate_registration_no', 'เลขทะเบียนบริษัท'],
+  ['partner_name', 'ชื่อคู่สัญญา'], ['active_status', 'สถานะ Active'],
+  ['contract_status', 'สถานะสัญญา'], ['group_status', 'กลุ่มสถานะ'],
+  ['start_contract', 'วันเริ่มสัญญา'], ['end_contract', 'วันสิ้นสุดสัญญา'],
+  ['contract_no', 'เลขที่สัญญา'], ['contract_guarantee_amount', 'วงเงินค้ำประกันรวม'],
+  ['installation_status', 'เหตุผล'], ['email', 'อีเมล'],
+] as const;
 export const contractValue = (value: string | null | undefined) => value?.trim() || 'ไม่ระบุ';
 export function groupContracts(rows: ContractRow[], column: string) {
   const counts = new Map<string, number>();
