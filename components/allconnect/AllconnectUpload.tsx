@@ -136,7 +136,6 @@ export default function AllconnectUpload({ onComplete, updatedAt }: { onComplete
       <span className={styles.filename}>{filename}</span>
     </div>
     <div className={styles.updatedAt}>อัปเดตล่าสุด (เวลาไทย): {updatedAt}</div>
-    <div className={styles.updatedAt}>เพิ่มเฉพาะวันที่ยังไม่มีในระบบ วันที่เดิมจะข้ามทั้งวัน</div>
     {filename && <>
       <div className={styles.progress}><progress aria-label="ความคืบหน้าการอัปโหลด" max={100} value={percent} /><strong>{percent}%</strong></div>
       <div role={error ? 'alert' : 'status'} aria-live="polite" className={error ? styles.error : styles.status}>
