@@ -5,12 +5,13 @@ import ProtectedRoute from '@/components/common/ProtectedRoute';
 import SidebarLayout from '@/components/common/SidebarLayout';
 import styles from './page.module.css';
 import ContractDashboard from '@/components/ContractDashboard';
+import ContractSummary from '@/components/ContractSummary';
 
-const CONTRACT_TABS = ['Track C', 'Solar', 'Corporate'] as const;
+const CONTRACT_TABS = ['Summary Contract', 'Track C', 'Solar', 'Corporate'] as const;
 type ContractTab = typeof CONTRACT_TABS[number];
 
 export default function ContractPage() {
-  const [activeTab, setActiveTab] = useState<ContractTab>('Track C');
+  const [activeTab, setActiveTab] = useState<ContractTab>('Summary Contract');
 
   const navigation = (
     <div className="navtabs" role="tablist" aria-label="Contract sections">
@@ -40,6 +41,7 @@ export default function ContractPage() {
           aria-labelledby={`contract-tab-${activeTab.toLowerCase().replaceAll(' ', '-')}`}
           className={styles.page}
         >
+          {activeTab === 'Summary Contract' && <ContractSummary />}
           {activeTab === 'Track C' && <ContractDashboard />}
           {activeTab === 'Solar' && <ContractDashboard key="solar" source="solar" />}
           {activeTab === 'Corporate' && <ContractDashboard key="corporate" source="corporate" />}

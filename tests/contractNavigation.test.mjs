@@ -21,13 +21,14 @@ test('Contract appears in the main sidebar menu and links to its page', () => {
   assert.ok(adminGuardEnd > contractLinkStart && adminGuardEnd < managedMenuStart);
 });
 
-test('Contract page provides the three requested tabs with Track C selected first', () => {
+test('Contract page provides the summary and three contract tabs', () => {
   assert.ok(fs.existsSync(contractPagePath), 'Contract page is missing');
 
   const page = fs.readFileSync(contractPagePath, 'utf8');
 
-  assert.match(page, /\['Track C', 'Solar', 'Corporate'\]/);
-  assert.match(page, /useState<ContractTab>\('Track C'\)/);
+  assert.match(page, /\['Summary Contract', 'Track C', 'Solar', 'Corporate'\]/);
+  assert.match(page, /useState<ContractTab>\('Summary Contract'\)/);
+  assert.match(page, /<ContractSummary \/>/);
   assert.match(page, /role="tablist"/);
   assert.match(page, /role="tab"/);
   assert.match(page, /aria-selected=/);
