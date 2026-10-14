@@ -23,10 +23,10 @@ export async function GET(request: NextRequest) {
   try {
     const client = supabaseAdmin({ noStore: true });
     const source = request.nextUrl.searchParams.get('source') ?? 'track-c';
-    if (source !== 'track-c' && source !== 'solar') {
+    if (source !== 'track-c' && source !== 'solar' && source !== 'corporate') {
       return NextResponse.json({ error: 'ประเภทสัญญาไม่ถูกต้อง' }, { status: 400, headers });
     }
-    const table = source === 'solar' ? 'contract_solar' : 'contract_c';
+    const table = source === 'solar' ? 'contract_solar' : source === 'corporate' ? 'contract_coporate' : 'contract_c';
     const rows = [];
     for (let offset = 0; ; offset += 1000) {
       const { data, error } = await client.from(table).select('*')

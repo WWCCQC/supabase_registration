@@ -42,6 +42,7 @@ export default function ContractPage() {
         >
           {activeTab === 'Track C' && <ContractDashboard />}
           {activeTab === 'Solar' && <ContractDashboard key="solar" source="solar" />}
+          {activeTab === 'Corporate' && <ContractDashboard key="corporate" source="corporate" />}
         </section>
       </SidebarLayout>
     </ProtectedRoute>
