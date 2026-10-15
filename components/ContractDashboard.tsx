@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { Download, RefreshCw, Search, X } from 'lucide-react';
+import { Download, Search, X } from 'lucide-react';
 import { ContractRow, contractColumns as trackColumns, solarContractColumns, corporateContractColumns, contractValue, filterContracts, groupContracts, groupStatusCards, onProcessRows } from '@/lib/contractDashboard';
 import styles from './ContractDashboard.module.css';
 
@@ -51,7 +51,6 @@ export default function ContractDashboard({ source = 'track-c' }: { source?: 'tr
   const [rows, setRows] = useState<ContractRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [revision, setRevision] = useState(0);
   const [query, setQuery] = useState('');
   const [filters, setFilters] = useState<Record<string, string>>({});
   const [exporting, setExporting] = useState(false);
@@ -67,7 +66,7 @@ export default function ContractDashboard({ source = 'track-c' }: { source?: 'tr
       }).catch(error => { if (!controller.signal.aborted) setError(error.message); })
       .finally(() => { if (!controller.signal.aborted) setLoading(false); });
     return () => controller.abort();
-  }, [revision, source]);
+  }, [source]);
   const filtered = useMemo(() => filterContracts(rows, query, filters), [rows, query, filters]);
   // การ์ดสรุปนับจากคอลัมน์ group_status โดยไม่นำตัวกรอง group_status มาคิด เพื่อให้การ์ดยังแสดงจำนวนรวมและทุกกลุ่มเสมอ
   const cardRows = useMemo(() => filterContracts(rows, query, { ...filters, group_status: '' }), [rows, query, filters]);
@@ -110,7 +109,6 @@ export default function ContractDashboard({ source = 'track-c' }: { source?: 'tr
     }
   };
   return <div className={styles.dashboard} aria-busy={loading}>
-    <header className={styles.header}><h2>Summary of contract</h2><button onClick={() => setRevision(value => value + 1)} disabled={loading} title="รีเฟรชข้อมูล" aria-label="รีเฟรชข้อมูล"><RefreshCw size={18} /></button></header>
     {error && <div role="alert" className={styles.error}>{error}</div>}
     {loading ? <p role="status">กำลังโหลดข้อมูลสัญญา...</p> : error ? null : <>
       <div className={styles.cards}>
