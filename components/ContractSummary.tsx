@@ -1,7 +1,7 @@
 'use client';
 
 import { Fragment, useEffect, useMemo, useState } from 'react';
-import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Download, RefreshCw, Search } from 'lucide-react';
+import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Download, Search } from 'lucide-react';
 import type { ContractRow } from '@/lib/contractDashboard';
 import { buildContractPortfolio, contractSources, portfolioCounts, sourceLabels, type ContractSource } from '@/lib/contractSummary';
 import styles from './ContractSummary.module.css';
@@ -14,7 +14,6 @@ export default function ContractSummary() {
   const [datasets, setDatasets] = useState<Datasets | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [revision, setRevision] = useState(0);
   const [query, setQuery] = useState('');
   const [typeCount, setTypeCount] = useState('');
   const [source, setSource] = useState('');
@@ -39,7 +38,7 @@ export default function ContractSummary() {
       if (!controller.signal.aborted) setError(cause instanceof Error ? cause.message : 'โหลดข้อมูลสัญญาไม่สำเร็จ');
     }).finally(() => { if (!controller.signal.aborted) setLoading(false); });
     return () => controller.abort();
-  }, [revision]);
+  }, []);
 
   const companies = useMemo(() => datasets ? buildContractPortfolio(datasets) : [], [datasets]);
   const counts = useMemo(() => portfolioCounts(companies), [companies]);
@@ -93,10 +92,6 @@ export default function ContractSummary() {
   }
 
   return <div className={styles.summary} aria-busy={loading}>
-    <header className={styles.header}>
-      <h1>Summary Contract</h1>
-      <button type="button" onClick={() => setRevision(value => value + 1)} disabled={loading} title="รีเฟรชข้อมูล" aria-label="รีเฟรชข้อมูล"><RefreshCw size={18} /></button>
-    </header>
     {error && <p role="alert" className={styles.error}>{error}</p>}
     {loading ? <p role="status">กำลังโหลดข้อมูลสัญญา...</p> : !error && datasets && <>
       <div className={styles.metrics}>
