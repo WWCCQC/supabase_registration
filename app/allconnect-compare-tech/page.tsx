@@ -8,7 +8,8 @@ import styles from '@/components/allconnect/AllconnectCompareDashboard.module.cs
 export default function AllconnectComparePage() {
   return (
     <ProtectedRoute allowedRoles={['admin', 'manager']}>
-      <SidebarLayout className={styles.layout}>
+      {/* ไม่แสดงแถวแท็บ TOL ในหน้านี้: ส่ง false เพื่อข้าม NavTabs ค่าเริ่มต้นของ SidebarLayout */}
+      <SidebarLayout className={styles.layout} navigation={false}>
         <AllconnectCompareDashboard />
       </SidebarLayout>
     </ProtectedRoute>
