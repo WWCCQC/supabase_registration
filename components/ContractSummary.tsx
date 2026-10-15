@@ -2,7 +2,7 @@
 
 import { Fragment, useEffect, useMemo, useState } from 'react';
 import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Download, Search } from 'lucide-react';
-import type { ContractRow } from '@/lib/contractDashboard';
+import { maskRegistration, type ContractRow } from '@/lib/contractDashboard';
 import { buildContractPortfolio, contractSources, portfolioCounts, sourceLabels, type ContractSource } from '@/lib/contractSummary';
 import styles from './ContractSummary.module.css';
 
@@ -76,7 +76,7 @@ export default function ContractSummary() {
       const XLSX = await import('xlsx');
       const headings = ['เลขทะเบียนบริษัท', 'ชื่อคู่สัญญา', 'ประเภทสัญญา', 'เลขที่สัญญา', 'สถานะสัญญา', 'กลุ่มสถานะ', 'สถานะ Active', 'วันเริ่มสัญญา', 'วันสิ้นสุดสัญญา', 'เหตุผล'];
       const rows = filtered.flatMap(company => company.contracts.map(({ source: contractSource, row }) => [
-        company.registration, company.name, sourceLabels[contractSource], row.contract_no ?? '', row.contract_status ?? '',
+        maskRegistration(company.registration), company.name, sourceLabels[contractSource], row.contract_no ?? '', row.contract_status ?? '',
         row.group_status ?? '', row.active_status ?? '', row.start_contract ?? '', row.end_contract ?? '', row.installation_status ?? '',
       ]));
       const sheet = XLSX.utils.aoa_to_sheet([headings, ...rows]);
@@ -116,7 +116,7 @@ export default function ContractSummary() {
           <div className={styles.combination} key={label}><span>{label}</span><div className={styles.bar}><div style={{ width: `${counts.companies ? count / counts.companies * 100 : 0}%` }} /></div><strong>{number(count)}</strong></div>)}</div>
       </section>
       <section className={styles.band} aria-label="รายชื่อคู่สัญญาทั้งหมด">
-        <div className={styles.sectionHeader}><h2>คู่สัญญารายบริษัท</h2><span>{number(filtered.length)} รายการ</span></div>
+        <div className={styles.sectionHeader}><h2>คู่สัญญารายบริษัท</h2></div>
         <div className={styles.filters}>
           <label className={styles.search}><Search size={17} aria-hidden="true" /><input aria-label="ค้นหาคู่สัญญา" placeholder="ชื่อบริษัท เลขทะเบียน เลขที่สัญญา…" value={query} onChange={event => updateFilter(setQuery, event.target.value)} /></label>
           <label>จำนวนประเภทงาน<select value={typeCount} onChange={event => updateFilter(setTypeCount, event.target.value)}><option value="">ทั้งหมด</option><option value="1">1 ประเภท</option><option value="2">2 ประเภท</option><option value="3">3 ประเภท</option></select></label>
@@ -129,7 +129,7 @@ export default function ContractSummary() {
         <div className={styles.tableWrap} role="region" tabIndex={0} aria-label="สรุปสัญญารายบริษัท"><table>
           <thead><tr><th scope="col">ชื่อคู่สัญญา</th><th scope="col">เลขทะเบียนบริษัท</th><th scope="col">ประเภทงานที่รับ</th><th scope="col">จำนวนประเภท</th><th scope="col">จำนวนสัญญา</th><th scope="col">กลุ่มสถานะ</th><th scope="col">รายละเอียด</th></tr></thead>
           <tbody>{visible.map(company => <Fragment key={company.key}><tr>
-            <td className={styles.name}>{company.name}</td><td className={styles.numeric}>{company.registration || 'ไม่ระบุ'}</td>
+            <td className={styles.name}>{company.name}</td><td className={styles.numeric}>{company.registration ? maskRegistration(company.registration) : 'ไม่ระบุ'}</td>
             <td><div className={styles.tags}>{company.sources.map(item => <span key={item} className={styles.tag}>{sourceLabels[item]}</span>)}</div></td>
             <td className={styles.numeric}>{company.matchable ? company.sources.length : '-'}</td><td className={styles.numeric}>{company.contracts.length}</td>
             <td><div className={styles.tags}>{[...new Set(company.contracts.map(({ row }) => row.group_status?.trim() || 'ไม่ระบุ'))].map(group => <span className={styles.status} key={group}>{group}</span>)}</div></td>

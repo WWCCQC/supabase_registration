@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { Download, Search, X } from 'lucide-react';
-import { ContractRow, contractColumns as trackColumns, solarContractColumns, corporateContractColumns, contractValue, filterContracts, groupContracts, groupStatusCards, onProcessRows } from '@/lib/contractDashboard';
+import { ContractRow, contractColumns as trackColumns, solarContractColumns, corporateContractColumns, contractValue, contractCellValue, filterContracts, groupContracts, groupStatusCards, onProcessRows } from '@/lib/contractDashboard';
 import styles from './ContractDashboard.module.css';
 
 const filterFields = [['rbm', 'RBM'], ['active_status', 'สถานะ Active'], ['contract_status', 'สถานะสัญญา'], ['group_status', 'กลุ่มสถานะ'], ['installation_status', 'เหตุผล'], ['bg_status', 'สถานะ BG']] as const;
@@ -92,10 +92,10 @@ export default function ContractDashboard({ source = 'track-c' }: { source?: 'tr
       const XLSX = await import('xlsx');
       const sheet = XLSX.utils.aoa_to_sheet([
         contractColumns.map(([, label]) => label),
-        ...tableRows.map(row => contractColumns.map(([key]) => String(row[key] ?? ''))),
+        ...tableRows.map(row => contractColumns.map(([key]) => String(contractCellValue(key, row[key]) ?? ''))),
       ]);
       sheet['!cols'] = contractColumns.map(([key, label]) => ({
-        wch: Math.min(60, Math.max(16, label.length + 2, ...tableRows.map(row => String(row[key] ?? '').length + 2))),
+        wch: Math.min(60, Math.max(16, label.length + 2, ...tableRows.map(row => String(contractCellValue(key, row[key]) ?? '').length + 2))),
       }));
       sheet['!autofilter'] = { ref: sheet['!ref']! };
       const workbook = XLSX.utils.book_new();
@@ -123,7 +123,7 @@ export default function ContractDashboard({ source = 'track-c' }: { source?: 'tr
        <section className={styles.reasons}><h3>รายละเอียดสถานะสัญญา · {number(reasonRows.length)} ราย</h3>{reasons.length ? <div className={styles.bars}>{reasons.map(([reason, count]) => <div key={reason} className={styles.barRow}><span>{reason}</span><div className={styles.track}><div style={{ width: `${count / reasonRows.length * 100}%` }} /></div><strong>{number(count)} <small>({(count / reasonRows.length * 100).toFixed(1)}%)</small></strong></div>)}</div> : <p>ไม่พบข้อมูลตามเงื่อนไข</p>}</section>
       <section><div className={styles.header}><h3>รายละเอียดสัญญา</h3><div className={styles.tableActions}><span>{number(tableRows.length)} รายการ</span><button type="button" onClick={exportExcel} disabled={loading || exporting || !tableRows.length}><Download size={17} aria-hidden="true" />{exporting ? 'กำลังส่งออก...' : 'Export Excel'}</button></div></div>
         {exportError && <p role="alert" className={styles.error}>{exportError}</p>}
-        <div className={styles.tableWrap} tabIndex={0} role="region" aria-label="ตารางรายละเอียดสัญญา"><table><thead><tr>{contractColumns.map(([key, label]) => <th key={key} title={key}>{label}</th>)}</tr></thead><tbody>{tableRows.map(row => <tr key={row.uuid || row.corporate_registration_no}>{contractColumns.map(([key]) => <td key={key}>{contractValue(row[key])}</td>)}</tr>)}{!tableRows.length && <tr><td colSpan={contractColumns.length}>ไม่พบข้อมูลตามเงื่อนไข</td></tr>}</tbody></table></div>
+        <div className={styles.tableWrap} tabIndex={0} role="region" aria-label="ตารางรายละเอียดสัญญา"><table><thead><tr>{contractColumns.map(([key, label]) => <th key={key} title={key}>{label}</th>)}</tr></thead><tbody>{tableRows.map(row => <tr key={row.uuid || row.corporate_registration_no}>{contractColumns.map(([key]) => <td key={key}>{contractValue(contractCellValue(key, row[key]))}</td>)}</tr>)}{!tableRows.length && <tr><td colSpan={contractColumns.length}>ไม่พบข้อมูลตามเงื่อนไข</td></tr>}</tbody></table></div>
       </section>
     </>}
   </div>;

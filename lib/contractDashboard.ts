@@ -27,6 +27,16 @@ export const corporateContractColumns = [
   ['installation_status', 'เหตุผล'], ['email', 'อีเมล'],
 ] as const;
 export const contractValue = (value: string | null | undefined) => value?.trim() || 'ไม่ระบุ';
+// ปกปิดเลขทะเบียนบริษัทเฉพาะตอนแสดงผล/Export: แทนตัวหน้าด้วย x และแสดงจริงเฉพาะ 5 ตัวท้าย (13 หลัก → xxxxxxxx12345)
+// การค้นหายังใช้ข้อมูลจริง จึงพิมพ์เลขเต็มเพื่อค้นหาได้
+export function maskRegistration(value: string | null | undefined) {
+  const raw = value?.trim() ?? '';
+  if (!raw) return '';
+  return raw.length <= 5 ? raw : 'x'.repeat(raw.length - 5) + raw.slice(-5);
+}
+// ใช้กับค่าคอลัมน์ในตารางสัญญา: ปกปิดเฉพาะ corporate_registration_no
+export const contractCellValue = (key: string, value: string | null | undefined) =>
+  key === 'corporate_registration_no' && value?.trim() ? maskRegistration(value) : value;
 export function groupContracts(rows: ContractRow[], column: string) {
   const counts = new Map<string, number>();
   for (const row of rows) {
