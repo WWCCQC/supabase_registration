@@ -318,7 +318,7 @@ export default function AllconnectCompareDashboard() {
                   {latestInsightMonth && <div className={styles.insightLead}>
                     <div className={styles.insightLeadTop}>
                       <span className={styles.insightLeadIcon}><ClipboardX size={19} strokeWidth={1.9} aria-hidden="true" /></span>
-                      <span>ช่างที่ยังไม่พบการปิดงานถึงสิ้น {monthName(latestInsightMonth.month)} {latestInsightMonth.month.slice(0, 4)}</span>
+                      <span>ช่างที่ไม่พบการปิดงานในเดือน {monthName(latestInsightMonth.month)} {latestInsightMonth.month.slice(0, 4)}</span>
                     </div>
                     <strong>{number(latestInsightMonth.withoutWork)} <small>กองงาน</small></strong>
                     {latestInsightMonth.change !== null && <span>
@@ -326,7 +326,7 @@ export default function AllconnectCompareDashboard() {
                     </span>}
                   </div>}
                   <div className={styles.insightPanel}>
-                    <h3><span className={styles.insightIcon}><CalendarDays size={16} strokeWidth={2} aria-hidden="true" /></span>รายเดือน <small>ยอดสะสมถึงสิ้นเดือน</small></h3>
+                    <h3><span className={styles.insightIcon}><CalendarDays size={16} strokeWidth={2} aria-hidden="true" /></span>รายเดือน <small>ไม่มีการปิดงานในเดือนนั้น</small></h3>
                     {insights?.months.length ? <ul className={styles.insightList}>
                       {insights.months.map(item => <li key={item.month} className={styles.insightRow}>
                         <span>{monthName(item.month)} {item.month.slice(0, 4)}</span>

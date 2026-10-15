@@ -153,27 +153,24 @@ WITH job_source AS MATERIALIZED (
   WHERE d.work_date IS NOT NULL AND s.handler_id IS NOT NULL
   GROUP BY 1, 2
   HAVING sum(s.completed_jobs) > 0
-), first_completed_month AS (
-  SELECT handler_id, min(work_month) AS first_work_month
-  FROM monthly_jobs
-  GROUP BY handler_id
 ), monthly AS (
+  -- Per-month (not cumulative): a head counts as with_work only if they completed work in that month,
+  -- matching the summary cards when the same month is selected.
   SELECT m.work_month, count(*) AS total,
-         count(*) FILTER (WHERE s.tech_id IS NOT NULL AND j.first_work_month <= m.work_month) AS with_work,
-         count(*) FILTER (WHERE s.tech_id IS NOT NULL AND (j.first_work_month IS NULL OR j.first_work_month > m.work_month)) AS without_work,
+         count(*) FILTER (WHERE s.tech_id IS NOT NULL AND j.handler_id IS NOT NULL) AS with_work,
+         count(*) FILTER (WHERE s.tech_id IS NOT NULL AND j.handler_id IS NULL) AS without_work,
          count(*) FILTER (WHERE s.tech_id IS NULL) AS pending
   FROM performance_months m
   CROSS JOIN (SELECT tech_id FROM scoped) s
-  LEFT JOIN first_completed_month j ON j.handler_id = s.tech_id
+  LEFT JOIN monthly_jobs j ON j.handler_id = s.tech_id AND j.work_month = m.work_month
   GROUP BY m.work_month
 ), monthly_company_types AS (
   SELECT m.work_month,
          coalesce(nullif(btrim(s.provider), ''), 'ไม่ระบุประเภท') AS company_type,
-         count(*) FILTER (WHERE s.tech_id IS NOT NULL
-           AND (j.first_work_month IS NULL OR j.first_work_month > m.work_month)) AS without_work
+         count(*) FILTER (WHERE s.tech_id IS NOT NULL AND j.handler_id IS NULL) AS without_work
   FROM performance_months m
   CROSS JOIN (SELECT tech_id, provider FROM scoped) s
-  LEFT JOIN first_completed_month j ON j.handler_id = s.tech_id
+  LEFT JOIN monthly_jobs j ON j.handler_id = s.tech_id AND j.work_month = m.work_month
   GROUP BY m.work_month, coalesce(nullif(btrim(s.provider), ''), 'ไม่ระบุประเภท')
 ), filtered AS (
   SELECT * FROM scoped

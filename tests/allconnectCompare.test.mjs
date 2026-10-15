@@ -57,7 +57,7 @@ test('large dashboard queries stage only required source columns and parse disti
   assert.match(sql, /SELECT DISTINCT btrim\("PERFORMANCE_DATE"\)/);
 });
 
-test('monthly trend counts heads without completed work through each month independent of the month filter', () => {
+test('monthly trend counts heads without completed work in each month independent of the month filter', () => {
   const sql = readFileSync(new URL('../create-allconnect-jobs-dashboard.sql', import.meta.url), 'utf8');
   const monthlyCtes = sql.split('monthly_source AS MATERIALIZED (')[1].split('), monthly AS (')[0];
   assert.doesNotMatch(monthlyCtes.replace(/--.*$/gm, ''), /p_month|"Month"/);
@@ -65,19 +65,20 @@ test('monthly trend counts heads without completed work through each month indep
   assert.match(monthlyCtes, /HAVING sum\(s\.completed_jobs\) > 0/);
   assert.match(sql, /FROM performance_months m/);
   assert.match(sql, /CROSS JOIN \(SELECT tech_id FROM scoped\) s/);
-  assert.match(sql, /min\(work_month\) AS first_work_month/);
-  assert.match(sql, /j\.first_work_month <= m\.work_month/);
+  assert.doesNotMatch(sql, /first_work_month/);
+  assert.match(sql, /LEFT JOIN monthly_jobs j ON j\.handler_id = s\.tech_id AND j\.work_month = m\.work_month/);
   assert.match(sql, /'monthly', coalesce\(/);
 });
 
-test('monthly company type breakdown uses the same cumulative no-work population as the monthly total', () => {
+test('monthly company type breakdown uses the same per-month no-work population as the monthly total', () => {
   const sql = readFileSync(new URL('../create-allconnect-jobs-dashboard.sql', import.meta.url), 'utf8');
   const breakdown = sql.split('monthly_company_types AS (')[1].split('), filtered AS (')[0];
   assert.match(sql, /coalesce\(t\.company_type, ''\) AS provider/);
   assert.match(breakdown, /FROM performance_months m/);
   assert.match(breakdown, /CROSS JOIN \(SELECT tech_id, provider FROM scoped\) s/);
   assert.match(breakdown, /s\.tech_id IS NOT NULL/);
-  assert.match(breakdown, /j\.first_work_month IS NULL OR j\.first_work_month > m\.work_month/);
+  assert.match(breakdown, /j\.work_month = m\.work_month/);
+  assert.match(breakdown, /s\.tech_id IS NOT NULL AND j\.handler_id IS NULL/);
   assert.match(breakdown, /coalesce\(nullif\(btrim\(s\.provider\), ''\), 'ไม่ระบุประเภท'\)/);
   assert.match(sql, /'monthlyByCompanyType', coalesce\(/);
 });
