@@ -240,14 +240,7 @@ export default function AllconnectCompareDashboard() {
         <label className={styles.globalSearchLabel}><span>ค้นหาข้อมูลช่าง</span><div className={styles.searchInput}><Search size={17} aria-hidden="true" /><input value={search} maxLength={200} onChange={event => setSearch(event.target.value)} placeholder="ชื่อ รหัสช่าง RBM ศูนย์ หรือจังหวัด" aria-label="ค้นหาข้อมูลช่าง" />{search && <button type="button" title="ล้างคำค้นหา" aria-label="ล้างคำค้นหา" onClick={() => setSearch('')}><X size={16} /></button>}</div></label>
         {rbm && <button type="button" className={styles.textButton} onClick={() => selectRegion('')}><X size={16} /> ล้างพื้นที่</button>}
         <div className={styles.loadStatus} role="status" aria-live="polite">
-          {busy ? 'กำลังโหลดข้อมูล...' : error ? 'โหลดไม่สำเร็จ' : (
-            <ul className={styles.scopeNotes}>
-              <li>ข้อมูลช่าง = allconnect_technicians</li>
-              <li>สถานะช่าง = หัวหน้า</li>
-              <li>ช่วงข้อมูล: {month || data?.dataset.months.join(', ') || '-'}</li>
-              <li>งานติดตั้ง / งานซ่อม</li>
-            </ul>
-          )}
+          {busy ? 'กำลังโหลดข้อมูล...' : error ? 'โหลดไม่สำเร็จ' : null}
         </div>
       </div>
 
@@ -319,7 +312,7 @@ export default function AllconnectCompareDashboard() {
             </section>
             </div>
             <section className={styles.insightPlaceholder} aria-label="Summary insight">
-              <div className={styles.sectionHeading}><h2>Summary insight</h2><span>{selectedTitle}</span></div>
+              <div className={styles.sectionHeading}><h2>Summary insight</h2>{rbm && <span>{rbm}</span>}</div>
               <div className={styles.insightSections}>
                 <div className={styles.insightPrimary}>
                   {latestInsightMonth && <div className={styles.insightLead}>
@@ -411,7 +404,7 @@ export default function AllconnectCompareDashboard() {
           </div>
 
           <section className={styles.section}>
-            <div className={styles.sectionHeading}><h2>ตารางสรุปการปิดงานรายพื้นที่ RBM</h2><span>{number(data.regions.length)} พื้นที่</span></div>
+            <div className={styles.sectionHeading}><h2>ตารางสรุปการปิดงานรายพื้นที่ RBM</h2></div>
             <div className={styles.tableScroll} tabIndex={0} role="region" aria-label="ตารางสรุปการปิดงานรายพื้นที่ RBM">
               <table className={`${styles.table} ${styles.regionalTable}`}>
                 <thead><tr><th scope="col">RBM</th><th scope="col">จำนวนกองงานทั้งหมด</th><th scope="col">จำนวนที่ปิดงาน</th><th scope="col">จำนวนที่ไม่มีการปิดงาน</th><th scope="col">สัดส่วนที่พบปิดงาน</th><th scope="col">งานติดตั้ง</th><th scope="col">งานซ่อม</th><th scope="col">จำนวนรวมที่ปิดงาน</th></tr></thead>
@@ -465,7 +458,7 @@ export default function AllconnectCompareDashboard() {
           </section>
 
           <section className={styles.section} aria-label="ตารางรายละเอียดการปิดงาน-ไม่ปิดงานของช่าง">
-            <div className={styles.sectionHeading}><h2>ตารางรายละเอียดการปิดงาน-ไม่ปิดงานของช่าง</h2><span>{selectedTitle}</span></div>
+            <div className={styles.sectionHeading}><h2>ตารางรายละเอียดการปิดงาน-ไม่ปิดงานของช่าง</h2>{rbm && <span>{rbm}</span>}</div>
              <div className={styles.tableControls}>
                <div className={styles.statusFilters} role="group" aria-label="เลือกข้อมูลการปิดงานของช่าง">
                  {DETAIL_FILTERS.map(({ value, label, Icon }) => <button key={value} type="button" className={`${styles.statusFilter} ${styles[`filter_${value}`]}`} aria-pressed={status === value} disabled={loading} onClick={() => { setStatus(value); setPage(1); }}>
@@ -513,8 +506,6 @@ export default function AllconnectCompareDashboard() {
           </section>
 
           <footer className={styles.dataNotes}>
-            <span>รหัสผู้รับงานที่ไม่พบในทะเบียนช่าง <strong>{number(data.dataset.unknownHandlers)}</strong> รหัส</span>
-            <span>รายการงานที่ไม่มีรหัสผู้รับงาน <strong>{number(data.dataset.missingHandlerRows)}</strong> รายการ</span>
             {data.dataset.missingTechIds > 0 && <span>ทะเบียนช่างที่ไม่มีรหัส <strong>{number(data.dataset.missingTechIds)}</strong> ราย</span>}
             {data.dataset.duplicateTechIds > 0 && <span>ทะเบียนรหัสซ้ำ ใช้ข้อมูลแก้ไขล่าสุด <strong>{number(data.dataset.duplicateTechIds)}</strong> แถว</span>}
             {data.dataset.invalidJobRows > 0 && <span>ข้อมูลจำนวนงานที่ไม่ถูกต้อง <strong>{number(data.dataset.invalidJobRows)}</strong> แถว</span>}
