@@ -1,0 +1,54 @@
+.chart {
+  min-width: 0;
+  padding: 22px 24px 26px;
+  border: 1px solid #e6edf6;
+  border-radius: 22px;
+  background: #fff;
+  box-shadow: 0 14px 36px rgba(19, 58, 117, 0.06);
+  font-family: Inter, "Noto Sans Thai", sans-serif;
+}
+.heading { display: flex; align-items: center; gap: 14px; margin-bottom: 22px; color: #0b2459; }
+.heading h3 { margin: 0; font-size: 20px; font-weight: 800; letter-spacing: -0.035em; line-height: 1.25; }
+.headingIcon { display: inline-flex; align-items: center; justify-content: center; width: 48px; height: 48px; border-radius: 15px; background: #e8f3ff; color: #0876d9; flex-shrink: 0; }
+.providerSummary { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; max-width: 1050px; margin: 0 auto 22px; }
+.providerPill { display: flex; align-items: center; gap: 8px; width: 100%; min-width: 0; padding: 6px 9px; border: 1.5px solid currentColor; border-radius: 999px; box-shadow: 0 5px 12px rgba(15, 63, 124, 0.09); }
+.providerIcon { display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0; color: #fff; }
+.providerName { min-width: 0; font-size: 14px; font-weight: 700; white-space: nowrap; }
+.providerPill strong { margin-left: auto; padding: 5px 8px; border-radius: 999px; background: rgba(255,255,255,0.75); font-size: 13px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.blue { color: #064dc4; background: linear-gradient(110deg, #eaf5ff, #bfdcff); border-color: #52a5ff; }
+.blue .providerIcon { background: linear-gradient(145deg, #2f9bff, #0046d2); }
+.green { color: #08774b; background: linear-gradient(110deg, #edfff5, #b7efca); border-color: #45ce84; }
+.green .providerIcon { background: linear-gradient(145deg, #2fd67e, #068451); }
+.orange { color: #bd4a00; background: linear-gradient(110deg, #fff9e8, #ffe5ab); border-color: #ffae2a; }
+.orange .providerIcon { background: linear-gradient(145deg, #ffca2d, #f06a00); }
+.chartScroll { width: 100%; overflow-x: auto; }
+.chartCanvas { min-width: 680px; }
+.tooltip { min-width: 190px; padding: 12px 14px; border: 1px solid #dbe6f5; border-radius: 12px; background: #fff; box-shadow: 0 10px 26px rgba(12, 39, 86, 0.14); color: #172e58; font-size: 12px; }
+.tooltip > strong { display: block; padding-bottom: 7px; margin-bottom: 5px; border-bottom: 1px solid #e9eef6; font-size: 13px; }
+.tooltipRow, .tooltipTotal { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 4px 0; }
+.tooltipRow span { display: inline-flex; align-items: center; gap: 7px; }
+.tooltipRow i { width: 9px; height: 9px; border-radius: 50%; }
+.tooltipTotal { margin-top: 5px; padding-top: 8px; border-top: 1px solid #e9eef6; font-weight: 700; }
+.footer { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
+.footerPill { display: inline-flex; align-items: center; gap: 10px; padding: 9px 17px; border: 1px solid; border-radius: 999px; font-size: 13px; box-shadow: 0 4px 10px rgba(15, 63, 124, 0.06); }
+.footerPill strong { font-weight: 800; font-variant-numeric: tabular-nums; }
+.footerRBM { color: #0752c5; background: #edf7ff; border-color: #91c8ff; }
+.footerTechnicians { color: #087e50; background: #f0fff7; border-color: #95e5b5; }
+.status { display: flex; align-items: center; justify-content: center; gap: 12px; min-height: 240px; color: #526883; font-size: 14px; }
+.status button { padding: 7px 13px; border: 1px solid #80b6eb; border-radius: 8px; background: #eff7ff; color: #0752c5; cursor: pointer; }
+@media (max-width: 1200px) {
+  .providerSummary { grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: 900px; }
+  .providerPill:last-child { grid-column: 1 / -1; width: min(100%, 390px); justify-self: center; }
+}
+@media (max-width: 700px) {
+  .chart { padding: 18px 14px 22px; }
+  .heading { gap: 10px; }
+  .headingIcon { width: 40px; height: 40px; }
+  .providerSummary { grid-template-columns: 1fr; }
+  .providerPill:last-child { grid-column: auto; width: 100%; }
+}
+@media (max-width: 420px) {
+  .providerName { font-size: 13px; }
+  .providerPill strong { font-size: 12px; }
+  .footerPill { width: 100%; justify-content: center; }
+}

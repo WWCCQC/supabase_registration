@@ -9,6 +9,7 @@ import { useAuth } from "@/lib/useAuth";
 import PivotTableComponent from "./tables/PivotTable";
 import TechnicianCountTable from "./tables/TechnicianCountTable";
 import DataUpdatedChip from "./common/DataUpdatedChip";
+import { lightBlueSection } from "./charts/sectionStyles";
 import WorkgroupCountTable from "./tables/WorkgroupCountTable";
 import {
   BarChart,
@@ -1601,49 +1602,15 @@ export default function TechBrowser() {
           </div>
         </div>
 
-        <div className="chart-grid-2col">
-          {/* RSM Provider Chart (กราฟใหม่) - ย้ายมาเป็นอันแรก */}
-          <div style={{
-            background: "white",
-            borderRadius: 12,
-            padding: 20,
-            boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
-            border: "1px solid #e5e7eb",
-            position: "relative"
-          }}>
-            <h3 style={{
-              margin: "0 0 20px 0",
-              fontSize: 18,
-              fontWeight: 600,
-              color: "#1f2937"
-            }}>
-              🏪 RBM Provider Distribution
-            </h3>
-            <RsmProviderChart />
-          </div>
+        <div className="chart-grid-2col" style={{ gridTemplateColumns: "minmax(0, 1fr)" }}>
+          {/* RBM Provider Distribution */}
+          <RsmProviderChart />
 
-          {/* CTM Provider Distribution Chart - ย้ายมาอยู่แถวแรก */}
-          <div style={{
-            background: "white",
-            borderRadius: 12,
-            padding: 20,
-            boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
-            border: "1px solid #e5e7eb",
-            position: "relative"
-          }}>
-            <h3 style={{
-              margin: "0 0 20px 0",
-              fontSize: 18,
-              fontWeight: 600,
-              color: "#1f2937"
-            }}>
-              🏪 CBM Provider Distribution
-            </h3>
-            <CtmProviderChart
-              selectedCtm={selectedCtm}
-              onCtmClick={handleCtmClick}
-            />
-          </div>
+          {/* CBM Provider Distribution */}
+          <CtmProviderChart
+            selectedCtm={selectedCtm}
+            onCtmClick={handleCtmClick}
+          />
         </div>
 
         {/* Gauge + RBM Table — แสดงเหนือ RBM Status by Power Authority */}
@@ -1701,14 +1668,7 @@ export default function TechBrowser() {
         {/* แถวที่ 3: Card Expiry Trend (เต็มแถว) */}
         <div className="chart-flex-row" style={{ marginTop: "20px" }}>
           {/* Card Expiry Trend Chart */}
-          <div className="chart-flex-item" style={{
-            background: "linear-gradient(180deg, #ffffff 0%, #f8fafc 100%)",
-            borderRadius: 16,
-            padding: 20,
-            border: "1px solid rgba(226,232,240,0.9)",
-            boxShadow: "0 1px 0 rgba(255,255,255,0.9) inset, 0 1px 2px rgba(15,23,42,0.06), 0 8px 20px -6px rgba(15,23,42,0.14), 0 18px 40px -18px rgba(15,23,42,0.20)",
-            position: "relative"
-          }}>
+          <div className="chart-flex-item" style={lightBlueSection}>
             <h3 style={{
               margin: "0 0 14px 0",
               fontSize: 16,

@@ -1,526 +1,157 @@
 "use client";
+
 import React from "react";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  LabelList,
-  Cell,
-} from "recharts";
+import { BarChart3, Building2, UserRound, UsersRound } from "lucide-react";
+import { Bar, BarChart, CartesianGrid, Cell, LabelList, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import shared from "./RsmProviderChart.module.css";
+import styles from "./CtmProviderChart.module.css";
 
-type CtmProviderChartProps = {
-  selectedCtm?: string | null;
-  onCtmClick?: (CBM: string | null) => void;
-};
+type Provider = "WW-Provider" | "True Tech" | "เถ้าแก่เทค";
+type ChartRow = { CBM: string; total: number } & Partial<Record<Provider, number>>;
+type Summary = { totalCBMs: number; totalTechnicians: number; providerBreakdown: Array<{ provider: string; count: number }> };
+type Props = { selectedCtm?: string | null; onCtmClick?: (CBM: string | null) => void };
 
-// Provider color palette — same as RBM for consistency
-const PROVIDER_COLORS = {
-  "WW-Provider": {
-    gradient: ["#60a5fa", "#1d4ed8"],
-    solid: "#3b82f6",
-    selected: "#2563eb",
-    light: "#dbeafe",
-    text: "#1d4ed8",
-  },
-  "True Tech": {
-    gradient: ["#34d399", "#047857"],
-    solid: "#10b981",
-    selected: "#059669",
-    light: "#d1fae5",
-    text: "#047857",
-  },
-  "เถ้าแก่เทค": {
-    gradient: ["#fbbf24", "#b45309"],
-    solid: "#f59e0b",
-    selected: "#d97706",
-    light: "#fef3c7",
-    text: "#b45309",
-  },
-} as const;
+const providers: Array<{ name: Provider; color: string }> = [
+  { name: "WW-Provider", color: "blue" },
+  { name: "True Tech", color: "green" },
+  { name: "เถ้าแก่เทค", color: "orange" },
+];
+const ITEMS_PER_PAGE = 15;
+const number = (value: number) => value.toLocaleString("en-US");
+const shortLabel = (value: string) => value.length > 20 ? `${value.slice(0, 19)}…` : value;
 
-const PROVIDER_ORDER = ["WW-Provider", "True Tech", "เถ้าแก่เทค"] as const;
+function ProviderTooltip({ active, payload, label }: any) {
+  if (!active || !payload?.length) return null;
+  const total = Number(payload[0]?.payload?.total) || 0;
+  return (
+    <div className={shared.tooltip}>
+      <strong>{label}</strong>
+      {payload.map((entry: any) => (
+        <div className={shared.tooltipRow} key={entry.dataKey}>
+          <span><i style={{ background: entry.color }} />{entry.name}</span>
+          <b>{number(Number(entry.value) || 0)}</b>
+        </div>
+      ))}
+      <div className={shared.tooltipTotal}><span>รวมทั้งหมด</span><b>{number(total)} คน</b></div>
+    </div>
+  );
+}
 
-export default function CtmProviderChart({ selectedCtm, onCtmClick }: CtmProviderChartProps) {
-  const [chartData, setChartData] = React.useState<any[]>([]);
-  const [summary, setSummary] = React.useState<any>(null);
-  const [providers, setProviders] = React.useState<string[]>([]);
-  const [loading, setLoading] = React.useState(false);
+export default function CtmProviderChart({ selectedCtm, onCtmClick }: Props) {
+  const [chartData, setChartData] = React.useState<ChartRow[]>([]);
+  const [summary, setSummary] = React.useState<Summary | null>(null);
+  const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
   const [startIndex, setStartIndex] = React.useState(0);
-  const itemsPerPage = 15;
 
-  async function fetchData() {
-    setLoading(true);
+  const fetchData = React.useCallback(async () => {
     try {
-      const res = await fetch("/api/chart/ctm-provider", { cache: "no-store" });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json?.error || "Failed to fetch CTM chart data");
-      setChartData(json.chartData || []);
-      setSummary(json.summary || null);
-      const fetched: string[] = json.providers || [];
-      const sorted: string[] = [
-        ...PROVIDER_ORDER.filter((p) => fetched.includes(p)),
-        ...fetched.filter((p) => !(PROVIDER_ORDER as readonly string[]).includes(p)),
-      ];
-      setProviders(sorted);
-    } catch (e: any) {
-      console.error("CTM Provider Chart fetch error:", e);
+      setLoading(true);
+      setError(null);
+      const response = await fetch("/api/chart/ctm-provider", { cache: "no-store" });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data?.error || "Failed to fetch CBM chart data");
+      setChartData(data.chartData || []);
+      setSummary(data.summary || null);
+    } catch (cause) {
+      console.error("CBM Provider Chart fetch error:", cause);
+      setError(cause instanceof Error ? cause.message : "ไม่สามารถโหลดข้อมูลได้");
     } finally {
       setLoading(false);
     }
-  }
-
-  function handleChartClick(data: any) {
-    if (data?.activePayload?.[0]) {
-      const clickedCtm = data.activePayload[0].payload.CBM;
-      onCtmClick?.(selectedCtm === clickedCtm ? null : clickedCtm);
-    }
-  }
-
-  React.useEffect(() => {
-    fetchData();
   }, []);
 
-  // ─── Loading State ─────────────────────────────────────────────────
-  if (loading) {
-    return (
-      <div
-        style={{
-          minHeight: 420,
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: 12,
-        }}
-      >
-        <div
-          style={{
-            width: 40,
-            height: 40,
-            border: "3px solid #e5e7eb",
-            borderTopColor: "#3b82f6",
-            borderRadius: "50%",
-            animation: "spin 0.8s linear infinite",
-          }}
-        />
-        <span style={{ fontSize: 14, color: "#6b7280" }}>กำลังโหลดข้อมูล...</span>
-        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-      </div>
-    );
-  }
+  React.useEffect(() => { void fetchData(); }, [fetchData]);
 
-  if (chartData.length === 0) {
-    return (
-      <div
-        style={{
-          minHeight: 200,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        <span style={{ fontSize: 15, color: "#9ca3af" }}>ไม่มีข้อมูล CBM</span>
-      </div>
-    );
-  }
+  if (loading) return <div className={shared.status}>กำลังโหลดข้อมูลกราฟ...</div>;
+  if (error) return <div className={shared.status} role="alert"><span>{error}</span><button type="button" onClick={() => void fetchData()}>ลองใหม่</button></div>;
 
-  const totalPages = Math.ceil(chartData.length / itemsPerPage);
-  const currentPage = Math.floor(startIndex / itemsPerPage) + 1;
-  const displayedData = chartData.slice(startIndex, startIndex + itemsPerPage);
-  const maxStartIndex = Math.max(0, chartData.length - itemsPerPage);
+  const maxStartIndex = Math.max(0, chartData.length - ITEMS_PER_PAGE);
+  const visibleStart = Math.min(startIndex, maxStartIndex);
+  const displayedData = chartData.slice(visibleStart, visibleStart + ITEMS_PER_PAGE);
+  const currentPage = Math.floor(visibleStart / ITEMS_PER_PAGE) + 1;
+  const totalPages = Math.ceil(chartData.length / ITEMS_PER_PAGE);
   const totalTechnicians = summary?.totalTechnicians ?? 0;
 
-  // ─── JSX ────────────────────────────────────────────────────────────
   return (
-    <div style={{ fontFamily: "Inter, 'Noto Sans Thai', sans-serif" }}>
+    <section className={shared.chart} aria-label="CBM Provider Distribution">
+      <div className={shared.heading}>
+        <span className={shared.headingIcon}><Building2 size={27} strokeWidth={2} /></span>
+        <h3>CBM Provider Distribution</h3>
+      </div>
 
-      {/* ── Legend Badges ─────────────────────────────────────── */}
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "center",
-          flexWrap: "wrap",
-          gap: 10,
-          marginBottom: 16,
-        }}
-      >
-        {PROVIDER_ORDER.map((p) => {
-          const c = PROVIDER_COLORS[p];
-          const info = summary?.providerBreakdown?.find((x: any) => x.provider === p);
-          const count = info?.count ?? 0;
-          const pct = totalTechnicians > 0 ? ((count / totalTechnicians) * 100).toFixed(1) : "0.0";
+      <div className={shared.providerSummary} aria-label="สัดส่วนช่างแต่ละประเภท">
+        {providers.map(({ name, color }) => {
+          const count = summary?.providerBreakdown?.find((item) => item.provider === name)?.count ?? 0;
+          const percentage = totalTechnicians > 0 ? ((count / totalTechnicians) * 100).toFixed(1) : "0.0";
           return (
-            <div
-              key={p}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-                background: c.light,
-                border: `1.5px solid ${c.solid}`,
-                borderRadius: 30,
-                padding: "5px 14px 5px 8px",
-                boxShadow: `0 2px 8px ${c.solid}30`,
-              }}
-            >
-              <span
-                style={{
-                  width: 10,
-                  height: 10,
-                  borderRadius: "50%",
-                  background: `linear-gradient(135deg, ${c.gradient[0]}, ${c.gradient[1]})`,
-                  boxShadow: `0 0 6px ${c.solid}80`,
-                  flexShrink: 0,
-                }}
-              />
-              <span style={{ fontSize: 12, fontWeight: 600, color: c.text }}>{p}</span>
-              <span
-                style={{
-                  fontSize: 11,
-                  fontWeight: 700,
-                  color: c.text,
-                  background: "rgba(255,255,255,0.6)",
-                  borderRadius: 10,
-                  padding: "1px 7px",
-                }}
-              >
-                {count.toLocaleString()} ({pct}%)
-              </span>
+            <div className={shared.providerPill + " " + shared[color]} key={name}>
+              <span className={shared.providerIcon}><UserRound size={22} strokeWidth={2.2} /></span>
+              <span className={shared.providerName}>{name}</span>
+              <strong>{number(count)} ({percentage}%)</strong>
             </div>
           );
         })}
       </div>
 
-      {/* ── Pagination Slider ──────────────────────────────────── */}
       {maxStartIndex > 0 && (
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            gap: 6,
-            marginBottom: 16,
-            padding: "10px 20px",
-            background: "linear-gradient(135deg, #f8fafc, #f1f5f9)",
-            border: "1px solid #e2e8f0",
-            borderRadius: 12,
-          }}
-        >
-          <div style={{ fontSize: 12, fontWeight: 600, color: "#475569" }}>
-            📍 แสดง CBM&nbsp;
-            <span style={{ color: "#3b82f6" }}>{startIndex + 1}–{Math.min(startIndex + itemsPerPage, chartData.length)}</span>
-            &nbsp;จากทั้งหมด&nbsp;
-            <span style={{ color: "#3b82f6" }}>{chartData.length}</span>
-            &nbsp;CBM &nbsp;(หน้า {currentPage}/{totalPages})
-          </div>
-          <div style={{ width: "100%", display: "flex", alignItems: "center", gap: 10 }}>
-            <span style={{ fontSize: 11, color: "#94a3b8", whiteSpace: "nowrap" }}>เริ่มต้น</span>
-            <input
-              type="range"
-              min="0"
-              max={maxStartIndex}
-              step="1"
-              value={startIndex}
-              onChange={(e) => setStartIndex(parseInt(e.target.value))}
-              style={{
-                flex: 1,
-                height: 6,
-                borderRadius: 3,
-                outline: "none",
-                cursor: "pointer",
-                accentColor: "#3b82f6",
-              }}
-            />
-            <span style={{ fontSize: 11, color: "#94a3b8", whiteSpace: "nowrap" }}>สิ้นสุด</span>
+        <div className={styles.pagination}>
+          <div className={styles.pageLabel}>แสดง CBM <strong>{visibleStart + 1}–{Math.min(visibleStart + ITEMS_PER_PAGE, chartData.length)}</strong> จาก {chartData.length} เขต <span>(หน้า {currentPage}/{totalPages})</span></div>
+          <div className={styles.rangeRow}>
+            <span>เริ่มต้น</span>
+            <input type="range" min={0} max={maxStartIndex} step={1} value={visibleStart} aria-label="เลื่อนช่วง CBM ที่แสดง" onChange={(event) => setStartIndex(Number(event.target.value))} />
+            <span>สิ้นสุด</span>
           </div>
         </div>
       )}
 
-      {/* ── Selected CBM Badge ─────────────────────────────────── */}
       {selectedCtm && (
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 8,
-            marginBottom: 12,
-          }}
-        >
-          <span
-            style={{
-              background: "linear-gradient(135deg, #06b6d4, #3b82f6)",
-              color: "white",
-              borderRadius: 20,
-              padding: "4px 14px",
-              fontSize: 12,
-              fontWeight: 600,
-            }}
-          >
-            🔍 กำลังกรอง CBM: {selectedCtm}
-          </span>
-          <button
-            onClick={() => onCtmClick?.(null)}
-            style={{
-              background: "#ef4444",
-              color: "white",
-              border: "none",
-              borderRadius: 6,
-              padding: "3px 10px",
-              fontSize: 11,
-              fontWeight: 600,
-              cursor: "pointer",
-            }}
-          >
-            ✕ ยกเลิก
-          </button>
+        <div className={styles.selection}>
+          <span>กำลังกรอง CBM: <strong>{selectedCtm}</strong></span>
+          <button type="button" onClick={() => onCtmClick?.(null)}>ยกเลิก</button>
         </div>
       )}
 
-      {/* ── Bar Chart ──────────────────────────────────────────── */}
-      <ResponsiveContainer width="100%" height={480} key="ctm-provider-chart">
-        <BarChart
-          data={displayedData}
-          margin={{ top: 24, right: 16, left: 10, bottom: 120 }}
-          onClick={handleChartClick}
-          style={{ cursor: "pointer" }}
-          barCategoryGap="10%"
-          barSize={32}
-        >
-          <defs>
-            <linearGradient id="ctmGradWW" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#60a5fa" />
-              <stop offset="100%" stopColor="#1d4ed8" />
-            </linearGradient>
-            <linearGradient id="ctmGradTT" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#34d399" />
-              <stop offset="100%" stopColor="#047857" />
-            </linearGradient>
-            <linearGradient id="ctmGradTG" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#fbbf24" />
-              <stop offset="100%" stopColor="#b45309" />
-            </linearGradient>
-          </defs>
-
-          <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
-
-          <XAxis
-            dataKey="CBM"
-            angle={-45}
-            textAnchor="end"
-            height={120}
-            interval={0}
-            tick={{ fontSize: 10, fill: "#64748b", fontWeight: 500 }}
-            axisLine={{ stroke: "#e2e8f0" }}
-            tickLine={false}
-          />
-
-          <YAxis
-            tick={false}
-            axisLine={false}
-            tickLine={false}
-            width={10}
-          />
-
-          <Tooltip
-            cursor={{ fill: "rgba(148,163,184,0.08)" }}
-            content={({ active, payload, label }: any) => {
-              if (!active || !payload?.length) return null;
-              const total = payload[0]?.payload?.total ?? 0;
-              return (
-                <div
-                  style={{
-                    background:
-                      "linear-gradient(135deg, rgba(15,23,42,0.95) 0%, rgba(30,41,59,0.95) 100%)",
-                    backdropFilter: "blur(12px)",
-                    border: "1px solid rgba(255,255,255,0.12)",
-                    borderRadius: 14,
-                    padding: "14px 18px",
-                    boxShadow: "0 8px 32px rgba(0,0,0,0.35)",
-                    minWidth: 200,
-                    fontFamily: "Inter, 'Noto Sans Thai', sans-serif",
-                  }}
-                >
-                  <p
-                    style={{
-                      fontWeight: 700,
-                      fontSize: 13,
-                      color: "#f1f5f9",
-                      marginBottom: 10,
-                      borderBottom: "1px solid rgba(255,255,255,0.1)",
-                      paddingBottom: 6,
-                    }}
-                  >
-                    📍 {label}
-                  </p>
-                  {payload
-                    .filter((e: any) => e.value > 0)
-                    .map((entry: any, i: number) => {
-                      const pct = total > 0 ? ((entry.value / total) * 100).toFixed(1) : "0.0";
-                      return (
-                        <div
-                          key={i}
-                          style={{
-                            display: "flex",
-                            justifyContent: "space-between",
-                            alignItems: "center",
-                            gap: 12,
-                            marginBottom: 5,
-                          }}
-                        >
-                          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                            <span
-                              style={{
-                                width: 10,
-                                height: 10,
-                                borderRadius: "50%",
-                                backgroundColor: entry.color,
-                                flexShrink: 0,
-                                boxShadow: `0 0 6px ${entry.color}`,
-                              }}
-                            />
-                            <span style={{ fontSize: 12, color: "#cbd5e1" }}>{entry.dataKey}</span>
-                          </div>
-                          <span style={{ fontSize: 12, color: "#f8fafc", fontWeight: 600 }}>
-                            {entry.value.toLocaleString()} ({pct}%)
-                          </span>
-                        </div>
-                      );
-                    })}
-                  <div
-                    style={{
-                      marginTop: 8,
-                      paddingTop: 8,
-                      borderTop: "1px solid rgba(255,255,255,0.1)",
-                      display: "flex",
-                      justifyContent: "space-between",
-                    }}
-                  >
-                    <span style={{ fontSize: 12, color: "#94a3b8" }}>รวมทั้งหมด</span>
-                    <span style={{ fontSize: 13, fontWeight: 700, color: "#38bdf8" }}>
-                      {total.toLocaleString()} คน
-                    </span>
-                  </div>
-                </div>
-              );
-            }}
-          />
-
-          {/* WW-Provider */}
-          <Bar dataKey="WW-Provider" stackId="a" fill="url(#ctmGradWW)" name="WW-Provider">
-            {displayedData.map((entry, i) => (
-              <Cell
-                key={`ctm-ww-${i}`}
-                fill={selectedCtm === entry.CBM ? PROVIDER_COLORS["WW-Provider"].selected : "url(#ctmGradWW)"}
-                opacity={selectedCtm && selectedCtm !== entry.CBM ? 0.35 : 1}
-              />
-            ))}
-            <LabelList
-              dataKey="WW-Provider"
-              position="center"
-              fill="white"
-              fontSize={9}
-              fontWeight="bold"
-              formatter={(v: any) => (Number(v) > 0 ? String(v) : "")}
-            />
-          </Bar>
-
-          {/* True Tech */}
-          <Bar dataKey="True Tech" stackId="a" fill="url(#ctmGradTT)" name="True Tech">
-            {displayedData.map((entry, i) => (
-              <Cell
-                key={`ctm-tt-${i}`}
-                fill={selectedCtm === entry.CBM ? PROVIDER_COLORS["True Tech"].selected : "url(#ctmGradTT)"}
-                opacity={selectedCtm && selectedCtm !== entry.CBM ? 0.35 : 1}
-              />
-            ))}
-            <LabelList
-              dataKey="True Tech"
-              position="center"
-              fill="white"
-              fontSize={9}
-              fontWeight="bold"
-              formatter={(v: any) => (Number(v) > 0 ? String(v) : "")}
-            />
-          </Bar>
-
-          {/* เถ้าแก่เทค */}
-          <Bar
-            dataKey="เถ้าแก่เทค"
-            stackId="a"
-            fill="url(#ctmGradTG)"
-            name="เถ้าแก่เทค"
-            radius={[6, 6, 0, 0]}
-          >
-            {displayedData.map((entry, i) => (
-              <Cell
-                key={`ctm-tg-${i}`}
-                fill={selectedCtm === entry.CBM ? PROVIDER_COLORS["เถ้าแก่เทค"].selected : "url(#ctmGradTG)"}
-                opacity={selectedCtm && selectedCtm !== entry.CBM ? 0.35 : 1}
-              />
-            ))}
-            <LabelList
-              dataKey="เถ้าแก่เทค"
-              position="center"
-              fill="white"
-              fontSize={9}
-              fontWeight="bold"
-              formatter={(v: any) => (Number(v) > 0 ? String(v) : "")}
-            />
-            {/* Total label on top */}
-            <LabelList
-              dataKey="total"
-              position="top"
-              fill="#1e293b"
-              fontSize={11}
-              fontWeight="bold"
-              offset={6}
-            />
-          </Bar>
-        </BarChart>
-      </ResponsiveContainer>
-
-      {/* ── Summary Footer ─────────────────────────────────────── */}
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "center",
-          gap: 8,
-          marginTop: 12,
-          flexWrap: "wrap",
-        }}
-      >
-        <div
-          style={{
-            background: "linear-gradient(135deg, #f0f9ff, #e0f2fe)",
-            border: "1px solid #bae6fd",
-            borderRadius: 10,
-            padding: "6px 16px",
-            fontSize: 12,
-            fontWeight: 600,
-            color: "#0369a1",
-          }}
-        >
-          📊 CBM ทั้งหมด {summary?.totalCBM ?? chartData.length} เขต
+      {chartData.length > 0 ? (
+        <div className={shared.chartScroll}>
+          <div className={styles.chartCanvas}>
+            <ResponsiveContainer width="100%" height={500}>
+              <BarChart data={displayedData} margin={{ top: 32, right: 16, left: 0, bottom: 18 }} barSize={58} onClick={(data: any) => {
+                const clickedCtm = data?.activePayload?.[0]?.payload?.CBM;
+                if (clickedCtm) onCtmClick?.(selectedCtm === clickedCtm ? null : clickedCtm);
+              }} style={{ cursor: onCtmClick ? "pointer" : "default" }}>
+                <defs>
+                  <linearGradient id="cbmProviderWW" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#3999ff" /><stop offset="100%" stopColor="#0752d8" /></linearGradient>
+                  <linearGradient id="cbmProviderTrue" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#2ccc80" /><stop offset="100%" stopColor="#088b55" /></linearGradient>
+                  <linearGradient id="cbmProviderTaoKae" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#ffd13f" /><stop offset="100%" stopColor="#f39800" /></linearGradient>
+                </defs>
+                <CartesianGrid stroke="#e5edf7" vertical={false} />
+                <XAxis dataKey="CBM" angle={-38} textAnchor="end" height={105} interval={0} tickFormatter={shortLabel} tick={{ fontSize: 11, fill: "#1c396b", fontWeight: 600 }} tickLine={false} axisLine={{ stroke: "#aabbd3" }} />
+                <YAxis allowDecimals={false} width={12} tick={false} tickLine={false} axisLine={{ stroke: "#aabbd3" }} />
+                <Tooltip content={<ProviderTooltip />} cursor={{ fill: "rgba(27,112,233,0.04)" }} />
+                <Bar dataKey="WW-Provider" stackId="providers" fill="url(#cbmProviderWW)">
+                  {displayedData.map((row) => <Cell key={row.CBM} opacity={selectedCtm && selectedCtm !== row.CBM ? 0.35 : 1} />)}
+                  <LabelList dataKey="WW-Provider" position="center" fill="#fff" fontSize={12} fontWeight={700} formatter={(value: any) => Number(value) > 0 ? number(Number(value)) : ""} />
+                </Bar>
+                <Bar dataKey="True Tech" stackId="providers" fill="url(#cbmProviderTrue)">
+                  {displayedData.map((row) => <Cell key={row.CBM} opacity={selectedCtm && selectedCtm !== row.CBM ? 0.35 : 1} />)}
+                  <LabelList dataKey="True Tech" position="center" fill="#fff" fontSize={12} fontWeight={700} formatter={(value: any) => Number(value) > 0 ? number(Number(value)) : ""} />
+                </Bar>
+                <Bar dataKey="เถ้าแก่เทค" stackId="providers" fill="url(#cbmProviderTaoKae)" radius={[7, 7, 0, 0]}>
+                  {displayedData.map((row) => <Cell key={row.CBM} opacity={selectedCtm && selectedCtm !== row.CBM ? 0.35 : 1} />)}
+                  <LabelList dataKey="เถ้าแก่เทค" position="center" fill="#71390b" fontSize={10} fontWeight={700} formatter={(value: any) => Number(value) > 0 ? number(Number(value)) : ""} />
+                  <LabelList dataKey="total" position="top" fill="#092152" fontSize={13} fontWeight={700} offset={7} formatter={(value: any) => number(Number(value) || 0)} />
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
         </div>
-        <div
-          style={{
-            background: "linear-gradient(135deg, #f0fdf4, #dcfce7)",
-            border: "1px solid #bbf7d0",
-            borderRadius: 10,
-            padding: "6px 16px",
-            fontSize: 12,
-            fontWeight: 600,
-            color: "#166534",
-          }}
-        >
-          👷 ช่างรวม {totalTechnicians.toLocaleString()} คน
-        </div>
+      ) : <div className={shared.status}>ไม่มีข้อมูล CBM</div>}
+
+      <div className={shared.footer}>
+        <div className={shared.footerPill + " " + shared.footerRBM}><BarChart3 size={22} /><span>CBM ทั้งหมด <strong>{number(summary?.totalCBMs ?? chartData.length)} เขต</strong></span></div>
+        <div className={shared.footerPill + " " + shared.footerTechnicians}><UsersRound size={22} /><span>ช่างรวม <strong>{number(totalTechnicians)} คน</strong></span></div>
       </div>
-    </div>
+    </section>
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 import React, { useRef, useEffect, useState, useCallback } from "react";
 import * as XLSX from "xlsx";
+import { lightBlueSection } from "./sectionStyles";
 
 /**
  * เกจครึ่งวงกลม 3 มิติ + ตารางรายพื้นที่ (RBM) + modal รายชื่อช่าง
@@ -780,6 +781,7 @@ export default function StatusGaugeSection({
     <div
       ref={sectionRef}
       style={{
+        ...lightBlueSection,
         display: "flex",
         gap: 20,
         alignItems: "stretch",
