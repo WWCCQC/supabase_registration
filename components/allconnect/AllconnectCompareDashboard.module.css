@@ -66,17 +66,35 @@
 .heatmapMonth:focus-visible { outline: 2px solid #a93d4b; outline-offset: 2px; }
 .heatmapCell { display: flex; align-items: center; justify-content: center; min-height: 42px; border-radius: 8px; background: #f1f3f6; color: #743b44; font-weight: 700; font-variant-numeric: tabular-nums; }
 .heatmap tfoot th, .heatmap tfoot td { padding-top: 9px; border-top: 1px solid #e3e7ed; color: #a93d4b; font-weight: 700; font-variant-numeric: tabular-nums; }
-.insightPlaceholder { padding: 20px; border: 1px solid #e5e9ee; border-radius: 12px; background: #fff; }
+.insightPlaceholder { display: flex; flex-direction: column; min-height: 0; padding: 20px; border: 1px solid #e5e9ee; border-radius: 12px; background: #fff; }
+.insightPlaceholder > .sectionHeading, .insightTotal { flex-shrink: 0; }
+@media (min-width: 901px) {
+  /* Card height follows the charts column; extra content scrolls inside the card. */
+  .insightPlaceholder { contain: size; }
+  .insightSections { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding-right: 6px; scrollbar-gutter: stable; }
+}
+.insightTotal { position: relative; isolation: isolate; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 22px; margin-top: 16px; padding: 24px; border: 1px solid #eed0d8; border-radius: 18px; background: radial-gradient(ellipse at 100% 0%, rgba(237, 177, 193, 0.23), transparent 65%), linear-gradient(125deg, #fffafb, #fbecef); box-shadow: 0 8px 24px -12px rgba(143, 49, 71, 0.24), 0 2px 5px rgba(143, 49, 71, 0.04), inset 0 1px 0 #fff; }
+.insightTotal::before { content: ''; position: absolute; z-index: -1; inset: 1px; border: 1px solid rgba(255, 255, 255, 0.65); border-radius: 16px; pointer-events: none; }
+.insightTotalContent { display: flex; align-items: center; flex: 1 1 220px; gap: 16px; min-width: 0; }
+.insightTotalContent > div { min-width: 0; }
+.insightTotalIcon { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 48px; height: 48px; border: 1px solid #efcfd7; border-radius: 15px; background: linear-gradient(145deg, #fff, #fff3f6); box-shadow: 0 6px 12px -5px rgba(165, 64, 87, 0.24), inset 0 1px 0 #fff; color: #b94253; }
+.insightTotalScope { display: inline-flex; align-items: center; gap: 6px; margin-bottom: 8px; padding: 3px 9px; border: 1px solid rgba(190, 83, 105, 0.12); border-radius: 20px; background: rgba(255, 255, 255, 0.65); color: #a74b5a; font-size: 11px; font-weight: 600; }
+.insightTotalScope::before { content: ''; flex: 0 0 5px; height: 5px; border-radius: 50%; background: #c76077; }
+.insightTotal h3 { margin: 0; color: #78303e; font-size: 15px; line-height: 1.6; overflow-wrap: anywhere; }
+.insightTotal p { margin: 6px 0 0; color: #8d6770; font-size: 12px; line-height: 1.6; }
+.insightTotalValue { display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 5px; min-width: 110px; max-width: 100%; margin-left: auto; padding: 16px 22px; border: 1px solid rgba(255, 255, 255, 0.9); border-radius: 14px; background: linear-gradient(145deg, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.38)); box-shadow: 0 5px 16px -8px rgba(143, 49, 71, 0.2), inset 0 1px 0 #fff; color: #934453; }
+.insightTotalValue strong { color: #b5374d; font-size: clamp(32px, 3vw, 42px); font-weight: 750; line-height: 1.1; letter-spacing: -1px; font-variant-numeric: tabular-nums; text-shadow: 0 1px 0 #fff; overflow-wrap: anywhere; }
+.insightTotalValue span { font-size: 12px; font-weight: 500; }
+@media (max-width: 600px) { .insightTotal { padding: 18px; gap: 16px; } .insightTotalContent { gap: 12px; } .insightTotalIcon { flex-basis: 40px; height: 40px; border-radius: 12px; } .insightTotalValue { flex-direction: row; align-items: baseline; gap: 8px; padding: 12px 18px; } }
 .insightLead { display: flex; flex-direction: column; gap: 9px; padding: 16px 18px; border-left: 3px solid #bd4050; border-radius: 0 8px 8px 0; background: #fcf7f8; color: #80444c; font-size: 12px; line-height: 1.5; }
 .insightLeadTop { display: flex; align-items: flex-start; gap: 10px; }
 .insightLeadIcon { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 28px; height: 28px; color: #b94253; }
 .insightLeadTop > span:last-child { min-width: 0; }
 .insightLead strong { color: #bd4050; font-size: 29px; line-height: 1.25; font-variant-numeric: tabular-nums; }
 .insightLead strong small { font-size: 12px; font-weight: 500; }
-.insightSections { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; gap: 18px; margin-top: 18px; }
+.insightSections { display: grid; grid-template-columns: minmax(0, 1fr); align-content: start; gap: 22px; margin-top: 18px; }
 .insightSections > div { min-width: 0; }
-.insightSections > div:last-child { grid-column: 1 / -1; }
-.insightPrimary { display: grid; align-content: start; gap: 18px; }
+.insightRegionGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 24px; }
 .insightPanel { min-width: 0; padding: 0; background: #fff; }
 .insightSections h3 { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; margin: 0 0 12px; color: #344253; font-size: 13px; line-height: 1.5; }
 .insightIcon { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 24px; height: 24px; margin-right: 1px; color: #b94253; }
@@ -175,6 +193,7 @@
 .sparkline { display: block; margin: 0 auto; overflow: visible; }
 .trendEmpty { color: #a1a8b3; }
 .idCell { font-variant-numeric: tabular-nums; white-space: nowrap; color: #256b89; font-weight: 600; }
+.workingDaysCell { text-align: left; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .badge { display: inline-block; padding: 3px 8px; border-radius: 4px; white-space: nowrap; font-size: 11px; }
 .with_work { color: #137252; background: #e6f4ed; }
 .without_work { color: #ad3a49; background: #fcecef; }
@@ -203,4 +222,4 @@
 }
 @media (max-width: 1150px) { .charts { grid-template-columns: minmax(0, 1fr); } .coverageChart { border-left: 0; border-top: 1px solid #e3e7ed; padding: 22px 0 0; } .donutCanvas { max-width: 300px; margin: auto; } }
 @media (max-width: 900px) { .trendGrid { grid-template-columns: minmax(0, 1fr); } .insightPlaceholder { min-height: 100px; } }
-@media (max-width: 600px) { .dashboard { padding: 18px 12px; } .header h1 { font-size: 22px; } .header p { font-size: 12px; } .scopeBar { gap: 12px; } .scopeBar > label { width: 100%; } .loadStatus { margin-left: 0; width: 100%; } .metrics { gap: 10px; } .metric { padding: 12px; } .metric > strong { font-size: 28px; } .metric > span { font-size: 12px; } .sectionHeading h2 { font-size: 15px; } .insightSections { grid-template-columns: minmax(0, 1fr); } .searchLabel { max-width: none; flex-basis: 100%; min-width: 0; } .tableControls > label:not(.searchLabel) { flex: 1; } .tableControls select { min-width: 130px; } .exportButton { font-size: 12px; padding: 8px 10px; } .pagination { gap: 12px; } .pagination > label { margin-left: 0; } .pageButtons { width: 100%; justify-content: center; } }
+@media (max-width: 600px) { .dashboard { padding: 18px 12px; } .header h1 { font-size: 22px; } .header p { font-size: 12px; } .scopeBar { gap: 12px; } .scopeBar > label { width: 100%; } .loadStatus { margin-left: 0; width: 100%; } .metrics { gap: 10px; } .metric { padding: 12px; } .metric > strong { font-size: 28px; } .metric > span { font-size: 12px; } .sectionHeading h2 { font-size: 15px; } .insightRegionGrid { grid-template-columns: minmax(0, 1fr); } .searchLabel { max-width: none; flex-basis: 100%; min-width: 0; } .tableControls > label:not(.searchLabel) { flex: 1; } .tableControls select { min-width: 130px; } .exportButton { font-size: 12px; padding: 8px 10px; } .pagination { gap: 12px; } .pagination > label { margin-left: 0; } .pageButtons { width: 100%; justify-content: center; } }

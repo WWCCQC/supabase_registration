@@ -1,5 +1,8 @@
 ﻿/** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Keep the dev server's compiled files separate from `next build` output.
+  // Running a production build while localhost is open otherwise removes dev chunks.
+  distDir: process.env.NODE_ENV === 'development' ? '.next-dev' : '.next',
   experimental: {
     forceSwcTransforms: true,
   },

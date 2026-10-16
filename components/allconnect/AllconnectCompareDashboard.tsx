@@ -6,7 +6,7 @@ import {
   ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from 'recharts';
 import { AlertCircle, Building2, CalendarDays, CheckCircle, ChevronDown, ChevronLeft, ChevronRight, ClipboardX, Download, MapPin, RefreshCw, Search, Users, X, XCircle } from 'lucide-react';
-import { buildExecutiveInsights, calculateWithoutWorkCoverage, weeklyJobBackground, providerSummaryExportRows, formatRegionBarLabel, type CompareDashboard, type CompareRow, type WorkStatus, type WorkStatusFilter } from '@/lib/allconnectCompare';
+import { buildExecutiveInsights, calculateWithoutWorkCoverage, calculateWorkingDays, weeklyJobBackground, providerSummaryExportRows, formatRegionBarLabel, type CompareDashboard, type CompareRow, type WorkStatus, type WorkStatusFilter } from '@/lib/allconnectCompare';
 import styles from './AllconnectCompareDashboard.module.css';
 import AllconnectUpload from './AllconnectUpload';
 import MonthlyNoWorkChart from './MonthlyNoWorkChart';
@@ -21,7 +21,7 @@ const monthName = (value: string) => MONTH_NAMES[Number(value.slice(5, 7)) - 1] 
 const WORK_LABELS: Record<WorkStatus, string> = {
   with_work: 'ปิดงาน', without_work: 'ไม่มีการปิดงาน', pending: 'รอเปรียบเทียบ',
 };
-const DETAIL_HEADINGS = ['RBM', 'Depot', 'Depot Name', 'รหัสช่าง', 'ชื่อช่าง', 'สถานะการปิดงาน'];
+const DETAIL_HEADINGS = ['RBM', 'Depot', 'Depot Name', 'รหัสช่าง', 'ชื่อช่าง', 'จำนวนวันที่เข้าทำงาน', 'สถานะการปิดงาน'];
 const COLORS = { withWork: '#159574', withoutWork: '#dc5966', pending: '#a1a8b3' };
 const DETAIL_FILTERS = [
   { value: 'all', label: 'ข้อมูลช่างทั้งหมด', Icon: Users },
@@ -131,7 +131,7 @@ export default function AllconnectCompareDashboard() {
       const headings = [...DETAIL_HEADINGS, ...first.dataset.workPeriods.map(period => `${period.month} Week ${period.weekNumber}`)];
       const worksheet = XLSX.utils.aoa_to_sheet([headings, ...rows.map(row => [
         row.rbm, row.depotCode, row.depotName,
-        row.techId ?? '', row.fullName, WORK_LABELS[row.workStatus], ...first.dataset.workPeriods.map(period => row.weeklyJobs.find(week => week.month === period.month && week.weekStart === period.weekStart)?.jobCount ?? 0),
+        row.techId ?? '', row.fullName, calculateWorkingDays(row.cardRegisterDate ?? '') ?? '', WORK_LABELS[row.workStatus], ...first.dataset.workPeriods.map(period => row.weeklyJobs.find(week => week.month === period.month && week.weekStart === period.weekStart)?.jobCount ?? 0),
       ])]);
       worksheet['!cols'] = headings.map((_, index) => ({ wch: [2, 4].includes(index) ? 32 : 20 }));
       const workbook = XLSX.utils.book_new();
@@ -270,27 +270,39 @@ export default function AllconnectCompareDashboard() {
             </div>
             <section className={styles.insightPlaceholder} aria-label="Summary insight">
               <div className={styles.sectionHeading}><h2>Summary insight</h2>{rbm && <span>{rbm}</span>}</div>
-              <div className={styles.insightSections}>
-                <div className={styles.insightPrimary}>
-                  {latestInsightMonth && <div className={styles.insightLead}>
-                    <div className={styles.insightLeadTop}>
-                      <span className={styles.insightLeadIcon}><ClipboardX size={19} strokeWidth={1.9} aria-hidden="true" /></span>
-                      <span>ช่างที่ไม่พบการปิดงานในเดือน {monthName(latestInsightMonth.month)} {latestInsightMonth.month.slice(0, 4)}</span>
-                    </div>
-                    <strong>{number(latestInsightMonth.withoutWork)} <small>กองงาน</small></strong>
-                    {latestInsightMonth.change !== null && <span>
-                      {latestInsightMonth.change < 0 ? `ลดลง ${number(-latestInsightMonth.change)}` : latestInsightMonth.change > 0 ? `เพิ่มขึ้น ${number(latestInsightMonth.change)}` : 'เท่าเดิม'} จากเดือนก่อน
-                    </span>}
-                  </div>}
-                  <div className={styles.insightPanel}>
-                    <h3><span className={styles.insightIcon}><CalendarDays size={16} strokeWidth={2} aria-hidden="true" /></span>รายเดือน <small>ไม่มีการปิดงานในเดือนนั้น</small></h3>
-                    {insights?.months.length ? <ul className={styles.insightList}>
-                      {insights.months.map(item => <li key={item.month} className={styles.insightRow}>
-                        <span>{monthName(item.month)} {item.month.slice(0, 4)}</span>
-                        <strong>{number(item.withoutWork)} กองงาน</strong>
-                      </li>)}
-                    </ul> : <p className={styles.insightEmpty}>ยังไม่มีข้อมูลรายเดือน</p>}
+              <div className={styles.insightTotal}>
+                <div className={styles.insightTotalContent}>
+                  <span className={styles.insightTotalIcon}><ClipboardX size={22} strokeWidth={1.8} aria-hidden="true" /></span>
+                  <div>
+                    <span className={styles.insightTotalScope}>{month ? `${monthName(month)} ${month.slice(0, 4)}` : 'ภาพรวมทุกเดือน'}</span>
+                    <h3>{month ? 'ช่างที่ไม่มีการปิดงานในเดือนที่เลือก' : 'ช่างที่ไม่มีการปิดงานทุกเดือน'}</h3>
+                    <p>{month ? 'ไม่พบการปิดงานในเดือนที่เลือก' : 'ไม่พบการปิดงานตลอดทุกเดือนที่มีข้อมูล'}</p>
                   </div>
+                </div>
+                <div className={styles.insightTotalValue}>
+                  <strong>{number(data.summary.withoutWork)}</strong>
+                  <span>กองงาน</span>
+                </div>
+              </div>
+              <div className={styles.insightSections}>
+                {latestInsightMonth && <div className={styles.insightLead}>
+                  <div className={styles.insightLeadTop}>
+                    <span className={styles.insightLeadIcon}><ClipboardX size={19} strokeWidth={1.9} aria-hidden="true" /></span>
+                    <span>ช่างที่ไม่พบการปิดงานในเดือน {monthName(latestInsightMonth.month)} {latestInsightMonth.month.slice(0, 4)}</span>
+                  </div>
+                  <strong>{number(latestInsightMonth.withoutWork)} <small>กองงาน</small></strong>
+                  {latestInsightMonth.change !== null && <span>
+                    {latestInsightMonth.change < 0 ? `ลดลง ${number(-latestInsightMonth.change)}` : latestInsightMonth.change > 0 ? `เพิ่มขึ้น ${number(latestInsightMonth.change)}` : 'เท่าเดิม'} จากเดือนก่อน
+                  </span>}
+                </div>}
+                <div className={styles.insightPanel}>
+                  <h3><span className={styles.insightIcon}><CalendarDays size={16} strokeWidth={2} aria-hidden="true" /></span>รายเดือน <small>ไม่มีการปิดงานในเดือนนั้น</small></h3>
+                  {insights?.months.length ? <ul className={styles.insightList}>
+                    {insights.months.map(item => <li key={item.month} className={styles.insightRow}>
+                      <span>{monthName(item.month)} {item.month.slice(0, 4)}</span>
+                      <strong>{number(item.withoutWork)} กองงาน</strong>
+                    </li>)}
+                  </ul> : <p className={styles.insightEmpty}>ยังไม่มีข้อมูลรายเดือน</p>}
                 </div>
                 <div className={styles.insightPanel}>
                   <h3><span className={styles.insightIcon}><MapPin size={16} strokeWidth={2} aria-hidden="true" /></span>ไม่มีการปิดงานรายพื้นที่ <small>{month || 'ทุกเดือน'}</small></h3>
@@ -438,9 +450,10 @@ export default function AllconnectCompareDashboard() {
                   </>}
                 </thead>
                 <tbody>{data.rows.map((row, index) => {
+                  const workingDays = calculateWorkingDays(row.cardRegisterDate ?? '');
                   const weeklyCounts = workPeriods.map(period => row.weeklyJobs?.find(week => week.month === period.month && week.weekStart === period.weekStart)?.jobCount ?? 0);
                   return <tr key={`${row.techId ?? 'missing'}-${index}`}>
-                    <td>{row.rbm}</td><td>{row.depotCode || '-'}</td><td>{row.depotName || '-'}</td><td className={styles.idCell}>{row.techId ?? '-'}</td><td>{row.fullName}</td><td><span className={`${styles.badge} ${styles[row.workStatus]}`}>{WORK_LABELS[row.workStatus]}</span></td>
+                    <td>{row.rbm}</td><td>{row.depotCode || '-'}</td><td>{row.depotName || '-'}</td><td className={styles.idCell}>{row.techId ?? '-'}</td><td>{row.fullName}</td><td className={styles.workingDaysCell} title={row.cardRegisterDate ? `วันที่ลงทะเบียน ${row.cardRegisterDate}` : undefined}>{workingDays === null ? '-' : number(workingDays)}</td><td><span className={`${styles.badge} ${styles[row.workStatus]}`}>{WORK_LABELS[row.workStatus]}</span></td>
                     <td className={styles.trendCell}><TrendSparkline values={weeklyCounts} labels={workPeriods.map(period => `${period.month} Week ${period.weekNumber}`)} /></td>
                     {workPeriods.map((period, periodIndex) => {
                       const count = weeklyCounts[periodIndex];
