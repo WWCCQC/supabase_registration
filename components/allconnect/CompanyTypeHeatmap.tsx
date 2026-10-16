@@ -38,8 +38,8 @@ export default function CompanyTypeHeatmap({ months, items, selectedMonth, onSel
     <div className={styles.scroll}>
       <table className={styles.table}>
         <thead><tr><th scope="col">ประเภทช่าง</th>{sorted.map(item => <th scope="col" key={item.month}><button className={styles.month} type="button" aria-pressed={selectedMonth === item.month} onClick={() => onSelectMonth(item.month)}>{label(item.month)}</button></th>)}<th scope="col">แนวโน้ม</th></tr></thead>
-        <tbody>{types.map((type, index) => <tr key={type}>
-          <th scope="row"><div className={styles.type}><span className={styles.icon} data-tone={index % 3}>{type === 'WW-Provider' ? 'WW' : type === 'True Tech' ? 'TT' : type === 'เถ้าแก่เทค' ? 'TK' : type.slice(0, 2)}</span><strong>{type || 'ไม่ระบุประเภท'}</strong></div></th>
+        <tbody>{types.map(type => <tr key={type}>
+          <th scope="row"><div className={styles.type}><strong>{type || 'ไม่ระบุประเภท'}</strong></div></th>
           {sorted.map(item => {
             const value = values.get(`${type}\0${item.month}`);
             const share = value !== undefined && item.withoutWork > 0 ? value / item.withoutWork * 100 : 0;
