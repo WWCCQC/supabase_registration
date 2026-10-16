@@ -192,16 +192,6 @@ WITH job_source AS MATERIALIZED (
            depot_code NULLS LAST, depot_name NULLS LAST, full_name, tech_id NULLS LAST
   LIMIT (SELECT page_size FROM paging)
   OFFSET (SELECT (page - 1) * page_size FROM paging)
-), no_work_periods AS MATERIALIZED (
-  SELECT p.tech_id, jsonb_agg(jsonb_build_object(
-    'month', w.work_month, 'weekStart', w.week_start,
-    'weekEnd', w.week_start + 6, 'weekNumber', extract(week FROM w.week_start)::integer
-  ) ORDER BY w.work_month, w.week_start) AS periods
-  FROM page_rows p CROSS JOIN work_periods w
-  LEFT JOIN weekly_jobs j ON j.tech_id = p.tech_id
-    AND j.work_month = w.work_month AND j.week_start = w.week_start
-  WHERE p.tech_id IS NOT NULL AND coalesce(j.completed_jobs, 0) = 0
-  GROUP BY p.tech_id
 ), all_weekly_jobs AS MATERIALIZED (
   SELECT p.tech_id, jsonb_agg(jsonb_build_object(
     'month', w.work_month, 'weekStart', w.week_start,
@@ -261,7 +251,6 @@ SELECT jsonb_build_object(
     'provider', p.provider, 'depotCode', p.depot_code, 'depotName', p.depot_name,
     'province', p.province, 'technicianStatus', p.technician_status,
     'jobCount', p.job_count, 'installCount', p.install_count, 'repairCount', p.repair_count, 'workStatus', p.work_status,
-    'noWorkPeriods', coalesce((SELECT n.periods FROM no_work_periods n WHERE n.tech_id = p.tech_id), '[]'::jsonb),
     'weeklyJobs', coalesce((SELECT n.periods FROM all_weekly_jobs n WHERE n.tech_id IS NOT DISTINCT FROM p.tech_id), '[]'::jsonb)
   ) ORDER BY substring(p.rbm FROM '^R([0-9]+)')::integer NULLS LAST, p.rbm NULLS LAST,
              p.depot_code NULLS LAST, p.depot_name NULLS LAST, p.full_name, p.tech_id NULLS LAST) FROM page_rows p), '[]'::jsonb),

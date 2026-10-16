@@ -1,10 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { jwtVerify } from 'jose';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { parseCompareJobParams } from '@/lib/allconnectCompare';
+import {
+  parseCompareDepotParams, parseCompareJobParams, parseCompareSummaryParams, parseCompareView,
+  type CompareDashboard,
+} from '@/lib/allconnectCompare';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
+
+const FULL_RPC = 'allconnect_compare_jobs_dashboard';
+const VIEW_RPC = {
+  summary: 'allconnect_compare_summary',
+  rows: 'allconnect_compare_rows',
+  depot: 'allconnect_compare_depot_technicians',
+} as const;
+
+// PostgREST: the function does not exist yet (split SQL not applied) -> use the all-in-one function.
+const isMissingFunction = (error: { code?: string } | null) => error?.code === 'PGRST202';
 
 export async function GET(request: NextRequest) {
   const headers = { 'Cache-Control': 'private, no-store, max-age=0' };
@@ -21,20 +34,52 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'กรุณาเข้าสู่ระบบใหม่' }, { status: 401, headers });
   }
 
-  let params;
+  const search = request.nextUrl.searchParams;
+  let view, params;
   try {
-    params = parseCompareJobParams(request.nextUrl.searchParams);
+    view = parseCompareView(search);
+    params = view === 'summary' ? parseCompareSummaryParams(search)
+      : view === 'depot' ? parseCompareDepotParams(search)
+      : parseCompareJobParams(search);
   } catch {
     return NextResponse.json({ error: 'ตัวกรองหรือหมายเลขหน้าไม่ถูกต้อง' }, { status: 400, headers });
   }
 
+  const call = async (name: string, args: Record<string, unknown>) => {
+    const { data, error } = await supabaseAdmin().rpc(name, args).abortSignal(request.signal);
+    return { data, error };
+  };
+
   try {
-    const { data, error } = await supabaseAdmin()
-      .rpc('allconnect_compare_jobs_dashboard', params)
-      .abortSignal(request.signal);
+    if (view === 'full') {
+      const { data, error } = await call(FULL_RPC, params);
+      if (error) throw error;
+      if (!data) throw new Error('Comparison returned no data');
+      return NextResponse.json(data, { headers });
+    }
+
+    const result = await call(VIEW_RPC[view], params);
+    if (!isMissingFunction(result.error)) {
+      if (result.error) throw result.error;
+      if (result.data === null || result.data === undefined) throw new Error('Comparison returned no data');
+      return NextResponse.json(view === 'depot' ? { technicians: result.data } : result.data, { headers });
+    }
+
+    // Fallback while create-allconnect-compare-split.sql has not been applied.
+    const fallbackParams = view === 'depot'
+      ? { p_rbm: null, p_status: 'all', p_search: '', p_page: 1, p_page_size: 1, p_month: params.p_month }
+      : view === 'summary' ? { ...parseCompareJobParams(search), p_page_size: 1 } : params;
+    const { data, error } = await call(FULL_RPC, fallbackParams);
     if (error) throw error;
     if (!data) throw new Error('Comparison returned no data');
-    return NextResponse.json(data, { headers });
+    const full = data as CompareDashboard;
+    if (view === 'depot') {
+      const depot = params as ReturnType<typeof parseCompareDepotParams>;
+      const match = full.depots.find(item => item.rbm === depot.p_rbm &&
+        item.depotCode === depot.p_depot_code && item.depotName === depot.p_depot_name);
+      return NextResponse.json({ technicians: match?.withoutWorkTechnicians ?? [] }, { headers });
+    }
+    return NextResponse.json(full, { headers });
   } catch (error) {
     console.error('Allconnect comparison failed:', error);
     return NextResponse.json({ error: 'โหลดข้อมูลเปรียบเทียบไม่สำเร็จ กรุณาลองอีกครั้ง' }, { status: 500, headers });

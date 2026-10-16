@@ -30,16 +30,19 @@ export interface CompareMonthCompanyType {
   withoutWork: number;
 }
 
+export interface DepotTechnician {
+  techId: string;
+  fullName: string;
+  typeOfWork: string;
+  jobAcceptType: string;
+}
+
 export interface CompareDepot extends CompareSummary {
   rbm: string;
   depotCode: string;
   depotName: string;
-  withoutWorkTechnicians: {
-    techId: string;
-    fullName: string;
-    typeOfWork: string;
-    jobAcceptType: string;
-  }[];
+  /** Only present in the legacy all-in-one response; the split API loads it per depot. */
+  withoutWorkTechnicians?: DepotTechnician[];
 }
 
 export function providerSummaryExportRows(depots: CompareDepot[]) {
@@ -74,7 +77,6 @@ export interface CompareRow {
   installCount: number;
   repairCount: number;
   workStatus: WorkStatus;
-  noWorkPeriods: NoWorkPeriod[];
   weeklyJobs: WeeklyJobPeriod[];
 }
 
@@ -99,6 +101,53 @@ export interface CompareDashboard {
   depots: CompareDepot[];
   rows: CompareRow[];
   pagination: { total: number; page: number; pageSize: number; totalPages: number };
+}
+
+/** view=summary: cards, charts and region/depot tables. */
+export interface CompareSummaryData {
+  dataset: Omit<CompareDashboard['dataset'], 'workPeriods'>;
+  summary: CompareSummary;
+  regions: CompareRegion[];
+  monthly?: CompareMonth[];
+  monthlyByCompanyType?: CompareMonthCompanyType[];
+  depots: CompareDepot[];
+}
+
+/** view=rows: one page of the technician detail table. */
+export interface CompareRowsData {
+  dataset: Pick<CompareDashboard['dataset'], 'totalRows' | 'importedAt' | 'updatedAt' | 'techniciansUpdatedAt' | 'workPeriods'>;
+  rows: CompareRow[];
+  pagination: CompareDashboard['pagination'];
+}
+
+export const COMPARE_VIEWS = ['full', 'summary', 'rows', 'depot'] as const;
+export type CompareView = typeof COMPARE_VIEWS[number];
+
+export function parseCompareView(params: URLSearchParams): CompareView {
+  const view = params.get('view') ?? 'full';
+  if (!COMPARE_VIEWS.includes(view as CompareView)) throw new Error('Invalid view');
+  return view as CompareView;
+}
+
+function parseMonth(params: URLSearchParams) {
+  const month = (params.get('month') ?? '').trim();
+  if (month && !/^\d{4}-(0[1-9]|1[0-2])$/.test(month)) throw new Error('Invalid month');
+  return month || null;
+}
+
+export function parseCompareSummaryParams(params: URLSearchParams) {
+  const rbm = (params.get('rbm') ?? '').trim();
+  if (rbm.length > 200) throw new Error('Filter is too long');
+  return { p_rbm: rbm || null, p_month: parseMonth(params) };
+}
+
+export function parseCompareDepotParams(params: URLSearchParams) {
+  const value = (name: string) => {
+    const text = (params.get(name) ?? '').trim();
+    if (!text || text.length > 200) throw new Error(`Invalid ${name}`);
+    return text;
+  };
+  return { p_rbm: value('rbm'), p_depot_code: value('depotCode'), p_depot_name: value('depotName'), p_month: parseMonth(params) };
 }
 
 export function buildExecutiveInsights(
@@ -212,7 +261,5 @@ export function parseCompareParams(params: URLSearchParams) {
 }
 
 export function parseCompareJobParams(params: URLSearchParams) {
-  const month = (params.get('month') ?? '').trim();
-  if (month && !/^\d{4}-(0[1-9]|1[0-2])$/.test(month)) throw new Error('Invalid month');
-  return { ...parseCompareParams(params), p_month: month || null };
+  return { ...parseCompareParams(params), p_month: parseMonth(params) };
 }

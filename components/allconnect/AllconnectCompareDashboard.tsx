@@ -6,7 +6,7 @@ import {
   ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from 'recharts';
 import { AlertCircle, Building2, CalendarDays, CheckCircle, ChevronDown, ChevronLeft, ChevronRight, ClipboardX, Download, MapPin, RefreshCw, Search, Users, X, XCircle } from 'lucide-react';
-import { buildExecutiveInsights, calculateWithoutWorkCoverage, calculateWorkingDays, weeklyJobBackground, providerSummaryExportRows, formatRegionBarLabel, type CompareDashboard, type CompareRow, type WorkStatus, type WorkStatusFilter } from '@/lib/allconnectCompare';
+import { buildExecutiveInsights, calculateWithoutWorkCoverage, calculateWorkingDays, weeklyJobBackground, providerSummaryExportRows, formatRegionBarLabel, type CompareRow, type CompareRowsData, type CompareSummaryData, type DepotTechnician, type WorkStatus, type WorkStatusFilter } from '@/lib/allconnectCompare';
 import styles from './AllconnectCompareDashboard.module.css';
 import AllconnectUpload from './AllconnectUpload';
 import MonthlyNoWorkChart from './MonthlyNoWorkChart';
@@ -52,15 +52,20 @@ function dateTime(value: string | null) {
   }).format(new Date(value)) : '-';
 }
 
-async function getDashboard(params: URLSearchParams, signal?: AbortSignal): Promise<CompareDashboard> {
+async function getCompare<T>(params: URLSearchParams, signal?: AbortSignal): Promise<T> {
   const response = await fetch(`/api/allconnect-compare?${params}`, { cache: 'no-store', signal });
   const body = await response.json();
   if (!response.ok) throw new Error(body.error || 'โหลดข้อมูลไม่สำเร็จ');
   return body;
 }
 
+type DepotTechniciansState = { loading: boolean; error?: string; items?: DepotTechnician[] };
+
 export default function AllconnectCompareDashboard() {
-  const [data, setData] = useState<CompareDashboard | null>(null);
+  // Summary (cards/charts/region & depot tables) reloads only on month/RBM change;
+  // the detail table reloads on its own when page, status or search changes.
+  const [data, setData] = useState<CompareSummaryData | null>(null);
+  const [rowsData, setRowsData] = useState<CompareRowsData | null>(null);
   const [rbm, setRbm] = useState('');
   const [month, setMonth] = useState('');
   const [status, setStatus] = useState<WorkStatusFilter>('all');
@@ -69,21 +74,42 @@ export default function AllconnectCompareDashboard() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(50);
   const [revision, setRevision] = useState(0);
-  const [loading, setLoading] = useState(true);
+  const [summaryLoading, setSummaryLoading] = useState(true);
+  const [rowsLoading, setRowsLoading] = useState(true);
   const [error, setError] = useState('');
+  const [rowsError, setRowsError] = useState('');
+  const [depotTechnicians, setDepotTechnicians] = useState<Record<string, DepotTechniciansState>>({});
   const [exportError, setExportError] = useState('');
   const [exporting, setExporting] = useState(false);
   const [providerExporting, setProviderExporting] = useState(false);
   const [providerExportError, setProviderExportError] = useState('');
   const [expandedDepots, setExpandedDepots] = useState<Set<string>>(new Set());
 
-  function toggleDepot(key: string) {
+  function loadDepotTechnicians(key: string, depot: CompareSummaryData['depots'][number]) {
+    if (depot.withoutWorkTechnicians) {
+      // Legacy all-in-one response already contains the list.
+      setDepotTechnicians(previous => ({ ...previous, [key]: { loading: false, items: depot.withoutWorkTechnicians } }));
+      return;
+    }
+    setDepotTechnicians(previous => ({ ...previous, [key]: { loading: true } }));
+    const params = new URLSearchParams({ view: 'depot', rbm: depot.rbm, depotCode: depot.depotCode, depotName: depot.depotName, month });
+    getCompare<{ technicians: DepotTechnician[] }>(params)
+      .then(result => setDepotTechnicians(previous => ({ ...previous, [key]: { loading: false, items: result.technicians } })))
+      .catch(cause => setDepotTechnicians(previous => ({
+        ...previous, [key]: { loading: false, error: cause instanceof Error ? cause.message : 'โหลดข้อมูลไม่สำเร็จ' },
+      })));
+  }
+
+  function toggleDepot(key: string, depot: CompareSummaryData['depots'][number]) {
+    const expanding = !expandedDepots.has(key);
     setExpandedDepots(previous => {
       const next = new Set(previous);
       if (next.has(key)) next.delete(key);
       else next.add(key);
       return next;
     });
+    const cached = depotTechnicians[key];
+    if (expanding && (!cached || cached.error)) loadDepotTechnicians(key, depot);
   }
 
   useEffect(() => {
@@ -93,15 +119,32 @@ export default function AllconnectCompareDashboard() {
 
   useEffect(() => {
     const controller = new AbortController();
-    setLoading(true);
+    setSummaryLoading(true);
     setError('');
-    const params = new URLSearchParams({ rbm, month, status, q: query, page: String(page), pageSize: String(pageSize) });
-    getDashboard(params, controller.signal)
+    // Depot technician lists depend on the month and on uploaded data.
+    setExpandedDepots(new Set());
+    setDepotTechnicians({});
+    const params = new URLSearchParams({ view: 'summary', rbm, month });
+    getCompare<CompareSummaryData>(params, controller.signal)
       .then(result => { if (!controller.signal.aborted) setData(result); })
       .catch(cause => {
         if (!controller.signal.aborted) setError(cause instanceof Error ? cause.message : 'โหลดข้อมูลไม่สำเร็จ');
       })
-      .finally(() => { if (!controller.signal.aborted) setLoading(false); });
+      .finally(() => { if (!controller.signal.aborted) setSummaryLoading(false); });
+    return () => controller.abort();
+  }, [rbm, month, revision]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    setRowsLoading(true);
+    setRowsError('');
+    const params = new URLSearchParams({ view: 'rows', rbm, month, status, q: query, page: String(page), pageSize: String(pageSize) });
+    getCompare<CompareRowsData>(params, controller.signal)
+      .then(result => { if (!controller.signal.aborted) setRowsData(result); })
+      .catch(cause => {
+        if (!controller.signal.aborted) setRowsError(cause instanceof Error ? cause.message : 'โหลดข้อมูลไม่สำเร็จ');
+      })
+      .finally(() => { if (!controller.signal.aborted) setRowsLoading(false); });
     return () => controller.abort();
   }, [rbm, month, status, query, page, pageSize, revision]);
 
@@ -115,12 +158,12 @@ export default function AllconnectCompareDashboard() {
     setExporting(true);
     setExportError('');
     try {
-      const params = new URLSearchParams({ rbm, month, status, q: query, page: '1', pageSize: '500' });
-      const first = await getDashboard(params);
+      const params = new URLSearchParams({ view: 'rows', rbm, month, status, q: query, page: '1', pageSize: '500' });
+      const first = await getCompare<CompareRowsData>(params);
       const rows: CompareRow[] = [...first.rows];
       for (let next = 2; next <= first.pagination.totalPages; next++) {
         params.set('page', String(next));
-        const result = await getDashboard(params);
+        const result = await getCompare<CompareRowsData>(params);
         if (result.pagination.total !== first.pagination.total || result.dataset.updatedAt !== first.dataset.updatedAt ||
             result.dataset.techniciansUpdatedAt !== first.dataset.techniciansUpdatedAt) {
           throw new Error('ข้อมูลมีการเปลี่ยนแปลงระหว่างส่งออก กรุณาลองอีกครั้ง');
@@ -197,8 +240,10 @@ export default function AllconnectCompareDashboard() {
   const visibleDepots = data?.depots.filter(depot => !rbm || depot.rbm === rbm) ?? [];
   const selectedTitle = rbm || 'ทุกพื้นที่ RBM';
   const staleSearch = query !== search.trim();
+  const loading = summaryLoading || rowsLoading;
+  const rowsBusy = rowsLoading || staleSearch;
   const busy = loading || staleSearch;
-  const workPeriods = data?.dataset.workPeriods ?? [];
+  const workPeriods = rowsData?.dataset.workPeriods ?? [];
   const workMonths = [...new Set(workPeriods.map(period => period.month))];
 
   return (
@@ -233,7 +278,7 @@ export default function AllconnectCompareDashboard() {
         <label className={styles.globalSearchLabel}><span>ค้นหาข้อมูลช่าง</span><div className={styles.searchInput}><Search size={17} aria-hidden="true" /><input value={search} maxLength={200} onChange={event => setSearch(event.target.value)} placeholder="ชื่อ รหัสช่าง RBM ศูนย์ หรือจังหวัด" aria-label="ค้นหาข้อมูลช่าง" />{search && <button type="button" title="ล้างคำค้นหา" aria-label="ล้างคำค้นหา" onClick={() => setSearch('')}><X size={16} /></button>}</div></label>
         {rbm && <button type="button" className={styles.textButton} onClick={() => selectRegion('')}><X size={16} /> ล้างพื้นที่</button>}
         <div className={styles.loadStatus} role="status" aria-live="polite">
-          {busy ? 'กำลังโหลดข้อมูล...' : error ? 'โหลดไม่สำเร็จ' : null}
+          {busy ? 'กำลังโหลดข้อมูล...' : error || rowsError ? 'โหลดไม่สำเร็จ' : null}
         </div>
       </div>
 
@@ -243,7 +288,7 @@ export default function AllconnectCompareDashboard() {
       {(!data || error) ? (
         !error && <div className={styles.initialLoading}>กำลังคำนวณข้อมูลช่างและงานติดตั้ง...</div>
       ) : (
-        <div className={busy ? styles.updating : undefined} aria-busy={busy}>
+        <div className={summaryLoading ? styles.updating : undefined} aria-busy={summaryLoading}>
           <section className={styles.metrics} aria-label={`สรุป ${selectedTitle}`}>
             <article className={styles.metric}><span>จำนวนช่าง(กองงาน)</span><strong>{number(data.summary.total)}</strong></article>
             <article className={`${styles.metric} ${styles.green}`}><span>จำนวนช่างที่ปิดงาน(กองงาน)</span><strong>{number(data.summary.withWork)}</strong></article>
@@ -390,7 +435,7 @@ export default function AllconnectCompareDashboard() {
           </section>
 
           <section className={styles.section}>
-            <div className={styles.sectionHeading}><h2>ตารางสรุปการปิดงานรายพื้นที่ตาม Provider</h2><button className={styles.exportButton} type="button" onClick={exportProviderExcel} disabled={providerExporting || busy || visibleDepots.length === 0} aria-label="Export Excel ตาราง Provider"><Download size={17} />{providerExporting ? 'กำลังส่งออก...' : 'Export Excel'}</button></div>
+            <div className={styles.sectionHeading}><h2>ตารางสรุปการปิดงานรายพื้นที่ตาม Provider</h2><button className={styles.exportButton} type="button" onClick={exportProviderExcel} disabled={providerExporting || summaryLoading || visibleDepots.length === 0} aria-label="Export Excel ตาราง Provider"><Download size={17} />{providerExporting ? 'กำลังส่งออก...' : 'Export Excel'}</button></div>
             {providerExportError && <p className={styles.error} role="alert">{providerExportError}</p>}
             <div className={`${styles.tableScroll} ${styles.depotTableScroll}`} tabIndex={0} role="region" aria-label="ตารางสรุปการปิดงานรายพื้นที่ตาม Provider">
               <table className={`${styles.table} ${styles.depotTable}`}>
@@ -399,9 +444,10 @@ export default function AllconnectCompareDashboard() {
                   const key = JSON.stringify([depot.rbm, depot.depotCode, depot.depotName]);
                   const expanded = expandedDepots.has(key);
                   const detailId = `depot-${encodeURIComponent(key)}`;
-                  return <Fragment key={key}><tr className={styles.depotRow} onClick={() => toggleDepot(key)}>
+                  const technicians = depotTechnicians[key];
+                  return <Fragment key={key}><tr className={styles.depotRow} onClick={() => toggleDepot(key, depot)}>
                   <td>{depot.rbm}</td>
-                  <td className={styles.idCell}><button type="button" className={styles.depotToggle} aria-expanded={expanded} aria-controls={detailId} aria-label={`ช่างที่ไม่พบงาน ${depot.depotCode} ${depot.rbm}`} onClick={event => { event.stopPropagation(); toggleDepot(key); }}>
+                  <td className={styles.idCell}><button type="button" className={styles.depotToggle} aria-expanded={expanded} aria-controls={detailId} aria-label={`ช่างที่ไม่พบงาน ${depot.depotCode} ${depot.rbm}`} onClick={event => { event.stopPropagation(); toggleDepot(key, depot); }}>
                     {expanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}{depot.depotCode}
                   </button></td>
                   <td>{depot.depotName}</td>
@@ -412,9 +458,11 @@ export default function AllconnectCompareDashboard() {
                   <td>{number(depot.installCount)}</td><td>{number(depot.repairCount)}</td><td>{number(depot.jobCount)}</td>
                 </tr>
                 {expanded && <tr className={styles.depotDetails} id={detailId}><td colSpan={10}>
-                  {depot.withoutWorkTechnicians.length > 0 ? <table className={styles.depotTechnicians} aria-label={`ช่างที่ไม่พบงาน ${depot.depotCode}`}>
+                  {!technicians || technicians.loading ? <div className={styles.depotEmpty} role="status">กำลังโหลดรายชื่อช่าง...</div>
+                  : technicians.error ? <div className={styles.depotEmpty} role="alert">{technicians.error} <button type="button" className={styles.textButton} onClick={() => loadDepotTechnicians(key, depot)}>ลองอีกครั้ง</button></div>
+                  : technicians.items && technicians.items.length > 0 ? <table className={styles.depotTechnicians} aria-label={`ช่างที่ไม่พบงาน ${depot.depotCode}`}>
                      <thead><tr><th scope="col">รหัสพนักงาน</th><th scope="col">ชื่อ</th><th scope="col">ประเภทงาน</th><th scope="col">ประเภทการรับงาน</th></tr></thead>
-                     <tbody>{depot.withoutWorkTechnicians.map(technician => <tr key={technician.techId}>
+                     <tbody>{technicians.items.map(technician => <tr key={technician.techId}>
                        <td>{technician.techId}</td><td>{technician.fullName}</td><td>{technician.typeOfWork || '-'}</td><td>{technician.jobAcceptType || '-'}</td>
                      </tr>)}</tbody>
                   </table> : <div className={styles.depotEmpty}>ไม่มีช่างที่ไม่พบงานใน Depot นี้</div>}
@@ -426,17 +474,19 @@ export default function AllconnectCompareDashboard() {
             </div>
           </section>
 
-          <section className={styles.section} aria-label="ตารางรายละเอียดการปิดงาน-ไม่ปิดงานของช่าง">
+          <section className={`${styles.section} ${rowsBusy && rowsData ? styles.updating : ''}`} aria-label="ตารางรายละเอียดการปิดงาน-ไม่ปิดงานของช่าง" aria-busy={rowsBusy}>
             <div className={styles.sectionHeading}><h2>ตารางรายละเอียดการปิดงาน-ไม่ปิดงานของช่าง</h2>{rbm && <span>{rbm}</span>}</div>
              <div className={styles.tableControls}>
                <div className={styles.statusFilters} role="group" aria-label="เลือกข้อมูลการปิดงานของช่าง">
-                 {DETAIL_FILTERS.map(({ value, label, Icon }) => <button key={value} type="button" className={`${styles.statusFilter} ${styles[`filter_${value}`]}`} aria-pressed={status === value} disabled={loading} onClick={() => { setStatus(value); setPage(1); }}>
+                 {DETAIL_FILTERS.map(({ value, label, Icon }) => <button key={value} type="button" className={`${styles.statusFilter} ${styles[`filter_${value}`]}`} aria-pressed={status === value} disabled={rowsLoading} onClick={() => { setStatus(value); setPage(1); }}>
                    <Icon size={19} aria-hidden="true" /><span>{label}</span>
                  </button>)}
                </div>
-              <button className={styles.exportButton} type="button" onClick={exportExcel} disabled={exporting || busy || data.pagination.total === 0}><Download size={17} />{exporting ? 'กำลังส่งออก...' : 'Export Excel'}</button>
+              <button className={styles.exportButton} type="button" onClick={exportExcel} disabled={exporting || rowsBusy || !rowsData || rowsData.pagination.total === 0}><Download size={17} />{exporting ? 'กำลังส่งออก...' : 'Export Excel'}</button>
             </div>
             {exportError && <p className={styles.error} role="alert">{exportError}</p>}
+            {rowsError && <div className={styles.error} role="alert"><AlertCircle size={20} /><span>{rowsError}</span><button type="button" onClick={() => setRevision(value => value + 1)}>ลองอีกครั้ง</button></div>}
+            {!rowsData ? (!rowsError && <div className={styles.initialLoading}>กำลังโหลดตารางรายละเอียดช่าง...</div>) : <>
             <div className={styles.tableScroll} tabIndex={0} role="region" aria-label="ตารางรายละเอียดการปิดงาน-ไม่ปิดงานของช่าง">
               <table className={`${styles.table} ${styles.detailTable}`}>
                 <thead>
@@ -449,7 +499,7 @@ export default function AllconnectCompareDashboard() {
                     <tr>{workPeriods.map(period => <th className={styles.weekHeader} scope="col" key={`${period.month}-${period.weekStart}`} title={`${period.weekStart} - ${period.weekEnd}`}>Week {period.weekNumber}</th>)}</tr>
                   </>}
                 </thead>
-                <tbody>{data.rows.map((row, index) => {
+                <tbody>{rowsData.rows.map((row, index) => {
                   const workingDays = calculateWorkingDays(row.cardRegisterDate ?? '');
                   const weeklyCounts = workPeriods.map(period => row.weeklyJobs?.find(week => week.month === period.month && week.weekStart === period.weekStart)?.jobCount ?? 0);
                   return <tr key={`${row.techId ?? 'missing'}-${index}`}>
@@ -462,17 +512,18 @@ export default function AllconnectCompareDashboard() {
                   </tr>;
                 })}</tbody>
               </table>
-              {data.rows.length === 0 && <div className={styles.empty}>{data.dataset.totalRows === 0 && status === 'without_work' ? 'ยังไม่มีข้อมูล Allconnect สำหรับระบุช่างที่ไม่พบงาน' : 'ไม่พบช่างตามเงื่อนไขที่เลือก'}</div>}
+              {rowsData.rows.length === 0 && <div className={styles.empty}>{rowsData.dataset.totalRows === 0 && status === 'without_work' ? 'ยังไม่มีข้อมูล Allconnect สำหรับระบุช่างที่ไม่พบงาน' : 'ไม่พบช่างตามเงื่อนไขที่เลือก'}</div>}
             </div>
             <div className={styles.pagination}>
-              <span>{data.pagination.total > 0 ? `${number((data.pagination.page - 1) * data.pagination.pageSize + 1)}–${number(Math.min(data.pagination.page * data.pagination.pageSize, data.pagination.total))}` : '0'} จาก {number(data.pagination.total)} ราย</span>
+              <span>{rowsData.pagination.total > 0 ? `${number((rowsData.pagination.page - 1) * rowsData.pagination.pageSize + 1)}–${number(Math.min(rowsData.pagination.page * rowsData.pagination.pageSize, rowsData.pagination.total))}` : '0'} จาก {number(rowsData.pagination.total)} ราย</span>
               <label>แถวต่อหน้า<select aria-label="แถวต่อหน้า" value={pageSize} onChange={event => { setPageSize(Number(event.target.value)); setPage(1); }}><option value={25}>25</option><option value={50}>50</option><option value={100}>100</option></select></label>
               <div className={styles.pageButtons}>
-                <button className={styles.iconButton} type="button" title="หน้าก่อนหน้า" aria-label="หน้าก่อนหน้า" disabled={busy || data.pagination.page <= 1} onClick={() => setPage(data.pagination.page - 1)}><ChevronLeft size={18} /></button>
-                <span>หน้า {number(data.pagination.page)} / {number(data.pagination.totalPages)}</span>
-                <button className={styles.iconButton} type="button" title="หน้าถัดไป" aria-label="หน้าถัดไป" disabled={busy || data.pagination.page >= data.pagination.totalPages} onClick={() => setPage(data.pagination.page + 1)}><ChevronRight size={18} /></button>
+                <button className={styles.iconButton} type="button" title="หน้าก่อนหน้า" aria-label="หน้าก่อนหน้า" disabled={rowsBusy || rowsData.pagination.page <= 1} onClick={() => setPage(rowsData.pagination.page - 1)}><ChevronLeft size={18} /></button>
+                <span>หน้า {number(rowsData.pagination.page)} / {number(rowsData.pagination.totalPages)}</span>
+                <button className={styles.iconButton} type="button" title="หน้าถัดไป" aria-label="หน้าถัดไป" disabled={rowsBusy || rowsData.pagination.page >= rowsData.pagination.totalPages} onClick={() => setPage(rowsData.pagination.page + 1)}><ChevronRight size={18} /></button>
               </div>
             </div>
+            </>}
           </section>
 
           <footer className={styles.dataNotes}>

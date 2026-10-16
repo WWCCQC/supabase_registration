@@ -50,3 +50,50 @@ test('comparison API calls the job dashboard with literal filters and preserves 
     p_status: 'with_work', p_rbm: 'R1', p_search: '', p_page: 1, p_page_size: 50, p_month: '2026-09',
   }]));
 });
+
+function loadRoute(rpc) {
+  const module = { exports: {} };
+  new Function('require', 'module', 'exports', source)(name => {
+    if (name === '@/lib/allconnectCompare') return compare;
+    if (name === '@/lib/supabase-admin') return { supabaseAdmin: () => ({
+      rpc(...args) { return { abortSignal: async () => rpc(...args) }; },
+    }) };
+    return require(name);
+  }, module, module.exports);
+  return module.exports.GET;
+}
+
+test('split views call their own RPC and fall back to the all-in-one function when missing', async t => {
+  const secret = 'allconnect-split-test-secret';
+  const previous = process.env.JWT_SECRET;
+  process.env.JWT_SECRET = secret;
+  t.after(() => { if (previous === undefined) delete process.env.JWT_SECRET; else process.env.JWT_SECRET = previous; });
+  const cookie = `auth-token=${jwt.sign({ role: 'admin' }, secret, { algorithm: 'HS256', expiresIn: '5m' })}`;
+  const request = params => new NextRequest(`http://localhost/api/allconnect-compare?${params}`, { headers: { cookie } });
+
+  const calls = [];
+  const GET = loadRoute((name, args) => {
+    calls.push([name, args]);
+    return { data: name === 'allconnect_compare_depot_technicians' ? [{ techId: '001' }] : { ok: name }, error: null };
+  });
+  assert.deepEqual(await (await GET(request('view=summary&rbm=R1&month=2026-09&page=3'))).json(), { ok: 'allconnect_compare_summary' });
+  assert.deepEqual(await (await GET(request('view=rows&rbm=R1&q=001&page=2'))).json(), { ok: 'allconnect_compare_rows' });
+  assert.deepEqual(await (await GET(request('view=depot&rbm=R1&depotCode=001&depotName=A'))).json(), { technicians: [{ techId: '001' }] });
+  assert.deepEqual(calls, [
+    ['allconnect_compare_summary', { p_rbm: 'R1', p_month: '2026-09' }],
+    ['allconnect_compare_rows', { p_rbm: 'R1', p_status: 'without_work', p_search: '001', p_page: 2, p_page_size: 50, p_month: null }],
+    ['allconnect_compare_depot_technicians', { p_rbm: 'R1', p_depot_code: '001', p_depot_name: 'A', p_month: null }],
+  ]);
+  for (const params of ['view=nope', 'view=depot&rbm=R1&depotCode=001', 'view=summary&month=2026-13']) {
+    assert.equal((await GET(request(params))).status, 400, params);
+  }
+
+  const fallback = loadRoute(name => name === 'allconnect_compare_jobs_dashboard'
+    ? { data: { depots: [{ rbm: 'R1', depotCode: '001', depotName: 'A', withoutWorkTechnicians: [{ techId: '009' }] }] }, error: null }
+    : { data: null, error: { code: 'PGRST202' } });
+  assert.deepEqual(await (await fallback(request('view=depot&rbm=R1&depotCode=001&depotName=A'))).json(), { technicians: [{ techId: '009' }] });
+  assert.equal((await fallback(request('view=summary'))).status, 200);
+
+  const failing = loadRoute(() => ({ data: null, error: { code: '42883' } }));
+  assert.equal((await failing(request('view=rows'))).status, 500);
+});

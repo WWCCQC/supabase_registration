@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { readFileSync } from 'node:fs';
-import { buildExecutiveInsights, calculateWithoutWorkCoverage, calculateWorkingDays, formatCompletedWorkType, formatNoWorkWeek, formatNoWorkPeriods, weeklyJobBackground, providerSummaryExportRows, formatRegionBarLabel, parseCompareParams, parseCompareJobParams } from '../lib/allconnectCompare.ts';
+import { buildExecutiveInsights, calculateWithoutWorkCoverage, calculateWorkingDays, formatCompletedWorkType, formatNoWorkWeek, formatNoWorkPeriods, weeklyJobBackground, providerSummaryExportRows, formatRegionBarLabel, parseCompareParams, parseCompareJobParams, parseCompareView, parseCompareSummaryParams, parseCompareDepotParams } from '../lib/allconnectCompare.ts';
 
 test('executive insights show month change and aggregate company counts across depots', () => {
   const source = {
@@ -105,6 +105,34 @@ test('completed jobs use only heads from allconnect_technicians with the new sou
     assert.ok(sql.includes(`t.${column}`), column);
   }
   assert.doesNotMatch(sql, /t\.type_of_work\s*=/);
+});
+
+test('split dashboard SQL adds lookup indexes and limits weekly work to the current page', () => {
+  const sql = readFileSync(new URL('../create-allconnect-compare-split.sql', import.meta.url), 'utf8');
+  for (const name of ['allconnect_month_btrim_idx', 'allconnect_staff_id_btrim_idx', 'allconnect_technicians_status_btrim_idx']) {
+    assert.match(sql, new RegExp(`CREATE INDEX IF NOT EXISTS ${name}`));
+  }
+  for (const fn of ['allconnect_compare_summary', 'allconnect_compare_rows', 'allconnect_compare_depot_technicians']) {
+    assert.match(sql, new RegExp(`CREATE OR REPLACE FUNCTION public\\.${fn}\\(`));
+    assert.match(sql, new RegExp(`GRANT EXECUTE ON FUNCTION public\\.${fn}\\([^)]*\\) TO service_role`));
+  }
+  assert.match(sql, /WHERE btrim\(t\.workgroup_status\) = 'หัวหน้า'/);
+  assert.match(sql, /a\.handler_id IN \(SELECT tech_id FROM page_rows/);
+  const summary = sql.split('FUNCTION public.allconnect_compare_summary(')[1].split('CREATE OR REPLACE FUNCTION')[0];
+  assert.doesNotMatch(summary, /withoutWorkTechnicians|'rows'/);
+  for (const file of ['../create-allconnect-compare-split.sql', '../create-allconnect-jobs-dashboard.sql']) {
+    assert.doesNotMatch(readFileSync(new URL(file, import.meta.url), 'utf8'), /noWorkPeriods|no_work_periods/);
+  }
+});
+
+test('split view parameters are validated', () => {
+  assert.equal(parseCompareView(new URLSearchParams()), 'full');
+  assert.equal(parseCompareView(new URLSearchParams({ view: 'rows' })), 'rows');
+  assert.throws(() => parseCompareView(new URLSearchParams({ view: 'other' })));
+  assert.deepEqual(parseCompareSummaryParams(new URLSearchParams({ rbm: ' R1 ', month: '2026-09', page: '5' })), { p_rbm: 'R1', p_month: '2026-09' });
+  assert.deepEqual(parseCompareDepotParams(new URLSearchParams({ rbm: 'R1', depotCode: '001', depotName: '-' })),
+    { p_rbm: 'R1', p_depot_code: '001', p_depot_name: '-', p_month: null });
+  assert.throws(() => parseCompareDepotParams(new URLSearchParams({ rbm: 'R1', depotCode: '001' })));
 });
 
 test('without-work coverage uses only technicians with a comparison result', () => {
