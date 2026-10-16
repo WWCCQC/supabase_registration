@@ -7,8 +7,8 @@ const sidebar = readFileSync(
   'utf8',
 );
 
-test('All connect compare tech menu is visible to admins only', () => {
-  const allconnectLinkStart = sidebar.indexOf('href="/allconnect-compare-tech"');
+test('existing admin All connect compare tech menu keeps its own guard', () => {
+  const allconnectLinkStart = sidebar.lastIndexOf('href="/allconnect-compare-tech"');
   const adminGuardStart = sidebar.lastIndexOf('{isAdmin() && (', allconnectLinkStart);
   const previousLinkEnd = sidebar.lastIndexOf('</Link>', allconnectLinkStart);
   const externalLinksStart = sidebar.indexOf('ลิงก์ภายนอก', allconnectLinkStart);

@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
   try {
     const secret = new TextEncoder().encode(process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-in-production');
     const { payload } = await jwtVerify(token, secret, { algorithms: ['HS256'] });
-    if (payload.role !== 'admin' && payload.role !== 'manager') {
+    if (payload.role !== 'admin' && payload.role !== 'manager' && payload.role !== 'allconnect_viewer') {
       return NextResponse.json({ error: 'ไม่มีสิทธิ์เข้าถึงรายงานนี้' }, { status: 403, headers });
     }
   } catch {

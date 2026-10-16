@@ -19,7 +19,8 @@ const ExternalIcon = () => (
 
 const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle }) => {
   const pathname = usePathname();
-  const { isAdmin, isManager } = useAuth();
+  const { user, isAdmin, isManager } = useAuth();
+  const isAllconnectViewer = user?.role === 'allconnect_viewer';
 
   const itemClass = (isActive: boolean) =>
     `snav-item${isActive ? ' is-active' : ''}`;
@@ -54,6 +55,19 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle }) => {
 
       {/* Navigation */}
       <nav className="sidebar-nav">
+        {isAllconnectViewer ? (
+          <Link
+            href="/allconnect-compare-tech"
+            className={itemClass(pathname === '/allconnect-compare-tech')}
+            title="All connect compare tech"
+          >
+            <span className="snav-icon">
+              <ChartNoAxesCombined style={{ fill: 'none' }} aria-hidden="true" />
+            </span>
+            {!collapsed && <span className="snav-text">All connect compare tech</span>}
+          </Link>
+        ) : (
+        <>
         {!collapsed && <div className="snav-label">เมนูหลัก</div>}
 
         <Link
@@ -222,6 +236,8 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle }) => {
               {!collapsed && <span className="snav-text">คู่มือ</span>}
             </Link>
           </>
+        )}
+        </>
         )}
       </nav>
     </aside>

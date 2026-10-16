@@ -12,6 +12,7 @@ const PROTECTED_PATHS = [
   '/blacklist',
   '/admin',
   '/admin-directory',
+  '/allconnect-compare-tech',
   '/ww-provider'
 ];
 
@@ -34,6 +35,27 @@ const USER_ALLOWED_PATHS = [
 
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
+  const token = request.cookies.get('auth-token')?.value;
+
+  // This role can read the Allconnect report and use the login/logout endpoints only.
+  if (token && pathname !== '/login') {
+    try {
+      const secret = new TextEncoder().encode(JWT_SECRET);
+      const { payload } = await jwtVerify(token, secret, { algorithms: ['HS256'] });
+      if (payload.role === 'allconnect_viewer') {
+        if (pathname === '/allconnect-compare-tech' || pathname === '/api/allconnect-compare' ||
+            pathname.startsWith('/api/auth/')) {
+          return NextResponse.next();
+        }
+        if (pathname.startsWith('/api/')) {
+          return NextResponse.json({ error: 'ไม่มีสิทธิ์เข้าถึง' }, { status: 403 });
+        }
+        return NextResponse.redirect(new URL('/allconnect-compare-tech', request.url));
+      }
+    } catch {
+      // Existing protected-route logic below handles invalid sessions.
+    }
+  }
   
   // ข้าม API routes ที่ user ควรเข้าถึงได้
   if (pathname.startsWith('/api/technicians') || 
@@ -58,8 +80,6 @@ export async function middleware(request: NextRequest) {
   }
 
   // ดึง token จาก cookies
-  const token = request.cookies.get('auth-token')?.value;
-  
   if (!token) {
     // ไม่มี token - redirect ไป login
     const loginUrl = new URL('/login', request.url);
@@ -117,19 +137,7 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    // กำหนดเส้นทางที่ต้องการให้ middleware ทำงาน
-    '/',
-    '/dashboard',
-    '/dashboard/:path*',
-    '/chart',
-    '/chart/:path*',
-    '/blacklist',
-    '/blacklist/:path*',
-    '/admin',
-    '/admin/:path*',
-    '/admin-directory',
-    '/admin-directory/:path*',
-    '/test-login',
-    '/test-login/:path*'
+    // Check every app/API route for the viewer role; skip framework and public assets.
+    '/((?!_next/|favicon.ico|robots.txt|sitemap.xml|ww-logo.png).*)'
   ],
 }

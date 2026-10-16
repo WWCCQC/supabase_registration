@@ -39,14 +39,14 @@ test('comparison API calls the job dashboard with literal filters and preserves 
   assert.equal((await get()).status, 401);
   assert.equal((await get('user')).status, 403);
   assert.equal(calls.length, 0);
-  for (const role of ['admin', 'manager']) {
+  for (const role of ['admin', 'manager', 'allconnect_viewer']) {
     const response = await get(role);
     assert.equal(response.status, 200);
     assert.match(response.headers.get('Cache-Control'), /no-store/);
     assert.deepEqual(await response.json(), status);
   }
   assert.equal((await get('admin', 'month=2026-13')).status, 400);
-  assert.deepEqual(calls, Array(2).fill(['allconnect_compare_jobs_dashboard', {
+  assert.deepEqual(calls, Array(3).fill(['allconnect_compare_jobs_dashboard', {
     p_status: 'with_work', p_rbm: 'R1', p_search: '', p_page: 1, p_page_size: 50, p_month: '2026-09',
   }]));
 });

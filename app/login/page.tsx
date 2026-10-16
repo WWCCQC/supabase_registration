@@ -66,7 +66,9 @@ export default function LoginPage() {
           // ถ้า login แล้วให้ไปหน้าที่ต้องการ หรือหน้าแรก
           console.log('Already authenticated, redirecting...');
           const urlParams = new URLSearchParams(window.location.search);
-          const redirectTo = urlParams.get('redirect') || '/';
+          const redirectTo = data.user?.role === 'allconnect_viewer'
+            ? '/allconnect-compare-tech'
+            : urlParams.get('redirect') || '/';
           console.log('Auth redirect to:', redirectTo);
           window.location.href = redirectTo;
           return;
@@ -118,9 +120,9 @@ export default function LoginPage() {
         // บันทึกเวลาเริ่ม login ลงใน localStorage เพื่อวัดเวลารวม
         localStorage.setItem('loginStartTime', loginStartTime.toString());
 
-        // กลับไปหน้าแรก (หน้าที่มีข้อมูล local)
+        // Viewer opens its only permitted page; existing roles keep their home page.
         setTimeout(() => {
-          window.location.replace('/');
+          window.location.replace(data.user?.role === 'allconnect_viewer' ? '/allconnect-compare-tech' : '/');
         }, 500); // รอ 500ms ให้ cookie ถูกตั้งเสร็จ
       } else {
         setError(data.error || 'เกิดข้อผิดพลาดในการเข้าสู่ระบบ');
