@@ -9,6 +9,8 @@ import { AlertCircle, Building2, CalendarDays, CheckCircle, ChevronDown, Chevron
 import { buildExecutiveInsights, calculateWithoutWorkCoverage, weeklyJobBackground, providerSummaryExportRows, formatRegionBarLabel, type CompareDashboard, type CompareRow, type WorkStatus, type WorkStatusFilter } from '@/lib/allconnectCompare';
 import styles from './AllconnectCompareDashboard.module.css';
 import AllconnectUpload from './AllconnectUpload';
+import MonthlyNoWorkChart from './MonthlyNoWorkChart';
+import CompanyTypeHeatmap from './CompanyTypeHeatmap';
 import TechniciansUpload from './TechniciansUpload';
 import sourceStyles from './AllconnectSources.module.css';
 
@@ -190,15 +192,6 @@ export default function AllconnectCompareDashboard() {
     withoutWorkLabel: item.withoutWork > 0 ? formatRegionBarLabel(item.withoutWork, item.total) : '',
   })) ?? [];
   const monthlyTypes = data?.monthlyByCompanyType ?? [];
-  const companyTypeTotals = new Map<string, number>();
-  const companyTypeCounts = new Map<string, number>();
-  for (const item of monthlyTypes) {
-    companyTypeTotals.set(item.companyType, (companyTypeTotals.get(item.companyType) ?? 0) + item.withoutWork);
-    companyTypeCounts.set(`${item.companyType}\u0000${item.month}`, item.withoutWork);
-  }
-  const companyTypes = [...companyTypeTotals.keys()].sort((a, b) =>
-    (companyTypeTotals.get(b) ?? 0) - (companyTypeTotals.get(a) ?? 0) || a.localeCompare(b, 'th'));
-  const maxCompanyTypeCount = Math.max(0, ...monthlyTypes.map(item => item.withoutWork));
   const insights = data ? buildExecutiveInsights(data, rbm) : null;
   const latestInsightMonth = insights?.months.at(-1);
   const visibleDepots = data?.depots.filter(depot => !rbm || depot.rbm === rbm) ?? [];
@@ -263,52 +256,16 @@ export default function AllconnectCompareDashboard() {
           <div className={styles.trendGrid}>
             <div className={styles.trendCharts}>
             <section className={styles.monthlyChart} aria-label="จำนวนช่างที่ไม่พบการปิดงานรายเดือน (กองงาน)">
-              <div className={styles.sectionHeading}><h2>จำนวนช่างที่ไม่พบการปิดงานรายเดือน (กองงาน)</h2></div>
-              {chartMonths.length ? <div className={styles.barCanvas}>
-                <div className={styles.monthlyChartInner} style={{ minWidth: Math.max(320, chartMonths.length * 110) }}>
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={chartMonths} margin={{ top: 32, right: 16, bottom: 4, left: 0 }} maxBarSize={72}
-                      onClick={state => {
-                        const value = state?.activeLabel;
-                        if (typeof value !== 'string') return;
-                        setMonth(previous => previous === value ? '' : value);
-                        setPage(1);
-                      }}>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e8ebef" />
-                      <XAxis dataKey="month" tickFormatter={monthName} tick={{ fontSize: 12, fill: '#374151' }} axisLine={false} tickLine={false} />
-                      <YAxis allowDecimals={false} tick={false} axisLine={false} tickLine={false} width={0} />
-                      <Tooltip cursor={{ fill: 'rgba(220, 89, 102, 0.08)' }} formatter={value => `${number(Number(value))} ราย`} labelFormatter={label => `เดือน ${label}`} contentStyle={{ borderRadius: 6, fontSize: 13 }} />
-                      <Bar dataKey="withoutWork" name="ไม่พบการปิดงาน" fill={COLORS.withoutWork} isAnimationActive={false} cursor="pointer">
-                        {chartMonths.map(item => <Cell key={item.month} fillOpacity={month && month !== item.month ? 0.35 : 1} />)}
-                        <LabelList dataKey="withoutWorkLabel" position="top" fill="#374151" fontSize={11} fontWeight={600} />
-                      </Bar>
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </div> : <div className={styles.empty}>{data.monthly ? 'ยังไม่มีข้อมูลรายเดือน' : 'ยังไม่ได้อัปเดตฟังก์ชันฐานข้อมูลสำหรับข้อมูลรายเดือน'}</div>}
+              {chartMonths.length ? <MonthlyNoWorkChart months={chartMonths} selectedMonth={month} onSelectMonth={value => {
+                setMonth(previous => previous === value ? '' : value);
+                setPage(1);
+              }} /> : <><div className={styles.sectionHeading}><h2>จำนวนช่างที่ไม่พบการปิดงานรายเดือน (กองงาน)</h2></div><div className={styles.empty}>{data.monthly ? 'ยังไม่มีข้อมูลรายเดือน' : 'ยังไม่ได้อัปเดตฟังก์ชันฐานข้อมูลสำหรับข้อมูลรายเดือน'}</div></>}
             </section>
             <section className={styles.companyTypeChart} aria-label="จำนวนช่างที่ไม่พบการปิดงานรายเดือน แยกตามประเภทช่าง">
-              <div className={styles.sectionHeading}><h2>จำนวนช่างที่ไม่พบการปิดงานรายเดือน แยกตามประเภทช่าง</h2></div>
-              {chartMonths.length && companyTypes.length ? <div className={styles.heatmapScroll}>
-                <table className={styles.heatmap}>
-                  <thead><tr><th scope="col">ประเภทช่าง</th>{chartMonths.map(item => <th scope="col" key={item.month}>
-                    <button type="button" className={styles.heatmapMonth} aria-pressed={month === item.month} onClick={() => { setMonth(previous => previous === item.month ? '' : item.month); setPage(1); }}>
-                      {monthName(item.month)} {item.month.slice(0, 4)}
-                    </button>
-                  </th>)}</tr></thead>
-                  <tbody>{companyTypes.map(companyType => <tr key={companyType}>
-                    <th scope="row">{companyType}</th>
-                    {chartMonths.map(item => {
-                      const count = companyTypeCounts.get(`${companyType}\u0000${item.month}`) ?? 0;
-                      const intensity = maxCompanyTypeCount > 0 ? count / maxCompanyTypeCount : 0;
-                      return <td key={item.month} title={`${companyType} · ${monthName(item.month)} ${item.month.slice(0, 4)}: ${number(count)} กองงาน`}>
-                        <span className={styles.heatmapCell} style={count ? { backgroundColor: `rgba(220, 89, 102, ${(0.12 + intensity * 0.4).toFixed(2)})` } : undefined}>{number(count)}</span>
-                      </td>;
-                    })}
-                  </tr>)}</tbody>
-                  <tfoot><tr><th scope="row">รวมทุกประเภท</th>{chartMonths.map(item => <td key={item.month}>{number(item.withoutWork)}</td>)}</tr></tfoot>
-                </table>
-              </div> : <div className={styles.empty}>{data.monthlyByCompanyType ? 'ยังไม่มีข้อมูลประเภทช่างที่ไม่พบการปิดงาน' : 'ยังไม่ได้อัปเดตฟังก์ชันฐานข้อมูลสำหรับข้อมูลประเภทช่างรายเดือน'}</div>}
+              {chartMonths.length && monthlyTypes.length ? <CompanyTypeHeatmap months={chartMonths} items={monthlyTypes} selectedMonth={month} onSelectMonth={value => {
+                setMonth(previous => previous === value ? '' : value);
+                setPage(1);
+              }} /> : <><div className={styles.sectionHeading}><h2>จำนวนช่างที่ไม่พบการปิดงานรายเดือน แยกตามประเภทช่าง</h2></div><div className={styles.empty}>{data.monthlyByCompanyType ? 'ยังไม่มีข้อมูลประเภทช่างที่ไม่พบการปิดงาน' : 'ยังไม่ได้อัปเดตฟังก์ชันฐานข้อมูลสำหรับข้อมูลประเภทช่างรายเดือน'}</div></>}
             </section>
             </div>
             <section className={styles.insightPlaceholder} aria-label="Summary insight">
