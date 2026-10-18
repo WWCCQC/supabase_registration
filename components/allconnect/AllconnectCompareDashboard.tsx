@@ -1,10 +1,6 @@
 'use client';
 
 import { Fragment, useEffect, useState } from 'react';
-import {
-  Bar, BarChart, CartesianGrid, Cell, LabelList, Pie, PieChart,
-  ResponsiveContainer, Tooltip, XAxis, YAxis,
-} from 'recharts';
 import { AlertCircle, Building2, CalendarDays, CheckCircle, ChevronDown, ChevronLeft, ChevronRight, ClipboardX, Download, MapPin, RefreshCw, Search, Users, X, XCircle } from 'lucide-react';
 import { buildExecutiveInsights, calculateWithoutWorkCoverage, calculateWorkingDays, weeklyJobBackground, providerSummaryExportRows, formatRegionBarLabel, type CompareRow, type CompareRowsData, type CompareSummaryData, type DepotTechnician, type WorkStatus, type WorkStatusFilter } from '@/lib/allconnectCompare';
 import styles from './AllconnectCompareDashboard.module.css';
@@ -22,7 +18,6 @@ const WORK_LABELS: Record<WorkStatus, string> = {
   with_work: 'ปิดงาน', without_work: 'ไม่มีการปิดงาน', pending: 'รอเปรียบเทียบ',
 };
 const DETAIL_HEADINGS = ['RBM', 'Depot', 'Depot Name', 'รหัสช่าง', 'ชื่อช่าง', 'จำนวนวันที่เข้าทำงาน', 'สถานะการปิดงาน'];
-const COLORS = { withWork: '#159574', withoutWork: '#dc5966', pending: '#a1a8b3' };
 const DETAIL_FILTERS = [
   { value: 'all', label: 'ข้อมูลช่างทั้งหมด', Icon: Users },
   { value: 'with_work', label: 'จำนวนช่างที่ปิดงาน', Icon: CheckCircle },
@@ -218,18 +213,6 @@ export default function AllconnectCompareDashboard() {
     } finally { setProviderExporting(false); }
   }
 
-  const summary = data?.summary;
-  const pieData = summary ? [
-    { name: 'พบปิดงาน', value: summary.withWork, color: COLORS.withWork },
-    { name: 'ไม่พบการปิดงาน', value: summary.withoutWork, color: COLORS.withoutWork },
-    { name: 'รอเปรียบเทียบ', value: summary.pending, color: COLORS.pending },
-  ].filter(item => item.value > 0) : [];
-  const chartRegions = data?.regions.map(region => ({
-    ...region,
-    withWorkLabel: region.withWork > 0 ? formatRegionBarLabel(region.withWork, region.total) : '',
-    withoutWorkLabel: region.withoutWork > 0 ? formatRegionBarLabel(region.withoutWork, region.total) : '',
-    totalLabel: region.total > 0 ? number(region.total) : '',
-  })) ?? [];
   const chartMonths = data?.monthly?.map(item => ({
     ...item,
     withoutWorkLabel: item.withoutWork > 0 ? formatRegionBarLabel(item.withoutWork, item.total) : '',
@@ -370,52 +353,311 @@ export default function AllconnectCompareDashboard() {
             </section>
           </div>
 
-          <div className={styles.charts}>
-            <section className={styles.regionChart}>
-              <div className={styles.sectionHeading}><h2>ช่างที่พบปิดงาน / ไม่พบการปิดงานงาน รายพื้นที่</h2></div>
-              <div className={styles.legend}><span><i style={{ background: COLORS.withWork }} />พบปิดงาน</span><span><i style={{ background: COLORS.withoutWork }} />ไม่พบการปิดงาน</span>{data.regions.some(region => region.pending > 0) && <span><i style={{ background: COLORS.pending }} />รอเปรียบเทียบ</span>}</div>
-              {chartRegions.length ? <div className={styles.barCanvas}>
-                <div className={styles.barChartInner} style={{ height: Math.max(310, chartRegions.length * 38) }}>
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={chartRegions} layout="vertical" margin={{ top: 8, right: 48, bottom: 8, left: 0 }} barSize={22}>
-                    <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e8ebef" />
-                    <XAxis type="number" allowDecimals={false} tick={false} axisLine={false} tickLine={false} />
-                    <YAxis type="category" dataKey="rbm" width={115} tick={{ fontSize: 11, fill: '#374151' }} axisLine={false} tickLine={false} />
-                    <Tooltip formatter={value => `${number(Number(value))} ราย`} contentStyle={{ borderRadius: 6, fontSize: 13 }} />
-                    <Bar dataKey="withWork" name="พบปิดงาน" stackId="technicians" fill={COLORS.withWork} isAnimationActive={false}>
-                      <LabelList dataKey="withWorkLabel" position="center" fill="#fff" fontSize={10} fontWeight={600} />
-                    </Bar>
-                    <Bar dataKey="withoutWork" name="ไม่พบการปิดงาน" stackId="technicians" fill={COLORS.withoutWork} isAnimationActive={false}>
-                      <LabelList dataKey="withoutWorkLabel" position="center" fill="#fff" fontSize={10} fontWeight={600} />
-                    </Bar>
-                    <Bar dataKey="pending" name="รอเปรียบเทียบ" stackId="technicians" fill={COLORS.pending} isAnimationActive={false}>
-                      <LabelList dataKey="totalLabel" position="right" fill="#374151" fontSize={11} fontWeight={700} />
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
+          {(() => {
+            const sortedRegions = [...data.regions].sort((a, b) => (b.total || 0) - (a.total || 0));
+            const totalTechs = data.summary.total || 0;
+            const withWorkTotal = data.summary.withWork || 0;
+            const withoutWorkTotal = data.summary.withoutWork || 0;
+            const pendingTotal = data.summary.pending || 0;
+            const maxRegionTotal = Math.max(...sortedRegions.map(r => r.total || 0), 1);
+
+            const withWorkOverallPct = percent(data.summary.coverage);
+            const withoutWorkOverallPct = percent(calculateWithoutWorkCoverage(withWorkTotal, withoutWorkTotal));
+            const pendingOverallPct = totalTechs > 0 ? `${((pendingTotal / totalTechs) * 100).toFixed(1)}%` : '0.0%';
+
+            const bmaRegions = sortedRegions.filter(r => r.rbm.toUpperCase().includes('BMA'));
+            const upcRegions = sortedRegions.filter(r => !r.rbm.toUpperCase().includes('BMA'));
+            const bmaTotal = bmaRegions.reduce((acc, r) => acc + (r.total || 0), 0);
+            const upcTotal = upcRegions.reduce((acc, r) => acc + (r.total || 0), 0);
+            const bmaPct = totalTechs > 0 ? ((bmaTotal / totalTechs) * 100).toFixed(1) : '0.0';
+            const upcPct = totalTechs > 0 ? ((upcTotal / totalTechs) * 100).toFixed(1) : '0.0';
+
+            const radius = 66;
+            const circumference = 2 * Math.PI * radius;
+            const activeTrackShare = 0.84;
+            const withWorkRatio = totalTechs > 0 ? withWorkTotal / totalTechs : 0;
+            const withoutWorkRatio = totalTechs > 0 ? withoutWorkTotal / totalTechs : 0;
+            const pendingVisualRatio = pendingTotal > 0 ? Math.max(pendingTotal / totalTechs, 0.032) : 0;
+
+            const withWorkArc = withWorkRatio * activeTrackShare * circumference;
+            const withoutWorkArc = withoutWorkRatio * activeTrackShare * circumference;
+            const pendingArc = pendingVisualRatio * circumference;
+
+            const startGapRatio = 1 - activeTrackShare;
+            const withWorkOffset = -startGapRatio * circumference;
+            const withoutWorkOffset = -(startGapRatio * circumference + withWorkArc);
+
+            return (
+              <section className={styles.bentoShell} aria-label="ช่างที่พบปิดงาน / ไม่พบการปิดงานงาน รายพื้นที่">
+                <header className={styles.bentoHeader}>
+                  <div className={styles.bentoHeaderLeft}>
+                    <div className={styles.rbmLogoBadge} aria-hidden="true">
+                      RBM
+                    </div>
+                    <div className={styles.bentoTitleGroup}>
+                      <div className={styles.bentoTitleRow}>
+                        <h2 className={styles.bentoTitle}>ช่างที่พบปิดงาน / ไม่พบการปิดงานงาน รายพื้นที่</h2>
+                      </div>
+                    </div>
+                  </div>
+                </header>
+
+                <div className={styles.bentoGrid}>
+                  {/* Left Card: 1. Overall Share (สัดส่วนช่างที่พบปิดงาน / ไม่พบการปิดงาน) */}
+                  <div className={styles.bentoCard}>
+                    <div className={styles.bentoPanelHeader}>
+                      <div>
+                        <h3 className={styles.bentoPanelTitle}>1. สัดส่วนช่างที่พบปิดงาน / ไม่พบการปิดงาน</h3>
+                      </div>
+                    </div>
+
+                    <div className={styles.bentoDonutWrapper}>
+                      <svg className={styles.bentoDonutSvg} viewBox="0 0 176 176" role="img" aria-label="สัดส่วนช่างที่พบปิดงาน / ไม่พบการปิดงาน">
+                        <circle
+                          cx="88"
+                          cy="88"
+                          r={radius}
+                          fill="none"
+                          stroke="#f1f5f9"
+                          strokeWidth="20"
+                        />
+                        {withWorkTotal > 0 && (
+                          <circle
+                            cx="88"
+                            cy="88"
+                            r={radius}
+                            fill="none"
+                            stroke="#10b981"
+                            strokeWidth="20"
+                            strokeDasharray={`${withWorkArc} ${circumference}`}
+                            strokeDashoffset={withWorkOffset}
+                            strokeLinecap="round"
+                          />
+                        )}
+                        {withoutWorkTotal > 0 && (
+                          <circle
+                            cx="88"
+                            cy="88"
+                            r={radius}
+                            fill="none"
+                            stroke="#e11d48"
+                            strokeWidth="20"
+                            strokeDasharray={`${withoutWorkArc} ${circumference}`}
+                            strokeDashoffset={withoutWorkOffset}
+                            strokeLinecap="round"
+                          />
+                        )}
+                        {pendingTotal > 0 && (
+                          <circle
+                            cx="88"
+                            cy="88"
+                            r={radius}
+                            fill="none"
+                            stroke="#64748b"
+                            strokeWidth="20"
+                            strokeDasharray={`${pendingArc} ${circumference}`}
+                            strokeDashoffset={0}
+                            strokeLinecap="round"
+                          />
+                        )}
+                      </svg>
+                      <div className={styles.bentoDonutCenter}>
+                        <span className={styles.bentoDonutTotalValue}>{number(totalTechs)}</span>
+                        <span className={styles.bentoDonutTotalLabel}>ช่างทั้งหมด (กองงาน)</span>
+                      </div>
+                    </div>
+
+                    <div className={styles.bentoCardsStack} aria-label="สัดส่วนช่างตามสถานะการปิดงาน">
+                      <div className={`${styles.bentoStatusCard} ${styles.bentoCardGreen}`}>
+                        <div className={styles.bentoCardLeft}>
+                          <div className={styles.bentoCardTitleRow}>
+                            <span className={`${styles.bentoStatusDot} ${styles.bentoDotGreen}`} />
+                            <span>พบปิดงาน</span>
+                          </div>
+                        </div>
+                        <div className={styles.bentoCardRight}>
+                          <div className={styles.bentoCardCount}>{number(withWorkTotal)} ราย</div>
+                          <div className={styles.bentoCardPct}>{withWorkOverallPct}</div>
+                        </div>
+                      </div>
+
+                      <div className={`${styles.bentoStatusCard} ${styles.bentoCardRed}`}>
+                        <div className={styles.bentoCardLeft}>
+                          <div className={styles.bentoCardTitleRow}>
+                            <span className={`${styles.bentoStatusDot} ${styles.bentoDotRed}`} />
+                            <span>ไม่พบการปิดงาน</span>
+                          </div>
+                        </div>
+                        <div className={styles.bentoCardRight}>
+                          <div className={styles.bentoCardCount}>{number(withoutWorkTotal)} ราย</div>
+                          <div className={styles.bentoCardPct}>{withoutWorkOverallPct}</div>
+                        </div>
+                      </div>
+
+                      {pendingTotal > 0 && (
+                        <div className={`${styles.bentoStatusCard} ${styles.bentoCardSlate}`}>
+                          <div className={styles.bentoCardLeft}>
+                            <div className={styles.bentoCardTitleRow}>
+                              <span className={`${styles.bentoStatusDot} ${styles.bentoDotSlate}`} />
+                              <span>รอเปรียบเทียบ</span>
+                            </div>
+                          </div>
+                          <div className={styles.bentoCardRight}>
+                            <div className={styles.bentoCardCount}>{number(pendingTotal)} ราย</div>
+                            <div className={styles.bentoCardPct}>{pendingOverallPct}</div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className={styles.bentoInsightBox}>
+                      <div className={styles.bentoInsightHeader}>★ KEY INSIGHT: BMA vs UPC</div>
+                      <div className={styles.bentoInsightRow}>
+                        <span>เขตปริมณฑล/กทม. ({bmaRegions.length} เขต BMA):</span>
+                        <span className={styles.bentoInsightValueWhite}>
+                          {number(bmaTotal)} ราย ({bmaPct}%)
+                        </span>
+                      </div>
+                      <div className={styles.bentoInsightRow}>
+                        <span>เขตต่างจังหวัด ({upcRegions.length} เขต UPC):</span>
+                        <span className={styles.bentoInsightValueGreen}>
+                          {number(upcTotal)} ราย ({upcPct}%)
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Right Card: 2. Ranked Horizontal Progress (ช่างที่พบปิดงาน / ไม่พบการปิดงานงาน รายพื้นที่) */}
+                  <div className={styles.bentoCard}>
+                    <div className={styles.bentoPanelHeader}>
+                      <div>
+                        <h3 className={styles.bentoPanelTitle}>2. ช่างที่พบปิดงาน / ไม่พบการปิดงานงาน รายพื้นที่</h3>
+                      </div>
+                    </div>
+
+                    {sortedRegions.length > 0 ? (
+                      <div className={styles.bentoMatrixList}>
+                        {sortedRegions.map((region, index) => {
+                          const rank = index + 1;
+                          const isBMA = region.rbm.toUpperCase().includes('BMA');
+                          const isTopRank = rank <= 2 || isBMA;
+
+                          const ww = region.withWork || 0;
+                          const wo = region.withoutWork || 0;
+                          const pd = region.pending || 0;
+                          const rowTotal = region.total || ww + wo + pd || 1;
+
+                          const wwRoundPct = Math.round((ww / rowTotal) * 100);
+                          const woRoundPct = Math.round((wo / rowTotal) * 100);
+
+                          const wwExactPct = ((ww / rowTotal) * 100).toFixed(1);
+                          const woExactPct = ((wo / rowTotal) * 100).toFixed(1);
+                          const pdExactPct = ((pd / rowTotal) * 100).toFixed(1);
+
+                          const totalBarWidthPct = Math.max((rowTotal / maxRegionTotal) * 100, 12);
+                          const shareOfAllPct = totalTechs > 0 ? ((rowTotal / totalTechs) * 100).toFixed(1) : '0.0';
+
+                          const pdVisualSharePct = pd > 0 ? Math.max((pd / rowTotal) * 100, 4.2) : 0;
+                          const remainingSharePct = 100 - pdVisualSharePct;
+                          const nonPdTotal = ww + wo || 1;
+                          const wwSegPct = (ww / nonPdTotal) * remainingSharePct;
+                          const woSegPct = (wo / nonPdTotal) * remainingSharePct;
+
+                          return (
+                            <div
+                              key={region.rbm}
+                              className={`${styles.bentoMatrixRow} ${isTopRank ? styles.bentoMatrixRowTop : ''}`}
+                            >
+                              <div className={styles.bentoMatrixLeft}>
+                                <span
+                                  className={`${styles.bentoRankBadge} ${
+                                    isTopRank ? styles.bentoRankBadgeTop : styles.bentoRankBadgeDefault
+                                  }`}
+                                >
+                                  #{rank}
+                                </span>
+                                <div className={styles.bentoRbmInfo}>
+                                  <div className={styles.bentoRbmNameRow}>
+                                    <span className={styles.bentoRbmName}>{region.rbm}</span>
+                                    <span
+                                      className={`${styles.bentoZoneBadge} ${
+                                        isBMA ? styles.bentoZoneBMA : styles.bentoZoneUPC
+                                      }`}
+                                    >
+                                      {isBMA ? 'BMA' : 'UPC'}
+                                    </span>
+                                  </div>
+                                  <div className={styles.bentoRbmQuickShare}>
+                                    พบปิดงาน {wwRoundPct}% • ไม่พบปิดงาน {woRoundPct}%
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div className={styles.bentoMatrixMiddle}>
+                                <div className={styles.bentoProgressTrack}>
+                                  <div
+                                    className={styles.bentoProgressFillGroup}
+                                    style={{ width: `${totalBarWidthPct}%` }}
+                                  >
+                                    {ww > 0 && (
+                                      <div
+                                        className={styles.bentoSegWithWork}
+                                        style={{ width: `${wwSegPct}%` }}
+                                        title={`พบปิดงาน: ${number(ww)} ราย (${wwExactPct}%)`}
+                                      >
+                                        {number(ww)}
+                                      </div>
+                                    )}
+                                    {wo > 0 && (
+                                      <div
+                                        className={styles.bentoSegWithoutWork}
+                                        style={{ width: `${woSegPct}%` }}
+                                        title={`ไม่พบการปิดงาน: ${number(wo)} ราย (${woExactPct}%)`}
+                                      >
+                                        {number(wo)}
+                                      </div>
+                                    )}
+                                    {pd > 0 && (
+                                      <div
+                                        className={styles.bentoSegPending}
+                                        style={{ width: `${pdVisualSharePct}%` }}
+                                        title={`รอเปรียบเทียบ: ${number(pd)} ราย (${pdExactPct}%)`}
+                                      />
+                                    )}
+                                  </div>
+                                </div>
+
+                                <div className={styles.bentoMicroPillsRow}>
+                                  <span className={styles.bentoMicroWithWork}>
+                                    พบปิดงาน: {number(ww)} ({wwExactPct}%)
+                                  </span>
+                                  <span className={styles.bentoMicroWithoutWork}>
+                                    ไม่พบการปิดงาน: {number(wo)} ({woExactPct}%)
+                                  </span>
+                                  {pd > 0 && (
+                                    <span className={styles.bentoMicroPendingActive}>
+                                      รอเปรียบเทียบ: {number(pd)} ({pdExactPct}%)
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+
+                              <div className={styles.bentoMatrixRight}>
+                                <div className={styles.bentoMatrixTotalNumber}>{number(region.total)}</div>
+                                <div className={styles.bentoMatrixTotalShare}>{shareOfAllPct}% ของทั้งหมด</div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <div className={styles.empty}>ไม่พบข้อมูลช่าง</div>
+                    )}
+                  </div>
                 </div>
-              </div> : <div className={styles.empty}>ไม่พบข้อมูลช่าง</div>}
-            </section>
-            <section className={styles.coverageChart}>
-              <div className={styles.sectionHeading}><h2>สัดส่วนช่างที่พบปิดงาน / ไม่พบการปิดงาน</h2></div>
-              <div className={styles.donutCanvas}>
-                {pieData.length > 0 && <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie data={pieData} dataKey="value" nameKey="name" innerRadius="68%" outerRadius="88%" startAngle={90} endAngle={-270} stroke="none" isAnimationActive={false}>
-                      {pieData.map(item => <Cell key={item.name} fill={item.color} />)}
-                    </Pie>
-                    <Tooltip formatter={value => `${number(Number(value))} ราย`} />
-                  </PieChart>
-                </ResponsiveContainer>}
-                <div className={styles.donutLabel}><strong>{percent(data.summary.coverage)}</strong><span>ช่างที่พบปิดงาน</span></div>
-              </div>
-              <dl className={styles.breakdown}>
-                <div><dt><i style={{ background: COLORS.withWork }} />พบปิดงาน</dt><dd>{number(data.summary.withWork)} ราย</dd></div>
-                <div><dt><i style={{ background: COLORS.withoutWork }} />ไม่พบการปิดงาน</dt><dd>{number(data.summary.withoutWork)} ราย</dd></div>
-                {data.summary.pending > 0 && <div><dt><i style={{ background: COLORS.pending }} />รอเปรียบเทียบ</dt><dd>{number(data.summary.pending)} ราย</dd></div>}
-              </dl>
-            </section>
-          </div>
+              </section>
+            );
+          })()}
 
           <section className={styles.section}>
             <div className={styles.sectionHeading}><h2>ตารางสรุปการปิดงานรายพื้นที่ RBM</h2></div>

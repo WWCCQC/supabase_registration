@@ -223,3 +223,612 @@
 @media (max-width: 1150px) { .charts { grid-template-columns: minmax(0, 1fr); } .coverageChart { border-left: 0; border-top: 1px solid #e3e7ed; padding: 22px 0 0; } .donutCanvas { max-width: 300px; margin: auto; } }
 @media (max-width: 900px) { .trendGrid { grid-template-columns: minmax(0, 1fr); } .insightPlaceholder { min-height: 100px; } }
 @media (max-width: 600px) { .dashboard { padding: 18px 12px; } .header h1 { font-size: 22px; } .header p { font-size: 12px; } .scopeBar { gap: 12px; } .scopeBar > label { width: 100%; } .loadStatus { margin-left: 0; width: 100%; } .metrics { gap: 10px; } .metric { padding: 12px; } .metric > strong { font-size: 28px; } .metric > span { font-size: 12px; } .sectionHeading h2 { font-size: 15px; } .insightRegionGrid { grid-template-columns: minmax(0, 1fr); } .searchLabel { max-width: none; flex-basis: 100%; min-width: 0; } .tableControls > label:not(.searchLabel) { flex: 1; } .tableControls select { min-width: 130px; } .exportButton { font-size: 12px; padding: 8px 10px; } .pagination { gap: 12px; } .pagination > label { margin-left: 0; } .pageButtons { width: 100%; justify-content: center; } }
+
+/* ==========================================================================
+   Bento UI & Ranked Horizontal Segmented Matrix (Allconnect Compare Tech)
+   ========================================================================== */
+
+.bentoShell {
+  min-width: 0;
+  margin: 20px 0 24px;
+  padding: 24px 26px 28px;
+  border: 1px solid #dbe4f0;
+  border-radius: 26px;
+  background: linear-gradient(180deg, #f8fafd 0%, #f1f5f9 100%);
+  box-shadow: 0 18px 42px rgba(15, 23, 42, 0.07), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  font-family: Inter, "Noto Sans Thai", -apple-system, BlinkMacSystemFont, sans-serif;
+  color: #0f172a;
+}
+
+.bentoHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.bentoHeaderLeft {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
+.rbmLogoBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 50px;
+  height: 50px;
+  border-radius: 14px;
+  background: linear-gradient(145deg, #4f86f7 0%, #1d4ed8 100%);
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  box-shadow: 0 8px 18px rgba(29, 78, 216, 0.28), inset 0 1px 1px rgba(255, 255, 255, 0.35);
+  flex-shrink: 0;
+}
+
+.bentoTitleGroup {
+  min-width: 0;
+}
+
+.bentoTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.bentoTitle {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.03em;
+  line-height: 1.25;
+}
+
+.bentoGrid {
+  display: grid;
+  grid-template-columns: 340px minmax(0, 1fr);
+  gap: 20px;
+  align-items: stretch;
+}
+
+.bentoCard {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 20px;
+  padding: 20px 22px;
+  box-shadow: 0 6px 20px rgba(15, 23, 42, 0.035);
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.bentoPanelHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.bentoPanelTitle {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.02em;
+}
+
+/* Left Panel: Donut Ring */
+.bentoDonutWrapper {
+  position: relative;
+  width: 176px;
+  height: 176px;
+  margin: 6px auto 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bentoDonutSvg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+  overflow: visible;
+}
+
+.bentoDonutCenter {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  pointer-events: none;
+}
+
+.bentoDonutTotalValue {
+  font-size: 26px;
+  font-weight: 800;
+  color: #0f172a;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+}
+
+.bentoDonutTotalLabel {
+  margin-top: 3px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #64748b;
+}
+
+/* Left Panel: Status Bento Cards */
+.bentoCardsStack {
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+  margin-bottom: 14px;
+}
+
+.bentoStatusCard {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 15px;
+  border-radius: 14px;
+  border: 1.5px solid transparent;
+  border-bottom-width: 4px;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.bentoStatusCard:hover {
+  transform: translateY(-1px);
+}
+
+.bentoCardGreen {
+  background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+  border-color: #6ee7b7;
+  border-bottom-color: #059669;
+}
+
+.bentoCardRed {
+  background: linear-gradient(135deg, #fff1f2 0%, #ffe4e6 100%);
+  border-color: #fda4af;
+  border-bottom-color: #e11d48;
+}
+
+.bentoCardSlate {
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  border-color: #cbd5e1;
+  border-bottom-color: #64748b;
+}
+
+.bentoCardLeft {
+  min-width: 0;
+}
+
+.bentoCardTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.bentoStatusDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.bentoDotGreen {
+  background: #065f46;
+}
+
+.bentoDotRed {
+  background: #9f1239;
+}
+
+.bentoDotSlate {
+  background: #334155;
+}
+
+.bentoCardGreen .bentoCardTitleRow {
+  color: #065f46;
+}
+
+.bentoCardRed .bentoCardTitleRow {
+  color: #9f1239;
+}
+
+.bentoCardSlate .bentoCardTitleRow {
+  color: #334155;
+}
+
+.bentoCardRight {
+  text-align: right;
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.bentoCardCount {
+  font-size: 16px;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.bentoCardGreen .bentoCardCount {
+  color: #047857;
+}
+
+.bentoCardRed .bentoCardCount {
+  color: #be123c;
+}
+
+.bentoCardSlate .bentoCardCount {
+  color: #334155;
+}
+
+.bentoCardPct {
+  margin-top: 2px;
+  font-size: 11.5px;
+  font-weight: 700;
+}
+
+.bentoCardGreen .bentoCardPct {
+  color: #065f46;
+}
+
+.bentoCardRed .bentoCardPct {
+  color: #9f1239;
+}
+
+.bentoCardSlate .bentoCardPct {
+  color: #475569;
+}
+
+/* Key Insight Box */
+.bentoInsightBox {
+  margin-top: auto;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: linear-gradient(145deg, #0f172a 0%, #1e293b 100%);
+  border-bottom: 3px solid #2563eb;
+  color: #f8fafc;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.14);
+}
+
+.bentoInsightHeader {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: #93c5fd;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+
+.bentoInsightRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 12px;
+  padding: 3px 0;
+  color: #cbd5e1;
+}
+
+.bentoInsightValueWhite {
+  font-weight: 800;
+  color: #ffffff;
+  font-variant-numeric: tabular-nums;
+}
+
+.bentoInsightValueGreen {
+  font-weight: 800;
+  color: #34d399;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Right Panel: Ranked Horizontal Matrix */
+.bentoMatrixList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.bentoMatrixRow {
+  display: grid;
+  grid-template-columns: 215px minmax(0, 1fr) 128px;
+  align-items: center;
+  gap: 16px;
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+}
+
+.bentoMatrixRow:hover {
+  background: #ffffff;
+  border-color: #94a3b8;
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.05);
+}
+
+.bentoMatrixRowTop {
+  background: linear-gradient(90deg, #f8fbff 0%, #f8fafc 100%);
+  border-color: #bacce6;
+}
+
+.bentoMatrixLeft {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  min-width: 0;
+  padding-bottom: 5px;
+  border-bottom: 2.5px solid #cbd5e1;
+}
+
+.bentoMatrixRowTop .bentoMatrixLeft {
+  border-bottom-color: #3b82f6;
+}
+
+.bentoRankBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  font-size: 13px;
+  font-weight: 800;
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.bentoRankBadgeTop {
+  background: linear-gradient(145deg, #2563eb 0%, #1d4ed8 100%);
+  color: #ffffff;
+  box-shadow: 0 4px 10px rgba(37, 99, 235, 0.28);
+}
+
+.bentoRankBadgeDefault {
+  background: #e2e8f0;
+  color: #334155;
+  border: 1px solid #cbd5e1;
+}
+
+.bentoRbmInfo {
+  min-width: 0;
+  flex: 1;
+}
+
+.bentoRbmNameRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.bentoRbmName {
+  font-size: 14px;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+
+.bentoZoneBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 1.5px 6px;
+  border-radius: 5px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  line-height: 1.3;
+}
+
+.bentoZoneBMA {
+  background: #dbeafe;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+}
+
+.bentoZoneUPC {
+  background: #e2e8f0;
+  color: #475569;
+  border: 1px solid #cbd5e1;
+}
+
+.bentoRbmQuickShare {
+  margin-top: 2px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #475569;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Middle column: Segmented Pill + Micro Pills */
+.bentoMatrixMiddle {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.bentoProgressTrack {
+  width: 100%;
+  height: 22px;
+  border-radius: 999px;
+  background: #e2e8f0;
+  box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.1);
+  overflow: hidden;
+  display: flex;
+  align-items: stretch;
+}
+
+.bentoProgressFillGroup {
+  display: flex;
+  height: 100%;
+  border-radius: 999px;
+  overflow: hidden;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.12);
+  transition: width 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.bentoSegWithWork {
+  background: linear-gradient(180deg, #2dd48f 0%, #10b981 55%, #059669 100%);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  overflow: hidden;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+
+.bentoSegWithoutWork {
+  background: linear-gradient(180deg, #fb7185 0%, #e11d48 55%, #be123c 100%);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  overflow: hidden;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+
+.bentoSegPending {
+  background: linear-gradient(180deg, #94a3b8 0%, #64748b 100%);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 800;
+  min-width: 14px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+
+.bentoMicroPillsRow {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  font-size: 11.5px;
+  font-variant-numeric: tabular-nums;
+}
+
+.bentoMicroWithWork {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: #047857;
+  font-weight: 700;
+}
+
+.bentoMicroWithWork::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #059669;
+}
+
+.bentoMicroWithoutWork {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: #be123c;
+  font-weight: 700;
+}
+
+.bentoMicroWithoutWork::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #e11d48;
+}
+
+.bentoMicroPendingActive {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 8px;
+  border-radius: 6px;
+  background: #f1f5f9;
+  border: 1px solid #94a3b8;
+  color: #334155;
+  font-weight: 800;
+  font-size: 11px;
+}
+
+/* Right column: Total Box */
+.bentoMatrixRight {
+  padding: 6px 12px;
+  border-radius: 10px;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.bentoMatrixTotalNumber {
+  font-size: 17px;
+  font-weight: 800;
+  color: #0f172a;
+  line-height: 1.15;
+}
+
+.bentoMatrixTotalShare {
+  margin-top: 2px;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: #64748b;
+  white-space: nowrap;
+}
+
+@media (max-width: 1200px) {
+  .bentoGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 820px) {
+  .bentoMatrixRow {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  .bentoMatrixRight {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    text-align: left;
+  }
+}
+
+@media (max-width: 700px) {
+  .bentoShell {
+    padding: 16px 14px 20px;
+  }
+}
+
