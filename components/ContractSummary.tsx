@@ -1,7 +1,7 @@
 'use client';
 
 import { Fragment, useEffect, useMemo, useState } from 'react';
-import { ArrowRight, Building2, Check, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, CircleX, Clock3, Download, FileText, Info, Layers, Play, Search, Sun, UserCheck, UserMinus, Users } from 'lucide-react';
+import { ArrowRight, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Download, Layers, Search } from 'lucide-react';
 import { maskRegistration, type ContractRow } from '@/lib/contractDashboard';
 import { buildContractPortfolio, contractOverview, contractSources, portfolioCounts, sourceLabels, type ContractSource } from '@/lib/contractSummary';
 import styles from './ContractSummary.module.css';
@@ -44,12 +44,40 @@ export default function ContractSummary({ onSelectSource }: { onSelectSource: (s
   const counts = useMemo(() => portfolioCounts(companies), [companies]);
   const overview = useMemo(() => contractOverview(companies), [companies]);
   const combinations = useMemo(() => {
-    const combinations = new Map<string, number>();
+    const shortThaiLabels: Record<ContractSource, string> = {
+      'track-c': 'งานติดตั้งอินเทอร์เน็ต',
+      solar: 'งานติดตั้งโซล่าร์',
+      corporate: 'งานก่อสร้างโครงสร้าง',
+    };
+    const map = new Map<string, {
+      label: string;
+      thaiDesc: string;
+      sourceCount: number;
+      count: number;
+      activeCount: number;
+      inactiveCount: number;
+    }>();
     for (const company of companies.filter(item => item.matchable)) {
       const key = company.sources.map(item => sourceLabels[item]).join(' + ');
-      combinations.set(key, (combinations.get(key) ?? 0) + 1);
+      const thaiDesc = company.sources.map(item => shortThaiLabels[item]).join(' • ');
+      const isActive = company.contracts.some(({ row }) => {
+        const g = row.group_status?.trim().toLowerCase().replace(/\s+/g, ' ');
+        return g === 'complete' || g === 'on process';
+      });
+      const existing = map.get(key) ?? {
+        label: key,
+        thaiDesc,
+        sourceCount: company.sources.length,
+        count: 0,
+        activeCount: 0,
+        inactiveCount: 0,
+      };
+      existing.count += 1;
+      if (isActive) existing.activeCount += 1;
+      else existing.inactiveCount += 1;
+      map.set(key, existing);
     }
-    return [...combinations].sort((a, b) => b[1] - a[1]);
+    return [...map.values()].sort((a, b) => b.count - a.count);
   }, [companies]);
   const filtered = useMemo(() => {
     const search = query.trim().toLocaleLowerCase('th');
@@ -97,57 +125,317 @@ export default function ContractSummary({ onSelectSource }: { onSelectSource: (s
     {loading ? <p role="status">กำลังโหลดข้อมูลสัญญา...</p> : !error && datasets && <>
       <section className={`${styles.band} ${styles.overview}`} aria-labelledby="contract-overview-title">
         <h2 id="contract-overview-title">ภาพรวมตัวแทนและสัญญา</h2>
-        <section className={styles.overviewSection} aria-labelledby="agent-status-title">
-          <h3 id="agent-status-title"><Users size={20} aria-hidden="true" />สถานะตัวแทน <span>นับบริษัทไม่ซ้ำ</span></h3>
+        <section className={`${styles.overviewSection} ${styles.agentStatusSection}`} aria-labelledby="agent-status-title">
+          <h3 id="agent-status-title" className={styles.agentSectionHeader}>
+            <span className={styles.agentHeaderBadge} aria-hidden="true">
+              <img src="/images/contracts/agent-header.png" alt="" />
+            </span>
+            <span>สถานะตัวแทน</span>
+            <span className={styles.agentSubtitlePill}>นับบริษัทไม่ซ้ำ</span>
+          </h3>
           <div className={styles.agentCards}>
             {[
-              { label: 'ตัวแทนทั้งหมด', value: overview.agents.total, detail: 'รวม Active และ Inactive', Icon: Users, tone: 'blue' },
-              { label: 'ตัวแทน Active', value: overview.agents.active, detail: 'มีสัญญา Active อย่างน้อย 1 ฉบับ', Icon: UserCheck, tone: 'green' },
-              { label: 'ตัวแทน Inactive', value: overview.agents.inactive, detail: 'ไม่มีสัญญา Active', Icon: UserMinus, tone: 'gray' },
-            ].map(({ label, value, detail, Icon, tone }) => <div className={styles.overviewMetric} data-tone={tone} key={label}>
-              <span className={styles.metricIcon}><Icon size={23} aria-hidden="true" /></span>
-              <div><h4>{label}</h4><strong>{number(value)} <small>ราย</small></strong><p>{detail}</p></div>
-            </div>)}
+              {
+                key: 'total',
+                titleMain: 'ตัวแทน',
+                titleSub: 'ทั้งหมด',
+                value: overview.agents.total,
+                pctLabel: overview.agents.total > 0 ? '100%' : '0%',
+                pctValue: overview.agents.total > 0 ? 100 : 0,
+                detail: 'รวม Active และ Inactive',
+                image: '/images/contracts/agent-total.png',
+                tone: 'blue',
+              },
+              {
+                key: 'active',
+                titleMain: 'ตัวแทน',
+                titleSub: 'Active',
+                value: overview.agents.active,
+                pctLabel: `${overview.agents.total > 0 ? ((overview.agents.active / overview.agents.total) * 100).toFixed(1) : '0.0'}%`,
+                pctValue: overview.agents.total > 0 ? (overview.agents.active / overview.agents.total) * 100 : 0,
+                detail: 'มีสัญญา Active อย่างน้อย 1 ฉบับ',
+                image: '/images/contracts/agent-active.png',
+                tone: 'green',
+              },
+              {
+                key: 'inactive',
+                titleMain: 'ตัวแทน',
+                titleSub: 'Inactive',
+                value: overview.agents.inactive,
+                pctLabel: `${overview.agents.total > 0 ? ((overview.agents.inactive / overview.agents.total) * 100).toFixed(1) : '0.0'}%`,
+                pctValue: overview.agents.total > 0 ? (overview.agents.inactive / overview.agents.total) * 100 : 0,
+                detail: 'ไม่มีสัญญา Active',
+                image: '/images/contracts/agent-inactive.png',
+                tone: 'slate',
+              },
+            ].map(({ key, titleMain, titleSub, value, pctLabel, pctValue, detail, image, tone }) => (
+              <article className={styles.agentBentoCard} data-tone={tone} key={key}>
+                <div className={styles.agentCardSurface}>
+                  <header className={styles.agentCardHeader}>
+                    <span className={styles.agentPhotoBadge} aria-hidden="true">
+                      <img src={image} alt="" />
+                    </span>
+                    <h4 className={styles.agentCardTitle}>
+                      <span>{titleMain}</span>
+                      <span className={styles.agentTitleAccent}>{titleSub}</span>
+                    </h4>
+                  </header>
+                  <div className={styles.agentPctRow}>
+                    <span className={styles.agentPctPill}>{pctLabel}</span>
+                  </div>
+                  <div className={styles.agentValueRow}>
+                    <strong>{number(value)} <small>ราย</small></strong>
+                  </div>
+                  <p className={styles.agentDetailText}>{detail}</p>
+                  <div className={styles.agentProgressTrack} aria-hidden="true">
+                    <div
+                      className={styles.agentProgressFill}
+                      style={{ width: `${Math.max(pctValue > 0 ? 8 : 0, Math.min(100, pctValue))}%` }}
+                    />
+                  </div>
+                </div>
+              </article>
+            ))}
           </div>
-          <p className={styles.definition}><Info size={16} aria-hidden="true" /><span>Active: มีสัญญาเสร็จสมบูรณ์หรืออยู่ระหว่างดำเนินการอย่างน้อย 1 ฉบับ</span></p>
+          <div className={styles.agentInfoBanner}>
+            <span className={styles.agentInfoIcon} aria-hidden="true">i</span>
+            <span>Active: มีสัญญาเสร็จสมบูรณ์หรืออยู่ระหว่างดำเนินการอย่างน้อย 1 ฉบับ</span>
+          </div>
           {overview.agents.missingRegistration > 0 && <p className={styles.note}>สัญญาที่ไม่มีเลขทะเบียนบริษัท {number(overview.agents.missingRegistration)} รายการ ไม่รวมในยอดตัวแทนไม่ซ้ำ</p>}
         </section>
-        <section className={styles.overviewSection} aria-labelledby="contract-status-title">
-          <h3 id="contract-status-title"><FileText size={20} aria-hidden="true" />ภาพรวมสัญญา <span>หน่วย: ฉบับ</span></h3>
-          <div className={styles.contractCards}>
+        <section className={`${styles.overviewSection} ${styles.contractOverviewSection}`} aria-labelledby="contract-status-title">
+          <h3 id="contract-status-title" className={styles.contractSectionHeader}>
+            <span className={styles.contractHeaderBadge} aria-hidden="true">
+              <img src="/images/contracts/overview-header.png" alt="" />
+            </span>
+            <span>ภาพรวมสัญญา</span>
+            <span className={styles.contractSubtitlePill}>หน่วย: ฉบับ</span>
+          </h3>
+          <div className={styles.contractOverviewGrid}>
             {[
-              { label: 'สัญญาทั้งหมด', value: overview.totals.total, detail: 'รวมทั้ง 3 ประเภทงาน', Icon: FileText, tone: 'blue' },
-              { label: 'สัญญา Active', value: overview.totals.active, detail: 'เสร็จสมบูรณ์ + อยู่ระหว่างดำเนินการ', Icon: Play, tone: 'blue' },
-              { label: 'เสร็จสมบูรณ์', value: overview.totals.complete, detail: 'Complete', Icon: Check, tone: 'green' },
-              { label: 'อยู่ระหว่างดำเนินการ', value: overview.totals.onProcess, detail: 'On Process', Icon: Clock3, tone: 'amber' },
-            ].map(({ label, value, detail, Icon, tone }) => <div className={styles.overviewMetric} data-tone={tone} key={label}>
-              <span className={styles.metricIcon}><Icon size={23} aria-hidden="true" /></span>
-              <div><h4>{label}</h4><strong>{number(value)}</strong><p>{detail}</p></div>
-            </div>)}
+              {
+                key: 'total',
+                label: 'สัญญาทั้งหมด',
+                value: overview.totals.total,
+                pctValue: overview.totals.total > 0 ? 100 : 0,
+                detail: 'รวมทั้ง 3 ประเภทงาน',
+                image: '/images/contracts/overview-total.png',
+                tone: 'sapphire',
+              },
+              {
+                key: 'active',
+                label: 'สัญญา Active',
+                value: overview.totals.active,
+                pctValue: overview.totals.total > 0 ? (overview.totals.active / overview.totals.total) * 100 : 0,
+                detail: 'เสร็จสมบูรณ์ + อยู่ระหว่างดำเนินการ',
+                image: '/images/contracts/overview-active.png',
+                tone: 'cyan',
+              },
+              {
+                key: 'complete',
+                label: 'เสร็จสมบูรณ์',
+                value: overview.totals.complete,
+                pctValue: overview.totals.total > 0 ? (overview.totals.complete / overview.totals.total) * 100 : 0,
+                detail: 'Complete',
+                image: '/images/contracts/overview-complete.png',
+                tone: 'green',
+              },
+              {
+                key: 'onProcess',
+                label: 'อยู่ระหว่างดำเนินการ',
+                value: overview.totals.onProcess,
+                pctValue: overview.totals.total > 0 ? (overview.totals.onProcess / overview.totals.total) * 100 : 0,
+                detail: 'On Process',
+                image: '/images/contracts/overview-process.png',
+                tone: 'amber',
+              },
+            ].map(({ key, label, value, pctValue, detail, image, tone }) => (
+              <article className={styles.contractBentoCard} data-tone={tone} key={key}>
+                <div className={styles.contractCardSurface}>
+                  <div className={styles.contractBadgeWrap}>
+                    <span
+                      className={`${styles.contractPhotoBadge} ${key === 'onProcess' ? styles.contractProcessCircle : ''}`}
+                      aria-hidden="true"
+                    >
+                      {key === 'onProcess' ? (
+                        <span className={styles.contractProcessCircleInner}>
+                          <svg className={styles.contractProcessGearsSvg} viewBox="0 0 120 120" fill="none">
+                            <g opacity="0.22" stroke="#1e3a8a" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round">
+                              <circle cx="46" cy="68" r="16" />
+                              <circle cx="46" cy="68" r="7" />
+                              <path d="M46 44v6M46 86v6M22 68h6M64 68h6M29 51l4 4M59 81l4 4M63 51l-4 4M33 81l-4 4" />
+                              <circle cx="78" cy="44" r="12" />
+                              <circle cx="78" cy="44" r="5" />
+                              <path d="M78 26v4M78 58v4M60 44h4M92 44h4M65 31l3 3M88 54l3 3M91 31l-3 3M68 54l-3 3" />
+                            </g>
+                          </svg>
+                          <span className={styles.contractProcessRedText}>On Process</span>
+                        </span>
+                      ) : (
+                        <img src={image} alt="" />
+                      )}
+                    </span>
+                  </div>
+                  <h4 className={styles.contractCardTitle}>{label}</h4>
+                  <div className={styles.contractValueRow}>
+                    <strong>{number(value)}</strong>
+                  </div>
+                  <p className={styles.contractDetailText}>{detail}</p>
+                  <div className={styles.contractProgressTrack} aria-hidden="true">
+                    <div
+                      className={styles.contractProgressFill}
+                      style={{ width: `${Math.max(pctValue > 0 ? 14 : 0, Math.min(100, pctValue))}%` }}
+                    />
+                  </div>
+                </div>
+              </article>
+            ))}
           </div>
-          <p className={styles.cancelledNote}><CircleX size={16} aria-hidden="true" /><span>สัญญายกเลิก <b>{number(overview.totals.cancelled)}</b> ฉบับ</span>{overview.totals.other > 0 && <span>สถานะอื่น / ไม่ระบุ {number(overview.totals.other)} ฉบับ</span>}</p>
+          <div className={styles.contractCancelledBanner}>
+            <span className={styles.contractCancelledBadge} aria-hidden="true">
+              <img src="/images/contracts/overview-cancelled.png" alt="" />
+            </span>
+            <span>สัญญายกเลิก <b>{number(overview.totals.cancelled)}</b> ฉบับ</span>
+            {overview.totals.other > 0 && <span className={styles.contractOtherSpan}>สถานะอื่น / ไม่ระบุ {number(overview.totals.other)} ฉบับ</span>}
+          </div>
         </section>
-        <section className={styles.overviewSection} aria-labelledby="source-status-title">
-          <h3 id="source-status-title"><Layers size={20} aria-hidden="true" />สถานะสัญญาตามประเภทงาน</h3>
+        <section className={`${styles.overviewSection} ${styles.sourceStatusSection}`} aria-labelledby="source-status-title">
+          <h3 id="source-status-title" className={styles.sourceSectionHeader}>
+            <span className={styles.sourceHeaderBadge} aria-hidden="true">
+              <img src="/images/contracts/header-layers.png" alt="" />
+            </span>
+            <span>สถานะสัญญาตามประเภทงาน</span>
+          </h3>
           <div className={styles.sourceGrid}>{contractSources.map(contractSource => {
             const summary = overview.bySource[contractSource];
-            const Icon = contractSource === 'solar' ? Sun : Building2;
+            const sourceMeta: Record<ContractSource, { subtitle: string; image: string }> = {
+              'track-c': { subtitle: 'งานติดตั้งอินเทอร์เน็ต', image: '/images/contracts/track-c.png' },
+              solar: { subtitle: 'งานติดตั้งโซล่าร์', image: '/images/contracts/solar.png' },
+              corporate: { subtitle: 'งานก่อสร้างโครงสร้าง', image: '/images/contracts/corporate.png' },
+            };
+            const meta = sourceMeta[contractSource];
             return <article className={styles.sourceCard} key={contractSource}>
-              <header><span className={styles.sourceIcon}><Icon size={24} aria-hidden="true" /></span><h4>{sourceLabels[contractSource]}</h4><strong>{number(summary.total)} <small>ฉบับ</small></strong></header>
-              <dl className={styles.statusList}>
-                <div data-tone="green"><dt>เสร็จสมบูรณ์</dt><dd>{number(summary.complete)}</dd></div>
-                <div data-tone="amber"><dt>อยู่ระหว่างดำเนินการ</dt><dd>{number(summary.onProcess)}</dd></div>
-                <div data-tone="gray"><dt>ยกเลิก</dt><dd>{number(summary.cancelled)}</dd></div>
-                {summary.other > 0 && <div data-tone="gray"><dt>สถานะอื่น / ไม่ระบุ</dt><dd>{number(summary.other)}</dd></div>}
-              </dl>
-              <button type="button" className={styles.sourceLink} onClick={() => onSelectSource(contractSource)} aria-label={`ดูรายละเอียด ${sourceLabels[contractSource]}`}>ดูรายละเอียด <ArrowRight size={15} aria-hidden="true" /></button>
+              <div className={styles.sourceCardSurface}>
+                <header className={styles.sourceCardHeader}>
+                  <span className={styles.sourcePhotoBadge} aria-hidden="true">
+                    <img src={meta.image} alt="" />
+                  </span>
+                  <div className={styles.sourceTitleGroup}>
+                    <h4>{sourceLabels[contractSource]}</h4>
+                    <p className={styles.sourceSubtitle}>{meta.subtitle}</p>
+                  </div>
+                </header>
+                <div className={styles.sourceTotalRow}>
+                  <strong>{number(summary.total)}</strong>
+                </div>
+                <dl className={styles.statusList}>
+                  <div data-tone="green"><dt>เสร็จสมบูรณ์</dt><span className={styles.statusLeader} aria-hidden="true" /><dd>{number(summary.complete)}</dd></div>
+                  <div data-tone="amber"><dt>อยู่ระหว่างดำเนินการ</dt><span className={styles.statusLeader} aria-hidden="true" /><dd>{number(summary.onProcess)}</dd></div>
+                  <div data-tone="gray"><dt>ยกเลิก</dt><span className={styles.statusLeader} aria-hidden="true" /><dd>{number(summary.cancelled)}</dd></div>
+                  {summary.other > 0 && <div data-tone="gray"><dt>สถานะอื่น / ไม่ระบุ</dt><span className={styles.statusLeader} aria-hidden="true" /><dd>{number(summary.other)}</dd></div>}
+                </dl>
+                <button type="button" className={styles.sourceLink} onClick={() => onSelectSource(contractSource)} aria-label={`ดูรายละเอียด ${sourceLabels[contractSource]}`}>ดูรายละเอียด <ArrowRight size={16} aria-hidden="true" /></button>
+              </div>
             </article>;
           })}</div>
         </section>
-        <section className={styles.overviewSection} aria-labelledby="work-pattern-title">
-          <h3 id="work-pattern-title"><Layers size={20} aria-hidden="true" />รูปแบบงานที่รับ</h3>
-          <div className={styles.combinations}>{combinations.map(([label, count]) =>
-            <div className={styles.combination} key={label}><span>{label}</span><div className={styles.bar}><div style={{ width: `${counts.companies ? count / counts.companies * 100 : 0}%` }} /></div><strong>{number(count)}</strong></div>)}</div>
+        <section className={`${styles.overviewSection} ${styles.workPatternBentoCard}`} aria-labelledby="work-pattern-title">
+          <div className={styles.workPatternHeader}>
+            <span className={styles.workPatternLogoBadge} aria-hidden="true">
+              <Layers size={22} strokeWidth={2.2} />
+            </span>
+            <h3 id="work-pattern-title" className={styles.workPatternTitle}>รูปแบบงานที่รับ</h3>
+          </div>
+          {(() => {
+            const maxPatternCount = Math.max(...combinations.map(item => item.count), 1);
+            const totalMatchableCompanies = counts.companies || combinations.reduce((acc, item) => acc + item.count, 0) || 1;
+            return (
+              <div className={styles.patternMatrixList}>
+                {combinations.map((item, index) => {
+                  const rank = index + 1;
+                  const isTopRank = rank <= 2;
+                  const totalBarWidthPct = Math.max((item.count / maxPatternCount) * 100, 12);
+                  const shareOfAllPct = ((item.count / totalMatchableCompanies) * 100).toFixed(1);
+                  const activeExactPct = item.count > 0 ? ((item.activeCount / item.count) * 100).toFixed(1) : '0.0';
+                  const inactiveExactPct = item.count > 0 ? ((item.inactiveCount / item.count) * 100).toFixed(1) : '0.0';
+                  const activeSegPct = item.count > 0 ? (item.activeCount / item.count) * 100 : 0;
+                  const inactiveSegPct = item.count > 0 ? (item.inactiveCount / item.count) * 100 : 0;
+
+                  return (
+                    <div
+                      key={item.label}
+                      className={`${styles.patternMatrixRow} ${isTopRank ? styles.patternMatrixRowTop : ''}`}
+                    >
+                      <div className={styles.patternMatrixLeft}>
+                        <span
+                          className={`${styles.patternRankBadge} ${
+                            isTopRank ? styles.patternRankBadgeTop : styles.patternRankBadgeDefault
+                          }`}
+                        >
+                          #{rank}
+                        </span>
+                        <div className={styles.patternInfo}>
+                          <div className={styles.patternNameRow}>
+                            <span className={styles.patternName}>{item.label}</span>
+                            <span
+                              className={`${styles.patternTypeBadge} ${
+                                item.sourceCount > 1 ? styles.patternTypeMulti : styles.patternTypeSingle
+                              }`}
+                            >
+                              {item.sourceCount} ประเภท
+                            </span>
+                          </div>
+                          <div className={styles.patternQuickSub}>{item.thaiDesc}</div>
+                        </div>
+                      </div>
+
+                      <div className={styles.patternMatrixMiddle}>
+                        <div className={styles.patternProgressTrack}>
+                          <div
+                            className={styles.patternProgressFillGroup}
+                            style={{ width: `${totalBarWidthPct}%` }}
+                          >
+                            {item.activeCount > 0 && (
+                              <div
+                                className={styles.patternSegActive}
+                                style={{ width: `${activeSegPct}%` }}
+                                title={`Active: ${number(item.activeCount)} ราย (${activeExactPct}%)`}
+                              >
+                                {number(item.activeCount)}
+                              </div>
+                            )}
+                            {item.inactiveCount > 0 && (
+                              <div
+                                className={styles.patternSegInactive}
+                                style={{ width: `${inactiveSegPct}%` }}
+                                title={`Inactive: ${number(item.inactiveCount)} ราย (${inactiveExactPct}%)`}
+                              >
+                                {number(item.inactiveCount)}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className={styles.patternMicroPillsRow}>
+                          <span className={styles.patternMicroActive}>
+                            Active: {number(item.activeCount)} ({activeExactPct}%)
+                          </span>
+                          <span className={styles.patternMicroInactive}>
+                            Inactive: {number(item.inactiveCount)} ({inactiveExactPct}%)
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className={styles.patternMatrixRight}>
+                        <div className={styles.patternTotalNumber}>{number(item.count)}</div>
+                        <div className={styles.patternTotalShare}>{shareOfAllPct}% ของทั้งหมด</div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })()}
         </section>
       </section>
       <section className={styles.band} aria-label="รายชื่อคู่สัญญาทั้งหมด">
