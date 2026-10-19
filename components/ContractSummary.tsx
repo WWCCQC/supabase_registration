@@ -1,16 +1,16 @@
 'use client';
 
 import { Fragment, useEffect, useMemo, useState } from 'react';
-import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Download, Search } from 'lucide-react';
+import { ArrowRight, Building2, Check, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, CircleX, Clock3, Download, FileText, Info, Layers, Play, Search, Sun, UserCheck, UserMinus, Users } from 'lucide-react';
 import { maskRegistration, type ContractRow } from '@/lib/contractDashboard';
-import { buildContractPortfolio, contractSources, portfolioCounts, sourceLabels, type ContractSource } from '@/lib/contractSummary';
+import { buildContractPortfolio, contractOverview, contractSources, portfolioCounts, sourceLabels, type ContractSource } from '@/lib/contractSummary';
 import styles from './ContractSummary.module.css';
 
 type Datasets = Record<ContractSource, ContractRow[]>;
 const number = (value: number) => value.toLocaleString('th-TH');
 const groupStatuses = ['Complete', 'On Process', 'Cancel'] as const;
 
-export default function ContractSummary() {
+export default function ContractSummary({ onSelectSource }: { onSelectSource: (source: ContractSource) => void }) {
   const [datasets, setDatasets] = useState<Datasets | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -42,6 +42,7 @@ export default function ContractSummary() {
 
   const companies = useMemo(() => datasets ? buildContractPortfolio(datasets) : [], [datasets]);
   const counts = useMemo(() => portfolioCounts(companies), [companies]);
+  const overview = useMemo(() => contractOverview(companies), [companies]);
   const combinations = useMemo(() => {
     const combinations = new Map<string, number>();
     for (const company of companies.filter(item => item.matchable)) {
@@ -94,26 +95,60 @@ export default function ContractSummary() {
   return <div className={styles.summary} aria-busy={loading}>
     {error && <p role="alert" className={styles.error}>{error}</p>}
     {loading ? <p role="status">กำลังโหลดข้อมูลสัญญา...</p> : !error && datasets && <>
-      <div className={styles.metrics}>
-        <div className={styles.metric}><span>บริษัทที่มีเลขทะเบียน</span><strong>{number(counts.companies)}</strong><small>จับคู่จากเลขทะเบียนบริษัท</small></div>
-        <div className={styles.metric}><span>รับงานครบ 3 ประเภท</span><strong>{number(counts.byTypeCount[2])}</strong><small>Track C + Solar + Corporate</small></div>
-        <div className={styles.metric}><span>รับงาน 2 ประเภท</span><strong>{number(counts.byTypeCount[1])}</strong><small>บริษัท</small></div>
-        <div className={styles.metric}><span>รับงาน 1 ประเภท</span><strong>{number(counts.byTypeCount[0])}</strong><small>บริษัท</small></div>
-      </div>
-      <section className={styles.band} aria-label="ภาพรวมรายประเภทสัญญา">
-        <h2>ภาพรวมรายประเภทสัญญา</h2>
-        <div className={styles.sourceGrid}>{contractSources.map(contractSource => {
-          const rows = datasets[contractSource];
-          return <div className={styles.sourceItem} key={contractSource}>
-            <h3>{sourceLabels[contractSource]}</h3><strong>{number(rows.length)} <small>สัญญา</small></strong>
-            <div className={styles.sourceStatuses}>{groupStatuses.map(group => <span key={group}>{group} <b>{number(rows.filter(row => row.group_status?.trim().toLowerCase() === group.toLowerCase()).length)}</b></span>)}</div>
-          </div>;
-        })}</div>
-      </section>
-      <section className={styles.band} aria-label="รูปแบบงานที่รับ">
-        <h2>รูปแบบงานที่รับ</h2>
-        <div className={styles.combinations}>{combinations.map(([label, count]) =>
-          <div className={styles.combination} key={label}><span>{label}</span><div className={styles.bar}><div style={{ width: `${counts.companies ? count / counts.companies * 100 : 0}%` }} /></div><strong>{number(count)}</strong></div>)}</div>
+      <section className={`${styles.band} ${styles.overview}`} aria-labelledby="contract-overview-title">
+        <h2 id="contract-overview-title">ภาพรวมตัวแทนและสัญญา</h2>
+        <section className={styles.overviewSection} aria-labelledby="agent-status-title">
+          <h3 id="agent-status-title"><Users size={20} aria-hidden="true" />สถานะตัวแทน <span>นับบริษัทไม่ซ้ำ</span></h3>
+          <div className={styles.agentCards}>
+            {[
+              { label: 'ตัวแทนทั้งหมด', value: overview.agents.total, detail: 'รวม Active และ Inactive', Icon: Users, tone: 'blue' },
+              { label: 'ตัวแทน Active', value: overview.agents.active, detail: 'มีสัญญา Active อย่างน้อย 1 ฉบับ', Icon: UserCheck, tone: 'green' },
+              { label: 'ตัวแทน Inactive', value: overview.agents.inactive, detail: 'ไม่มีสัญญา Active', Icon: UserMinus, tone: 'gray' },
+            ].map(({ label, value, detail, Icon, tone }) => <div className={styles.overviewMetric} data-tone={tone} key={label}>
+              <span className={styles.metricIcon}><Icon size={23} aria-hidden="true" /></span>
+              <div><h4>{label}</h4><strong>{number(value)} <small>ราย</small></strong><p>{detail}</p></div>
+            </div>)}
+          </div>
+          <p className={styles.definition}><Info size={16} aria-hidden="true" /><span>Active: มีสัญญาเสร็จสมบูรณ์หรืออยู่ระหว่างดำเนินการอย่างน้อย 1 ฉบับ</span></p>
+          {overview.agents.missingRegistration > 0 && <p className={styles.note}>สัญญาที่ไม่มีเลขทะเบียนบริษัท {number(overview.agents.missingRegistration)} รายการ ไม่รวมในยอดตัวแทนไม่ซ้ำ</p>}
+        </section>
+        <section className={styles.overviewSection} aria-labelledby="contract-status-title">
+          <h3 id="contract-status-title"><FileText size={20} aria-hidden="true" />ภาพรวมสัญญา <span>หน่วย: ฉบับ</span></h3>
+          <div className={styles.contractCards}>
+            {[
+              { label: 'สัญญาทั้งหมด', value: overview.totals.total, detail: 'รวมทั้ง 3 ประเภทงาน', Icon: FileText, tone: 'blue' },
+              { label: 'สัญญา Active', value: overview.totals.active, detail: 'เสร็จสมบูรณ์ + อยู่ระหว่างดำเนินการ', Icon: Play, tone: 'blue' },
+              { label: 'เสร็จสมบูรณ์', value: overview.totals.complete, detail: 'Complete', Icon: Check, tone: 'green' },
+              { label: 'อยู่ระหว่างดำเนินการ', value: overview.totals.onProcess, detail: 'On Process', Icon: Clock3, tone: 'amber' },
+            ].map(({ label, value, detail, Icon, tone }) => <div className={styles.overviewMetric} data-tone={tone} key={label}>
+              <span className={styles.metricIcon}><Icon size={23} aria-hidden="true" /></span>
+              <div><h4>{label}</h4><strong>{number(value)}</strong><p>{detail}</p></div>
+            </div>)}
+          </div>
+          <p className={styles.cancelledNote}><CircleX size={16} aria-hidden="true" /><span>สัญญายกเลิก <b>{number(overview.totals.cancelled)}</b> ฉบับ</span>{overview.totals.other > 0 && <span>สถานะอื่น / ไม่ระบุ {number(overview.totals.other)} ฉบับ</span>}</p>
+        </section>
+        <section className={styles.overviewSection} aria-labelledby="source-status-title">
+          <h3 id="source-status-title"><Layers size={20} aria-hidden="true" />สถานะสัญญาตามประเภทงาน</h3>
+          <div className={styles.sourceGrid}>{contractSources.map(contractSource => {
+            const summary = overview.bySource[contractSource];
+            const Icon = contractSource === 'solar' ? Sun : Building2;
+            return <article className={styles.sourceCard} key={contractSource}>
+              <header><span className={styles.sourceIcon}><Icon size={24} aria-hidden="true" /></span><h4>{sourceLabels[contractSource]}</h4><strong>{number(summary.total)} <small>ฉบับ</small></strong></header>
+              <dl className={styles.statusList}>
+                <div data-tone="green"><dt>เสร็จสมบูรณ์</dt><dd>{number(summary.complete)}</dd></div>
+                <div data-tone="amber"><dt>อยู่ระหว่างดำเนินการ</dt><dd>{number(summary.onProcess)}</dd></div>
+                <div data-tone="gray"><dt>ยกเลิก</dt><dd>{number(summary.cancelled)}</dd></div>
+                {summary.other > 0 && <div data-tone="gray"><dt>สถานะอื่น / ไม่ระบุ</dt><dd>{number(summary.other)}</dd></div>}
+              </dl>
+              <button type="button" className={styles.sourceLink} onClick={() => onSelectSource(contractSource)} aria-label={`ดูรายละเอียด ${sourceLabels[contractSource]}`}>ดูรายละเอียด <ArrowRight size={15} aria-hidden="true" /></button>
+            </article>;
+          })}</div>
+        </section>
+        <section className={styles.overviewSection} aria-labelledby="work-pattern-title">
+          <h3 id="work-pattern-title"><Layers size={20} aria-hidden="true" />รูปแบบงานที่รับ</h3>
+          <div className={styles.combinations}>{combinations.map(([label, count]) =>
+            <div className={styles.combination} key={label}><span>{label}</span><div className={styles.bar}><div style={{ width: `${counts.companies ? count / counts.companies * 100 : 0}%` }} /></div><strong>{number(count)}</strong></div>)}</div>
+        </section>
       </section>
       <section className={styles.band} aria-label="รายชื่อคู่สัญญาทั้งหมด">
         <div className={styles.sectionHeader}><h2>คู่สัญญารายบริษัท</h2></div>

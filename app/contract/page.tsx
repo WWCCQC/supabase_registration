@@ -41,7 +41,7 @@ export default function ContractPage() {
           aria-labelledby={`contract-tab-${activeTab.toLowerCase().replaceAll(' ', '-')}`}
           className={styles.page}
         >
-          {activeTab === 'Summary Contract' && <ContractSummary />}
+          {activeTab === 'Summary Contract' && <ContractSummary onSelectSource={source => setActiveTab(source === 'track-c' ? 'Track C' : source === 'solar' ? 'Solar' : 'Corporate')} />}
           {activeTab === 'Track C' && <ContractDashboard />}
           {activeTab === 'Solar' && <ContractDashboard key="solar" source="solar" />}
           {activeTab === 'Corporate' && <ContractDashboard key="corporate" source="corporate" />}

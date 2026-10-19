@@ -28,7 +28,7 @@ test('Contract page provides the summary and three contract tabs', () => {
 
   assert.match(page, /\['Summary Contract', 'Track C', 'Solar', 'Corporate'\]/);
   assert.match(page, /useState<ContractTab>\('Summary Contract'\)/);
-  assert.match(page, /<ContractSummary \/>/);
+  assert.match(page, /<ContractSummary onSelectSource=/);
   assert.match(page, /role="tablist"/);
   assert.match(page, /role="tab"/);
   assert.match(page, /aria-selected=/);

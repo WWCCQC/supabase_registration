@@ -52,3 +52,34 @@ export function portfolioCounts(companies: PortfolioCompany[]) {
     byTypeCount: [1, 2, 3].map(count => linked.filter(company => company.sources.length === count).length),
   };
 }
+
+export function contractOverview(companies: PortfolioCompany[]) {
+  const emptyCounts = () => ({ total: 0, active: 0, complete: 0, onProcess: 0, cancelled: 0, other: 0 });
+  const totals = emptyCounts();
+  const bySource = Object.fromEntries(contractSources.map(source => [source, emptyCounts()])) as Record<ContractSource, ReturnType<typeof emptyCounts>>;
+  const agents = { total: 0, active: 0, inactive: 0, missingRegistration: 0 };
+
+  for (const company of companies) {
+    let hasActiveContract = false;
+    for (const { source, row } of company.contracts) {
+      const status = (row.group_status ?? '').trim().toLowerCase().replace(/\s+/g, ' ');
+      const key = status === 'complete' ? 'complete' : status === 'on process' ? 'onProcess' : status === 'cancel' ? 'cancelled' : 'other';
+      const active = key === 'complete' || key === 'onProcess';
+      hasActiveContract ||= active;
+      for (const counts of [totals, bySource[source]]) {
+        counts.total += 1;
+        counts[key] += 1;
+        if (active) counts.active += 1;
+      }
+    }
+    // Missing registrations cannot be deduplicated reliably across contract types.
+    if (!company.matchable) {
+      agents.missingRegistration += company.contracts.length;
+      continue;
+    }
+    agents.total += 1;
+    if (hasActiveContract) agents.active += 1;
+    else agents.inactive += 1;
+  }
+  return { agents, totals, bySource };
+}
