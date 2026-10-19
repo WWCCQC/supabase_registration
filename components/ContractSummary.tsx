@@ -276,9 +276,11 @@ export default function ContractSummary({ onSelectSource }: { onSelectSource: (s
                       )}
                     </span>
                   </div>
-                  <h4 className={styles.contractCardTitle}>{label}</h4>
-                  <div className={styles.contractValueRow}>
-                    <strong>{number(value)}</strong>
+                  <div className={styles.contractTitleRow}>
+                    <h4 className={styles.contractCardTitle}>{label}</h4>
+                    <div className={styles.contractValueRow}>
+                      <strong>{number(value)}</strong>
+                    </div>
                   </div>
                   <p className={styles.contractDetailText}>{detail}</p>
                   <div className={styles.contractProgressTrack} aria-hidden="true">

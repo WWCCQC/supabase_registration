@@ -48,8 +48,8 @@
   margin: 0 0 24px !important;
 }
 .agentSectionHeader > span:nth-child(2) {
-  font-size: 31px !important;
-  font-weight: 900 !important;
+  font-size: 24px !important;
+  font-weight: 400 !important;
   color: #0b1936 !important;
   letter-spacing: -0.025em;
 }
@@ -145,12 +145,18 @@
 .agentCardTitle {
   margin: 0;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  align-items: baseline;
+  gap: 8px;
+  white-space: nowrap;
   font-size: 26px;
   font-weight: 900;
   color: #0b1936;
   line-height: 1.16;
   letter-spacing: -0.02em;
+}
+.agentBentoCard[data-tone='blue'] .agentCardTitle {
+  gap: 0;
 }
 .agentBentoCard[data-tone='green'] .agentTitleAccent {
   color: #0b7a48;
@@ -189,7 +195,7 @@
   display: inline-flex;
   align-items: baseline;
   gap: 8px;
-  font-size: 48px;
+  font-size: 24px;
   font-weight: 900;
   line-height: 1;
   letter-spacing: -0.03em;
@@ -249,6 +255,25 @@
     0 3px 8px rgba(51, 65, 85, 0.42),
     inset 0 1px 1px rgba(255, 255, 255, 0.7);
 }
+/* Text color follows progress bar tone */
+.agentBentoCard .agentCardTitle,
+.agentBentoCard .agentCardTitle .agentTitleAccent,
+.agentBentoCard .agentValueRow strong,
+.agentBentoCard .agentDetailText {
+  color: #2563eb;
+}
+.agentBentoCard[data-tone='green'] .agentCardTitle,
+.agentBentoCard[data-tone='green'] .agentCardTitle .agentTitleAccent,
+.agentBentoCard[data-tone='green'] .agentValueRow strong,
+.agentBentoCard[data-tone='green'] .agentDetailText {
+  color: #047857;
+}
+.agentBentoCard[data-tone='slate'] .agentCardTitle,
+.agentBentoCard[data-tone='slate'] .agentCardTitle .agentTitleAccent,
+.agentBentoCard[data-tone='slate'] .agentValueRow strong,
+.agentBentoCard[data-tone='slate'] .agentDetailText {
+  color: #475569;
+}
 .agentInfoBanner {
   display: flex;
   align-items: center;
@@ -261,8 +286,8 @@
   box-shadow:
     0 14px 28px -8px rgba(15, 23, 42, 0.14),
     inset 0 1px 2px rgba(255, 255, 255, 0.92);
-  font-size: 17px;
-  font-weight: 700;
+  font-size: 15px;
+  font-weight: 400;
   color: #0b1936;
 }
 .agentInfoIcon {
@@ -299,8 +324,8 @@
   margin: 0 0 24px !important;
 }
 .contractSectionHeader > span:nth-child(2) {
-  font-size: 31px !important;
-  font-weight: 900 !important;
+  font-size: 24px !important;
+  font-weight: 400 !important;
   color: #0b1936 !important;
   letter-spacing: -0.025em;
 }
@@ -472,8 +497,16 @@
     0 1px 0 #ffffff,
     0 2px 6px rgba(220, 38, 38, 0.28);
 }
-.contractCardTitle {
+.contractTitleRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px;
   margin: 0 0 8px;
+}
+.contractCardTitle {
+  margin: 0;
   font-size: 22px;
   font-weight: 900;
   color: #0b1936;
@@ -482,7 +515,7 @@
 }
 .contractValueRow strong {
   display: block;
-  font-size: 50px;
+  font-size: 24px;
   font-weight: 900;
   line-height: 1;
   letter-spacing: -0.03em;
@@ -546,6 +579,27 @@
     0 3px 10px rgba(245, 158, 11, 0.5),
     inset 0 1px 1px rgba(255, 255, 255, 0.8);
 }
+/* Text color follows progress bar tone */
+.contractBentoCard .contractCardTitle,
+.contractBentoCard .contractValueRow strong,
+.contractBentoCard .contractDetailText {
+  color: #2563eb;
+}
+.contractBentoCard[data-tone='cyan'] .contractCardTitle,
+.contractBentoCard[data-tone='cyan'] .contractValueRow strong,
+.contractBentoCard[data-tone='cyan'] .contractDetailText {
+  color: #0284c7;
+}
+.contractBentoCard[data-tone='green'] .contractCardTitle,
+.contractBentoCard[data-tone='green'] .contractValueRow strong,
+.contractBentoCard[data-tone='green'] .contractDetailText {
+  color: #047857;
+}
+.contractBentoCard[data-tone='amber'] .contractCardTitle,
+.contractBentoCard[data-tone='amber'] .contractValueRow strong,
+.contractBentoCard[data-tone='amber'] .contractDetailText {
+  color: #b45309;
+}
 .contractCancelledBanner {
   display: flex;
   align-items: center;
@@ -559,12 +613,12 @@
   box-shadow:
     0 14px 28px -8px rgba(15, 23, 42, 0.14),
     inset 0 1px 2px rgba(255, 255, 255, 0.92);
-  font-size: 20px;
-  font-weight: 800;
+  font-size: 18px;
+  font-weight: 400;
   color: #0b1936;
 }
 .contractCancelledBanner b {
-  font-weight: 900;
+  font-weight: 400;
 }
 .contractCancelledBadge {
   display: inline-flex;
@@ -603,8 +657,14 @@
   align-items: center !important;
   gap: 16px !important;
   margin: 0 0 24px !important;
-  font-size: 31px !important;
-  font-weight: 900 !important;
+  font-size: 24px !important;
+  font-weight: 400 !important;
+  color: #0b1936 !important;
+  letter-spacing: -0.025em;
+}
+.sourceSectionHeader > span:nth-child(2) {
+  font-size: 24px !important;
+  font-weight: 400 !important;
   color: #0b1936 !important;
   letter-spacing: -0.025em;
 }
@@ -708,7 +768,7 @@
   margin: 2px 0 12px;
 }
 .sourceTotalRow strong {
-  font-size: 42px;
+  font-size: 24px;
   font-weight: 900;
   color: #0b1936;
   line-height: 1;
@@ -768,6 +828,18 @@
   color: #0b1936;
   font-variant-numeric: tabular-nums;
 }
+.statusList [data-tone='gray'] dt,
+.statusList [data-tone='gray'] dd {
+  color: #475569;
+}
+.statusList [data-tone='green'] dt,
+.statusList [data-tone='green'] dd {
+  color: #15803d;
+}
+.statusList [data-tone='amber'] dt,
+.statusList [data-tone='amber'] dd {
+  color: #b45309;
+}
 .sourceLink {
   display: inline-flex;
   justify-content: center;
@@ -788,7 +860,7 @@
   transform: translateX(2px);
 }
 @media (max-width: 1150px) { .contractCards, .contractOverviewGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .overviewMetric { padding: 14px; gap: 10px; } .agentStatusSection .agentCards, .sourceGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-@media (max-width: 800px) { .agentCards, .agentStatusSection .agentCards, .sourceGrid { grid-template-columns: 1fr; } .agentStatusSection, .contractOverviewSection, .sourceStatusSection { padding: 20px 16px 24px !important; } .agentSectionHeader > span:nth-child(2), .contractSectionHeader > span:nth-child(2), .sourceSectionHeader { font-size: 24px !important; } .agentInfoBanner, .contractCancelledBanner { border-radius: 18px; font-size: 15px; } }
+@media (max-width: 800px) { .agentCards, .agentStatusSection .agentCards, .sourceGrid { grid-template-columns: 1fr; } .agentStatusSection, .contractOverviewSection, .sourceStatusSection { padding: 20px 16px 24px !important; } .agentSectionHeader > span:nth-child(2), .contractSectionHeader > span:nth-child(2), .sourceSectionHeader, .sourceSectionHeader > span:nth-child(2) { font-size: 24px !important; } .agentInfoBanner, .contractCancelledBanner { border-radius: 18px; font-size: 13px; } }
 @media (max-width: 600px) { .contractCards, .contractOverviewGrid { grid-template-columns: 1fr; } .summary { max-width: calc(100vw - 64px); } }
 .workPatternBentoCard {
   margin-top: 26px !important;
@@ -820,8 +892,8 @@
 }
 .workPatternTitle {
   margin: 0 !important;
-  font-size: 21px !important;
-  font-weight: 800 !important;
+  font-size: 24px !important;
+  font-weight: 400 !important;
   color: #0f172a !important;
   letter-spacing: -0.025em;
 }
