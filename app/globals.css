@@ -449,7 +449,7 @@ html, body {
 /* ===== Top Bar (3 มิติ — เข้าชุดกับ Sidebar) ===== */
 .topbar {
   position: relative;
-  height: 56px;
+  height: 60px;
   /* ไล่เฉดแนวตั้ง + แสงเรืองมุมซ้าย ให้ดูเป็นแท่งนูน */
   background:
     radial-gradient(90% 180% at 0% 0%, rgba(120,145,255,0.35) 0%, rgba(120,145,255,0) 60%),
@@ -477,6 +477,138 @@ html, body {
   bottom: -1px;
   height: 1px;
   background: linear-gradient(90deg, rgba(120,145,255,0), rgba(146,168,255,0.55), rgba(120,145,255,0));
+}
+
+/* ===== 3D Immersive Frameless W&W Brand Header (Option A — Style 2) ===== */
+.topbar-brand-3d {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  margin-right: auto;
+  min-width: 0;
+  padding: 2px 0;
+}
+
+.topbar-ww-sphere-wrap {
+  position: relative;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+  box-shadow:
+    0 8px 16px rgba(4, 8, 40, 0.65),
+    0 0 14px rgba(239, 68, 68, 0.35);
+  animation: topbarSphereFloat 5.5s ease-in-out infinite;
+}
+
+.topbar-ww-sphere-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  border-radius: 50%;
+  animation: topbarSphereSpin 18s linear infinite;
+  transform-origin: center center;
+}
+
+.topbar-ww-sphere-gloss {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 28% 24%, rgba(255, 255, 255, 0.56) 0%, rgba(255, 255, 255, 0.14) 28%, transparent 54%),
+    radial-gradient(circle at 50% 50%, transparent 62%, rgba(0, 0, 0, 0.44) 100%);
+  box-shadow: inset 0 1.5px 3px rgba(255, 255, 255, 0.6);
+  pointer-events: none;
+}
+
+.topbar-ww-text-col {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.topbar-ww-title {
+  display: block;
+  font-size: 16.5px;
+  font-weight: 900;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+  color: #f8fafc;
+  background: linear-gradient(180deg, #ffffff 0%, #f1f5f9 55%, #cbd5e1 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 1.5px 0 #475569) drop-shadow(0 4px 10px rgba(4, 8, 40, 0.65));
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.topbar-ww-horizon-bar {
+  position: relative;
+  margin-top: 4px;
+  height: 3px;
+  width: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #38bdf8 0%, #60a5fa 45%, #38bdf8 85%, rgba(56, 189, 248, 0.22) 100%);
+  box-shadow:
+    0 0 10px rgba(56, 189, 248, 0.9),
+    0 3px 14px rgba(56, 189, 248, 0.6);
+  overflow: hidden;
+}
+
+.topbar-ww-horizon-bar::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -35%;
+  width: 35%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.95) 50%, transparent 100%);
+  animation: topbarHorizonSweep 4.5s ease-in-out infinite;
+}
+
+.topbar-ww-horizon-reflection {
+  margin-top: 3px;
+  height: 1.5px;
+  width: 86%;
+  margin-left: auto;
+  margin-right: auto;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgba(125, 211, 252, 0.9) 0%, rgba(56, 189, 248, 0.35) 45%, transparent 80%);
+  filter: blur(0.6px);
+}
+
+@keyframes topbarSphereSpin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes topbarSphereFloat {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-2.5px); }
+}
+
+@keyframes topbarHorizonSweep {
+  0% { left: -35%; }
+  65%, 100% { left: 105%; }
+}
+
+@media (max-width: 900px) {
+  .topbar-ww-title {
+    font-size: 13.5px;
+  }
+  .topbar-ww-sphere-wrap {
+    width: 34px;
+    height: 34px;
+  }
+}
+
+@media (max-width: 768px) {
+  .topbar-brand-3d {
+    display: none;
+  }
 }
 
 /* ชิปข้อมูลใน TopBar (เวลาอัปเดต / นาฬิกา) */

@@ -14,9 +14,23 @@ const TopBar: React.FC<TopBarProps> = ({ onToggleSidebar, sidebarCollapsed }) =>
 
   return (
     <div className="topbar">
-      {/* Office label — left side */}
-      <div className="topbar-chip" style={{ marginRight: 'auto' }}>
-        <span style={{ fontWeight: 700 }}>W&amp;W : Strategic Assurance Office/Last-Mile Service Management</span>
+      {/* Office label — 3D Immersive Frameless W&W Brand Header (Option A - Style 2) */}
+      <div className="topbar-brand-3d">
+        <div className="topbar-ww-sphere-wrap" aria-hidden="true">
+          <img
+            src="/images/ww-3d-sphere.png"
+            alt=""
+            className="topbar-ww-sphere-img"
+          />
+          <span className="topbar-ww-sphere-gloss" />
+        </div>
+        <div className="topbar-ww-text-col">
+          <span className="topbar-ww-title">
+            W&amp;W : Strategic Assurance Office/Last-Mile Service Management
+          </span>
+          <div className="topbar-ww-horizon-bar" aria-hidden="true" />
+          <div className="topbar-ww-horizon-reflection" aria-hidden="true" />
+        </div>
       </div>
 
       {/* Mobile hamburger */}
