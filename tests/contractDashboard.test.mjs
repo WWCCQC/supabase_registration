@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { readFileSync } from 'node:fs';
-import { contractColumns, filterContracts, groupContracts, groupStatusCards, onProcessRows } from '../lib/contractDashboard.ts';
+import { contractColumns, filterContracts, groupContracts, groupStatusCards, onProcessRows, countActiveContracts, isCorporateHiddenGroupStatus } from '../lib/contractDashboard.ts';
 
 test('table and Excel columns use the current contract_c schema', () => {
   const keys = contractColumns.map(([key]) => key);
@@ -50,6 +50,16 @@ test('group status cards follow Complete, On Process, Cancel order', () => {
   // case/spacing differences still match; missing groups show 0; other values go last
   assert.deepEqual(groupStatusCards([{ group_status: 'on  process' }, { group_status: 'Other' }]),
     [['Complete', 0], ['on  process', 1], ['Cancel', 0], ['Other', 1]]);
+});
+
+test('corporate cards hide Complete/On Process and count สัญญา Active from contract_status', () => {
+  const rows = [
+    { group_status: 'Complete', contract_status: 'สัญญา Active' },
+    { group_status: 'On Process', contract_status: ' สัญญา active ' },
+    { group_status: 'Cancel', contract_status: 'ยกเลิกสัญญา' },
+  ];
+  assert.equal(countActiveContracts(rows), 2);
+  assert.deepEqual(groupStatusCards(rows).filter(([status]) => !isCorporateHiddenGroupStatus(status)), [['Cancel', 1]]);
 });
 
 test('contract status chart uses only On Process rows grouped by installation_status', () => {

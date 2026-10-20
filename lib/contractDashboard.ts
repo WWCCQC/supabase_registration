@@ -60,6 +60,14 @@ export function groupStatusCards(rows: ContractRow[]) {
     .map(status => [status, 0] as [string, number]);
   return [...counts, ...missing].sort((a, b) => rank(a[0]) - rank(b[0]));
 }
+// หน้า Corporate: ไม่แสดงการ์ด Complete และ On Process
+export const corporateHiddenGroupStatuses = ['Complete', 'On Process'] as const;
+export const isCorporateHiddenGroupStatus = (value: string) =>
+  corporateHiddenGroupStatuses.some(status => groupStatusKey(status) === groupStatusKey(value));
+// การ์ด "สัญญา Active" ของหน้า Corporate นับจากคอลัมน์ contract_status
+export const activeContractStatus = 'สัญญา Active';
+export const countActiveContracts = (rows: ContractRow[]) =>
+  rows.filter(row => groupStatusKey(row.contract_status ?? '') === groupStatusKey(activeContractStatus)).length;
 // กราฟรายละเอียดสถานะสัญญา: เฉพาะรายการ group_status = On Process แยกตาม installation_status
 export function onProcessRows(rows: ContractRow[]) {
   return rows.filter(row => groupStatusKey(row.group_status ?? '') === groupStatusKey('On Process'));

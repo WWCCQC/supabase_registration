@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { Download, Search, X } from 'lucide-react';
-import { ContractRow, contractColumns as trackColumns, solarContractColumns, corporateContractColumns, contractValue, contractCellValue, filterContracts, groupContracts, groupStatusCards, onProcessRows } from '@/lib/contractDashboard';
+import { ContractRow, contractColumns as trackColumns, solarContractColumns, corporateContractColumns, contractValue, contractCellValue, filterContracts, groupContracts, groupStatusCards, onProcessRows, isCorporateHiddenGroupStatus, activeContractStatus, countActiveContracts } from '@/lib/contractDashboard';
 import styles from './ContractDashboard.module.css';
 
 const filterFields = [['rbm', 'RBM'], ['active_status', 'สถานะ Active'], ['contract_status', 'สถานะสัญญา'], ['group_status', 'กลุ่มสถานะ'], ['installation_status', 'เหตุผล'], ['bg_status', 'สถานะ BG']] as const;
@@ -70,7 +70,11 @@ export default function ContractDashboard({ source = 'track-c' }: { source?: 'tr
   const filtered = useMemo(() => filterContracts(rows, query, filters), [rows, query, filters]);
   // การ์ดสรุปนับจากคอลัมน์ group_status โดยไม่นำตัวกรอง group_status มาคิด เพื่อให้การ์ดยังแสดงจำนวนรวมและทุกกลุ่มเสมอ
   const cardRows = useMemo(() => filterContracts(rows, query, { ...filters, group_status: '' }), [rows, query, filters]);
-  const statuses = useMemo(() => groupStatusCards(cardRows), [cardRows]);
+  const isCorporate = source === 'corporate';
+  // หน้า Corporate: ซ่อนการ์ด Complete และ On Process
+  const statuses = useMemo(() => groupStatusCards(cardRows).filter(([status]) => !isCorporate || !isCorporateHiddenGroupStatus(status)), [cardRows, isCorporate]);
+  // หน้า Corporate: การ์ด "สัญญา Active" นับจากคอลัมน์ contract_status (ไม่นำตัวกรอง contract_status มาคิด)
+  const activeCount = useMemo(() => isCorporate ? countActiveContracts(filterContracts(rows, query, { ...filters, contract_status: '' })) : 0, [rows, query, filters, isCorporate]);
   // กราฟรายละเอียดสถานะสัญญา: นับเฉพาะ On Process แยกตามคอลัมน์ installation_status
   const reasonRows = useMemo(() => onProcessRows(filtered), [filtered]);
   const reasons = useMemo(() => groupContracts(reasonRows, 'installation_status'), [reasonRows]);
@@ -112,8 +116,9 @@ export default function ContractDashboard({ source = 'track-c' }: { source?: 'tr
     {error && <div role="alert" className={styles.error}>{error}</div>}
     {loading ? <p role="status">กำลังโหลดข้อมูลสัญญา...</p> : error ? null : <>
       <div className={styles.cards}>
-        <button className={styles.card} aria-pressed={!filters.group_status} onClick={() => changeFilter('group_status', '')}><span>คู่สัญญาทั้งหมด</span><AnimatedCardNumber value={cardRows.length} /><small>ราย</small></button>
-        {statuses.map(([status, count], index) => <button key={status} className={styles.card} data-tone={index % 5} aria-pressed={filters.group_status === status} onClick={() => changeFilter('group_status', filters.group_status === status ? '' : status)}><span>{status}</span><AnimatedCardNumber value={count} /><small>{cardRows.length ? (count / cardRows.length * 100).toFixed(1) : '0.0'}% ของทั้งหมด</small></button>)}
+        <button className={styles.card} aria-pressed={!filters.group_status && (!isCorporate || filters.contract_status !== activeContractStatus)} onClick={() => isCorporate ? setFilters(previous => ({ ...previous, group_status: '', contract_status: '' })) : changeFilter('group_status', '')}><span>คู่สัญญาทั้งหมด</span><AnimatedCardNumber value={cardRows.length} /><small>ราย</small></button>
+        {isCorporate && <button className={styles.card} data-tone={0} aria-pressed={filters.contract_status === activeContractStatus} onClick={() => changeFilter('contract_status', filters.contract_status === activeContractStatus ? '' : activeContractStatus)}><span>{activeContractStatus}</span><AnimatedCardNumber value={activeCount} /><small>{cardRows.length ? (activeCount / cardRows.length * 100).toFixed(1) : '0.0'}% ของทั้งหมด</small></button>}
+        {statuses.map(([status, count], index) => <button key={status} className={styles.card} data-tone={(index + (isCorporate ? 1 : 0)) % 5} aria-pressed={filters.group_status === status} onClick={() => changeFilter('group_status', filters.group_status === status ? '' : status)}><span>{status}</span><AnimatedCardNumber value={count} /><small>{cardRows.length ? (count / cardRows.length * 100).toFixed(1) : '0.0'}% ของทั้งหมด</small></button>)}
       </div>
       <div className={styles.filters}>
         <label className={styles.search}>ค้นหาทุกคอลัมน์<div><Search size={17} /><input value={query} placeholder={isTrackC ? 'ชื่อคู่สัญญา เลขที่สัญญา Depot…' : 'ชื่อคู่สัญญา เลขที่สัญญา เลขทะเบียนบริษัท…'} onChange={event => { setQuery(event.target.value); }} /></div></label>
