@@ -15,7 +15,6 @@ export default function ContractSummary({ onSelectSource }: { onSelectSource: (s
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [query, setQuery] = useState('');
-  const [typeCount, setTypeCount] = useState('');
   const [source, setSource] = useState('');
   const [status, setStatus] = useState('');
   const [page, setPage] = useState(1);
@@ -44,37 +43,19 @@ export default function ContractSummary({ onSelectSource }: { onSelectSource: (s
   const counts = useMemo(() => portfolioCounts(companies), [companies]);
   const overview = useMemo(() => contractOverview(companies), [companies]);
   const combinations = useMemo(() => {
-    const shortThaiLabels: Record<ContractSource, string> = {
-      'track-c': 'งานติดตั้งอินเทอร์เน็ต',
-      solar: 'งานติดตั้งโซล่าร์',
-      corporate: 'งานก่อสร้างโครงสร้าง',
-    };
     const map = new Map<string, {
       label: string;
-      thaiDesc: string;
-      sourceCount: number;
+      sources: ContractSource[];
       count: number;
-      activeCount: number;
-      inactiveCount: number;
     }>();
     for (const company of companies.filter(item => item.matchable)) {
       const key = company.sources.map(item => sourceLabels[item]).join(' + ');
-      const thaiDesc = company.sources.map(item => shortThaiLabels[item]).join(' • ');
-      const isActive = company.contracts.some(({ row }) => {
-        const g = row.group_status?.trim().toLowerCase().replace(/\s+/g, ' ');
-        return g === 'complete' || g === 'on process';
-      });
       const existing = map.get(key) ?? {
         label: key,
-        thaiDesc,
-        sourceCount: company.sources.length,
+        sources: company.sources,
         count: 0,
-        activeCount: 0,
-        inactiveCount: 0,
       };
       existing.count += 1;
-      if (isActive) existing.activeCount += 1;
-      else existing.inactiveCount += 1;
       map.set(key, existing);
     }
     return [...map.values()].sort((a, b) => b.count - a.count);
@@ -82,12 +63,11 @@ export default function ContractSummary({ onSelectSource }: { onSelectSource: (s
   const filtered = useMemo(() => {
     const search = query.trim().toLocaleLowerCase('th');
     return companies.filter(company =>
-      (!typeCount || (company.matchable && company.sources.length === Number(typeCount))) &&
       (!source || company.sources.includes(source as ContractSource)) &&
       (!status || company.contracts.some(contract => contract.row.group_status?.trim().toLowerCase() === status.toLowerCase())) &&
       (!search || [company.name, company.registration, ...company.contracts.flatMap(contract => Object.values(contract.row))]
         .some(value => String(value ?? '').toLocaleLowerCase('th').includes(search))));
-  }, [companies, query, typeCount, source, status]);
+  }, [companies, query, source, status]);
   const pages = Math.max(1, Math.ceil(filtered.length / 25));
   const current = Math.min(page, pages);
   const visible = filtered.slice((current - 1) * 25, current * 25);
@@ -180,11 +160,9 @@ export default function ContractSummary({ onSelectSource }: { onSelectSource: (s
                       <span className={styles.agentTitleAccent}>{titleSub}</span>
                     </h4>
                   </header>
-                  <div className={styles.agentPctRow}>
-                    <span className={styles.agentPctPill}>{pctLabel}</span>
-                  </div>
                   <div className={styles.agentValueRow}>
                     <strong>{number(value)} <small>ราย</small></strong>
+                    <span className={styles.agentPctPill}>{pctLabel}</span>
                   </div>
                   <p className={styles.agentDetailText}>{detail}</p>
                   <div className={styles.agentProgressTrack} aria-hidden="true">
@@ -323,13 +301,13 @@ export default function ContractSummary({ onSelectSource }: { onSelectSource: (s
                     <img src={meta.image} alt="" />
                   </span>
                   <div className={styles.sourceTitleGroup}>
-                    <h4>{sourceLabels[contractSource]}</h4>
+                    <div className={styles.sourceTitleRow}>
+                      <h4>{sourceLabels[contractSource]}</h4>
+                      <strong className={styles.sourceInlineTotal}>{number(summary.total)}</strong>
+                    </div>
                     <p className={styles.sourceSubtitle}>{meta.subtitle}</p>
                   </div>
                 </header>
-                <div className={styles.sourceTotalRow}>
-                  <strong>{number(summary.total)}</strong>
-                </div>
                 <dl className={styles.statusList}>
                   <div data-tone="green"><dt>เสร็จสมบูรณ์</dt><span className={styles.statusLeader} aria-hidden="true" /><dd>{number(summary.complete)}</dd></div>
                   <div data-tone="amber"><dt>อยู่ระหว่างดำเนินการ</dt><span className={styles.statusLeader} aria-hidden="true" /><dd>{number(summary.onProcess)}</dd></div>
@@ -346,95 +324,87 @@ export default function ContractSummary({ onSelectSource }: { onSelectSource: (s
             <span className={styles.workPatternLogoBadge} aria-hidden="true">
               <Layers size={22} strokeWidth={2.2} />
             </span>
-            <h3 id="work-pattern-title" className={styles.workPatternTitle}>รูปแบบงานที่รับ</h3>
+            <h3 id="work-pattern-title" className={styles.workPatternTitle}>Scope of work by provider</h3>
           </div>
           {(() => {
-            const maxPatternCount = Math.max(...combinations.map(item => item.count), 1);
-            const totalMatchableCompanies = counts.companies || combinations.reduce((acc, item) => acc + item.count, 0) || 1;
+            const totalMatchableCompanies = combinations.reduce((acc, item) => acc + item.count, 0) || counts.companies || 1;
+            const renderCheckBadge = (hasSource: boolean, tone: 'blue' | 'teal' | 'purple', label: string) => {
+              if (!hasSource) {
+                return <span className={styles.patternDash} aria-label={`ไม่รับงาน ${label}`}>—</span>;
+              }
+              return (
+                <span className={styles.patternCheckCircle} data-tone={tone} aria-label={`รับงาน ${label}`}>
+                  <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                    <path d="M3.8 8.3L6.7 11.2L12.3 5.2" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </span>
+              );
+            };
             return (
-              <div className={styles.patternMatrixList}>
-                {combinations.map((item, index) => {
-                  const rank = index + 1;
-                  const isTopRank = rank <= 2;
-                  const totalBarWidthPct = Math.max((item.count / maxPatternCount) * 100, 12);
-                  const shareOfAllPct = ((item.count / totalMatchableCompanies) * 100).toFixed(1);
-                  const activeExactPct = item.count > 0 ? ((item.activeCount / item.count) * 100).toFixed(1) : '0.0';
-                  const inactiveExactPct = item.count > 0 ? ((item.inactiveCount / item.count) * 100).toFixed(1) : '0.0';
-                  const activeSegPct = item.count > 0 ? (item.activeCount / item.count) * 100 : 0;
-                  const inactiveSegPct = item.count > 0 ? (item.inactiveCount / item.count) * 100 : 0;
-
-                  return (
-                    <div
-                      key={item.label}
-                      className={`${styles.patternMatrixRow} ${isTopRank ? styles.patternMatrixRowTop : ''}`}
-                    >
-                      <div className={styles.patternMatrixLeft}>
-                        <span
-                          className={`${styles.patternRankBadge} ${
-                            isTopRank ? styles.patternRankBadgeTop : styles.patternRankBadgeDefault
-                          }`}
+              <div className={styles.patternTableWrap} role="region" aria-labelledby="work-pattern-title">
+                <div className={styles.patternTable}>
+                  <div className={styles.patternTableHead}>
+                    <div className={styles.patternColWork}>รูปแบบงาน</div>
+                    <div className={styles.patternColSource}>Track C</div>
+                    <div className={styles.patternColSource}>Solar</div>
+                    <div className={styles.patternColSource}>Corporate</div>
+                    <div className={styles.patternColCount}>จำนวนตัวแทน</div>
+                    <div className={styles.patternColShare}>สัดส่วน</div>
+                  </div>
+                  <div className={styles.patternTableBody}>
+                    {combinations.map((item, index) => {
+                      const pctNum = (item.count / totalMatchableCompanies) * 100;
+                      const pctLabel = pctNum.toFixed(1);
+                      const hasTrackC = item.sources.includes('track-c');
+                      const hasSolar = item.sources.includes('solar');
+                      const hasCorporate = item.sources.includes('corporate');
+                      return (
+                        <div
+                          key={item.label}
+                          className={`${styles.patternTableRow} ${index % 2 === 1 ? styles.patternTableRowAlt : ''}`}
                         >
-                          #{rank}
-                        </span>
-                        <div className={styles.patternInfo}>
-                          <div className={styles.patternNameRow}>
-                            <span className={styles.patternName}>{item.label}</span>
-                            <span
-                              className={`${styles.patternTypeBadge} ${
-                                item.sourceCount > 1 ? styles.patternTypeMulti : styles.patternTypeSingle
-                              }`}
-                            >
-                              {item.sourceCount} ประเภท
-                            </span>
+                          <div className={styles.patternColWork}>{item.label}</div>
+                          <div className={styles.patternColSource}>
+                            {renderCheckBadge(hasTrackC, 'blue', 'Track C')}
                           </div>
-                          <div className={styles.patternQuickSub}>{item.thaiDesc}</div>
-                        </div>
-                      </div>
-
-                      <div className={styles.patternMatrixMiddle}>
-                        <div className={styles.patternProgressTrack}>
-                          <div
-                            className={styles.patternProgressFillGroup}
-                            style={{ width: `${totalBarWidthPct}%` }}
-                          >
-                            {item.activeCount > 0 && (
+                          <div className={styles.patternColSource}>
+                            {renderCheckBadge(hasSolar, 'teal', 'Solar')}
+                          </div>
+                          <div className={styles.patternColSource}>
+                            {renderCheckBadge(hasCorporate, 'purple', 'Corporate')}
+                          </div>
+                          <div className={styles.patternColCount}>
+                            <strong>{number(item.count)}</strong> <span>ราย</span>
+                          </div>
+                          <div className={styles.patternColShare}>
+                            <span className={styles.patternSharePct}>{pctLabel}%</span>
+                            <div className={styles.patternShareBarTrack} aria-hidden="true">
                               <div
-                                className={styles.patternSegActive}
-                                style={{ width: `${activeSegPct}%` }}
-                                title={`Active: ${number(item.activeCount)} ราย (${activeExactPct}%)`}
-                              >
-                                {number(item.activeCount)}
-                              </div>
-                            )}
-                            {item.inactiveCount > 0 && (
-                              <div
-                                className={styles.patternSegInactive}
-                                style={{ width: `${inactiveSegPct}%` }}
-                                title={`Inactive: ${number(item.inactiveCount)} ราย (${inactiveExactPct}%)`}
-                              >
-                                {number(item.inactiveCount)}
-                              </div>
-                            )}
+                                className={styles.patternShareBarFill}
+                                style={{ width: `${Math.max(pctNum, 1.4)}%` }}
+                              />
+                            </div>
                           </div>
                         </div>
-
-                        <div className={styles.patternMicroPillsRow}>
-                          <span className={styles.patternMicroActive}>
-                            Active: {number(item.activeCount)} ({activeExactPct}%)
-                          </span>
-                          <span className={styles.patternMicroInactive}>
-                            Inactive: {number(item.inactiveCount)} ({inactiveExactPct}%)
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className={styles.patternMatrixRight}>
-                        <div className={styles.patternTotalNumber}>{number(item.count)}</div>
-                        <div className={styles.patternTotalShare}>{shareOfAllPct}% ของทั้งหมด</div>
+                      );
+                    })}
+                  </div>
+                  <div className={styles.patternTableFoot}>
+                    <div className={styles.patternColWork}>รวม</div>
+                    <div className={styles.patternColSource} />
+                    <div className={styles.patternColSource} />
+                    <div className={styles.patternColSource} />
+                    <div className={styles.patternColCount}>
+                      <strong>{number(totalMatchableCompanies)}</strong> <span>ราย</span>
+                    </div>
+                    <div className={styles.patternColShare}>
+                      <span className={styles.patternSharePct}>100.0%</span>
+                      <div className={styles.patternShareBarTrack} aria-hidden="true">
+                        <div className={styles.patternShareBarFill} style={{ width: '100%' }} />
                       </div>
                     </div>
-                  );
-                })}
+                  </div>
+                </div>
               </div>
             );
           })()}
@@ -444,7 +414,6 @@ export default function ContractSummary({ onSelectSource }: { onSelectSource: (s
         <div className={styles.sectionHeader}><h2>คู่สัญญารายบริษัท</h2></div>
         <div className={styles.filters}>
           <label className={styles.search}><Search size={17} aria-hidden="true" /><input aria-label="ค้นหาคู่สัญญา" placeholder="ชื่อบริษัท เลขทะเบียน เลขที่สัญญา…" value={query} onChange={event => updateFilter(setQuery, event.target.value)} /></label>
-          <label>จำนวนประเภทงาน<select value={typeCount} onChange={event => updateFilter(setTypeCount, event.target.value)}><option value="">ทั้งหมด</option><option value="1">1 ประเภท</option><option value="2">2 ประเภท</option><option value="3">3 ประเภท</option></select></label>
           <label>ประเภทสัญญา<select value={source} onChange={event => updateFilter(setSource, event.target.value)}><option value="">ทั้งหมด</option>{contractSources.map(item => <option value={item} key={item}>{sourceLabels[item]}</option>)}</select></label>
           <label>กลุ่มสถานะ<select value={status} onChange={event => updateFilter(setStatus, event.target.value)}><option value="">ทั้งหมด</option>{groupStatuses.map(item => <option value={item} key={item}>{item}</option>)}</select></label>
           <button className={styles.export} type="button" onClick={exportExcel} disabled={exporting || !filtered.length}><Download size={17} aria-hidden="true" />{exporting ? 'กำลังส่งออก...' : 'Export Excel'}</button>
@@ -452,18 +421,18 @@ export default function ContractSummary({ onSelectSource }: { onSelectSource: (s
         {counts.missingRegistration > 0 && <p className={styles.note}>ไม่พบเลขทะเบียนบริษัท {number(counts.missingRegistration)} รายการ แสดงแยกไว้ในตาราง</p>}
         {exportError && <p role="alert" className={styles.error}>{exportError}</p>}
         <div className={styles.tableWrap} role="region" tabIndex={0} aria-label="สรุปสัญญารายบริษัท"><table>
-          <thead><tr><th scope="col">ชื่อคู่สัญญา</th><th scope="col">เลขทะเบียนบริษัท</th><th scope="col">ประเภทงานที่รับ</th><th scope="col">จำนวนประเภท</th><th scope="col">จำนวนสัญญา</th><th scope="col">กลุ่มสถานะ</th><th scope="col">รายละเอียด</th></tr></thead>
+          <thead><tr><th scope="col">ชื่อคู่สัญญา</th><th scope="col">เลขทะเบียนบริษัท</th><th scope="col">ประเภทงานที่รับ</th><th scope="col">จำนวนสัญญา</th><th scope="col">กลุ่มสถานะ</th><th scope="col">รายละเอียด</th></tr></thead>
           <tbody>{visible.map(company => <Fragment key={company.key}><tr>
             <td className={styles.name}>{company.name}</td><td className={styles.numeric}>{company.registration ? maskRegistration(company.registration) : 'ไม่ระบุ'}</td>
             <td><div className={styles.tags}>{company.sources.map(item => <span key={item} className={styles.tag}>{sourceLabels[item]}</span>)}</div></td>
-            <td className={styles.numeric}>{company.matchable ? company.sources.length : '-'}</td><td className={styles.numeric}>{company.contracts.length}</td>
+            <td className={styles.numeric}>{company.contracts.length}</td>
             <td><div className={styles.tags}>{[...new Set(company.contracts.map(({ row }) => row.group_status?.trim() || 'ไม่ระบุ'))].map(group => <span className={styles.status} key={group}>{group}</span>)}</div></td>
             <td><button type="button" className={styles.expand} aria-label={`รายละเอียดสัญญา ${company.name}`} aria-expanded={expanded === company.key} onClick={() => setExpanded(previous => previous === company.key ? null : company.key)}>{expanded === company.key ? <ChevronUp size={18} /> : <ChevronDown size={18} />}</button></td>
-          </tr>{expanded === company.key && <tr><td colSpan={7} className={styles.details}><div className={styles.detailGrid}>
+          </tr>{expanded === company.key && <tr><td colSpan={6} className={styles.details}><div className={styles.detailGrid}>
             <div className={styles.detailHead}><span>ประเภทสัญญา</span><span>เลขที่สัญญา</span><span>สถานะสัญญา</span><span>กลุ่มสถานะ</span><span>วันเริ่ม</span><span>วันสิ้นสุด</span><span>เหตุผล</span></div>
             {company.contracts.map(({ source: contractSource, row }, index) => <div className={styles.detailRow} key={`${contractSource}-${row.uuid ?? index}`}><span>{sourceLabels[contractSource]}</span><span>{row.contract_no || '-'}</span><span>{row.contract_status || '-'}</span><span>{row.group_status || '-'}</span><span>{row.start_contract || '-'}</span><span>{row.end_contract || '-'}</span><span>{row.installation_status || '-'}</span></div>)}
           </div></td></tr>}</Fragment>)}
-          {!visible.length && <tr><td colSpan={7} className={styles.empty}>ไม่พบคู่สัญญาตามเงื่อนไข</td></tr>}</tbody>
+          {!visible.length && <tr><td colSpan={6} className={styles.empty}>ไม่พบคู่สัญญาตามเงื่อนไข</td></tr>}</tbody>
         </table></div>
         <div className={styles.pagination}><span>หน้า {current} / {pages}</span><button type="button" aria-label="หน้าก่อนหน้า" disabled={current === 1} onClick={() => { setPage(current - 1); setExpanded(null); }}><ChevronLeft size={18} /></button><button type="button" aria-label="หน้าถัดไป" disabled={current === pages} onClick={() => { setPage(current + 1); setExpanded(null); }}><ChevronRight size={18} /></button></div>
       </section>
