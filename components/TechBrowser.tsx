@@ -1192,13 +1192,14 @@ export default function TechBrowser() {
   /* ---------- Render ---------- */
   return (
     <div style={{ width: '100%', overflow: 'hidden', padding: '16px', boxSizing: 'border-box' }}>
-      {/* ===== KPI Cards - Single Row ===== */}
+      {/* ===== KPI Cards - Single Row (Dark Glass Monotone) ===== */}
       <div style={{
-        background: "linear-gradient(160deg, #1e3a5f 0%, #1a3050 50%, #162840 100%)",
+        background: "radial-gradient(900px 220px at 15% 0%, rgba(14, 165, 233, 0.18), transparent 65%), linear-gradient(180deg, #0f172a 0%, #0b1324 100%)",
         padding: "18px",
         borderRadius: "16px",
         marginBottom: "16px",
-        boxShadow: "0 8px 32px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.06)"
+        border: "1px solid rgba(51, 65, 85, 0.8)",
+        boxShadow: "0 12px 32px -8px rgba(2, 6, 23, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.08)"
       }}>
         {/* Header */}
         <div style={{
@@ -1206,57 +1207,61 @@ export default function TechBrowser() {
           justifyContent: "space-between",
           alignItems: "center",
           marginBottom: "14px",
-          padding: "8px 10px",
-          background: "rgba(255,255,255,0.06)",
+          padding: "8px 12px",
+          background: "rgba(255,255,255,0.05)",
           borderRadius: "10px",
           backdropFilter: "blur(4px)",
           border: "1px solid rgba(255,255,255,0.10)"
         }}>
-          <div style={{ fontSize: "14px", fontWeight: 700, color: "rgba(255,255,255,0.92)", letterSpacing: "0.3px" }}>
+          <div style={{ fontSize: "14px", fontWeight: 700, color: "rgba(255,255,255,0.95)", letterSpacing: "0.3px" }}>
             📊 ข้อมูลสรุป (Dashboard)
           </div>
           <DataUpdatedChip style={{ marginLeft: "auto" }} />
         </div>
 
-        {/* Row 1: All cards in single row */}
-        <div
-          className="kpi-grid"
-        >
-          {/* 1. Total */}
+        {/* Row 1: All 10 cards in single row */}
+        <div className="kpi-grid">
+          {/* 1. Hero Total Technicians */}
           <div
             style={{
               ...cardStyle,
               cursor: "pointer",
-              background: "linear-gradient(145deg, #1e40af 0%, #1e3a8a 60%, #172554 100%)",
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "space-between",
+              padding: "11px 12px",
+              background: "linear-gradient(145deg, #0284c7 0%, #1e40af 55%, #172554 100%)",
               color: "white",
-              border: "1px solid rgba(255,255,255,0.15)",
-              boxShadow: "0 4px 15px rgba(30,58,138,0.5), inset 0 1px 0 rgba(255,255,255,0.12)",
+              border: "1px solid rgba(125, 211, 252, 0.35)",
+              boxShadow: "0 10px 24px -6px rgba(2, 132, 199, 0.45), inset 0 1px 1px rgba(255, 255, 255, 0.28)",
             }}
             onClick={() => {
               clearFilters();
               setQ("");
             }}
+            onMouseOver={(e) => { e.currentTarget.style.transform = "translateY(-3px)"; }}
+            onMouseOut={(e) => { e.currentTarget.style.transform = "translateY(0)"; }}
             title="คลิกเพื่อล้างตัวกรองทั้งหมด"
           >
-            <div style={{ ...cardTitle, color: "rgba(255,255,255,0.7)", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.5px" }}>
-              👷 ช่างทั้งหมด (คน)
+            <div style={{ fontSize: 11, fontWeight: 700, color: "#bae6fd", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+              👷 ช่างทั้งหมด
             </div>
-            <div style={{ ...cardNumber, color: "white", fontSize: 16, textShadow: "0 1px 4px rgba(0,0,0,0.3)" }}>
+            <div style={{ fontSize: 19, fontWeight: 800, color: "#ffffff", letterSpacing: "-0.4px", marginTop: 4, fontVariantNumeric: "tabular-nums" }}>
               {kpiLoading ? <span className="skeleton skeleton-kpi-number" /> : (kpiInitialized ? `${(kpi?.total ?? 0).toLocaleString()}` : <span className="skeleton skeleton-kpi-number" />)}
+            </div>
+            <div style={{ fontSize: 11, fontWeight: 600, color: "rgba(186, 230, 253, 0.85)", marginTop: 4 }}>
+              100% (คน)
             </div>
           </div>
 
-          {/* 2-3. Installation, Repair */}
-          {["Installation", "Repair"].map((name, index) => {
+          {/* 2-3. Installation, Repair (Sky Rim Light) */}
+          {["Installation", "Repair"].map((name) => {
             const f = (kpi?.by_work_type || []).find(
               (x) => (x.key || "").trim().toLowerCase() === name.toLowerCase()
             );
             const count = f?.count ?? 0;
             const pct = f?.percent ?? 0;
-            const gradients = [
-              "linear-gradient(145deg, #0284c7 0%, #0369a1 60%, #075985 100%)",
-              "linear-gradient(145deg, #0891b2 0%, #0e7490 60%, #155e75 100%)",
-            ];
+            const isSelected = q === name;
 
             return (
               <div
@@ -1264,43 +1269,53 @@ export default function TechBrowser() {
                 style={{
                   ...cardStyle,
                   cursor: "pointer",
-                  background: gradients[index],
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "space-between",
+                  padding: "11px 12px",
+                  background: "linear-gradient(145deg, rgba(30, 41, 59, 0.86) 0%, rgba(15, 23, 42, 0.94) 100%)",
                   color: "white",
-                  border: q === name ? "2px solid rgba(255,255,255,0.9)" : "1px solid rgba(255,255,255,0.15)",
-                  transition: "all 0.22s ease",
-                  transform: q === name ? "scale(1.05)" : "scale(1)",
-                  boxShadow: q === name ? "0 8px 24px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.2)" : "0 4px 12px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.12)",
+                  border: isSelected ? "1.5px solid #38bdf8" : "1px solid rgba(255,255,255,0.10)",
+                  transform: isSelected ? "translateY(-3px)" : "translateY(0)",
+                  boxShadow: isSelected
+                    ? "0 12px 26px -6px rgba(14, 165, 233, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.22)"
+                    : "0 8px 20px -6px rgba(2, 6, 23, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.14)",
                 }}
                 onClick={() => {
-                  if (q === name) { setQ(""); } else { clearFilters(); setQ(name); }
+                  if (isSelected) { setQ(""); } else { clearFilters(); setQ(name); }
                 }}
-                onMouseOver={(e) => { if (q !== name) e.currentTarget.style.transform = "scale(1.02)"; }}
-                onMouseOut={(e) => { if (q !== name) e.currentTarget.style.transform = "scale(1)"; }}
+                onMouseOver={(e) => { if (!isSelected) e.currentTarget.style.transform = "translateY(-3px)"; }}
+                onMouseOut={(e) => { if (!isSelected) e.currentTarget.style.transform = "translateY(0)"; }}
                 title={`คลิกเพื่อกรองตาม ${name}`}
               >
-                <div style={{ ...cardTitle, color: "rgba(255,255,255,0.72)", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 2.5, background: "linear-gradient(90deg, #38bdf8, #67e8f9)" }} />
+                <div style={{ fontSize: 10.5, fontWeight: 700, color: "#cbd5e1", textTransform: "uppercase", letterSpacing: "0.4px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                   {name === "Installation" ? "🔧 " : "🛠️ "}{name}
                 </div>
-                <div style={{ ...cardNumber, color: "white", fontSize: 15, textShadow: "0 1px 4px rgba(0,0,0,0.3)" }}>
-                  {kpiLoading ? <span className="skeleton skeleton-kpi-number" /> : `${count.toLocaleString()} (${pct.toFixed(1)}%)`}
+                <div style={{ fontSize: 17, fontWeight: 800, color: "#ffffff", letterSpacing: "-0.3px", marginTop: 4, fontVariantNumeric: "tabular-nums" }}>
+                  {kpiLoading ? <span className="skeleton skeleton-kpi-number" /> : count.toLocaleString()}
+                </div>
+                <div style={{ marginTop: 6 }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: "#7dd3fc", marginBottom: 3 }}>
+                    {kpiLoading ? "" : `${pct.toFixed(1)}%`}
+                  </div>
+                  <div style={{ height: 4, width: "100%", borderRadius: 999, background: "#334155", overflow: "hidden" }}>
+                    <div style={{ height: "100%", width: `${kpiLoading ? 0 : Math.max(pct > 0 ? 4 : 0, Math.min(100, pct))}%`, background: "#38bdf8", borderRadius: 999 }} />
+                  </div>
                 </div>
               </div>
             );
           })}
 
-          {/* 4-6. Providers: WW-Provider, True Tech, เถ้าแก่เทค */}
+          {/* 4-6. Providers: WW-Provider, True Tech, เถ้าแก่เทค (Emerald Rim Light) */}
           {["WW-Provider", "True Tech", "เถ้าแก่เทค"].map((name, index) => {
             const f = (kpi?.by_provider || []).find(
               (x) => (x.key || "").trim().toLowerCase() === name.toLowerCase()
             );
             const count = f?.count ?? 0;
-            const pct = f?.percent ?? 0;
-            const providerGradients = [
-              "linear-gradient(145deg, #3b82f6 0%, #2563eb 60%, #1d4ed8 100%)",
-              "linear-gradient(145deg, #10b981 0%, #059669 60%, #047857 100%)",
-              "linear-gradient(145deg, #f59e0b 0%, #d97706 60%, #b45309 100%)",
-            ];
-            const icons = ["🔵", "🟢", "🟡"];
+            const pct = Number(f?.percent ?? 0);
+            const icons = ["🏢", "⚡", "🤝"];
+            const isSelected = q === name;
 
             return (
               <div
@@ -1308,149 +1323,128 @@ export default function TechBrowser() {
                 style={{
                   ...cardStyle,
                   cursor: "pointer",
-                  background: providerGradients[index],
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "space-between",
+                  padding: "11px 12px",
+                  background: "linear-gradient(145deg, rgba(30, 41, 59, 0.86) 0%, rgba(15, 23, 42, 0.94) 100%)",
                   color: "white",
-                  border: q === name ? "2px solid rgba(255,255,255,0.9)" : "1px solid rgba(255,255,255,0.15)",
-                  transition: "all 0.22s ease",
-                  transform: q === name ? "scale(1.05)" : "scale(1)",
-                  boxShadow: q === name ? "0 8px 24px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.2)" : "0 4px 12px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.12)",
+                  border: isSelected ? "1.5px solid #34d399" : "1px solid rgba(255,255,255,0.10)",
+                  transform: isSelected ? "translateY(-3px)" : "translateY(0)",
+                  boxShadow: isSelected
+                    ? "0 12px 26px -6px rgba(16, 185, 129, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.22)"
+                    : "0 8px 20px -6px rgba(2, 6, 23, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.14)",
                 }}
                 onClick={() => {
-                  if (q === name) { setQ(""); } else { clearFilters(); setQ(name); }
+                  if (isSelected) { setQ(""); } else { clearFilters(); setQ(name); }
                 }}
-                onMouseOver={(e) => { if (q !== name) e.currentTarget.style.transform = "scale(1.02)"; }}
-                onMouseOut={(e) => { if (q !== name) e.currentTarget.style.transform = "scale(1)"; }}
+                onMouseOver={(e) => { if (!isSelected) e.currentTarget.style.transform = "translateY(-3px)"; }}
+                onMouseOut={(e) => { if (!isSelected) e.currentTarget.style.transform = "translateY(0)"; }}
                 title={`คลิกเพื่อกรองตาม ${name}`}
               >
-                <div style={{ ...cardTitle, color: "rgba(255,255,255,0.72)", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 2.5, background: "linear-gradient(90deg, #34d399, #5eead4)" }} />
+                <div style={{ fontSize: 10.5, fontWeight: 700, color: "#cbd5e1", textTransform: "uppercase", letterSpacing: "0.4px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                   {icons[index]} {name}
                 </div>
-                <div style={{ ...cardNumber, color: "white", fontSize: 15, textShadow: "0 1px 4px rgba(0,0,0,0.3)" }}>
-                  {kpiLoading ? <span className="skeleton skeleton-kpi-number" /> : (kpiInitialized ? `${count.toLocaleString()} (${pct}%)` : <span className="skeleton skeleton-kpi-number" />)}
+                <div style={{ fontSize: 17, fontWeight: 800, color: "#ffffff", letterSpacing: "-0.3px", marginTop: 4, fontVariantNumeric: "tabular-nums" }}>
+                  {kpiLoading ? <span className="skeleton skeleton-kpi-number" /> : (kpiInitialized ? count.toLocaleString() : <span className="skeleton skeleton-kpi-number" />)}
+                </div>
+                <div style={{ marginTop: 6 }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: "#6ee7b7", marginBottom: 3 }}>
+                    {kpiLoading || !kpiInitialized ? "" : `${pct}%`}
+                  </div>
+                  <div style={{ height: 4, width: "100%", borderRadius: 999, background: "#334155", overflow: "hidden" }}>
+                    <div style={{ height: "100%", width: `${kpiLoading || !kpiInitialized ? 0 : Math.max(pct > 0 ? 4 : 0, Math.min(100, pct))}%`, background: "#34d399", borderRadius: 999 }} />
+                  </div>
                 </div>
               </div>
             );
           })}
 
-          {/* Depot Code */}
+          {/* 7. Hero Depot Code */}
           <div
             style={{
               ...cardStyle,
               cursor: "pointer",
-              background: "linear-gradient(145deg, #4f46e5 0%, #4338ca 60%, #3730a3 100%)",
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "space-between",
+              padding: "11px 12px",
+              background: "linear-gradient(145deg, #0284c7 0%, #1e40af 55%, #172554 100%)",
               color: "white",
-              border: "1px solid rgba(255,255,255,0.15)",
-              boxShadow: "0 4px 15px rgba(79,70,229,0.5), inset 0 1px 0 rgba(255,255,255,0.12)",
+              border: "1px solid rgba(125, 211, 252, 0.35)",
+              boxShadow: "0 10px 24px -6px rgba(2, 132, 199, 0.45), inset 0 1px 1px rgba(255, 255, 255, 0.28)",
             }}
             onClick={() => { clearFilters(); setQ(""); }}
+            onMouseOver={(e) => { e.currentTarget.style.transform = "translateY(-3px)"; }}
+            onMouseOut={(e) => { e.currentTarget.style.transform = "translateY(0)"; }}
             title="Depot Code ทั้งหมด"
           >
-            <div style={{ ...cardTitle, color: "rgba(255,255,255,0.72)", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.5px" }}>
-              🏪 Depot Code
+            <div style={{ fontSize: 11, fontWeight: 700, color: "#bae6fd", textTransform: "uppercase", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+              🏛️ Depot Code
             </div>
-            <div style={{ ...cardNumber, color: "white", fontSize: 16, textShadow: "0 1px 4px rgba(0,0,0,0.3)" }}>
+            <div style={{ fontSize: 19, fontWeight: 800, color: "#ffffff", letterSpacing: "-0.4px", marginTop: 4, fontVariantNumeric: "tabular-nums" }}>
               {depotCodeLoading ? <span className="skeleton skeleton-kpi-number" /> : depotCodeCount.toLocaleString()}
             </div>
-          </div>
-
-          {/* Depot WW-Provider */}
-          <div
-            style={{
-              ...cardStyle,
-              cursor: "pointer",
-              background: q === "Depot WW-Provider"
-                ? "linear-gradient(145deg, #1d4ed8 0%, #1e40af 60%, #1e3a8a 100%)"
-                : "linear-gradient(145deg, #3b82f6 0%, #2563eb 60%, #1d4ed8 100%)",
-              color: "white",
-              border: q === "Depot WW-Provider" ? "2px solid rgba(255,255,255,0.9)" : "1px solid rgba(255,255,255,0.15)",
-              transition: "all 0.22s ease",
-              transform: q === "Depot WW-Provider" ? "scale(1.05)" : "scale(1)",
-              boxShadow: q === "Depot WW-Provider" ? "0 8px 24px rgba(29,78,216,0.5), inset 0 1px 0 rgba(255,255,255,0.2)" : "0 4px 12px rgba(59,130,246,0.35), inset 0 1px 0 rgba(255,255,255,0.12)",
-            }}
-            onClick={() => {
-              if (q === "Depot WW-Provider") { setQ(""); } else { clearFilters(); setQ("Depot WW-Provider"); }
-            }}
-            onMouseOver={(e) => { if (q !== "Depot WW-Provider") e.currentTarget.style.transform = "scale(1.02)"; }}
-            onMouseOut={(e) => { if (q !== "Depot WW-Provider") e.currentTarget.style.transform = "scale(1)"; }}
-            title="คลิกเพื่อกรองตาม Depot WW-Provider"
-          >
-            <div style={{ ...cardTitle, color: "rgba(255,255,255,0.72)", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.5px" }}>
-              🏭 Depot WW
-            </div>
-            <div style={{ ...cardNumber, color: "white", fontSize: 15, textShadow: "0 1px 4px rgba(0,0,0,0.3)" }}>
-              {depotByProviderLoading ? <span className="skeleton skeleton-kpi-number" /> : (() => {
-                const count = depotByProvider["WW-Provider"] || 0;
-                const percentage = depotCodeCount > 0 ? ((count / depotCodeCount) * 100).toFixed(1) : 0;
-                return `${count} (${percentage}%)`;
-              })()}
+            <div style={{ fontSize: 11, fontWeight: 600, color: "rgba(186, 230, 253, 0.85)", marginTop: 4 }}>
+              100% (แห่ง)
             </div>
           </div>
 
-          {/* Depot True Tech */}
-          <div
-            style={{
-              ...cardStyle,
-              cursor: "pointer",
-              background: q === "Depot True Tech"
-                ? "linear-gradient(145deg, #047857 0%, #065f46 60%, #064e3b 100%)"
-                : "linear-gradient(145deg, #10b981 0%, #059669 60%, #047857 100%)",
-              color: "white",
-              border: q === "Depot True Tech" ? "2px solid rgba(255,255,255,0.9)" : "1px solid rgba(255,255,255,0.15)",
-              transition: "all 0.22s ease",
-              transform: q === "Depot True Tech" ? "scale(1.05)" : "scale(1)",
-              boxShadow: q === "Depot True Tech" ? "0 8px 24px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.2)" : "0 4px 12px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.12)",
-            }}
-            onClick={() => {
-              if (q === "Depot True Tech") { setQ(""); } else { clearFilters(); setQ("Depot True Tech"); }
-            }}
-            onMouseOver={(e) => { if (q !== "Depot True Tech") e.currentTarget.style.transform = "scale(1.02)"; }}
-            onMouseOut={(e) => { if (q !== "Depot True Tech") e.currentTarget.style.transform = "scale(1)"; }}
-            title="คลิกเพื่อกรองตาม Depot True Tech"
-          >
-            <div style={{ ...cardTitle, color: "rgba(255,255,255,0.72)", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.5px" }}>
-              🟢 Depot True Tech
-            </div>
-            <div style={{ ...cardNumber, color: "white", fontSize: 15, textShadow: "0 1px 4px rgba(0,0,0,0.3)" }}>
-              {depotByProviderLoading ? <span className="skeleton skeleton-kpi-number" /> : (() => {
-                const count = depotByProvider["True Tech"] || 0;
-                const percentage = depotCodeCount > 0 ? ((count / depotCodeCount) * 100).toFixed(1) : 0;
-                return `${count} (${percentage}%)`;
-              })()}
-            </div>
-          </div>
+          {/* 8-10. Depot by Provider: Depot WW, Depot True Tech, Depot เถ้าแก่เทค (Indigo Rim Light) */}
+          {[
+            { queryKey: "Depot WW-Provider", providerKey: "WW-Provider", label: "🏭 Depot WW" },
+            { queryKey: "Depot True Tech", providerKey: "True Tech", label: "🏢 Depot True Tech" },
+            { queryKey: "Depot เถ้าแก่เทค", providerKey: "เถ้าแก่เทค", label: "🏠 Depot เถ้าแก่เทค" },
+          ].map(({ queryKey, providerKey, label }) => {
+            const count = depotByProvider[providerKey] || 0;
+            const pctNum = depotCodeCount > 0 ? (count / depotCodeCount) * 100 : 0;
+            const pctLabel = depotCodeCount > 0 ? pctNum.toFixed(1) : "0";
+            const isSelected = q === queryKey;
 
-          {/* Depot เถ้าแก่เทค */}
-          <div
-            style={{
-              ...cardStyle,
-              cursor: "pointer",
-              background: q === "Depot เถ้าแก่เทค"
-                ? "linear-gradient(145deg, #b45309 0%, #92400e 60%, #78350f 100%)"
-                : "linear-gradient(145deg, #f59e0b 0%, #d97706 60%, #b45309 100%)",
-              color: "white",
-              border: q === "Depot เถ้าแก่เทค" ? "2px solid rgba(255,255,255,0.9)" : "1px solid rgba(255,255,255,0.15)",
-              transition: "all 0.22s ease",
-              transform: q === "Depot เถ้าแก่เทค" ? "scale(1.05)" : "scale(1)",
-              boxShadow: q === "Depot เถ้าแก่เทค" ? "0 8px 24px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.2)" : "0 4px 12px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.12)",
-            }}
-            onClick={() => {
-              if (q === "Depot เถ้าแก่เทค") { setQ(""); } else { clearFilters(); setQ("Depot เถ้าแก่เทค"); }
-            }}
-            onMouseOver={(e) => { if (q !== "Depot เถ้าแก่เทค") e.currentTarget.style.transform = "scale(1.02)"; }}
-            onMouseOut={(e) => { if (q !== "Depot เถ้าแก่เทค") e.currentTarget.style.transform = "scale(1)"; }}
-            title="คลิกเพื่อกรองตาม Depot เถ้าแก่เทค"
-          >
-            <div style={{ ...cardTitle, color: "rgba(255,255,255,0.72)", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.5px" }}>
-              🟡 Depot เถ้าแก่เทค
-            </div>
-            <div style={{ ...cardNumber, color: "white", fontSize: 15, textShadow: "0 1px 4px rgba(0,0,0,0.3)" }}>
-              {depotByProviderLoading ? <span className="skeleton skeleton-kpi-number" /> : (() => {
-                const count = depotByProvider["เถ้าแก่เทค"] || 0;
-                const percentage = depotCodeCount > 0 ? ((count / depotCodeCount) * 100).toFixed(1) : 0;
-                return `${count} (${percentage}%)`;
-              })()}
-            </div>
-          </div>
+            return (
+              <div
+                key={queryKey}
+                style={{
+                  ...cardStyle,
+                  cursor: "pointer",
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "space-between",
+                  padding: "11px 12px",
+                  background: "linear-gradient(145deg, rgba(30, 41, 59, 0.86) 0%, rgba(15, 23, 42, 0.94) 100%)",
+                  color: "white",
+                  border: isSelected ? "1.5px solid #818cf8" : "1px solid rgba(255,255,255,0.10)",
+                  transform: isSelected ? "translateY(-3px)" : "translateY(0)",
+                  boxShadow: isSelected
+                    ? "0 12px 26px -6px rgba(99, 102, 241, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.22)"
+                    : "0 8px 20px -6px rgba(2, 6, 23, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.14)",
+                }}
+                onClick={() => {
+                  if (isSelected) { setQ(""); } else { clearFilters(); setQ(queryKey); }
+                }}
+                onMouseOver={(e) => { if (!isSelected) e.currentTarget.style.transform = "translateY(-3px)"; }}
+                onMouseOut={(e) => { if (!isSelected) e.currentTarget.style.transform = "translateY(0)"; }}
+                title={`คลิกเพื่อกรองตาม ${queryKey}`}
+              >
+                <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 2.5, background: "linear-gradient(90deg, #818cf8, #7dd3fc)" }} />
+                <div style={{ fontSize: 10.5, fontWeight: 700, color: "#cbd5e1", textTransform: "uppercase", letterSpacing: "0.4px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                  {label}
+                </div>
+                <div style={{ fontSize: 17, fontWeight: 800, color: "#ffffff", letterSpacing: "-0.3px", marginTop: 4, fontVariantNumeric: "tabular-nums" }}>
+                  {depotByProviderLoading ? <span className="skeleton skeleton-kpi-number" /> : count.toLocaleString()}
+                </div>
+                <div style={{ marginTop: 6 }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: "#a5b4fc", marginBottom: 3 }}>
+                    {depotByProviderLoading ? "" : `${pctLabel}%`}
+                  </div>
+                  <div style={{ height: 4, width: "100%", borderRadius: 999, background: "#334155", overflow: "hidden" }}>
+                    <div style={{ height: "100%", width: `${depotByProviderLoading ? 0 : Math.max(pctNum > 0 ? 4 : 0, Math.min(100, pctNum))}%`, background: "#818cf8", borderRadius: 999 }} />
+                  </div>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
       {/* ===== /KPI Cards ===== */}
