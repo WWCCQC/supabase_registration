@@ -410,29 +410,106 @@ export default function ContractSummary({ onSelectSource }: { onSelectSource: (s
           })()}
         </section>
       </section>
-      <section className={styles.band} aria-label="รายชื่อคู่สัญญาทั้งหมด">
-        <div className={styles.sectionHeader}><h2>คู่สัญญารายบริษัท</h2></div>
+      <section className={`${styles.band} ${styles.tableSection}`} aria-label="รายชื่อคู่สัญญาทั้งหมด">
+        <div className={styles.sectionHeader}>
+          <div className={styles.tableTitleGroup}>
+            <h2>คู่สัญญารายบริษัท</h2>
+            <span className={styles.rowCountBadge}>{number(filtered.length)} บริษัท</span>
+          </div>
+          <button className={styles.export} type="button" onClick={exportExcel} disabled={exporting || !filtered.length}>
+            <Download size={16} aria-hidden="true" />
+            {exporting ? 'กำลังส่งออก...' : 'Export Excel'}
+          </button>
+        </div>
         <div className={styles.filters}>
-          <label className={styles.search}><Search size={17} aria-hidden="true" /><input aria-label="ค้นหาคู่สัญญา" placeholder="ชื่อบริษัท เลขทะเบียน เลขที่สัญญา…" value={query} onChange={event => updateFilter(setQuery, event.target.value)} /></label>
-          <label>ประเภทสัญญา<select value={source} onChange={event => updateFilter(setSource, event.target.value)}><option value="">ทั้งหมด</option>{contractSources.map(item => <option value={item} key={item}>{sourceLabels[item]}</option>)}</select></label>
-          <label>กลุ่มสถานะ<select value={status} onChange={event => updateFilter(setStatus, event.target.value)}><option value="">ทั้งหมด</option>{groupStatuses.map(item => <option value={item} key={item}>{item}</option>)}</select></label>
-          <button className={styles.export} type="button" onClick={exportExcel} disabled={exporting || !filtered.length}><Download size={17} aria-hidden="true" />{exporting ? 'กำลังส่งออก...' : 'Export Excel'}</button>
+          <label className={styles.search}>
+            <span className={styles.filterTitle}>
+              <i className={styles.searchDot} aria-hidden="true" />
+              ค้นหาคู่สัญญา
+            </span>
+            <div className={styles.searchBox}>
+              <span className={styles.searchBadge} aria-hidden="true">
+                <Search size={15} />
+              </span>
+              <input
+                aria-label="ค้นหาคู่สัญญา"
+                placeholder="ชื่อบริษัท เลขทะเบียน เลขที่สัญญา…"
+                value={query}
+                onChange={event => updateFilter(setQuery, event.target.value)}
+              />
+            </div>
+          </label>
+          <label className={styles.filterItem}>
+            <span className={styles.filterTitle}>ประเภทสัญญา</span>
+            <div className={styles.selectBox} data-active={Boolean(source) || undefined}>
+              <i className={styles.filterDot} data-tone="0" aria-hidden="true" />
+              <select value={source} onChange={event => updateFilter(setSource, event.target.value)}>
+                <option value="">ทั้งหมด</option>
+                {contractSources.map(item => <option value={item} key={item}>{sourceLabels[item]}</option>)}
+              </select>
+            </div>
+          </label>
+          <label className={styles.filterItem}>
+            <span className={styles.filterTitle}>กลุ่มสถานะ</span>
+            <div className={styles.selectBox} data-active={Boolean(status) || undefined}>
+              <i className={styles.filterDot} data-tone="1" aria-hidden="true" />
+              <select value={status} onChange={event => updateFilter(setStatus, event.target.value)}>
+                <option value="">ทั้งหมด</option>
+                {groupStatuses.map(item => <option value={item} key={item}>{item}</option>)}
+              </select>
+            </div>
+          </label>
         </div>
         {counts.missingRegistration > 0 && <p className={styles.note}>ไม่พบเลขทะเบียนบริษัท {number(counts.missingRegistration)} รายการ แสดงแยกไว้ในตาราง</p>}
         {exportError && <p role="alert" className={styles.error}>{exportError}</p>}
         <div className={styles.tableWrap} role="region" tabIndex={0} aria-label="สรุปสัญญารายบริษัท"><table>
           <thead><tr><th scope="col">ชื่อคู่สัญญา</th><th scope="col">เลขทะเบียนบริษัท</th><th scope="col">ประเภทงานที่รับ</th><th scope="col">จำนวนสัญญา</th><th scope="col">กลุ่มสถานะ</th><th scope="col">รายละเอียด</th></tr></thead>
-          <tbody>{visible.map(company => <Fragment key={company.key}><tr>
-            <td className={styles.name}>{company.name}</td><td className={styles.numeric}>{company.registration ? maskRegistration(company.registration) : 'ไม่ระบุ'}</td>
-            <td><div className={styles.tags}>{company.sources.map(item => <span key={item} className={styles.tag}>{sourceLabels[item]}</span>)}</div></td>
-            <td className={styles.numeric}>{company.contracts.length}</td>
-            <td><div className={styles.tags}>{[...new Set(company.contracts.map(({ row }) => row.group_status?.trim() || 'ไม่ระบุ'))].map(group => <span className={styles.status} key={group}>{group}</span>)}</div></td>
-            <td><button type="button" className={styles.expand} aria-label={`รายละเอียดสัญญา ${company.name}`} aria-expanded={expanded === company.key} onClick={() => setExpanded(previous => previous === company.key ? null : company.key)}>{expanded === company.key ? <ChevronUp size={18} /> : <ChevronDown size={18} />}</button></td>
-          </tr>{expanded === company.key && <tr><td colSpan={6} className={styles.details}><div className={styles.detailGrid}>
-            <div className={styles.detailHead}><span>ประเภทสัญญา</span><span>เลขที่สัญญา</span><span>สถานะสัญญา</span><span>กลุ่มสถานะ</span><span>วันเริ่ม</span><span>วันสิ้นสุด</span><span>เหตุผล</span></div>
-            {company.contracts.map(({ source: contractSource, row }, index) => <div className={styles.detailRow} key={`${contractSource}-${row.uuid ?? index}`}><span>{sourceLabels[contractSource]}</span><span>{row.contract_no || '-'}</span><span>{row.contract_status || '-'}</span><span>{row.group_status || '-'}</span><span>{row.start_contract || '-'}</span><span>{row.end_contract || '-'}</span><span>{row.installation_status || '-'}</span></div>)}
-          </div></td></tr>}</Fragment>)}
-          {!visible.length && <tr><td colSpan={6} className={styles.empty}>ไม่พบคู่สัญญาตามเงื่อนไข</td></tr>}</tbody>
+          <tbody>{visible.map(company => {
+            const maskedReg = company.registration ? maskRegistration(company.registration) : '';
+            return <Fragment key={company.key}><tr className={styles.companyRow} data-expanded={expanded === company.key || undefined}>
+              <td className={styles.name}>{company.name}</td>
+              <td className={styles.numeric}>
+                {maskedReg && maskedReg.startsWith('x') && maskedReg.length > 5 ? (
+                  <span className={styles.regNo}>
+                    <span className={styles.regMask}>{maskedReg.slice(0, -5)}</span>
+                    <strong>{maskedReg.slice(-5)}</strong>
+                  </span>
+                ) : (maskedReg || 'ไม่ระบุ')}
+              </td>
+              <td><div className={styles.tags}>{company.sources.map(item => <span key={item} className={styles.tag} data-source={item}>{sourceLabels[item]}</span>)}</div></td>
+              <td className={styles.numeric}><span className={styles.countBadge}>{company.contracts.length}</span></td>
+              <td><div className={styles.tags}>{[...new Set(company.contracts.map(({ row }) => row.group_status?.trim() || 'ไม่ระบุ'))].map(group => {
+                const lower = group.toLowerCase();
+                const tone = lower === 'complete' ? 'complete' : lower.includes('process') ? 'process' : lower.includes('cancel') ? 'cancel' : 'default';
+                return (
+                  <span className={styles.status} data-group={tone} key={group}>
+                    {tone === 'complete' ? '✓ ' : tone === 'process' ? '⏳ ' : ''}
+                    {group}
+                  </span>
+                );
+              })}</div></td>
+              <td><button type="button" className={styles.expand} aria-label={`รายละเอียดสัญญา ${company.name}`} aria-expanded={expanded === company.key} onClick={() => setExpanded(previous => previous === company.key ? null : company.key)}>{expanded === company.key ? <ChevronUp size={18} /> : <ChevronDown size={18} />}</button></td>
+            </tr>{expanded === company.key && <tr className={styles.detailTr}><td colSpan={6} className={styles.details}><div className={styles.detailGrid}>
+              <div className={styles.detailHead}><span>ประเภทสัญญา</span><span>เลขที่สัญญา</span><span>สถานะสัญญา</span><span>กลุ่มสถานะ</span><span>วันเริ่ม</span><span>วันสิ้นสุด</span><span>เหตุผล</span></div>
+              {company.contracts.map(({ source: contractSource, row }, index) => {
+                const grp = row.group_status?.trim() || '-';
+                const grpLower = grp.toLowerCase();
+                const grpTone = grpLower === 'complete' ? 'complete' : grpLower.includes('process') ? 'process' : grpLower.includes('cancel') ? 'cancel' : 'default';
+                return (
+                  <div className={styles.detailRow} key={`${contractSource}-${row.uuid ?? index}`}>
+                    <span><b className={styles.tag} data-source={contractSource}>{sourceLabels[contractSource]}</b></span>
+                    <span className={styles.contractNo}>{row.contract_no || '-'}</span>
+                    <span>{row.contract_status || '-'}</span>
+                    <span><b className={styles.status} data-group={grpTone}>{grpTone === 'complete' ? '✓ ' : grpTone === 'process' ? '⏳ ' : ''}{grp}</b></span>
+                    <span>{row.start_contract || '-'}</span>
+                    <span>{row.end_contract || '-'}</span>
+                    <span>{row.installation_status || '-'}</span>
+                  </div>
+                );
+              })}
+            </div></td></tr>}</Fragment>;
+          })}
+          {!visible.length && <tr className={styles.emptyRow}><td colSpan={6} className={styles.empty}>ไม่พบคู่สัญญาตามเงื่อนไข</td></tr>}</tbody>
         </table></div>
         <div className={styles.pagination}><span>หน้า {current} / {pages}</span><button type="button" aria-label="หน้าก่อนหน้า" disabled={current === 1} onClick={() => { setPage(current - 1); setExpanded(null); }}><ChevronLeft size={18} /></button><button type="button" aria-label="หน้าถัดไป" disabled={current === pages} onClick={() => { setPage(current + 1); setExpanded(null); }}><ChevronRight size={18} /></button></div>
       </section>
