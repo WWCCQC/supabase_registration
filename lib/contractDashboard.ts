@@ -72,6 +72,25 @@ export const countActiveContracts = (rows: ContractRow[]) =>
 export function onProcessRows(rows: ContractRow[]) {
   return rows.filter(row => groupStatusKey(row.group_status ?? '') === groupStatusKey('On Process'));
 }
+// กราฟรายละเอียดสัญญาตามพื้นที่ (หน้า Corporate): แยกตามคอลัมน์ rbm และนับจำนวนตามคอลัมน์ active_status
+export function rbmActiveStatusBreakdown(rows: ContractRow[], rbmRank: (value: string) => number) {
+  const statuses = groupContracts(rows, 'active_status').map(([status]) => status)
+    .sort((a, b) => Number(b.toLowerCase() === 'active') - Number(a.toLowerCase() === 'active'));
+  const areas = new Map<string, Map<string, number>>();
+  for (const row of rows) {
+    const rbm = contractValue(row.rbm);
+    const status = contractValue(row.active_status);
+    const counts = areas.get(rbm) ?? new Map<string, number>();
+    counts.set(status, (counts.get(status) ?? 0) + 1);
+    areas.set(rbm, counts);
+  }
+  const items = [...areas].map(([rbm, counts]) => ({
+    rbm,
+    total: [...counts.values()].reduce((sum, count) => sum + count, 0),
+    counts: statuses.map(status => [status, counts.get(status) ?? 0] as [string, number]),
+  })).sort((a, b) => rbmRank(a.rbm) - rbmRank(b.rbm) || a.rbm.localeCompare(b.rbm, 'th', { numeric: true }));
+  return { statuses, items, max: Math.max(0, ...items.map(item => item.total)) };
+}
 export function filterContracts(rows: ContractRow[], query: string, filters: Record<string, string>) {
   const search = query.trim().toLocaleLowerCase('th');
   return rows.filter(row => Object.entries(filters).every(([key, value]) => !value || contractValue(row[key]) === value)

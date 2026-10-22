@@ -2,8 +2,9 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { Download, Search, X } from 'lucide-react';
-import { ContractRow, contractColumns as trackColumns, solarContractColumns, corporateContractColumns, contractValue, contractCellValue, filterContracts, groupContracts, groupStatusCards, onProcessRows, isCorporateHiddenGroupStatus, activeContractStatus, countActiveContracts } from '@/lib/contractDashboard';
+import { ContractRow, contractColumns as trackColumns, solarContractColumns, corporateContractColumns, contractValue, contractCellValue, filterContracts, groupContracts, groupStatusCards, onProcessRows, isCorporateHiddenGroupStatus, activeContractStatus, countActiveContracts, rbmActiveStatusBreakdown } from '@/lib/contractDashboard';
 import styles from './ContractDashboard.module.css';
+import RbmContractChart from './charts/RbmContractChart';
 
 const filterFields = [['rbm', 'RBM'], ['active_status', 'สถานะ Active'], ['contract_status', 'สถานะสัญญา'], ['group_status', 'กลุ่มสถานะ'], ['installation_status', 'เหตุผล'], ['bg_status', 'สถานะ BG']] as const;
 const rbmOrder = ['R1', 'R2', 'R3', 'R4', 'R5', 'R6', 'R7', 'R8'];
@@ -78,6 +79,8 @@ export default function ContractDashboard({ source = 'track-c' }: { source?: 'tr
   // กราฟรายละเอียดสถานะสัญญา: นับเฉพาะ On Process แยกตามคอลัมน์ installation_status
   const reasonRows = useMemo(() => onProcessRows(filtered), [filtered]);
   const reasons = useMemo(() => groupContracts(reasonRows, 'installation_status'), [reasonRows]);
+  // หน้า Corporate: กราฟรายละเอียดสัญญาตามพื้นที่ (rbm) นับจำนวนตาม active_status
+  const rbmBreakdown = useMemo(() => isCorporate ? rbmActiveStatusBreakdown(filtered, rbmRank) : null, [filtered, isCorporate]);
   // ค่าเริ่มต้นแสดงเฉพาะ Active; เมื่อมีการค้นหาหรือใช้ตัวกรอง จะแสดงทุกสถานะตามเงื่อนไข
   const isFiltering = query.trim() !== '' || Object.values(filters).some(Boolean);
   // เปิดหน้าปกติ: แสดงเฉพาะ Active และเรียง RBM จากน้อยไปมาก / ค้นหาหรือกรอง: แสดงทุกสถานะตามลำดับเดิม
@@ -125,6 +128,7 @@ export default function ContractDashboard({ source = 'track-c' }: { source?: 'tr
         {filterFields.filter(([key]) => isTrackC || (key !== 'bg_status' && (source !== 'corporate' || key !== 'rbm'))).map(([key, label]) => <label key={key}>{label}<select value={filters[key] || ''} onChange={event => changeFilter(key, event.target.value)}><option value="">ทั้งหมด</option>{groupContracts(rows, key).sort(([a], [b]) => key === 'rbm' ? rbmRank(a) - rbmRank(b) : 0).map(([value]) => <option key={value}>{value}</option>)}</select></label>)}
         <button title="ล้างตัวกรอง" aria-label="ล้างตัวกรอง" onClick={() => { setFilters({}); setQuery(''); }}><X size={18} /></button>
       </div>
+      {rbmBreakdown && <RbmContractChart data={rbmBreakdown} />}
        <section className={styles.reasons}><h3>รายละเอียดสถานะสัญญา · {number(reasonRows.length)} ราย</h3>{reasons.length ? <div className={styles.bars}>{reasons.map(([reason, count]) => <div key={reason} className={styles.barRow}><span>{reason}</span><div className={styles.track}><div style={{ width: `${count / reasonRows.length * 100}%` }} /></div><strong>{number(count)} <small>({(count / reasonRows.length * 100).toFixed(1)}%)</small></strong></div>)}</div> : <p>ไม่พบข้อมูลตามเงื่อนไข</p>}</section>
       <section><div className={styles.header}><h3>รายละเอียดสัญญา</h3><div className={styles.tableActions}><span>{number(tableRows.length)} รายการ</span><button type="button" onClick={exportExcel} disabled={loading || exporting || !tableRows.length}><Download size={17} aria-hidden="true" />{exporting ? 'กำลังส่งออก...' : 'Export Excel'}</button></div></div>
         {exportError && <p role="alert" className={styles.error}>{exportError}</p>}
