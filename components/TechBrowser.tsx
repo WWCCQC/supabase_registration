@@ -1244,7 +1244,7 @@ export default function TechBrowser() {
             title="คลิกเพื่อล้างตัวกรองทั้งหมด"
           >
             <div style={{ fontSize: 11, fontWeight: 700, color: "#bae6fd", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-              👷 ช่างทั้งหมด
+              ช่างทั้งหมด
             </div>
             <div style={{ fontSize: 19, fontWeight: 800, color: "#ffffff", letterSpacing: "-0.4px", marginTop: 4, fontVariantNumeric: "tabular-nums" }}>
               {kpiLoading ? <span className="skeleton skeleton-kpi-number" /> : (kpiInitialized ? `${(kpi?.total ?? 0).toLocaleString()}` : <span className="skeleton skeleton-kpi-number" />)}
@@ -1290,7 +1290,7 @@ export default function TechBrowser() {
               >
                 <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 2.5, background: "linear-gradient(90deg, #38bdf8, #67e8f9)" }} />
                 <div style={{ fontSize: 10.5, fontWeight: 700, color: "#cbd5e1", textTransform: "uppercase", letterSpacing: "0.4px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                  {name === "Installation" ? "🔧 " : "🛠️ "}{name}
+                  {name}
                 </div>
                 <div style={{ fontSize: 17, fontWeight: 800, color: "#ffffff", letterSpacing: "-0.3px", marginTop: 4, fontVariantNumeric: "tabular-nums" }}>
                   {kpiLoading ? <span className="skeleton skeleton-kpi-number" /> : count.toLocaleString()}
@@ -1308,13 +1308,12 @@ export default function TechBrowser() {
           })}
 
           {/* 4-6. Providers: WW-Provider, True Tech, เถ้าแก่เทค (Emerald Rim Light) */}
-          {["WW-Provider", "True Tech", "เถ้าแก่เทค"].map((name, index) => {
+          {["WW-Provider", "True Tech", "เถ้าแก่เทค"].map((name) => {
             const f = (kpi?.by_provider || []).find(
               (x) => (x.key || "").trim().toLowerCase() === name.toLowerCase()
             );
             const count = f?.count ?? 0;
             const pct = Number(f?.percent ?? 0);
-            const icons = ["🏢", "⚡", "🤝"];
             const isSelected = q === name;
 
             return (
@@ -1344,7 +1343,7 @@ export default function TechBrowser() {
               >
                 <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 2.5, background: "linear-gradient(90deg, #34d399, #5eead4)" }} />
                 <div style={{ fontSize: 10.5, fontWeight: 700, color: "#cbd5e1", textTransform: "uppercase", letterSpacing: "0.4px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                  {icons[index]} {name}
+                  {name === "WW-Provider" ? "Provider" : name}
                 </div>
                 <div style={{ fontSize: 17, fontWeight: 800, color: "#ffffff", letterSpacing: "-0.3px", marginTop: 4, fontVariantNumeric: "tabular-nums" }}>
                   {kpiLoading ? <span className="skeleton skeleton-kpi-number" /> : (kpiInitialized ? count.toLocaleString() : <span className="skeleton skeleton-kpi-number" />)}
@@ -1381,21 +1380,21 @@ export default function TechBrowser() {
             title="Depot Code ทั้งหมด"
           >
             <div style={{ fontSize: 11, fontWeight: 700, color: "#bae6fd", textTransform: "uppercase", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-              🏛️ Depot Code
+              Depot Code
             </div>
             <div style={{ fontSize: 19, fontWeight: 800, color: "#ffffff", letterSpacing: "-0.4px", marginTop: 4, fontVariantNumeric: "tabular-nums" }}>
               {depotCodeLoading ? <span className="skeleton skeleton-kpi-number" /> : depotCodeCount.toLocaleString()}
             </div>
             <div style={{ fontSize: 11, fontWeight: 600, color: "rgba(186, 230, 253, 0.85)", marginTop: 4 }}>
-              100% (แห่ง)
+              100%
             </div>
           </div>
 
           {/* 8-10. Depot by Provider: Depot WW, Depot True Tech, Depot เถ้าแก่เทค (Indigo Rim Light) */}
           {[
-            { queryKey: "Depot WW-Provider", providerKey: "WW-Provider", label: "🏭 Depot WW" },
-            { queryKey: "Depot True Tech", providerKey: "True Tech", label: "🏢 Depot True Tech" },
-            { queryKey: "Depot เถ้าแก่เทค", providerKey: "เถ้าแก่เทค", label: "🏠 Depot เถ้าแก่เทค" },
+            { queryKey: "Depot WW-Provider", providerKey: "WW-Provider", label: "Provider" },
+            { queryKey: "Depot True Tech", providerKey: "True Tech", label: "True Tech" },
+            { queryKey: "Depot เถ้าแก่เทค", providerKey: "เถ้าแก่เทค", label: "เถ้าแก่เทค" },
           ].map(({ queryKey, providerKey, label }) => {
             const count = depotByProvider[providerKey] || 0;
             const pctNum = depotCodeCount > 0 ? (count / depotCodeCount) * 100 : 0;

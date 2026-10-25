@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 import React from "react";
 import * as XLSX from "xlsx";
 import {
@@ -13,6 +13,7 @@ import {
 } from "recharts";
 
 type ChartItem = {
+  year: number;
   month: number;
   monthLabel: string;
   shortLabel: string;
@@ -148,10 +149,15 @@ export default function CardExpiryTrendChart({ selectedMonth, onMonthClick }: Ca
       const res = await fetch("/api/chart/card-expiry-trend", { cache: "no-store" });
       const json = await res.json();
       if (!res.ok) throw new Error(json?.error || "Failed to fetch");
-      const mapped = (json.chartData || []).map((d: any) => ({
-        ...d,
-        notRenewedCount: Math.max(0, d.count - d.renewCount),
-      }));
+      const fallbackYear = json.summary?.year ?? new Date().getFullYear();
+      const mapped: ChartItem[] = (json.chartData || [])
+        .map((d: any) => ({
+          ...d,
+          year: Number(d.year ?? fallbackYear),
+          notRenewedCount: Math.max(0, d.count - d.renewCount),
+        }))
+        // เรียงตามปี แล้วตามเดือน
+        .sort((a: ChartItem, b: ChartItem) => a.year - b.year || a.month - b.month);
       setChartData(mapped);
       setSummary(json.summary || null);
     } catch (e: any) {
@@ -352,7 +358,7 @@ export default function CardExpiryTrendChart({ selectedMonth, onMonthClick }: Ca
             axisLine={{ stroke: "#d8dee8" }}
             tickLine={false}
             interval={0}
-            height={34}
+            height={46}
             tick={(tickProps: any) => {
               const { x, y, payload } = tickProps;
               const item = visibleData[payload?.index ?? -1];
@@ -361,11 +367,11 @@ export default function CardExpiryTrendChart({ selectedMonth, onMonthClick }: Ca
                 <g transform={`translate(${x},${y})`}>
                   {isCurrent && (
                     <rect
-                      x={-23}
-                      y={5}
-                      width={46}
-                      height={19}
-                      rx={9.5}
+                      x={-24}
+                      y={4}
+                      width={48}
+                      height={34}
+                      rx={10}
                       fill="#fee2e2"
                       stroke="#fecaca"
                       style={{ filter: "drop-shadow(0 2px 3px rgba(185,28,28,0.25))" }}
@@ -373,7 +379,7 @@ export default function CardExpiryTrendChart({ selectedMonth, onMonthClick }: Ca
                   )}
                   <text
                     x={0}
-                    y={19}
+                    y={18}
                     textAnchor="middle"
                     style={{
                       fontSize: 11,
@@ -382,6 +388,18 @@ export default function CardExpiryTrendChart({ selectedMonth, onMonthClick }: Ca
                     }}
                   >
                     {payload?.value}
+                  </text>
+                  <text
+                    x={0}
+                    y={32}
+                    textAnchor="middle"
+                    style={{
+                      fontSize: 10,
+                      fontWeight: isCurrent ? 700 : 500,
+                      fill: isCurrent ? "#dc2626" : "#94a3b8",
+                    }}
+                  >
+                    {item?.year}
                   </text>
                 </g>
               );

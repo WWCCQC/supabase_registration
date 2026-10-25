@@ -134,6 +134,7 @@ export async function GET(request: NextRequest) {
       totalExpiring += count;
       totalRenew += renewCount;
       chartData.push({
+        year: currentYear,
         month: m,
         monthLabel: `${thaiMonths[m]} ${currentYear}`,
         shortLabel: thaiMonths[m],
