@@ -83,8 +83,10 @@ export default function RbmContractChart({ data, source = 'corporate' }: { data:
     {data.items.length ? <div className={styles.body}>
       <figure className={styles.visual}>
         <img
-          src="https://sggunyytungtyhezchft.supabase.co/storage/v1/object/public/other/Generated_Image_rRVoPh2CS08bw8xx_1%20(1).png"
-          alt="Wire & Wireless Corporate"
+          src={source === 'track-c'
+            ? 'https://sggunyytungtyhezchft.supabase.co/storage/v1/object/public/other/installer.png'
+            : 'https://sggunyytungtyhezchft.supabase.co/storage/v1/object/public/other/Generated_Image_rRVoPh2CS08bw8xx_1%20(1).png'}
+          alt={source === 'track-c' ? 'Wire & Wireless Track C' : 'Wire & Wireless Corporate'}
           loading="lazy"
         />
         <figcaption className={styles.visualCaption}>
