@@ -23,7 +23,7 @@ const splitRbm = (rbm: string) => {
   return { code, name: rest.join('_') };
 };
 
-export default function RbmContractChart({ data }: { data: Breakdown }) {
+export default function RbmContractChart({ data, source = 'corporate' }: { data: Breakdown; source?: 'track-c' | 'solar' | 'corporate' }) {
   const grandTotal = data.items.reduce((sum, item) => sum + item.total, 0);
   const activeIndex = data.statuses.findIndex(status => status.toLowerCase() === 'active');
   const activeTotal = activeIndex === -1 ? 0 : data.items.reduce((sum, item) => sum + item.counts[activeIndex][1], 0);
@@ -48,7 +48,7 @@ export default function RbmContractChart({ data }: { data: Breakdown }) {
   return <section className={styles.panel}>
     <header className={styles.head}>
       <div>
-        <span className={styles.eyebrow}><i aria-hidden="true" />Corporate Contract Overview</span>
+        <span className={styles.eyebrow}><i aria-hidden="true" />{source === 'track-c' ? 'Track C Contract Overview' : 'Corporate Contract Overview'}</span>
         <h3>รายละเอียดสัญญาตามพื้นที่</h3>
       </div>
       <div className={styles.legend}>

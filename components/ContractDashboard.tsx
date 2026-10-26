@@ -230,8 +230,15 @@ export default function ContractDashboard({ source = 'track-c' }: { source?: 'tr
   // กราฟรายละเอียดสถานะสัญญา: นับเฉพาะ On Process แยกตามคอลัมน์ installation_status
   const reasonRows = useMemo(() => onProcessRows(filtered), [filtered]);
   const reasons = useMemo(() => groupContracts(reasonRows, 'installation_status'), [reasonRows]);
-  // หน้า Corporate: กราฟรายละเอียดสัญญาตามพื้นที่ (rbm) นับจำนวนตาม active_status
-  const rbmBreakdown = useMemo(() => isCorporate ? rbmActiveStatusBreakdown(filtered, rbmRank) : null, [filtered, isCorporate]);
+  // หน้า Track C และ Corporate: กราฟรายละเอียดสัญญาตามพื้นที่ (rbm) นับจำนวนตาม active_status (หน้า Track C แสดงเฉพาะ Active)
+  const rbmBreakdown = useMemo(() => {
+    if (isCorporate) return rbmActiveStatusBreakdown(filtered, rbmRank);
+    if (isTrackC) {
+      const activeOnly = filtered.filter(row => contractValue(row.active_status).toLowerCase() === 'active');
+      return rbmActiveStatusBreakdown(activeOnly, rbmRank);
+    }
+    return null;
+  }, [filtered, isCorporate, isTrackC]);
   // ค่าเริ่มต้นแสดงเฉพาะ Active; เมื่อมีการค้นหาหรือใช้ตัวกรอง จะแสดงทุกสถานะตามเงื่อนไข
   const isFiltering = query.trim() !== '' || Object.values(filters).some(Boolean);
   // เปิดหน้าปกติ: แสดงเฉพาะ Active และเรียง RBM จากน้อยไปมาก / ค้นหาหรือกรอง: แสดงทุกสถานะตามลำดับเดิม
@@ -359,7 +366,7 @@ export default function ContractDashboard({ source = 'track-c' }: { source?: 'tr
           <X size={17} />
         </button>
       </div>
-      {rbmBreakdown && <RbmContractChart data={rbmBreakdown} />}
+      {rbmBreakdown && <RbmContractChart data={rbmBreakdown} source={source} />}
       {!isCorporate && <section className={styles.reasons}><h3>รายละเอียดสถานะสัญญา · {number(reasonRows.length)} ราย</h3>{reasons.length ? <div className={styles.bars}>{reasons.map(([reason, count]) => <div key={reason} className={styles.barRow}><span>{reason}</span><div className={styles.track}><div style={{ width: `${count / reasonRows.length * 100}%` }} /></div><strong>{number(count)} <small>({(count / reasonRows.length * 100).toFixed(1)}%)</small></strong></div>)}</div> : <p>ไม่พบข้อมูลตามเงื่อนไข</p>}</section>}
       <section className={styles.tableSection}>
         <div className={styles.header}>
