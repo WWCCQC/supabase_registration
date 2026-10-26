@@ -7,7 +7,7 @@ export const contractColumns = [
   ['start_contract', 'วันเริ่มสัญญา'], ['end_contract', 'วันสิ้นสุดสัญญา'],
   ['contract_no', 'เลขที่สัญญา'],
   ['contract_guarantee_amount', 'วงเงินค้ำประกันรวม'],
-  ['contract_technician_team_count', 'จำนวนทีมช่าง'], ['bg_status', 'สถานะ BG'],
+  ['bg_status', 'สถานะ BG'],
   ['installation_status', 'เหตุผล'],
 ] as const;
 export const solarContractColumns = [
