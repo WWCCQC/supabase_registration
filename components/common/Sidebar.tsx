@@ -98,12 +98,12 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle }) => {
           <Link
             href="/contract"
             className={itemClass(pathname === '/contract')}
-            title="Contract"
+            title="ข้อมูลสัญญา"
           >
             <span className="snav-icon">
               <FileText style={{ fill: 'none' }} aria-hidden="true" />
             </span>
-            {!collapsed && <span className="snav-text">Contract</span>}
+            {!collapsed && <span className="snav-text">ข้อมูลสัญญา</span>}
           </Link>
         )}
 
