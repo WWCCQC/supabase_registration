@@ -744,3 +744,52 @@
   .providerPill strong { font-size: 12px; }
   .footerPill { width: 100%; justify-content: center; }
 }
+
+/* 3D Overall Share (three.js) */
+.donutCanvas {
+  position: absolute;
+  inset: -22px;
+}
+
+.donutCanvas canvas {
+  outline: none;
+}
+
+button.providerBentoCard {
+  width: 100%;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+button.providerBentoCard:focus-visible {
+  outline: 3px solid #1d63dc;
+  outline-offset: 2px;
+}
+
+.providerCardActive {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.14);
+}
+
+.providerCardDimmed {
+  opacity: 0.45;
+}
+
+.segDimmed {
+  opacity: 0.25;
+}
+
+.segWW,
+.segTT,
+.segTK,
+.providerBentoCard {
+  transition: opacity 0.2s ease, transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.rankedBy {
+  font-weight: 600;
+  color: #64748b;
+  font-size: 0.85em;
+}
