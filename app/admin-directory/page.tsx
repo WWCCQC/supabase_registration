@@ -3,11 +3,14 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import NextDynamic from 'next/dynamic';
 import * as XLSX from 'xlsx';
 import ProtectedRoute from '@/components/common/ProtectedRoute';
 import SidebarLayout from '@/components/common/SidebarLayout';
 import SalesDirectory from './SalesDirectory';
 import styles from './page.module.css';
+
+const TolAdminKpi3D = NextDynamic(() => import('./TolAdminKpi3D'), { ssr: false });
 
 type AdminTab = 'tol' | 'sales';
 
@@ -66,6 +69,8 @@ function AdminDirectoryContent() {
   const [activeTab, setActiveTab] = useState<AdminTab>('tol');
   const [admins, setAdmins] = useState<TolAdmin[]>([]);
   const [query, setQuery] = useState('');
+  const [selectedFunction, setSelectedFunction] = useState<string | null>(null);
+  const [sortByDepot, setSortByDepot] = useState(false);
   const [page, setPage] = useState(1);
   const [selectedAdmin, setSelectedAdmin] = useState<TolAdmin | null>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
@@ -105,14 +110,27 @@ function AdminDirectoryContent() {
       cmp(a.region, b.region) || cmp(a.depot_code, b.depot_code) || cmp(a.staff_name, b.staff_name));
   }, [admins]);
 
+  const matchesFunction = useMemo(() => {
+    const knownKeys = new Set(functionTypes.map((t) => t.key));
+    return (admin: TolAdmin) => {
+      if (selectedFunction === null) return true;
+      const fn = admin.function_admin?.trim() || '';
+      if (selectedFunction === '') return !knownKeys.has(fn);
+      return fn === selectedFunction;
+    };
+  }, [selectedFunction]);
+
   const filteredAdmins = useMemo(() => {
     const term = query.trim().toLocaleLowerCase();
-    if (!term) return sortedAdmins;
-    return sortedAdmins.filter((admin) => [
-      admin.staff_name, admin.sub_name, admin.depot_code, admin.province,
-      admin.region, admin.function_admin, admin.training_date,
-    ].some((value) => value?.toLocaleLowerCase().includes(term)));
-  }, [sortedAdmins, query]);
+    return sortedAdmins.filter((admin) => {
+      if (!matchesFunction(admin)) return false;
+      if (!term) return true;
+      return [
+        admin.staff_name, admin.sub_name, admin.depot_code, admin.province,
+        admin.region, admin.function_admin, admin.training_date,
+      ].some((value) => value?.toLocaleLowerCase().includes(term));
+    });
+  }, [sortedAdmins, query, matchesFunction]);
 
   const totalPages = Math.max(1, Math.ceil(filteredAdmins.length / PAGE_SIZE));
   const currentPage = Math.min(page, totalPages);
@@ -135,15 +153,22 @@ function AdminDirectoryContent() {
     const groups = new Map<string, { depots: Map<string, DepotGroup>; staff: Set<string> }>();
     const allDepots = new Set<string>();
     const allStaff = new Set<string>();
+    const filteredDepots = new Set<string>();
+    const filteredStaff = new Set<string>();
     for (const admin of admins) {
+      const depot = clean(admin.depot_code);
+      const staff = clean(admin.staff_code);
+      if (staff) allStaff.add(staff);
+      if (depot) allDepots.add(depot);
+      if (!matchesFunction(admin)) continue;
+      if (staff) filteredStaff.add(staff);
+      if (depot) filteredDepots.add(depot);
+
       const region = clean(admin.region) || 'ไม่ระบุ';
       const group = groups.get(region) ?? { depots: new Map<string, DepotGroup>(), staff: new Set<string>() };
       groups.set(region, group);
-      const depot = clean(admin.depot_code);
-      const staff = clean(admin.staff_code);
-      if (staff) { group.staff.add(staff); allStaff.add(staff); }
+      if (staff) group.staff.add(staff);
       if (!depot) continue;
-      allDepots.add(depot);
       const depotGroup = group.depots.get(depot) ?? { staff: new Set<string>(), subNames: new Map<string, number>() };
       group.depots.set(depot, depotGroup);
       if (staff) depotGroup.staff.add(staff);
@@ -160,10 +185,24 @@ function AdminDirectoryContent() {
         // A depot can have spelling variants of the same company; show the most common one.
         subName: Array.from(subNames).sort((a, b) => b[1] - a[1])[0]?.[0] ?? '',
         adminCount: depotStaff.size,
-      })).sort((a, b) => byText(a.depotCode, b.depotCode)),
-    })).sort((a, b) => byText(a.region, b.region));
-    return { rows, totalDepots: allDepots.size, totalAdmins: allStaff.size };
-  }, [admins]);
+      })).sort((a, b) =>
+        sortByDepot
+          ? b.adminCount - a.adminCount || byText(a.depotCode, b.depotCode)
+          : byText(a.depotCode, b.depotCode)
+      ),
+    })).sort((a, b) =>
+      sortByDepot
+        ? b.depotCount - a.depotCount || b.adminCount - a.adminCount || byText(a.region, b.region)
+        : byText(a.region, b.region)
+    );
+    return {
+      rows,
+      totalDepots: allDepots.size,
+      totalAdmins: allStaff.size,
+      filteredDepotsCount: filteredDepots.size,
+      filteredAdminsCount: filteredStaff.size,
+    };
+  }, [admins, matchesFunction, sortByDepot]);
 
   const overview = useMemo(() => {
     const clean = (value: string | null) => value?.trim() || '';
@@ -183,7 +222,7 @@ function AdminDirectoryContent() {
     return { functions, total };
   }, [admins]);
 
-  useEffect(() => { setPage(1); }, [query]);
+  useEffect(() => { setPage(1); }, [query, selectedFunction]);
 
   useEffect(() => {
     if (!selectedAdmin) return;
@@ -256,58 +295,39 @@ function AdminDirectoryContent() {
           )}
         </header>
 
-        {activeTab === 'tol' && !loading && !error && regionSummary.rows.length > 0 && (
+        {activeTab === 'tol' && !loading && !error && regionSummary.totalAdmins > 0 && (
           <>
-          <div className={styles.directoryOverview}>
-            <div className={styles.directoryOverviewArt}>
-              <img
-                className={styles.directoryOverviewImage}
-                src="https://sggunyytungtyhezchft.supabase.co/storage/v1/object/public/manual/robot_install_repair.jpg"
-                alt="หุ่นยนต์งานติดตั้งและซ่อม"
-                loading="lazy"
-              />
-            </div>
-          <div className={styles.kpiGrid}>
-            <article className={`${styles.kpiCard} ${styles.kpiBlue}`}>
-              <span className={styles.kpiLabel}>แอดมินทั้งหมด(คน)</span>
-              <strong className={styles.kpiValue}>{regionSummary.totalAdmins.toLocaleString()}</strong>
-            </article>
-
-            <article className={`${styles.kpiCard} ${styles.kpiTeal}`}>
-              <span className={styles.kpiLabel}>จำนวน depot</span>
-              <strong className={styles.kpiValue}>{regionSummary.totalDepots.toLocaleString()}</strong>
-            </article>
-
-            <article className={`${styles.kpiCard} ${styles.kpiWide}`}>
-              <span className={styles.kpiLabel}>แยกตามหน้าที่</span>
-              <div className={styles.fnBar} role="img" aria-label={overview.functions.map((f) => `${f.label} ${f.count} คน`).join(', ')}>
-                {overview.functions.filter((f) => f.count > 0).map((f) => (
-                  <span
-                    key={f.label}
-                    className={styles[`fn_${f.tone}`]}
-                    style={{ flexGrow: f.count }}
-                    title={`${f.label}: ${f.count.toLocaleString()} คน`}
-                  />
-                ))}
-              </div>
-              <ul className={styles.fnLegend}>
-                {overview.functions.map((f) => (
-                  <li key={f.label}>
-                    <span className={`${styles.fnDot} ${styles[`fn_${f.tone}`]}`} aria-hidden="true" />
-                    <span className={styles.fnName}>{f.label}</span>
-                    <strong>{f.count.toLocaleString()}</strong>
-                    <span className={styles.fnPct}>
-                      {overview.total ? Math.round((f.count / overview.total) * 100) : 0}%
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </article>
-          </div>
-          </div>
+          <TolAdminKpi3D
+            totalAdmins={regionSummary.totalAdmins}
+            filteredAdminsCount={regionSummary.filteredAdminsCount}
+            totalDepots={regionSummary.totalDepots}
+            filteredDepotsCount={regionSummary.filteredDepotsCount}
+            functions={overview.functions}
+            totalFunctionStaff={overview.total}
+            selectedFunction={selectedFunction}
+            onSelectFunction={setSelectedFunction}
+            sortByDepot={sortByDepot}
+            onToggleSortByDepot={() => setSortByDepot((prev) => !prev)}
+          />
 
           <div className={`${styles.card} ${styles.summaryCard}`}>
-            <h2 className={styles.sectionTitle}>รายชื่อแอดมินตามพื้นที่</h2>
+            <div className={styles.sectionHeaderRow}>
+              <h2 className={styles.sectionTitle}>รายชื่อแอดมินตามพื้นที่</h2>
+              <div className={styles.activeFiltersRow}>
+                {selectedFunction !== null && (
+                  <span className={styles.activeFilterPill}>
+                    กรองหน้าที่: {overview.functions.find((f) => f.key === selectedFunction)?.label ?? 'ไม่ระบุ'}
+                    <button type="button" onClick={() => setSelectedFunction(null)} aria-label="ล้างตัวกรองหน้าที่">✕</button>
+                  </span>
+                )}
+                {sortByDepot && (
+                  <span className={`${styles.activeFilterPill} ${styles.activeFilterPillTeal}`}>
+                    เรียงตามจำนวน Depot มากสุด
+                    <button type="button" onClick={() => setSortByDepot(false)} aria-label="ยกเลิกการเรียงตาม Depot">✕</button>
+                  </span>
+                )}
+              </div>
+            </div>
             <div className={`${styles.tableWrap} ${styles.summaryWrap}`}>
               <table className={`${styles.table} ${styles.summaryTable}`}>
                 <thead>
@@ -346,9 +366,9 @@ function AdminDirectoryContent() {
                 })}
                 <tfoot>
                   <tr>
-                    <td>รวม</td>
-                    <td className={styles.num}>{regionSummary.totalDepots.toLocaleString()}</td>
-                    <td className={styles.num}>{regionSummary.totalAdmins.toLocaleString()}</td>
+                    <td>รวม{selectedFunction !== null ? ' (ตามตัวกรอง)' : ''}</td>
+                    <td className={styles.num}>{regionSummary.filteredDepotsCount.toLocaleString()}</td>
+                    <td className={styles.num}>{regionSummary.filteredAdminsCount.toLocaleString()}</td>
                     <td className={styles.groupStart} colSpan={3} />
                   </tr>
                 </tfoot>

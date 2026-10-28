@@ -3,8 +3,11 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import NextDynamic from 'next/dynamic';
 import * as XLSX from 'xlsx';
 import styles from './page.module.css';
+
+const SalesAdminKpi3D = NextDynamic(() => import('./SalesAdminKpi3D'), { ssr: false });
 
 type SalesAdmin = {
   uuid: string;
@@ -30,6 +33,7 @@ function toImageSrc(url: string, size: number): string {
 export default function SalesDirectory() {
   const [admins, setAdmins] = useState<SalesAdmin[]>([]);
   const [query, setQuery] = useState('');
+  const [sortByCompany, setSortByCompany] = useState(false);
   const [page, setPage] = useState(1);
   const [selectedAdmin, setSelectedAdmin] = useState<SalesAdmin | null>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
@@ -86,6 +90,13 @@ export default function SalesDirectory() {
   };
 
   const sortedAdmins = useMemo(() => [...admins].sort((a, b) => {
+    if (sortByCompany) {
+      const compA = a.dealer_name?.trim() || a.depot_code?.trim() || '';
+      const compB = b.dealer_name?.trim() || b.depot_code?.trim() || '';
+      if (!compA || !compB) return compA ? -1 : compB ? 1 : 0;
+      const cmp = compA.localeCompare(compB, 'th', { numeric: true });
+      if (cmp !== 0) return cmp;
+    }
     const codeA = a.store_code_100xxx?.trim() || '';
     const codeB = b.store_code_100xxx?.trim() || '';
     if (!codeA || !codeB) return codeA ? -1 : codeB ? 1 : 0;
@@ -102,7 +113,7 @@ export default function SalesDirectory() {
     }
     return codeA.localeCompare(codeB, 'en', { numeric: true }) ||
       (a.full_name || '').localeCompare(b.full_name || '', 'th');
-  }), [admins]);
+  }), [admins, sortByCompany]);
 
   const filteredAdmins = useMemo(() => {
     const term = query.trim().toLocaleLowerCase();
@@ -152,26 +163,16 @@ export default function SalesDirectory() {
         </div>
       )}
       {!loading && !error && (
-        <div className={styles.directoryOverview}>
-          <div className={styles.directoryOverviewArt}>
-            <img
-              className={styles.directoryOverviewImage}
-              src="https://sggunyytungtyhezchft.supabase.co/storage/v1/object/public/manual/robot_sales.jpg"
-              alt="หุ่นยนต์งานขาย"
-              loading="lazy"
-            />
-          </div>
-          <div className={styles.salesKpiGrid}>
-            <article className={`${styles.kpiCard} ${styles.kpiBlue}`}>
-              <span className={styles.kpiLabel}>จำนวนแอดมินงานขาย</span>
-              <strong className={styles.kpiValue}>{admins.length.toLocaleString()}</strong>
-            </article>
-            <article className={`${styles.kpiCard} ${styles.kpiTeal}`}>
-              <span className={styles.kpiLabel}>จำนวนบริษัท</span>
-              <strong className={styles.kpiValue}>{companyCount.toLocaleString()}</strong>
-            </article>
-          </div>
-        </div>
+        <SalesAdminKpi3D
+          adminCount={admins.length}
+          companyCount={companyCount}
+          sortByCompany={sortByCompany}
+          onResetAll={() => {
+            setSortByCompany(false);
+            setQuery('');
+          }}
+          onToggleSortByCompany={() => setSortByCompany((prev) => !prev)}
+        />
       )}
       <div className={styles.card}>
         <div className={styles.toolbar}>
