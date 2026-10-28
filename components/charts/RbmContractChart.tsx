@@ -48,7 +48,7 @@ export default function RbmContractChart({ data, source = 'corporate' }: { data:
   return <section className={styles.panel}>
     <header className={styles.head}>
       <div>
-        <span className={styles.eyebrow}><i aria-hidden="true" />{source === 'track-c' ? 'Track C Contract Overview' : 'Corporate Contract Overview'}</span>
+        <span className={styles.eyebrow}><i aria-hidden="true" />{source === 'track-c' ? 'Track C Contract Overview' : source === 'solar' ? 'Track Solar Contract Overview' : 'Corporate Contract Overview'}</span>
         <h3>รายละเอียดสัญญาตามพื้นที่</h3>
       </div>
       <div className={styles.legend}>
@@ -85,8 +85,10 @@ export default function RbmContractChart({ data, source = 'corporate' }: { data:
         <img
           src={source === 'track-c'
             ? 'https://sggunyytungtyhezchft.supabase.co/storage/v1/object/public/other/installer.png'
-            : 'https://sggunyytungtyhezchft.supabase.co/storage/v1/object/public/other/Generated_Image_rRVoPh2CS08bw8xx_1%20(1).png'}
-          alt={source === 'track-c' ? 'Wire & Wireless Track C' : 'Wire & Wireless Corporate'}
+            : source === 'solar'
+              ? 'https://sggunyytungtyhezchft.supabase.co/storage/v1/object/public/other/installsolar.png'
+              : 'https://sggunyytungtyhezchft.supabase.co/storage/v1/object/public/other/Generated_Image_rRVoPh2CS08bw8xx_1%20(1).png'}
+          alt={source === 'track-c' ? 'Wire & Wireless Track C' : source === 'solar' ? 'Wire & Wireless Track Solar' : 'Wire & Wireless Corporate'}
           loading="lazy"
         />
         <figcaption className={styles.visualCaption}>

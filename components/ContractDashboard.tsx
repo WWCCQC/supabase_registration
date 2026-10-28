@@ -230,15 +230,16 @@ export default function ContractDashboard({ source = 'track-c' }: { source?: 'tr
   // กราฟรายละเอียดสถานะสัญญา: นับเฉพาะ On Process แยกตามคอลัมน์ installation_status
   const reasonRows = useMemo(() => onProcessRows(filtered), [filtered]);
   const reasons = useMemo(() => groupContracts(reasonRows, 'installation_status'), [reasonRows]);
-  // หน้า Track C และ Corporate: กราฟรายละเอียดสัญญาตามพื้นที่ (rbm) นับจำนวนตาม active_status (หน้า Track C แสดงเฉพาะ Active)
+  // หน้า Track C, Track Solar และ Corporate: กราฟรายละเอียดสัญญาตามพื้นที่ (rbm) นับจำนวนตาม active_status (หน้า Track C และ Track Solar แสดงเฉพาะ Active)
+  const isSolar = source === 'solar';
   const rbmBreakdown = useMemo(() => {
     if (isCorporate) return rbmActiveStatusBreakdown(filtered, rbmRank);
-    if (isTrackC) {
+    if (isTrackC || isSolar) {
       const activeOnly = filtered.filter(row => contractValue(row.active_status).toLowerCase() === 'active');
       return rbmActiveStatusBreakdown(activeOnly, rbmRank);
     }
     return null;
-  }, [filtered, isCorporate, isTrackC]);
+  }, [filtered, isCorporate, isTrackC, isSolar]);
   // ค่าเริ่มต้นแสดงเฉพาะ Active; เมื่อมีการค้นหาหรือใช้ตัวกรอง จะแสดงทุกสถานะตามเงื่อนไข
   const isFiltering = query.trim() !== '' || Object.values(filters).some(Boolean);
   // เปิดหน้าปกติ: แสดงเฉพาะ Active และเรียง RBM จากน้อยไปมาก / ค้นหาหรือกรอง: แสดงทุกสถานะตามลำดับเดิม
