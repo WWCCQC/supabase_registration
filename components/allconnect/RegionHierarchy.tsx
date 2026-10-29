@@ -41,7 +41,7 @@ export default function RegionHierarchy({ regions, selected, month, onSelect }: 
     return <button type="button" className={styles.regionLink} aria-expanded={Boolean(open[key])} aria-label={`${open[key] ? 'ยุบ' : 'ขยาย'} ${label}`} onClick={action} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>{open[key] ? <ChevronDown size={16}/> : <ChevronRight size={16}/>} {label}</button>;
   }
   return <tbody>{regions.map(region => <Fragment key={region.rbm}>
-    <tr className={selected === region.rbm ? styles.selectedRow : undefined}><th scope="row">{toggle(region.rbm, region.rbm, () => void expand(region.rbm))} <button type="button" className={styles.regionLink} aria-pressed={selected === region.rbm} onClick={() => onSelect(region.rbm)} style={{ fontSize: 11 }}>กรอง</button></th>{cells(region, region.rbm)}</tr>
+    <tr className={selected === region.rbm ? styles.selectedRow : undefined}><th scope="row">{toggle(region.rbm, region.rbm, () => void expand(region.rbm))}</th>{cells(region, region.rbm)}</tr>
     {open[region.rbm] && <>
       {loading[region.rbm] && <tr><td colSpan={8} role="status">กำลังโหลด CBM และจังหวัด...</td></tr>}
       {errors[region.rbm] && <tr><td colSpan={8} role="alert">{errors[region.rbm]}</td></tr>}
