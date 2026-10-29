@@ -35,6 +35,20 @@ export async function GET(request: NextRequest) {
   }
 
   const search = request.nextUrl.searchParams;
+  if (search.get('view') === 'hierarchy') {
+    let params;
+    try { params = parseCompareSummaryParams(search); } catch {
+      return NextResponse.json({ error: 'ตัวกรองไม่ถูกต้อง' }, { status: 400, headers });
+    }
+    try {
+      if (!params.p_rbm) return NextResponse.json({ error: 'กรุณาระบุ RBM' }, { status: 400, headers });
+      const { data, error } = await supabaseAdmin().rpc('allconnect_compare_region_hierarchy', params).abortSignal(request.signal);
+      if (error) throw error;
+      return NextResponse.json({ rows: data ?? [] }, { headers });
+    } catch {
+      return NextResponse.json({ error: 'โหลดลำดับชั้นพื้นที่ไม่สำเร็จ' }, { status: 500, headers });
+    }
+  }
   let view, params;
   try {
     view = parseCompareView(search);

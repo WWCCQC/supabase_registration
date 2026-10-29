@@ -97,3 +97,18 @@ test('split views call their own RPC and fall back to the all-in-one function wh
   const failing = loadRoute(() => ({ data: null, error: { code: '42883' } }));
   assert.equal((await failing(request('view=rows'))).status, 500);
 });
+
+test('hierarchy is available to viewers, validates filters and passes literal RBM/month to RPC', async t => {
+  const previous = process.env.JWT_SECRET;
+  process.env.JWT_SECRET = 'hierarchy-test-secret';
+  t.after(() => { if (previous === undefined) delete process.env.JWT_SECRET; else process.env.JWT_SECRET = previous; });
+  const calls = [];
+  const rows = [{ cbm: 'CBM A', level: 'cbm', total: 2 }];
+  const GET = loadRoute((name, args) => { calls.push([name, args]); return { data: rows, error: null }; });
+  const cookie = `auth-token=${jwt.sign({ role: 'allconnect_viewer' }, process.env.JWT_SECRET)}`;
+  const request = params => new NextRequest(`http://localhost/api/allconnect-compare?view=hierarchy&${params}`, { headers: { cookie } });
+  assert.deepEqual(await (await GET(request('rbm=R1&month=2026-10'))).json(), { rows });
+  assert.deepEqual(calls, [['allconnect_compare_region_hierarchy', { p_rbm: 'R1', p_month: '2026-10' }]]);
+  assert.equal((await GET(request('rbm=R1&month=bad'))).status, 400);
+  assert.equal((await GET(request(''))).status, 400);
+});

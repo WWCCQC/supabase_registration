@@ -7,6 +7,7 @@ import styles from './AllconnectCompareDashboard.module.css';
 import AllconnectUpload from './AllconnectUpload';
 import MonthlyNoWorkChart from './MonthlyNoWorkChart';
 import CompanyTypeHeatmap from './CompanyTypeHeatmap';
+import RegionHierarchy from './RegionHierarchy';
 import TechniciansUpload from './TechniciansUpload';
 import sourceStyles from './AllconnectSources.module.css';
 
@@ -664,14 +665,7 @@ export default function AllconnectCompareDashboard() {
             <div className={styles.tableScroll} tabIndex={0} role="region" aria-label="ตารางสรุปการปิดงานรายพื้นที่ RBM">
               <table className={`${styles.table} ${styles.regionalTable}`}>
                 <thead><tr><th scope="col">RBM</th><th scope="col">จำนวนกองงานทั้งหมด</th><th scope="col">จำนวนที่ปิดงาน</th><th scope="col">จำนวนที่ไม่มีการปิดงาน</th><th scope="col">สัดส่วนที่พบปิดงาน</th><th scope="col">งานติดตั้ง</th><th scope="col">งานซ่อม</th><th scope="col">จำนวนรวมที่ปิดงาน</th></tr></thead>
-                <tbody>{data.regions.map(region => <tr key={region.rbm} className={rbm === region.rbm ? styles.selectedRow : undefined}>
-                  <th scope="row"><button className={styles.regionLink} type="button" onClick={() => selectRegion(region.rbm)} aria-pressed={rbm === region.rbm}>{region.rbm}</button></th>
-                  <td>{number(region.total)}</td>
-                  <td><button className={styles.greenLink} type="button" onClick={() => selectRegion(region.rbm, 'with_work')} aria-label={`จำนวนที่ปิดงาน ${region.rbm}`}>{number(region.withWork)}</button></td>
-                  <td><button className={styles.redLink} type="button" onClick={() => selectRegion(region.rbm, 'without_work')} aria-label={`จำนวนที่ไม่มีการปิดงาน ${region.rbm}`}>{number(region.withoutWork)}</button></td>
-                  <td><div className={styles.coverageCell}><meter min={0} max={100} value={region.coverage ?? 0} aria-label={`สัดส่วนที่พบปิดงาน ${region.rbm}`} /><span>{percent(region.coverage)}</span></div></td>
-                  <td>{number(region.installCount)}</td><td>{number(region.repairCount)}</td><td>{number(region.jobCount)}</td>
-                </tr>)}</tbody>
+                <RegionHierarchy key={`${month}:${revision}`} regions={data.regions} selected={rbm} month={month} onSelect={selectRegion} />
               </table>
             </div>
           </section>
