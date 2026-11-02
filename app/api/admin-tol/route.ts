@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const supabase = supabaseAdmin();
+    const supabase = supabaseAdmin({ noStore: true });
     const data = [];
     const pageSize = 1000;
     for (let from = 0; ; from += pageSize) {
