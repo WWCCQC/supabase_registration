@@ -2,6 +2,14 @@
 import React, { useRef, useEffect, useState, useCallback } from "react";
 import * as XLSX from "xlsx";
 import { lightBlueSection } from "./sectionStyles";
+import NextDynamic from "next/dynamic";
+import LegendTile3D from "./LegendTile3D";
+
+// เกจ 3D ใช้ three.js → โหลดฝั่ง client เท่านั้น
+const Gauge3D = NextDynamic(() => import("./Gauge3D"), {
+  ssr: false,
+  loading: () => <div style={{ width: 300, height: 190, margin: "0 auto" }} />,
+});
 
 /**
  * เกจครึ่งวงกลม 3 มิติ + ตารางรายพื้นที่ (RBM) + modal รายชื่อช่าง
@@ -687,8 +695,8 @@ export default function StatusGaugeSection({
   const play = inView && !loading;
 
   // ตัวเลขวิ่งบนการ์ด (จังหวะเดียวกับเข็มไมล์)
-  const passCount = useCountUp(parseFloat(passPercent), play, 1500);
-  const failCount = useCountUp(parseFloat(failPercent), play, 850, 950);
+  const passHeads = useCountUp(totalPass, play, 1500, 500);
+  const failHeads = useCountUp(totalFail, play, 1100, 1300);
 
   // ── Detail modal (คลิกตัวเลขในคอลัมน์ ผ่าน / ไม่ผ่าน) ────────────
   const [detail, setDetail] = useState<DetailTarget | null>(null);
@@ -845,107 +853,58 @@ export default function StatusGaugeSection({
           </div>
         ) : (
           <>
-            {/* Gauge canvas */}
-            <GaugeCanvas
+            {/* Gauge — 3D (fallback เป็น canvas เดิมถ้าไม่รองรับ WebGL) */}
+            <Gauge3D
               pass={totalPass}
               fail={totalFail}
               total={grandTotal}
               animate={play}
               passColor={tone.pass.arc}
               failColor={tone.fail.arc}
+              fallback={
+                <GaugeCanvas
+                  pass={totalPass}
+                  fail={totalFail}
+                  total={grandTotal}
+                  animate={play}
+                  passColor={tone.pass.arc}
+                  failColor={tone.fail.arc}
+                />
+              }
             />
 
-            {/* Center value display — การ์ดย่อยแบบยกนูน */}
+            {/* Legend ใต้เกจ — การ์ด 3D motion */}
             <div
               style={{
                 display: "flex",
                 alignItems: "stretch",
                 justifyContent: "center",
                 gap: 10,
-                marginTop: 2,
+                marginTop: 16,
                 width: "100%",
                 boxSizing: "border-box",
               }}
             >
-              {/* ผ่าน */}
-              <div
-                style={{
-                  flex: 1,
-                  textAlign: "center",
-                  padding: "10px 8px",
-                  borderRadius: 14,
-                  background: `linear-gradient(180deg, ${tone.pass.tileTop} 0%, ${tone.pass.tileBottom} 100%)`,
-                  border: `1px solid ${tone.pass.tileBorder}`,
-                  boxShadow: `0 1px 0 rgba(255,255,255,0.95) inset, 0 -2px 0 rgba(${tone.pass.glowRgb},0.16) inset, 0 6px 14px -6px rgba(${tone.pass.glowRgb},0.45)`,
-                }}
-              >
-                <div
-                  style={{
-                    fontSize: 24,
-                    fontWeight: 800,
-                    lineHeight: 1,
-                    background: `linear-gradient(180deg, ${tone.pass.numFrom} 0%, ${tone.pass.numTo} 100%)`,
-                    WebkitBackgroundClip: "text",
-                    backgroundClip: "text",
-                    color: "transparent",
-                    textShadow: "0 1px 0 rgba(255,255,255,0.6)",
-                    fontVariantNumeric: "tabular-nums",
-                  }}
-                >
-                  {passCount.toFixed(2)}%
-                </div>
-                <div
-                  style={{
-                    fontSize: 11,
-                    fontWeight: 700,
-                    color: tone.pass.labelText,
-                    marginTop: 5,
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  {labels.passTile}
-                </div>
-              </div>
-
-              {/* ไม่ผ่าน */}
-              <div
-                style={{
-                  flex: 1,
-                  textAlign: "center",
-                  padding: "10px 8px",
-                  borderRadius: 14,
-                  background: `linear-gradient(180deg, ${tone.fail.tileTop} 0%, ${tone.fail.tileBottom} 100%)`,
-                  border: `1px solid ${tone.fail.tileBorder}`,
-                  boxShadow: `0 1px 0 rgba(255,255,255,0.95) inset, 0 -2px 0 rgba(${tone.fail.glowRgb},0.16) inset, 0 6px 14px -6px rgba(${tone.fail.glowRgb},0.45)`,
-                }}
-              >
-                <div
-                  style={{
-                    fontSize: 24,
-                    fontWeight: 800,
-                    lineHeight: 1,
-                    background: `linear-gradient(180deg, ${tone.fail.numFrom} 0%, ${tone.fail.numTo} 100%)`,
-                    WebkitBackgroundClip: "text",
-                    backgroundClip: "text",
-                    color: "transparent",
-                    textShadow: "0 1px 0 rgba(255,255,255,0.6)",
-                    fontVariantNumeric: "tabular-nums",
-                  }}
-                >
-                  {failCount.toFixed(2)}%
-                </div>
-                <div
-                  style={{
-                    fontSize: 11,
-                    fontWeight: 700,
-                    color: tone.fail.labelText,
-                    marginTop: 5,
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  {labels.failTile}
-                </div>
-              </div>
+              <LegendTile3D
+                tone={tone.pass}
+                kind="pass"
+                label={labels.passTile}
+                hint={labels.passHint}
+                percent={parseFloat(passPercent)}
+                count={passHeads}
+                active={play}
+                delay={150}
+              />
+              <LegendTile3D
+                tone={tone.fail}
+                kind="fail"
+                label={labels.failTile}
+                hint={labels.failHint}
+                percent={parseFloat(failPercent)}
+                count={failHeads}
+                active={play}
+                delay={950}
+              />
             </div>
           </>
         )}
