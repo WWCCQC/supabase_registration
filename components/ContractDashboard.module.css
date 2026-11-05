@@ -9,6 +9,8 @@
 .dashboard button:disabled { opacity: .45; cursor: default; }
 .dashboard button:focus-visible, .dashboard input:focus-visible, .dashboard select:focus-visible { outline: 2px solid #087e8b; outline-offset: 3px; }
 .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
+.updatedRow { display: flex; justify-content: flex-end; margin-bottom: 12px; }
+.updatedChip { flex: none; padding: 8px 14px; border-radius: 999px; background: #e9edff; color: #12239e; font-weight: 700; }
 .cards .card {
   position: relative;
   text-align: left;

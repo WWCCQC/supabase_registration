@@ -207,18 +207,30 @@ export default function ContractDashboard({ source = 'track-c' }: { source?: 'tr
   const [filters, setFilters] = useState<Record<string, string>>({});
   const [exporting, setExporting] = useState(false);
   const [exportError, setExportError] = useState('');
+  const [updatedAt, setUpdatedAt] = useState<string | null>(null);
   useEffect(() => {
     const controller = new AbortController();
-    setLoading(true); setError('');
+    setLoading(true); setError(''); setUpdatedAt(null);
     fetch(`/api/contract-c?source=${source}`, { signal: controller.signal, cache: 'no-store' })
       .then(async response => {
         const body = await response.json();
         if (!response.ok) throw new Error(body.error || 'โหลดข้อมูลไม่สำเร็จ');
         setRows(body.rows);
+        setUpdatedAt(body.updatedAt ?? null);
       }).catch(error => { if (!controller.signal.aborted) setError(error.message); })
       .finally(() => { if (!controller.signal.aborted) setLoading(false); });
     return () => controller.abort();
   }, [source]);
+  const updatedLabel = useMemo(() => {
+    if (!updatedAt) return null;
+    const date = new Date(updatedAt);
+    if (Number.isNaN(date.getTime())) return null;
+    return date.toLocaleString('en-GB', {
+      timeZone: 'Asia/Bangkok',
+      day: '2-digit', month: '2-digit', year: 'numeric',
+      hour: '2-digit', minute: '2-digit', hour12: false,
+    });
+  }, [updatedAt]);
   const filtered = useMemo(() => filterContracts(rows, query, filters), [rows, query, filters]);
   // การ์ดสรุปนับจากคอลัมน์ group_status โดยไม่นำตัวกรอง group_status มาคิด เพื่อให้การ์ดยังแสดงจำนวนรวมและทุกกลุ่มเสมอ
   const cardRows = useMemo(() => filterContracts(rows, query, { ...filters, group_status: '' }), [rows, query, filters]);
@@ -277,6 +289,11 @@ export default function ContractDashboard({ source = 'track-c' }: { source?: 'tr
   return <div className={styles.dashboard} aria-busy={loading}>
     {error && <div role="alert" className={styles.error}>{error}</div>}
     {loading ? <p role="status">กำลังโหลดข้อมูลสัญญา...</p> : error ? null : <>
+      {updatedLabel && (
+        <div className={styles.updatedRow}>
+          <span className={styles.updatedChip}>Data updated as {updatedLabel}</span>
+        </div>
+      )}
       <div className={styles.cards}>
         <button
           className={styles.card}

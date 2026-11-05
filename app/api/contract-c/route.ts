@@ -35,7 +35,17 @@ export async function GET(request: NextRequest) {
       rows.push(...(data ?? []));
       if (!data || data.length < 1000) break;
     }
-    return NextResponse.json({ rows }, { headers });
+    // contract_c uses `update_at` (text ISO); contract_solar / contract_coporate use `updated_at` (timestamptz).
+    const updatedColumn = table === 'contract_c' ? 'update_at' : 'updated_at';
+    let latestTime = -Infinity;
+    let updatedAt: string | null = null;
+    for (const row of rows as Record<string, unknown>[]) {
+      const value = row[updatedColumn];
+      if (typeof value !== 'string') continue;
+      const time = new Date(value).getTime();
+      if (!Number.isNaN(time) && time > latestTime) { latestTime = time; updatedAt = value; }
+    }
+    return NextResponse.json({ rows, updatedAt }, { headers });
   } catch {
     return NextResponse.json({ error: 'โหลดข้อมูลสัญญาไม่สำเร็จ กรุณาลองอีกครั้ง' }, { status: 500, headers });
   }
