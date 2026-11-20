@@ -120,7 +120,7 @@ export default function TrainingRadarChart() {
 
   if (loading) {
     return (
-      <div style={{ padding: 24, textAlign: "center", color: "#666" }}>
+      <div style={{ padding: 24, textAlign: "center", color: "var(--text-muted)" }}>
         กำลังโหลดข้อมูลการอบรม...
       </div>
     );
@@ -128,7 +128,7 @@ export default function TrainingRadarChart() {
 
   if (error) {
     return (
-      <div style={{ padding: 24, textAlign: "center", color: "#ef4444" }}>
+      <div style={{ padding: 24, textAlign: "center", color: "color-mix(in srgb, #ef4444 var(--ink), #fff)" }}>
         ❌ {error}
       </div>
     );
@@ -136,7 +136,7 @@ export default function TrainingRadarChart() {
 
   if (data.length === 0) {
     return (
-      <div style={{ padding: 24, textAlign: "center", color: "#666" }}>
+      <div style={{ padding: 24, textAlign: "center", color: "var(--text-muted)" }}>
         ไม่มีข้อมูล
       </div>
     );
@@ -173,10 +173,10 @@ export default function TrainingRadarChart() {
     <div>
       <ResponsiveContainer width="100%" height={350}>
         <RadarChart cx="50%" cy="50%" outerRadius="70%" data={percentData}>
-          <PolarGrid stroke="#c0c0c0" strokeDasharray="4 4" />
+          <PolarGrid stroke="var(--border-strong)" strokeDasharray="4 4" />
           <PolarAngleAxis
             dataKey="label"
-            tick={{ fontSize: 13, fill: "#374151", fontWeight: 600 }}
+            tick={{ fontSize: 13, fill: "var(--text-2)", fontWeight: 600 }}
           />
           <PolarRadiusAxis
             angle={90}
@@ -201,7 +201,7 @@ export default function TrainingRadarChart() {
             ]}
             contentStyle={{
               borderRadius: 8,
-              border: "1px solid #e5e7eb",
+              border: "1px solid var(--border)",
               boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
             }}
           />
@@ -232,7 +232,7 @@ export default function TrainingRadarChart() {
               style={{
                 textAlign: "center",
                 padding: "14px 8px",
-                background: "#ffffff",
+                background: "var(--surface)",
                 borderRadius: 12,
                 border: "2px solid #ffffff",
               }}
@@ -240,7 +240,7 @@ export default function TrainingRadarChart() {
               <div style={{ fontSize: 11, color: "#9ca3af", textTransform: "uppercase", letterSpacing: 0.5 }}>
                 จำนวนทั้งหมด
               </div>
-              <div style={{ fontSize: 20, fontWeight: 700, color: "#1f2937" }}>
+              <div style={{ fontSize: 20, fontWeight: 700, color: "var(--text)" }}>
                 {total.toLocaleString()}
               </div>
               <div style={{ fontSize: 11, color: "#9ca3af" }}>ช่าง</div>
@@ -254,7 +254,7 @@ export default function TrainingRadarChart() {
                 style={{
                   textAlign: "center",
                   padding: "14px 8px",
-                  background: "#fff",
+                  background: "var(--surface)",
                   borderRadius: 12,
                   cursor: "pointer",
                   transition: "transform 0.15s, box-shadow 0.15s",
@@ -306,7 +306,7 @@ export default function TrainingRadarChart() {
           <div
             onClick={(e) => e.stopPropagation()}
             style={{
-              background: "white", borderRadius: 16, padding: "24px 28px",
+              background: "var(--surface)", borderRadius: 16, padding: "24px 28px",
               boxShadow: "0 20px 60px rgba(0,0,0,0.25)",
               maxWidth: 1100, width: "96%", maxHeight: "88vh",
               display: "flex", flexDirection: "column",
@@ -321,7 +321,7 @@ export default function TrainingRadarChart() {
                   width: 12, height: 12, borderRadius: "50%",
                   background: accentColor, flexShrink: 0,
                 }} />
-                <span style={{ fontSize: 16, fontWeight: 700, color: "#1e293b" }}>
+                <span style={{ fontSize: 16, fontWeight: 700, color: "var(--text)" }}>
                   📋 {modalSubject}
                 </span>
                 <span style={{
@@ -334,13 +334,13 @@ export default function TrainingRadarChart() {
               <button
                 onClick={closeModal}
                 style={{
-                  background: "#f1f5f9", border: "none", borderRadius: "50%",
+                  background: "var(--surface-2)", border: "none", borderRadius: "50%",
                   width: 32, height: 32, cursor: "pointer", fontSize: 16,
                   display: "flex", alignItems: "center", justifyContent: "center",
-                  color: "#64748b", transition: "background 0.15s", flexShrink: 0,
+                  color: "var(--text-muted)", transition: "background 0.15s", flexShrink: 0,
                 }}
-                onMouseEnter={(e) => { e.currentTarget.style.background = "#e2e8f0"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.background = "#f1f5f9"; }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = "var(--surface-3)"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = "var(--surface-2)"; }}
               >
                 ✕
               </button>
@@ -356,11 +356,11 @@ export default function TrainingRadarChart() {
                   onChange={(e) => setModalSearch(e.target.value)}
                   style={{
                     width: "100%", padding: "7px 12px 7px 32px", fontSize: 13,
-                    border: "1.5px solid #e2e8f0", borderRadius: 8, outline: "none",
+                    border: "1.5px solid var(--border)", borderRadius: 8, outline: "none",
                     transition: "border-color 0.15s",
                   }}
                   onFocus={(e) => { e.currentTarget.style.borderColor = accentColor; }}
-                  onBlur={(e) => { e.currentTarget.style.borderColor = "#e2e8f0"; }}
+                  onBlur={(e) => { e.currentTarget.style.borderColor = "var(--border)"; }}
                 />
                 <span style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", fontSize: 14, pointerEvents: "none" }}>🔍</span>
               </div>
@@ -368,7 +368,7 @@ export default function TrainingRadarChart() {
                 onClick={handleDownloadExcel}
                 disabled={modalLoading || !filteredModalRows.length}
                 style={{
-                  background: filteredModalRows.length ? "linear-gradient(135deg, #10b981, #059669)" : "#e2e8f0",
+                  background: filteredModalRows.length ? "linear-gradient(135deg, #10b981, #059669)" : "var(--surface-3)",
                   color: filteredModalRows.length ? "white" : "#94a3b8",
                   border: "none", borderRadius: 8, padding: "7px 16px",
                   fontSize: 12, fontWeight: 600, cursor: filteredModalRows.length ? "pointer" : "default",
@@ -386,15 +386,15 @@ export default function TrainingRadarChart() {
             {modalLoading ? (
               <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 40, gap: 10 }}>
                 <div style={{
-                  width: 36, height: 36, border: "3px solid #e5e7eb",
+                  width: 36, height: 36, border: "3px solid var(--border)",
                   borderTopColor: accentColor,
                   borderRadius: "50%", animation: "spin 0.8s linear infinite",
                 }} />
-                <span style={{ fontSize: 13, color: "#6b7280" }}>กำลังโหลดข้อมูล...</span>
+                <span style={{ fontSize: 13, color: "var(--text-muted)" }}>กำลังโหลดข้อมูล...</span>
                 <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
               </div>
             ) : modalError ? (
-              <div style={{ padding: 30, textAlign: "center", color: "#ef4444", fontSize: 14 }}>
+              <div style={{ padding: 30, textAlign: "center", color: "color-mix(in srgb, #ef4444 var(--ink), #fff)", fontSize: 14 }}>
                 ❌ {modalError}
               </div>
             ) : (
@@ -407,8 +407,8 @@ export default function TrainingRadarChart() {
                       {["#", ...getTableHeaders().map(h => h.label)].map((h) => (
                         <th key={h} style={{
                           textAlign: "left", padding: "8px 8px", fontWeight: 600, fontSize: 11,
-                          background: "#f8fafc", boxShadow: `inset 0 -2px 0 ${accentColor}30`,
-                          color: "#475569", borderBottom: `2px solid ${accentColor}30`,
+                          background: "var(--surface-2)", boxShadow: `inset 0 -2px 0 ${accentColor}30`,
+                          color: "var(--text-2)", borderBottom: `2px solid ${accentColor}30`,
                           whiteSpace: "nowrap",
                         }}>
                           {h}
@@ -426,15 +426,15 @@ export default function TrainingRadarChart() {
                     ) : (
                       filteredModalRows.map((row, idx) => (
                         <tr key={idx} style={{
-                          borderBottom: "1px solid #f1f5f9",
+                          borderBottom: "1px solid var(--border)",
                           transition: "background 0.1s",
                         }}
-                          onMouseEnter={(e) => { e.currentTarget.style.background = "#f8fafc"; }}
+                          onMouseEnter={(e) => { e.currentTarget.style.background = "var(--surface-2)"; }}
                           onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
                         >
                           <td style={{ padding: "6px 8px", color: "#9ca3af", fontSize: 11 }}>{idx + 1}</td>
                           {getTableHeaders().map((h) => (
-                            <td key={h.key} style={{ padding: "6px 8px", color: "#334155", whiteSpace: "nowrap" }}>
+                            <td key={h.key} style={{ padding: "6px 8px", color: "var(--text-2)", whiteSpace: "nowrap" }}>
                               {row[h.key] ?? "-"}
                             </td>
                           ))}

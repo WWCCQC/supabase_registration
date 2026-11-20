@@ -11,6 +11,8 @@ interface SidebarLayoutProps {
   activeTab?: NavTab;
   onTabChange?: (tab: NavTab) => void;
   navigation?: React.ReactNode;
+  /** Opt this page into dark mode with a switch in the TopBar. */
+  themeToggle?: boolean;
 }
 
 const SidebarLayout: React.FC<SidebarLayoutProps> = ({
@@ -19,6 +21,7 @@ const SidebarLayout: React.FC<SidebarLayoutProps> = ({
   activeTab = 'TOL',
   onTabChange,
   navigation,
+  themeToggle = false,
 }) => {
   const [collapsed, setCollapsed] = useState(false);
 
@@ -26,7 +29,7 @@ const SidebarLayout: React.FC<SidebarLayoutProps> = ({
     <div className={`sidebar-layout ${className}`}>
       <Sidebar collapsed={collapsed} onToggle={() => setCollapsed(v => !v)} />
       <main className={`sidebar-main ${collapsed ? 'sidebar-main-collapsed' : ''}`}>
-        <TopBar onToggleSidebar={() => setCollapsed(v => !v)} sidebarCollapsed={collapsed} />
+        <TopBar onToggleSidebar={() => setCollapsed(v => !v)} sidebarCollapsed={collapsed} themeToggle={themeToggle} />
         {navigation ?? (
           <NavTabs activeTab={activeTab} onTabChange={onTabChange ?? (() => {})} />
         )}

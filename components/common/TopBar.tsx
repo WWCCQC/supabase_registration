@@ -3,13 +3,16 @@
 import React from 'react';
 import { useAuth } from '@/lib/useAuth';
 import LiveClock from './LiveClock';
+import ThemeToggle from './ThemeToggle';
 
 interface TopBarProps {
   onToggleSidebar: () => void;
   sidebarCollapsed: boolean;
+  /** Show the light/dark switch (opts this page into dark mode). */
+  themeToggle?: boolean;
 }
 
-const TopBar: React.FC<TopBarProps> = ({ onToggleSidebar, sidebarCollapsed }) => {
+const TopBar: React.FC<TopBarProps> = ({ onToggleSidebar, sidebarCollapsed, themeToggle = false }) => {
   const { user } = useAuth();
 
   return (
@@ -50,6 +53,8 @@ const TopBar: React.FC<TopBarProps> = ({ onToggleSidebar, sidebarCollapsed }) =>
 
       {/* Live Clock */}
       <LiveClock />
+
+      {themeToggle && <ThemeToggle />}
 
       {/* User info */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>

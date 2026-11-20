@@ -1,41 +1,41 @@
 .chart {
   min-width: 0;
   padding: 22px 24px 26px;
-  border: 1px solid #e6edf6;
+  border: 1px solid var(--border);
   border-radius: 22px;
-  background: #fff;
+  background: var(--surface);
   box-shadow: 0 14px 36px rgba(19, 58, 117, 0.06);
   font-family: Inter, "Noto Sans Thai", sans-serif;
 }
-.heading { display: flex; align-items: center; gap: 14px; margin-bottom: 22px; color: #0b2459; }
+.heading { display: flex; align-items: center; gap: 14px; margin-bottom: 22px; color: color-mix(in srgb, #0b2459 var(--ink), #fff); }
 .heading h3 { margin: 0; font-size: 20px; font-weight: 800; letter-spacing: -0.035em; line-height: 1.25; }
-.headingIcon { display: inline-flex; align-items: center; justify-content: center; width: 48px; height: 48px; border-radius: 15px; background: #e8f3ff; color: #0876d9; flex-shrink: 0; }
+.headingIcon { display: inline-flex; align-items: center; justify-content: center; width: 48px; height: 48px; border-radius: 15px; background: color-mix(in srgb, #e8f3ff var(--tint), var(--surface)); color: color-mix(in srgb, #0876d9 var(--ink), #fff); flex-shrink: 0; }
 .providerSummary { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; max-width: 1050px; margin: 0 auto 22px; }
 .providerPill { display: flex; align-items: center; gap: 8px; width: 100%; min-width: 0; padding: 6px 9px; border: 1.5px solid currentColor; border-radius: 999px; box-shadow: 0 5px 12px rgba(15, 63, 124, 0.09); }
 .providerIcon { display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0; color: #fff; }
 .providerName { min-width: 0; font-size: 14px; font-weight: 700; white-space: nowrap; }
-.providerPill strong { margin-left: auto; padding: 5px 8px; border-radius: 999px; background: rgba(255,255,255,0.75); font-size: 13px; font-variant-numeric: tabular-nums; white-space: nowrap; }
-.blue { color: #064dc4; background: linear-gradient(110deg, #eaf5ff, #bfdcff); border-color: #52a5ff; }
+.providerPill strong { margin-left: auto; padding: 5px 8px; border-radius: 999px; background: color-mix(in srgb, var(--surface) 75%, transparent); font-size: 13px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.blue { color: color-mix(in srgb, #064dc4 var(--ink), #fff); background: linear-gradient(110deg, color-mix(in srgb, #eaf5ff var(--tint), var(--surface)), color-mix(in srgb, #bfdcff var(--tint), var(--surface))); border-color: #52a5ff; }
 .blue .providerIcon { background: linear-gradient(145deg, #2f9bff, #0046d2); }
-.green { color: #08774b; background: linear-gradient(110deg, #edfff5, #b7efca); border-color: #45ce84; }
+.green { color: color-mix(in srgb, #08774b var(--ink), #fff); background: linear-gradient(110deg, color-mix(in srgb, #edfff5 var(--tint), var(--surface)), color-mix(in srgb, #b7efca var(--tint), var(--surface))); border-color: #45ce84; }
 .green .providerIcon { background: linear-gradient(145deg, #2fd67e, #068451); }
-.orange { color: #bd4a00; background: linear-gradient(110deg, #fff9e8, #ffe5ab); border-color: #ffae2a; }
+.orange { color: color-mix(in srgb, #bd4a00 var(--ink), #fff); background: linear-gradient(110deg, color-mix(in srgb, #fff9e8 var(--tint), var(--surface)), color-mix(in srgb, #ffe5ab var(--tint), var(--surface))); border-color: #ffae2a; }
 .orange .providerIcon { background: linear-gradient(145deg, #ffca2d, #f06a00); }
 .chartScroll { width: 100%; overflow-x: auto; }
 .chartCanvas { min-width: 680px; }
-.tooltip { min-width: 190px; padding: 12px 14px; border: 1px solid #dbe6f5; border-radius: 12px; background: #fff; box-shadow: 0 10px 26px rgba(12, 39, 86, 0.14); color: #172e58; font-size: 12px; }
-.tooltip > strong { display: block; padding-bottom: 7px; margin-bottom: 5px; border-bottom: 1px solid #e9eef6; font-size: 13px; }
+.tooltip { min-width: 190px; padding: 12px 14px; border: 1px solid color-mix(in srgb, #dbe6f5 var(--tint), var(--border)); border-radius: 12px; background: var(--surface); box-shadow: 0 10px 26px rgba(12, 39, 86, 0.14); color: color-mix(in srgb, #172e58 var(--ink), #fff); font-size: 12px; }
+.tooltip > strong { display: block; padding-bottom: 7px; margin-bottom: 5px; border-bottom: 1px solid var(--border); font-size: 13px; }
 .tooltipRow, .tooltipTotal { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 4px 0; }
 .tooltipRow span { display: inline-flex; align-items: center; gap: 7px; }
 .tooltipRow i { width: 9px; height: 9px; border-radius: 50%; }
-.tooltipTotal { margin-top: 5px; padding-top: 8px; border-top: 1px solid #e9eef6; font-weight: 700; }
+.tooltipTotal { margin-top: 5px; padding-top: 8px; border-top: 1px solid var(--border); font-weight: 700; }
 .footer { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
 .footerPill { display: inline-flex; align-items: center; gap: 10px; padding: 9px 17px; border: 1px solid; border-radius: 999px; font-size: 13px; box-shadow: 0 4px 10px rgba(15, 63, 124, 0.06); }
 .footerPill strong { font-weight: 800; font-variant-numeric: tabular-nums; }
-.footerRBM { color: #0752c5; background: #edf7ff; border-color: #91c8ff; }
-.footerTechnicians { color: #087e50; background: #f0fff7; border-color: #95e5b5; }
-.status { display: flex; align-items: center; justify-content: center; gap: 12px; min-height: 240px; color: #526883; font-size: 14px; }
-.status button { padding: 7px 13px; border: 1px solid #80b6eb; border-radius: 8px; background: #eff7ff; color: #0752c5; cursor: pointer; }
+.footerRBM { color: color-mix(in srgb, #0752c5 var(--ink), #fff); background: color-mix(in srgb, #edf7ff var(--tint), var(--surface)); border-color: color-mix(in srgb, #91c8ff var(--tint), var(--border)); }
+.footerTechnicians { color: color-mix(in srgb, #087e50 var(--ink), #fff); background: color-mix(in srgb, #f0fff7 var(--tint), var(--surface)); border-color: color-mix(in srgb, #95e5b5 var(--tint), var(--border)); }
+.status { display: flex; align-items: center; justify-content: center; gap: 12px; min-height: 240px; color: color-mix(in srgb, #526883 var(--ink), #fff); font-size: 14px; }
+.status button { padding: 7px 13px; border: 1px solid #80b6eb; border-radius: 8px; background: color-mix(in srgb, #eff7ff var(--tint), var(--surface)); color: color-mix(in srgb, #0752c5 var(--ink), #fff); cursor: pointer; }
 
 /* ==========================================================================
    Bento UI & Ranked Horizontal Segmented Matrix (2026 Redesign)
@@ -44,12 +44,12 @@
 .bentoShell {
   min-width: 0;
   padding: 24px 26px 28px;
-  border: 1px solid #dbe4f0;
+  border: 1px solid color-mix(in srgb, #dbe4f0 var(--tint), var(--border));
   border-radius: 26px;
-  background: linear-gradient(180deg, #f8fafd 0%, #f1f5f9 100%);
+  background: linear-gradient(180deg, var(--surface-2) 0%, var(--surface-2) 100%);
   box-shadow: 0 18px 42px rgba(15, 23, 42, 0.07), inset 0 1px 0 rgba(255, 255, 255, 0.9);
   font-family: Inter, "Noto Sans Thai", -apple-system, BlinkMacSystemFont, sans-serif;
-  color: #0f172a;
+  color: var(--text);
 }
 
 .bentoHeader {
@@ -99,7 +99,7 @@
   margin: 0;
   font-size: 23px;
   font-weight: 800;
-  color: #0f172a;
+  color: var(--text);
   letter-spacing: -0.03em;
   line-height: 1.2;
 }
@@ -109,9 +109,9 @@
   align-items: center;
   padding: 4px 11px;
   border-radius: 999px;
-  background: #eff6ff;
-  border: 1px solid #bfdbfe;
-  color: #1d4ed8;
+  background: color-mix(in srgb, #eff6ff var(--tint), var(--surface));
+  border: 1px solid color-mix(in srgb, #bfdbfe var(--tint), var(--border));
+  color: color-mix(in srgb, #1d4ed8 var(--ink), #fff);
   font-size: 11.5px;
   font-weight: 700;
   letter-spacing: -0.01em;
@@ -121,7 +121,7 @@
 .bentoSubtitle {
   margin: 4px 0 0;
   font-size: 13px;
-  color: #475569;
+  color: var(--text-2);
   font-weight: 500;
 }
 
@@ -140,7 +140,7 @@
 }
 
 .bentoHeaderDivider {
-  color: #475569;
+  color: var(--text-2);
   font-weight: 400;
 }
 
@@ -159,8 +159,8 @@
 }
 
 .bentoCard {
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 20px;
   padding: 20px 22px;
   box-shadow: 0 6px 20px rgba(15, 23, 42, 0.035);
@@ -181,21 +181,21 @@
   margin: 0;
   font-size: 16px;
   font-weight: 800;
-  color: #0f172a;
+  color: var(--text);
   letter-spacing: -0.02em;
 }
 
 .panelSubtitle {
   margin: 3px 0 0;
   font-size: 12px;
-  color: #64748b;
+  color: var(--text-muted);
   font-weight: 500;
 }
 
 .panelSortNote {
   font-size: 12px;
   font-weight: 700;
-  color: #475569;
+  color: var(--text-2);
   white-space: nowrap;
   padding-top: 2px;
 }
@@ -232,7 +232,7 @@
 .donutTotalValue {
   font-size: 26px;
   font-weight: 800;
-  color: #0f172a;
+  color: var(--text);
   line-height: 1.1;
   letter-spacing: -0.03em;
   font-variant-numeric: tabular-nums;
@@ -242,7 +242,7 @@
   margin-top: 3px;
   font-size: 11.5px;
   font-weight: 600;
-  color: #64748b;
+  color: var(--text-muted);
 }
 
 /* Left Panel: 3 Provider Cards */
@@ -270,20 +270,20 @@
 }
 
 .providerCardBlue {
-  background: linear-gradient(135deg, #f0f7ff 0%, #e0effe 100%);
-  border-color: #93c5fd;
+  background: linear-gradient(135deg, color-mix(in srgb, #f0f7ff var(--tint), var(--surface)) 0%, color-mix(in srgb, #e0effe var(--tint), var(--surface)) 100%);
+  border-color: color-mix(in srgb, #93c5fd var(--tint), var(--border));
   border-bottom-color: #2563eb;
 }
 
 .providerCardGreen {
-  background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
-  border-color: #6ee7b7;
+  background: linear-gradient(135deg, color-mix(in srgb, #ecfdf5 var(--tint), var(--surface)) 0%, color-mix(in srgb, #d1fae5 var(--tint), var(--surface)) 100%);
+  border-color: color-mix(in srgb, #6ee7b7 var(--tint), var(--border));
   border-bottom-color: #059669;
 }
 
 .providerCardOrange {
-  background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
-  border-color: #fcd34d;
+  background: linear-gradient(135deg, color-mix(in srgb, #fffbeb var(--tint), var(--surface)) 0%, color-mix(in srgb, #fef3c7 var(--tint), var(--surface)) 100%);
+  border-color: color-mix(in srgb, #fcd34d var(--tint), var(--border));
   border-bottom-color: #d97706;
 }
 
@@ -319,15 +319,15 @@
 }
 
 .providerCardBlue .providerCardTitleRow {
-  color: #1e3a8a;
+  color: color-mix(in srgb, #1e3a8a var(--ink), #fff);
 }
 
 .providerCardGreen .providerCardTitleRow {
-  color: #065f46;
+  color: color-mix(in srgb, #065f46 var(--ink), #fff);
 }
 
 .providerCardOrange .providerCardTitleRow {
-  color: #78350f;
+  color: color-mix(in srgb, #78350f var(--ink), #fff);
 }
 
 .providerCardSub {
@@ -337,15 +337,15 @@
 }
 
 .providerCardBlue .providerCardSub {
-  color: #1d4ed8;
+  color: color-mix(in srgb, #1d4ed8 var(--ink), #fff);
 }
 
 .providerCardGreen .providerCardSub {
-  color: #047857;
+  color: color-mix(in srgb, #047857 var(--ink), #fff);
 }
 
 .providerCardOrange .providerCardSub {
-  color: #b45309;
+  color: color-mix(in srgb, #b45309 var(--ink), #fff);
 }
 
 .providerCardRight {
@@ -361,15 +361,15 @@
 }
 
 .providerCardBlue .providerCardCount {
-  color: #1d4ed8;
+  color: color-mix(in srgb, #1d4ed8 var(--ink), #fff);
 }
 
 .providerCardGreen .providerCardCount {
-  color: #047857;
+  color: color-mix(in srgb, #047857 var(--ink), #fff);
 }
 
 .providerCardOrange .providerCardCount {
-  color: #b45309;
+  color: color-mix(in srgb, #b45309 var(--ink), #fff);
 }
 
 .providerCardPct {
@@ -379,15 +379,15 @@
 }
 
 .providerCardBlue .providerCardPct {
-  color: #1e40af;
+  color: color-mix(in srgb, #1e40af var(--ink), #fff);
 }
 
 .providerCardGreen .providerCardPct {
-  color: #065f46;
+  color: color-mix(in srgb, #065f46 var(--ink), #fff);
 }
 
 .providerCardOrange .providerCardPct {
-  color: #92400e;
+  color: color-mix(in srgb, #92400e var(--ink), #fff);
 }
 
 /* Key Insight Box */
@@ -446,20 +446,20 @@
   gap: 16px;
   padding: 10px 14px;
   border-radius: 14px;
-  background: #f8fafc;
-  border: 1px solid #cbd5e1;
+  background: var(--surface-2);
+  border: 1px solid var(--border-strong);
   transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
 }
 
 .matrixRow:hover {
-  background: #ffffff;
+  background: var(--surface);
   border-color: #94a3b8;
   box-shadow: 0 6px 16px rgba(15, 23, 42, 0.05);
 }
 
 .matrixRowTop {
-  background: linear-gradient(90deg, #f8fbff 0%, #f8fafc 100%);
-  border-color: #bacce6;
+  background: linear-gradient(90deg, color-mix(in srgb, #f8fbff var(--tint), var(--surface)) 0%, var(--surface-2) 100%);
+  border-color: color-mix(in srgb, #bacce6 var(--tint), var(--border));
 }
 
 .matrixLeft {
@@ -468,7 +468,7 @@
   gap: 11px;
   min-width: 0;
   padding-bottom: 5px;
-  border-bottom: 2.5px solid #cbd5e1;
+  border-bottom: 2.5px solid var(--border-strong);
 }
 
 .matrixRowTop .matrixLeft {
@@ -495,9 +495,9 @@
 }
 
 .rankBadgeDefault {
-  background: #e2e8f0;
-  color: #334155;
-  border: 1px solid #cbd5e1;
+  background: var(--surface-3);
+  color: var(--text-2);
+  border: 1px solid var(--border-strong);
 }
 
 .rbmInfo {
@@ -515,7 +515,7 @@
 .rbmName {
   font-size: 14px;
   font-weight: 800;
-  color: #0f172a;
+  color: var(--text);
   letter-spacing: -0.01em;
   white-space: nowrap;
 }
@@ -532,22 +532,22 @@
 }
 
 .zoneBMA {
-  background: #dbeafe;
-  color: #1d4ed8;
-  border: 1px solid #bfdbfe;
+  background: color-mix(in srgb, #dbeafe var(--tint), var(--surface));
+  color: color-mix(in srgb, #1d4ed8 var(--ink), #fff);
+  border: 1px solid color-mix(in srgb, #bfdbfe var(--tint), var(--border));
 }
 
 .zoneUPC {
-  background: #e2e8f0;
-  color: #475569;
-  border: 1px solid #cbd5e1;
+  background: var(--surface-3);
+  color: var(--text-2);
+  border: 1px solid var(--border-strong);
 }
 
 .rbmQuickShare {
   margin-top: 2px;
   font-size: 11px;
   font-weight: 600;
-  color: #475569;
+  color: var(--text-2);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -565,7 +565,7 @@
   width: 100%;
   height: 22px;
   border-radius: 999px;
-  background: #e2e8f0;
+  background: var(--surface-3);
   box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.1);
   overflow: hidden;
   display: flex;
@@ -611,7 +611,7 @@
 
 .segTK {
   background: linear-gradient(180deg, #fbbf24 0%, #f59e0b 55%, #d97706 100%);
-  color: #78350f;
+  color: color-mix(in srgb, #78350f var(--ink), #fff);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -634,7 +634,7 @@
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  color: #1d4ed8;
+  color: color-mix(in srgb, #1d4ed8 var(--ink), #fff);
   font-weight: 700;
 }
 
@@ -650,7 +650,7 @@
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  color: #047857;
+  color: color-mix(in srgb, #047857 var(--ink), #fff);
   font-weight: 700;
 }
 
@@ -667,9 +667,9 @@
   align-items: center;
   padding: 1px 8px;
   border-radius: 6px;
-  background: #fef3c7;
+  background: color-mix(in srgb, #fef3c7 var(--tint), var(--surface));
   border: 1px solid #f59e0b;
-  color: #b45309;
+  color: color-mix(in srgb, #b45309 var(--ink), #fff);
   font-weight: 800;
   font-size: 11px;
 }
@@ -686,8 +686,8 @@
 .matrixRight {
   padding: 6px 12px;
   border-radius: 10px;
-  background: #ffffff;
-  border: 1px solid #cbd5e1;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
@@ -695,7 +695,7 @@
 .matrixTotalNumber {
   font-size: 17px;
   font-weight: 800;
-  color: #0f172a;
+  color: var(--text);
   line-height: 1.15;
 }
 
@@ -703,7 +703,7 @@
   margin-top: 2px;
   font-size: 10.5px;
   font-weight: 600;
-  color: #64748b;
+  color: var(--text-muted);
   white-space: nowrap;
 }
 
@@ -796,7 +796,7 @@ button.providerBentoCard:focus-visible {
 
 .rankedBy {
   font-weight: 600;
-  color: #64748b;
+  color: var(--text-muted);
   font-size: 0.85em;
 }
 
@@ -824,9 +824,9 @@ button.providerBentoCard:focus-visible {
   gap: 5px;
   padding: 4px 10px;
   border-radius: 999px;
-  border: 1px solid #93c5fd;
-  background: #eff6ff;
-  color: #1d4ed8;
+  border: 1px solid color-mix(in srgb, #93c5fd var(--tint), var(--border));
+  background: color-mix(in srgb, #eff6ff var(--tint), var(--surface));
+  color: color-mix(in srgb, #1d4ed8 var(--ink), #fff);
   font: inherit;
   font-size: 11.5px;
   font-weight: 700;
@@ -836,7 +836,7 @@ button.providerBentoCard:focus-visible {
 }
 
 .scopeResetPill:hover {
-  background: #dbeafe;
+  background: color-mix(in srgb, #dbeafe var(--tint), var(--surface));
 }
 
 .insightRowInteractive {
@@ -873,7 +873,7 @@ button.providerBentoCard:focus-visible {
 
 .matrixRowSelected {
   border-color: #2563eb;
-  background: #eff6ff;
+  background: color-mix(in srgb, #eff6ff var(--tint), var(--surface));
   box-shadow: 0 8px 20px rgba(37, 99, 235, 0.12);
 }
 

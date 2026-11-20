@@ -64,18 +64,15 @@ export default function LoginPage() {
         const data = await response.json();
         if (data.authenticated) {
           // ถ้า login แล้วให้ไปหน้าที่ต้องการ หรือหน้าแรก
-          console.log('Already authenticated, redirecting...');
           const urlParams = new URLSearchParams(window.location.search);
           const redirectTo = data.user?.role === 'allconnect_viewer'
             ? '/allconnect-compare-tech'
             : urlParams.get('redirect') || '/';
-          console.log('Auth redirect to:', redirectTo);
           window.location.href = redirectTo;
           return;
         }
       }
     } catch (error) {
-      console.log('Not authenticated');
     }
   };
 
@@ -90,9 +87,6 @@ export default function LoginPage() {
     setLoading(true);
     setError('');
 
-    // เริ่มวัดเวลา login
-    const loginStartTime = performance.now();
-    console.log('🕐 Login process started at:', new Date().toISOString());
 
     try {
       const response = await fetch('/api/auth/login', {
@@ -110,16 +104,6 @@ export default function LoginPage() {
       const data = await response.json();
 
       if (response.ok) {
-        const loginEndTime = performance.now();
-        const loginDuration = loginEndTime - loginStartTime;
-
-        console.log('✅ Login API completed in:', Math.round(loginDuration), 'ms');
-        console.log('Login successful, redirecting to home...');
-        console.log('Response data:', data);
-
-        // บันทึกเวลาเริ่ม login ลงใน localStorage เพื่อวัดเวลารวม
-        localStorage.setItem('loginStartTime', loginStartTime.toString());
-
         // Viewer opens its only permitted page; existing roles keep their home page.
         setTimeout(() => {
           window.location.replace(data.user?.role === 'allconnect_viewer' ? '/allconnect-compare-tech' : '/');

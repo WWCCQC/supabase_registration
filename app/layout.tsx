@@ -1,19 +1,33 @@
 ﻿import "./globals.css";
+import type { Metadata, Viewport } from "next";
+import { Noto_Sans_Thai } from "next/font/google";
+import { ToastProvider } from "@/components/common/Toast";
+import { themeInitScript } from "@/lib/theme";
 
-export const metadata = { 
+const notoSansThai = Noto_Sans_Thai({
+  subsets: ["thai", "latin"],
+  weight: ["400", "500", "600", "700", "800"],
+  display: "swap",
+});
+
+export const metadata: Metadata = {
   title: "Registration",
-  charset: "utf-8",
-  viewport: "width=device-width, initial-scale=1"
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="th">
+    <html lang="th" suppressHydrationWarning>
       <head>
-        <meta charSet="utf-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>
-      <body style={{ fontFamily: "'Noto Sans Thai', 'Sarabun', 'ui-sans-serif', 'system-ui', sans-serif" }}>{children}</body>
+      <body className={notoSansThai.className}>
+        <ToastProvider>{children}</ToastProvider>
+      </body>
     </html>
   );
 }

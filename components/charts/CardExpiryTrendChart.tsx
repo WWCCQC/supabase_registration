@@ -226,7 +226,7 @@ export default function CardExpiryTrendChart({ selectedMonth, onMonthClick }: Ca
   if (loading) {
     return (
       <div style={{ minHeight: 350, display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <div style={{ fontSize: 16, color: "#666" }}>กำลังโหลดข้อมูล...</div>
+        <div style={{ fontSize: 16, color: "var(--text-muted)" }}>กำลังโหลดข้อมูล...</div>
       </div>
     );
   }
@@ -234,7 +234,7 @@ export default function CardExpiryTrendChart({ selectedMonth, onMonthClick }: Ca
   if (error) {
     return (
       <div style={{ minHeight: 350, display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <div style={{ fontSize: 16, color: "#ef4444" }}>เกิดข้อผิดพลาด: {error}</div>
+        <div style={{ fontSize: 16, color: "color-mix(in srgb, #ef4444 var(--ink), #fff)" }}>เกิดข้อผิดพลาด: {error}</div>
       </div>
     );
   }
@@ -303,9 +303,9 @@ export default function CardExpiryTrendChart({ selectedMonth, onMonthClick }: Ca
               padding: "5px 12px",
               borderRadius: 999,
               fontWeight: 600,
-              color: "#334155",
-              background: "linear-gradient(180deg, #ffffff 0%, #f1f5f9 100%)",
-              border: "1px solid #e2e8f0",
+              color: "var(--text-2)",
+              background: "linear-gradient(180deg, var(--surface) 0%, var(--surface-2) 100%)",
+              border: "1px solid var(--border)",
               boxShadow:
                 "0 1px 0 rgba(255,255,255,0.9) inset, 0 2px 5px -2px rgba(15,23,42,0.22)",
             }}
@@ -341,7 +341,7 @@ export default function CardExpiryTrendChart({ selectedMonth, onMonthClick }: Ca
                   <stop offset="100%" stopColor={c.dark} />
                 </linearGradient>
                 <linearGradient id={`ce-${id}-top`} x1="0" y1="0" x2="1" y2="1">
-                  <stop offset="0%" stopColor="#ffffff" />
+                  <stop offset="0%" stopColor="var(--surface)" />
                   <stop offset="55%" stopColor={c.light} />
                   <stop offset="100%" stopColor={c.base} />
                 </linearGradient>
@@ -352,10 +352,10 @@ export default function CardExpiryTrendChart({ selectedMonth, onMonthClick }: Ca
               </React.Fragment>
             ))}
           </defs>
-          <CartesianGrid strokeDasharray="4 6" stroke="#e8ecf2" vertical={false} />
+          <CartesianGrid strokeDasharray="4 6" stroke="var(--border)" vertical={false} />
           <XAxis
             dataKey="shortLabel"
-            axisLine={{ stroke: "#d8dee8" }}
+            axisLine={{ stroke: "var(--border)" }}
             tickLine={false}
             interval={0}
             height={46}
@@ -372,8 +372,8 @@ export default function CardExpiryTrendChart({ selectedMonth, onMonthClick }: Ca
                       width={48}
                       height={34}
                       rx={10}
-                      fill="#fee2e2"
-                      stroke="#fecaca"
+                      fill="color-mix(in srgb, #fee2e2 var(--tint), var(--surface))"
+                      stroke="color-mix(in srgb, #fecaca var(--tint), var(--border))"
                       style={{ filter: "drop-shadow(0 2px 3px rgba(185,28,28,0.25))" }}
                     />
                   )}
@@ -384,7 +384,7 @@ export default function CardExpiryTrendChart({ selectedMonth, onMonthClick }: Ca
                     style={{
                       fontSize: 11,
                       fontWeight: isCurrent ? 800 : 600,
-                      fill: isCurrent ? "#b91c1c" : "#64748b",
+                      fill: isCurrent ? "color-mix(in srgb, #b91c1c var(--ink), #fff)" : "#64748b",
                     }}
                   >
                     {payload?.value}
@@ -396,7 +396,7 @@ export default function CardExpiryTrendChart({ selectedMonth, onMonthClick }: Ca
                     style={{
                       fontSize: 10,
                       fontWeight: isCurrent ? 700 : 500,
-                      fill: isCurrent ? "#dc2626" : "#94a3b8",
+                      fill: isCurrent ? "color-mix(in srgb, #dc2626 var(--ink), #fff)" : "#94a3b8",
                     }}
                   >
                     {item?.year}
@@ -590,14 +590,14 @@ export default function CardExpiryTrendChart({ selectedMonth, onMonthClick }: Ca
                       height={18}
                       rx={9}
                       fill="#ffffff"
-                      stroke="#e2e8f0"
+                      stroke="var(--border)"
                       style={{ filter: "drop-shadow(0 2px 4px rgba(15,23,42,0.18))" }}
                     />
                     <text
                       x={cx}
                       y={cy + 1}
                       textAnchor="middle"
-                      style={{ fontSize: 11, fontWeight: 800, fill: "#334155" }}
+                      style={{ fontSize: 11, fontWeight: 800, fill: "var(--text-2)" }}
                     >
                       {label}
                     </text>
@@ -615,8 +615,8 @@ export default function CardExpiryTrendChart({ selectedMonth, onMonthClick }: Ca
         style={{
           flex: "1 1 300px",
           minWidth: 280,
-          background: "linear-gradient(165deg, #fff7ed 0%, #ffffff 55%, #fffbf6 100%)",
-          border: "1px solid #fed7aa",
+          background: "linear-gradient(165deg, color-mix(in srgb, #fff7ed var(--tint), var(--surface)) 0%, var(--surface) 55%, color-mix(in srgb, #fffbf6 var(--tint), var(--surface)) 100%)",
+          border: "1px solid color-mix(in srgb, #fed7aa var(--tint), var(--border))",
           borderRadius: 16,
           padding: "16px 18px",
           display: "flex",
@@ -636,14 +636,14 @@ export default function CardExpiryTrendChart({ selectedMonth, onMonthClick }: Ca
               alignItems: "center",
               justifyContent: "center",
               borderRadius: 9,
-              background: "linear-gradient(160deg, #ffedd5 0%, #fed7aa 100%)",
+              background: "linear-gradient(160deg, color-mix(in srgb, #ffedd5 var(--tint), var(--surface)) 0%, color-mix(in srgb, #fed7aa var(--tint), var(--surface)) 100%)",
               boxShadow:
                 "0 1px 0 rgba(255,255,255,0.9) inset, 0 2px 5px rgba(194,65,12,0.28)",
             }}
           >
             📊
           </span>
-          <span style={{ fontSize: 14, fontWeight: 700, color: "#9a3412" }}>
+          <span style={{ fontSize: 14, fontWeight: 700, color: "color-mix(in srgb, #9a3412 var(--ink), #fff)" }}>
             สรุปเชิงวิเคราะห์
           </span>
         </div>
@@ -651,8 +651,8 @@ export default function CardExpiryTrendChart({ selectedMonth, onMonthClick }: Ca
         {/* อัตราต่อบัตรรวม */}
         <div
           style={{
-            background: "linear-gradient(180deg, #ffffff 0%, #fffaf5 100%)",
-            border: "1px solid #fde4cc",
+            background: "linear-gradient(180deg, var(--surface) 0%, color-mix(in srgb, #fffaf5 var(--tint), var(--surface)) 100%)",
+            border: "1px solid color-mix(in srgb, #fde4cc var(--tint), var(--border))",
             borderRadius: 12,
             padding: "11px 13px",
             boxShadow:
@@ -660,15 +660,15 @@ export default function CardExpiryTrendChart({ selectedMonth, onMonthClick }: Ca
           }}
         >
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-            <span style={{ fontSize: 12, color: "#6b7280" }}>อัตราต่อบัตรรวมทั้งปี</span>
-            <span style={{ fontSize: 18, fontWeight: 800, color: renewRate >= 50 ? "#16a34a" : "#ea580c" }}>
+            <span style={{ fontSize: 12, color: "var(--text-muted)" }}>อัตราต่อบัตรรวมทั้งปี</span>
+            <span style={{ fontSize: 18, fontWeight: 800, color: renewRate >= 50 ? "color-mix(in srgb, #16a34a var(--ink), #fff)" : "color-mix(in srgb, #ea580c var(--ink), #fff)" }}>
               {renewRate.toFixed(1)}%
             </span>
           </div>
           <div
             style={{
               height: 9,
-              background: "linear-gradient(180deg, #dfe4ea 0%, #eef1f5 100%)",
+              background: "linear-gradient(180deg, var(--surface-3) 0%, var(--surface-3) 100%)",
               boxShadow:
                 "0 1px 2px rgba(15,23,42,0.18) inset, 0 1px 0 rgba(255,255,255,0.85)",
               borderRadius: 999,
@@ -691,9 +691,9 @@ export default function CardExpiryTrendChart({ selectedMonth, onMonthClick }: Ca
               }}
             />
           </div>
-          <div style={{ fontSize: 11, color: "#6b7280", marginTop: 6 }}>
-            ต่อบัตรแล้ว <strong style={{ color: "#16a34a" }}>{totalRenew.toLocaleString()}</strong> คน ·
-            คงค้าง <strong style={{ color: "#ea580c" }}>{notRenewed.toLocaleString()}</strong> คน
+          <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 6 }}>
+            ต่อบัตรแล้ว <strong style={{ color: "color-mix(in srgb, #16a34a var(--ink), #fff)" }}>{totalRenew.toLocaleString()}</strong> คน ·
+            คงค้าง <strong style={{ color: "color-mix(in srgb, #ea580c var(--ink), #fff)" }}>{notRenewed.toLocaleString()}</strong> คน
             จากทั้งหมด {totalExpiring.toLocaleString()} คน
           </div>
         </div>
@@ -701,20 +701,20 @@ export default function CardExpiryTrendChart({ selectedMonth, onMonthClick }: Ca
         {/* Highlight cards */}
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           {peakMonth && (
-            <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12, color: "#374151" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12, color: "var(--text-2)" }}>
               <span style={{ fontSize: 16 }}>📈</span>
               <span>
                 หมดอายุสูงสุดเดือน <strong>{peakMonth.shortLabel}</strong>{" "}
-                <strong style={{ color: "#ea580c" }}>{peakMonth.count}</strong> คน — ต้องเตรียมรองรับการต่อบัตร
+                <strong style={{ color: "color-mix(in srgb, #ea580c var(--ink), #fff)" }}>{peakMonth.count}</strong> คน — ต้องเตรียมรองรับการต่อบัตร
               </span>
             </div>
           )}
           {bestRenewMonth && bestRenewMonth.renewCount > 0 && (
-            <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12, color: "#374151" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12, color: "var(--text-2)" }}>
               <span style={{ fontSize: 16 }}>✅</span>
               <span>
                 ต่อบัตรดีสุดเดือน <strong>{bestRenewMonth.shortLabel}</strong>{" "}
-                <strong style={{ color: "#16a34a" }}>
+                <strong style={{ color: "color-mix(in srgb, #16a34a var(--ink), #fff)" }}>
                   {((bestRenewMonth.renewCount / bestRenewMonth.count) * 100).toFixed(0)}%
                 </strong>{" "}
                 ({bestRenewMonth.renewCount}/{bestRenewMonth.count} คน)
@@ -722,17 +722,17 @@ export default function CardExpiryTrendChart({ selectedMonth, onMonthClick }: Ca
             </div>
           )}
           {riskMonth && riskMonth.notRenewedCount > 0 && (
-            <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12, color: "#374151" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12, color: "var(--text-2)" }}>
               <span style={{ fontSize: 16 }}>⚠️</span>
               <span>
                 เดือนเสี่ยง <strong>{riskMonth.shortLabel}</strong> ยังค้างต่อบัตร{" "}
-                <strong style={{ color: "#dc2626" }}>{riskMonth.notRenewedCount}</strong> คน — ควรเร่งติดตาม
+                <strong style={{ color: "color-mix(in srgb, #dc2626 var(--ink), #fff)" }}>{riskMonth.notRenewedCount}</strong> คน — ควรเร่งติดตาม
               </span>
             </div>
           )}
         </div>
 
-        <div style={{ fontSize: 11, color: "#9a3412", background: "#ffedd5", borderRadius: 8, padding: "8px 10px", lineHeight: 1.5 }}>
+        <div style={{ fontSize: 11, color: "color-mix(in srgb, #9a3412 var(--ink), #fff)", background: "color-mix(in srgb, #ffedd5 var(--tint), var(--surface))", borderRadius: 8, padding: "8px 10px", lineHeight: 1.5 }}>
           💡 ภาพรวมมีบัตรหมดอายุ {totalExpiring.toLocaleString()} คนในปี {summary?.year}{" "}
           แต่ลงทะเบียนต่อบัตรเพียง {renewRate.toFixed(1)}%{" "}
           {renewRate < 50 ? "ซึ่งยังต่ำกว่าครึ่ง ควรเร่งรณรงค์ให้ช่างเข้าอบรมต่อบัตรก่อนถึงกำหนด" : "อยู่ในเกณฑ์ที่ดี ควรรักษาระดับนี้ต่อไป"}
@@ -755,25 +755,25 @@ export default function CardExpiryTrendChart({ selectedMonth, onMonthClick }: Ca
             {
               label: `รวมหมดอายุทั้งปี ${summary.year}`,
               value: summary.totalExpiring,
-              color: "#1f2937",
-              tint: "#f8fafc",
-              border: "#e2e8f0",
+              color: "var(--text)",
+              tint: "var(--surface-2)",
+              border: "var(--border)",
               glow: "15,23,42",
             },
             {
               label: "หมดอายุเดือนนี้",
               value: chartData.find((d) => d.month === currentMonth)?.count || 0,
-              color: "#dc2626",
-              tint: "#fef2f2",
-              border: "#fecaca",
+              color: "color-mix(in srgb, #dc2626 var(--ink), #fff)",
+              tint: "color-mix(in srgb, #fef2f2 var(--tint), var(--surface))",
+              border: "color-mix(in srgb, #fecaca var(--tint), var(--border))",
               glow: "220,38,38",
             },
             {
               label: "รวมลงทะเบียนอบรมช่างต่อบัตร",
               value: summary.totalRenew,
-              color: "#15803d",
-              tint: "#f0fdf4",
-              border: "#bbf7d0",
+              color: "color-mix(in srgb, #15803d var(--ink), #fff)",
+              tint: "color-mix(in srgb, #f0fdf4 var(--tint), var(--surface))",
+              border: "color-mix(in srgb, #bbf7d0 var(--tint), var(--border))",
               glow: "22,163,74",
             },
           ].map((tile) => (
@@ -784,7 +784,7 @@ export default function CardExpiryTrendChart({ selectedMonth, onMonthClick }: Ca
                 minWidth: 150,
                 padding: "10px 16px",
                 borderRadius: 14,
-                background: `linear-gradient(180deg, #ffffff 0%, ${tile.tint} 100%)`,
+                background: `linear-gradient(180deg, var(--surface) 0%, ${tile.tint} 100%)`,
                 border: `1px solid ${tile.border}`,
                 boxShadow: `0 1px 0 rgba(255,255,255,0.95) inset, 0 -2px 0 rgba(${tile.glow},0.12) inset, 0 6px 14px -8px rgba(${tile.glow},0.45)`,
               }}
@@ -831,7 +831,7 @@ export default function CardExpiryTrendChart({ selectedMonth, onMonthClick }: Ca
           <div
             onClick={(e) => e.stopPropagation()}
             style={{
-              background: "white", borderRadius: 16, padding: "24px 28px",
+              background: "var(--surface)", borderRadius: 16, padding: "24px 28px",
               boxShadow: "0 20px 60px rgba(0,0,0,0.25)",
               maxWidth: 1100, width: "96%", maxHeight: "88vh",
               display: "flex", flexDirection: "column",
@@ -843,7 +843,7 @@ export default function CardExpiryTrendChart({ selectedMonth, onMonthClick }: Ca
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
                 <span style={{ width: 12, height: 12, borderRadius: "50%", background: "#f97316", flexShrink: 0 }} />
-                <span style={{ fontSize: 16, fontWeight: 700, color: "#1e293b" }}>
+                <span style={{ fontSize: 16, fontWeight: 700, color: "var(--text)" }}>
                   🪪 บัตรช่างหมดอายุ {chartData.find((d) => d.month === modalMonth)?.monthLabel ?? ""}
                 </span>
                 <span style={{
@@ -856,13 +856,13 @@ export default function CardExpiryTrendChart({ selectedMonth, onMonthClick }: Ca
               <button
                 onClick={closeModal}
                 style={{
-                  background: "#f1f5f9", border: "none", borderRadius: "50%",
+                  background: "var(--surface-2)", border: "none", borderRadius: "50%",
                   width: 32, height: 32, cursor: "pointer", fontSize: 16,
                   display: "flex", alignItems: "center", justifyContent: "center",
-                  color: "#64748b", transition: "background 0.15s", flexShrink: 0,
+                  color: "var(--text-muted)", transition: "background 0.15s", flexShrink: 0,
                 }}
-                onMouseEnter={(e) => { e.currentTarget.style.background = "#e2e8f0"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.background = "#f1f5f9"; }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = "var(--surface-3)"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = "var(--surface-2)"; }}
               >
                 ✕
               </button>
@@ -878,11 +878,11 @@ export default function CardExpiryTrendChart({ selectedMonth, onMonthClick }: Ca
                   onChange={(e) => setModalSearch(e.target.value)}
                   style={{
                     width: "100%", padding: "7px 12px 7px 32px", fontSize: 13,
-                    border: "1.5px solid #e2e8f0", borderRadius: 8, outline: "none",
+                    border: "1.5px solid var(--border)", borderRadius: 8, outline: "none",
                     transition: "border-color 0.15s",
                   }}
                   onFocus={(e) => { e.currentTarget.style.borderColor = "#f97316"; }}
-                  onBlur={(e) => { e.currentTarget.style.borderColor = "#e2e8f0"; }}
+                  onBlur={(e) => { e.currentTarget.style.borderColor = "var(--border)"; }}
                 />
                 <span style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", fontSize: 14, pointerEvents: "none" }}>🔍</span>
               </div>
@@ -890,7 +890,7 @@ export default function CardExpiryTrendChart({ selectedMonth, onMonthClick }: Ca
                 onClick={handleDownloadExcel}
                 disabled={modalLoading || !filteredModalRows.length}
                 style={{
-                  background: filteredModalRows.length ? "linear-gradient(135deg, #10b981, #059669)" : "#e2e8f0",
+                  background: filteredModalRows.length ? "linear-gradient(135deg, #10b981, #059669)" : "var(--surface-3)",
                   color: filteredModalRows.length ? "white" : "#94a3b8",
                   border: "none", borderRadius: 8, padding: "7px 16px",
                   fontSize: 12, fontWeight: 600, cursor: filteredModalRows.length ? "pointer" : "default",
@@ -908,14 +908,14 @@ export default function CardExpiryTrendChart({ selectedMonth, onMonthClick }: Ca
             {modalLoading ? (
               <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 40, gap: 10 }}>
                 <div style={{
-                  width: 36, height: 36, border: "3px solid #e5e7eb",
+                  width: 36, height: 36, border: "3px solid var(--border)",
                   borderTopColor: "#f97316",
                   borderRadius: "50%", animation: "ceSpin 0.8s linear infinite",
                 }} />
-                <span style={{ fontSize: 13, color: "#6b7280" }}>กำลังโหลดข้อมูล...</span>
+                <span style={{ fontSize: 13, color: "var(--text-muted)" }}>กำลังโหลดข้อมูล...</span>
               </div>
             ) : modalError ? (
-              <div style={{ padding: 30, textAlign: "center", color: "#ef4444", fontSize: 14 }}>
+              <div style={{ padding: 30, textAlign: "center", color: "color-mix(in srgb, #ef4444 var(--ink), #fff)", fontSize: 14 }}>
                 ❌ {modalError}
               </div>
             ) : (
@@ -926,8 +926,8 @@ export default function CardExpiryTrendChart({ selectedMonth, onMonthClick }: Ca
                       {["#", ...DETAIL_HEADERS.map((h) => h.label)].map((h) => (
                         <th key={h} style={{
                           textAlign: "left", padding: "8px 8px", fontWeight: 600, fontSize: 11,
-                          background: "#f8fafc", boxShadow: "inset 0 -2px 0 #f9731630",
-                          color: "#475569", borderBottom: "2px solid #f9731630",
+                          background: "var(--surface-2)", boxShadow: "inset 0 -2px 0 #f9731630",
+                          color: "var(--text-2)", borderBottom: "2px solid #f9731630",
                           whiteSpace: "nowrap",
                         }}>
                           {h}
@@ -944,13 +944,13 @@ export default function CardExpiryTrendChart({ selectedMonth, onMonthClick }: Ca
                       </tr>
                     ) : (
                       filteredModalRows.map((row, idx) => (
-                        <tr key={idx} style={{ borderBottom: "1px solid #f1f5f9", transition: "background 0.1s" }}
-                          onMouseEnter={(e) => { e.currentTarget.style.background = "#f8fafc"; }}
+                        <tr key={idx} style={{ borderBottom: "1px solid var(--border)", transition: "background 0.1s" }}
+                          onMouseEnter={(e) => { e.currentTarget.style.background = "var(--surface-2)"; }}
                           onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
                         >
                           <td style={{ padding: "6px 8px", color: "#9ca3af", fontSize: 11 }}>{idx + 1}</td>
                           {DETAIL_HEADERS.map((h) => (
-                            <td key={h.key} style={{ padding: "6px 8px", color: "#334155", whiteSpace: "nowrap" }}>
+                            <td key={h.key} style={{ padding: "6px 8px", color: "var(--text-2)", whiteSpace: "nowrap" }}>
                               {h.key === "renew_status" ? (
                                 <span style={{
                                   fontSize: 11, fontWeight: 600, borderRadius: 6, padding: "2px 8px",

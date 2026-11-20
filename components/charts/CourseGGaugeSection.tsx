@@ -52,11 +52,11 @@ export default function CourseGGaugeSection({
       loading={chartLoading}
       title="Status by Course G"
       titleIcon="📗"
-      titleIconBg="linear-gradient(160deg, #dcfce7 0%, #bbf7d0 100%)"
+      titleIconBg="linear-gradient(160deg, color-mix(in srgb, #dcfce7 var(--tint), var(--surface)) 0%, color-mix(in srgb, #bbf7d0 var(--tint), var(--surface)) 100%)"
       titleIconShadow="0 1px 0 rgba(255,255,255,0.85) inset, 0 2px 5px rgba(22,163,74,0.28)"
       tableTitle="RBM Status by Course G"
       tableIcon="📊"
-      tableIconBg="linear-gradient(160deg, #e0f2fe 0%, #bae6fd 100%)"
+      tableIconBg="linear-gradient(160deg, color-mix(in srgb, #e0f2fe var(--tint), var(--surface)) 0%, color-mix(in srgb, #bae6fd var(--tint), var(--surface)) 100%)"
       tableIconShadow="0 1px 0 rgba(255,255,255,0.9) inset, 0 2px 5px rgba(2,132,199,0.25)"
       labels={{
         passTile: "✅ ผ่านอบรม",

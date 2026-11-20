@@ -48,7 +48,7 @@ export default function PowerAuthorityGaugeSection({
       title="Status by Power Authority"
       gaugeNote={
         <>
-          <strong style={{ color: "#334155" }}>หมายเหตุ : คำนวนจาก</strong>
+          <strong style={{ color: "var(--text-2)" }}>หมายเหตุ : คำนวนจาก</strong>
           <ul style={{ margin: "6px 0 0", paddingLeft: 18 }}>
             <li>UPC: เฉพาะ “หัวหน้า”</li>
             <li>BMA: “หัวหน้า” และ “ลูกน้อง” ยกเว้นปทุมธานี เฉพาะ “หัวหน้า”</li>
@@ -57,11 +57,11 @@ export default function PowerAuthorityGaugeSection({
         </>
       }
       titleIcon="⚡"
-      titleIconBg="linear-gradient(160deg, #fef9c3 0%, #fde68a 100%)"
+      titleIconBg="linear-gradient(160deg, color-mix(in srgb, #fef9c3 var(--tint), var(--surface)) 0%, color-mix(in srgb, #fde68a var(--tint), var(--surface)) 100%)"
       titleIconShadow="0 1px 0 rgba(255,255,255,0.8) inset, 0 2px 5px rgba(180,131,10,0.28)"
       tableTitle="RBM Status by Power"
       tableIcon="📊"
-      tableIconBg="linear-gradient(160deg, #e0f2fe 0%, #bae6fd 100%)"
+      tableIconBg="linear-gradient(160deg, color-mix(in srgb, #e0f2fe var(--tint), var(--surface)) 0%, color-mix(in srgb, #bae6fd var(--tint), var(--surface)) 100%)"
       tableIconShadow="0 1px 0 rgba(255,255,255,0.9) inset, 0 2px 5px rgba(2,132,199,0.25)"
       labels={{
         passTile: "✅ ผ่านการอบรม",

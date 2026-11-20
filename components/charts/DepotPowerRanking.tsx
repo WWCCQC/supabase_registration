@@ -38,7 +38,7 @@ export default function DepotPowerRanking() {
   if (loading) {
     return (
       <div style={{ textAlign: "center", padding: 40 }}>
-        <div style={{ fontSize: 16, color: "#666" }}>กำลังโหลดข้อมูล...</div>
+        <div style={{ fontSize: 16, color: "var(--text-muted)" }}>กำลังโหลดข้อมูล...</div>
       </div>
     );
   }
@@ -46,7 +46,7 @@ export default function DepotPowerRanking() {
   if (error) {
     return (
       <div style={{ textAlign: "center", padding: 40 }}>
-        <div style={{ fontSize: 16, color: "#ef4444" }}>เกิดข้อผิดพลาด: {error}</div>
+        <div style={{ fontSize: 16, color: "color-mix(in srgb, #ef4444 var(--ink), #fff)" }}>เกิดข้อผิดพลาด: {error}</div>
       </div>
     );
   }
@@ -63,7 +63,7 @@ export default function DepotPowerRanking() {
     <div style={{ fontFamily: 'system-ui, -apple-system, sans-serif', height: '100%', display: 'flex', flexDirection: 'column' }}>
       {/* Header with refresh button */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-        <div style={{ fontSize: '14px', color: '#6b7280', fontWeight: '500' }}>
+        <div style={{ fontSize: '14px', color: 'var(--text-muted)', fontWeight: '500' }}>
           Top 10 Depot - บัตรการไฟฟ้าสูงสุด
         </div>
         <button
@@ -71,7 +71,7 @@ export default function DepotPowerRanking() {
           disabled={loading}
           style={{
             padding: '4px 10px',
-            backgroundColor: loading ? '#e5e7eb' : '#3b82f6',
+            backgroundColor: loading ? 'var(--surface-3)' : '#3b82f6',
             color: loading ? '#9ca3af' : 'white',
             border: 'none',
             borderRadius: '4px',
@@ -85,7 +85,7 @@ export default function DepotPowerRanking() {
       </div>
 
       {/* Table */}
-      <div style={{ flex: 1, overflowY: 'auto', border: '1px solid #e5e7eb', borderRadius: '6px' }}>
+      <div style={{ flex: 1, overflowY: 'auto', border: '1px solid var(--border)', borderRadius: '6px' }}>
         <table style={{ 
           width: '100%', 
           borderCollapse: 'collapse',
@@ -94,15 +94,15 @@ export default function DepotPowerRanking() {
           <thead style={{ 
             position: 'sticky', 
             top: 0, 
-            backgroundColor: '#f9fafb',
-            borderBottom: '2px solid #e5e7eb'
+            backgroundColor: 'var(--surface-2)',
+            borderBottom: '2px solid var(--border)'
           }}>
             <tr>
               <th style={{ 
                 padding: '10px 8px', 
                 textAlign: 'center',
                 fontWeight: '600',
-                color: '#374151',
+                color: 'var(--text-2)',
                 width: '50px'
               }}>
                 อันดับ
@@ -111,7 +111,7 @@ export default function DepotPowerRanking() {
                 padding: '10px 8px', 
                 textAlign: 'left',
                 fontWeight: '600',
-                color: '#374151'
+                color: 'var(--text-2)'
               }}>
                 ชื่อ Depot
               </th>
@@ -119,7 +119,7 @@ export default function DepotPowerRanking() {
                 padding: '10px 8px', 
                 textAlign: 'center',
                 fontWeight: '600',
-                color: '#374151',
+                color: 'var(--text-2)',
                 width: '80px'
               }}>
                 จำนวนช่าง
@@ -128,7 +128,7 @@ export default function DepotPowerRanking() {
                 padding: '10px 8px', 
                 textAlign: 'center',
                 fontWeight: '600',
-                color: '#374151',
+                color: 'var(--text-2)',
                 width: '100px'
               }}>
                 มีบัตรไฟฟ้า
@@ -137,7 +137,7 @@ export default function DepotPowerRanking() {
                 padding: '10px 8px', 
                 textAlign: 'center',
                 fontWeight: '600',
-                color: '#374151',
+                color: 'var(--text-2)',
                 width: '80px'
               }}>
                 %
@@ -149,29 +149,29 @@ export default function DepotPowerRanking() {
               <tr 
                 key={item.depot_name}
                 style={{ 
-                  backgroundColor: index % 2 === 0 ? '#ffffff' : '#f9fafb',
-                  borderBottom: '1px solid #e5e7eb'
+                  backgroundColor: index % 2 === 0 ? 'var(--surface)' : 'var(--surface-2)',
+                  borderBottom: '1px solid var(--border)'
                 }}
               >
                 <td style={{ 
                   padding: '10px 8px', 
                   textAlign: 'center',
                   fontWeight: '600',
-                  color: index < 3 ? '#f59e0b' : '#6b7280'
+                  color: index < 3 ? '#f59e0b' : 'var(--text-muted)'
                 }}>
                   {index < 3 ? ['🥇', '🥈', '🥉'][index] : `${index + 1}`}
                 </td>
                 <td style={{ 
                   padding: '10px 8px', 
                   fontWeight: '500',
-                  color: '#111827'
+                  color: 'var(--text)'
                 }}>
                   {item.depot_name}
                 </td>
                 <td style={{ 
                   padding: '10px 8px', 
                   textAlign: 'center',
-                  color: '#374151'
+                  color: 'var(--text-2)'
                 }}>
                   {item.total_technicians.toLocaleString()}
                 </td>
@@ -187,7 +187,7 @@ export default function DepotPowerRanking() {
                   padding: '10px 8px', 
                   textAlign: 'center',
                   fontWeight: '500',
-                  color: '#6b7280'
+                  color: 'var(--text-muted)'
                 }}>
                   {item.percentage}%
                 </td>
@@ -201,10 +201,10 @@ export default function DepotPowerRanking() {
       <div style={{
         marginTop: '12px',
         padding: '8px 12px',
-        backgroundColor: '#f3f4f6',
+        backgroundColor: 'var(--surface-2)',
         borderRadius: '6px',
         fontSize: '12px',
-        color: '#6b7280',
+        color: 'var(--text-muted)',
         textAlign: 'center'
       }}>
         แสดงผล 10 อันดับแรก จากทั้งหมด

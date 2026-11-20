@@ -321,7 +321,7 @@ export default function ProviderShare3D({
             label: selectedRef.current ? "คลิกเพื่อแสดงช่างทั้งหมด" : "ภาพรวมช่างทั้งหมด",
             value: totalValue,
             pct: "100.0",
-            color: "#3b82f6",
+            color: "color-mix(in srgb, #3b82f6 var(--ink), #fff)",
             isCenter: true,
           });
         }

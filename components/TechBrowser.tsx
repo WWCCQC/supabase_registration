@@ -2,6 +2,7 @@
 import React from "react";
 import { createPortal } from "react-dom";
 import dynamic from "next/dynamic";
+import { Download, IdCard, Search, UserRound, Warehouse, X } from "lucide-react";
 import { createClient } from '@supabase/supabase-js';
 import { getFieldLabel, SECTION_LABELS, KPI_LABELS } from "../lib/fieldLabels";
 import { TECHNICIAN_TABLE_COLUMNS } from "../lib/technicianTableColumns";
@@ -9,6 +10,7 @@ import { useAuth } from "@/lib/useAuth";
 import PivotTableComponent from "./tables/PivotTable";
 import TechnicianCountTable from "./tables/TechnicianCountTable";
 import DataUpdatedChip from "./common/DataUpdatedChip";
+import { useToast } from "./common/Toast";
 import { lightBlueSection } from "./charts/sectionStyles";
 import WorkgroupCountTable from "./tables/WorkgroupCountTable";
 import {
@@ -29,7 +31,7 @@ const RsmProviderChart = dynamic(() => import("./charts/RsmProviderChart"), {
   ssr: false,
   loading: () => (
     <div style={{ padding: 24, textAlign: "center" }}>
-      <div style={{ fontSize: 16, color: "#666" }}>กำลังโหลด Provider Chart...</div>
+      <div style={{ fontSize: 16, color: "var(--text-muted)" }}>กำลังโหลด Provider Chart...</div>
     </div>
   )
 });
@@ -39,7 +41,7 @@ const CtmProviderChart = dynamic(() => import("./charts/CtmProviderChart"), {
   ssr: false,
   loading: () => (
     <div style={{ padding: 24, textAlign: "center" }}>
-      <div style={{ fontSize: 16, color: "#666" }}>กำลังโหลด CTM Chart...</div>
+      <div style={{ fontSize: 16, color: "var(--text-muted)" }}>กำลังโหลด CTM Chart...</div>
     </div>
   )
 });
@@ -49,7 +51,7 @@ const CtmProviderChart = dynamic(() => import("./charts/CtmProviderChart"), {
 //   ssr: false,
 //   loading: () => (
 //     <div style={{ padding: 24, textAlign: "center" }}>
-//       <div style={{ fontSize: 16, color: "#666" }}>กำลังโหลด Power Authority Chart...</div>
+//       <div style={{ fontSize: 16, color: "var(--text-muted)" }}>กำลังโหลด Power Authority Chart...</div>
 //     </div>
 //   )
 // });
@@ -59,7 +61,7 @@ const PivotTable = dynamic(() => import("./tables/PivotTable"), {
   ssr: false,
   loading: () => (
     <div style={{ padding: 24, textAlign: "center" }}>
-      <div style={{ fontSize: 16, color: "#666" }}>กำลังโหลด Pivot Table...</div>
+      <div style={{ fontSize: 16, color: "var(--text-muted)" }}>กำลังโหลด Pivot Table...</div>
     </div>
   )
 });
@@ -69,7 +71,7 @@ const DepotPowerRanking = dynamic(() => import("./charts/DepotPowerRanking"), {
   ssr: false,
   loading: () => (
     <div style={{ padding: 24, textAlign: "center" }}>
-      <div style={{ fontSize: 16, color: "#666" }}>กำลังโหลด Depot Power Ranking...</div>
+      <div style={{ fontSize: 16, color: "var(--text-muted)" }}>กำลังโหลด Depot Power Ranking...</div>
     </div>
   )
 });
@@ -79,7 +81,7 @@ const CardExpiryTrendChart = dynamic(() => import("./charts/CardExpiryTrendChart
   ssr: false,
   loading: () => (
     <div style={{ padding: 24, textAlign: "center" }}>
-      <div style={{ fontSize: 16, color: "#666" }}>กำลังโหลด Card Expiry Chart...</div>
+      <div style={{ fontSize: 16, color: "var(--text-muted)" }}>กำลังโหลด Card Expiry Chart...</div>
     </div>
   )
 });
@@ -89,7 +91,7 @@ const TrainingRadarChart = dynamic(() => import("./charts/TrainingRadarChart"), 
   ssr: false,
   loading: () => (
     <div style={{ padding: 24, textAlign: "center" }}>
-      <div style={{ fontSize: 16, color: "#666" }}>กำลังโหลด Training Radar Chart...</div>
+      <div style={{ fontSize: 16, color: "var(--text-muted)" }}>กำลังโหลด Training Radar Chart...</div>
     </div>
   )
 });
@@ -99,7 +101,7 @@ const PowerAuthorityGaugeSection = dynamic(() => import("./charts/PowerAuthority
   ssr: false,
   loading: () => (
     <div style={{ padding: 24, textAlign: "center" }}>
-      <div style={{ fontSize: 16, color: "#666" }}>กำลังโหลด Power Authority Gauge...</div>
+      <div style={{ fontSize: 16, color: "var(--text-muted)" }}>กำลังโหลด Power Authority Gauge...</div>
     </div>
   )
 });
@@ -109,7 +111,7 @@ const CourseGGaugeSection = dynamic(() => import("./charts/CourseGGaugeSection")
   ssr: false,
   loading: () => (
     <div style={{ padding: 24, textAlign: "center" }}>
-      <div style={{ fontSize: 16, color: "#666" }}>กำลังโหลด Course G Gauge...</div>
+      <div style={{ fontSize: 16, color: "var(--text-muted)" }}>กำลังโหลด Course G Gauge...</div>
     </div>
   )
 });
@@ -119,7 +121,7 @@ const CourseECGaugeSection = dynamic(() => import("./charts/CourseECGaugeSection
   ssr: false,
   loading: () => (
     <div style={{ padding: 24, textAlign: "center" }}>
-      <div style={{ fontSize: 16, color: "#666" }}>กำลังโหลด Course EC Gauge...</div>
+      <div style={{ fontSize: 16, color: "var(--text-muted)" }}>กำลังโหลด Course EC Gauge...</div>
     </div>
   )
 });
@@ -229,10 +231,9 @@ const WIDTHS: Partial<Record<(typeof COLS)[number], number>> = {
 export default function TechBrowser() {
   /* Auth check */
   const { user, isAdmin, isManager } = useAuth();
+  const showToast = useToast();
 
   /* Performance Timing */
-  const [componentStartTime] = React.useState(() => performance.now());
-  const [initialLoadComplete, setInitialLoadComplete] = React.useState(false);
 
   /* table state */
   const [page, setPage] = React.useState(1);
@@ -390,16 +391,11 @@ export default function TechBrowser() {
   }
 
   async function fetchData(p = page) {
-    const startTime = performance.now();
     setLoading(true);
     setError(null);
     try {
       const params = buildParams(p);
       const url = `/api/technicians?${params.toString()}`;
-      console.log('🔍 Fetching data with selectedRsm:', selectedRsm);
-      console.log('🔍 Fetching data with selectedCtm:', selectedCtm);
-      console.log('🔍 Fetching data with selectedPowerAuthority:', selectedPowerAuthority);
-      console.log('🔍 Fetching data from:', url);
 
       // เพิ่ม timeout และ headers
       const controller = new AbortController();
@@ -416,11 +412,7 @@ export default function TechBrowser() {
 
       clearTimeout(timeoutId);
 
-      console.log('📡 Response status:', res.status);
-      console.log('📡 Response headers:', Object.fromEntries(res.headers.entries()));
-
       const text = await res.text();
-      console.log('📄 Raw response:', text);
 
       let json;
       try {
@@ -429,16 +421,12 @@ export default function TechBrowser() {
         throw new Error('Invalid JSON response: ' + text.substring(0, 100));
       }
 
-      console.log('📊 Response data:', json);
-
       if (!res.ok) throw new Error(json?.error || `HTTP ${res.status}: Failed to fetch`);
       setRows(json.rows || []);
       setTotal(json.total || 0);
       setTotalPages(json.totalPages || 1);
       setPage(json.page || p);
 
-      const endTime = performance.now();
-      console.log(`📊 Data fetch completed in ${(endTime - startTime).toFixed(2)}ms`);
     } catch (e: any) {
       console.error('❌ Fetch error:', e);
       if (e.name === 'AbortError') {
@@ -453,7 +441,6 @@ export default function TechBrowser() {
   }
 
   async function fetchChartData() {
-    const startTime = performance.now();
     setChartLoading(true);
     try {
       // Add cache-busting parameter
@@ -472,8 +459,6 @@ export default function TechBrowser() {
       setChartData(json.chartData || []);
       setChartSummary(json.summary || null);
 
-      const endTime = performance.now();
-      console.log(`📊 Chart data fetch completed in ${(endTime - startTime).toFixed(2)}ms`);
     } catch (e: any) {
       console.error("Chart fetch error:", e);
     } finally {
@@ -484,11 +469,9 @@ export default function TechBrowser() {
   async function fetchKpis() {
     // ป้องกันการเรียกซ้ำ
     if (kpiFetching) {
-      console.log('🔄 KPI fetch already in progress, skipping...');
       return;
     }
 
-    const startTime = performance.now();
     setKpiFetching(true);
     setKpiLoading(true);
     try {
@@ -496,8 +479,6 @@ export default function TechBrowser() {
       // const params = buildFilterParamsOnly();
       // const url = `/api/kpis?${params.toString()}`;
       const url = `/api/kpis`; // NO FILTERS - always show total data
-      console.log('📊 Fetching KPIs (TOTAL DATA - no filters)');
-      console.log('📊 Fetching KPIs from:', url);
 
       // เพิ่ม timeout และ headers
       const controller = new AbortController();
@@ -514,10 +495,7 @@ export default function TechBrowser() {
 
       clearTimeout(timeoutId);
 
-      console.log('📡 KPI Response status:', res.status);
-
       const text = await res.text();
-      console.log('📄 KPI Raw response:', text);
 
       let json;
       try {
@@ -526,26 +504,19 @@ export default function TechBrowser() {
         throw new Error('Invalid JSON response from KPI API');
       }
 
-      console.log('📊 KPI Response data:', json);
-
       if (!res.ok) throw new Error(json?.error || `HTTP ${res.status}: KPI fetch error`);
 
       // ตรวจสอบว่าข้อมูลมีค่าที่ถูกต้องหรือไม่ (รองรับทั้ง nested และ flat format)
       const kpiData = json?.data || json; // รองรับทั้ง { data: {...} } และ {...} format
-      console.log('📊 KPI Data extracted:', kpiData);
       const validKpi = {
         total: kpiData?.total ?? 0,
         by_work_type: Array.isArray(kpiData?.by_work_type) ? kpiData.by_work_type : [],
         by_provider: Array.isArray(kpiData?.by_provider) ? kpiData.by_provider : []
       };
 
-      console.log('📊 Setting KPI data:', validKpi);
-      console.log('📊 KPI total specifically:', kpiData?.total, 'vs', validKpi.total);
       setKpi(validKpi);
       setKpiInitialized(true);
 
-      const endTime = performance.now();
-      console.log(`📊 KPI fetch completed in ${(endTime - startTime).toFixed(2)}ms`);
     } catch (e: any) {
       console.error('❌ KPI fetch error:', e);
       if (e.name === 'AbortError') {
@@ -577,7 +548,6 @@ export default function TechBrowser() {
 
   /** ดึงรายการ RSM สำหรับ select (มี fallback จากข้อมูลช่างหน้าแรก) */
   async function fetchRsmOptions() {
-    const startTime = performance.now();
     setRsmLoading(true);
     try {
       // 1) พยายามดึงจาก API โดยตรง - ใช้ /api/meta/rsm
@@ -594,8 +564,6 @@ export default function TechBrowser() {
         );
         setRsmOptions(uniq);
 
-        const endTime = performance.now();
-        console.log(`📊 RSM options fetch completed in ${(endTime - startTime).toFixed(2)}ms`);
         return;
       }
       // 2) ถ้า API ไม่พร้อม → fallback ไปอ่านจาก technicians หน้าแรก
@@ -609,8 +577,6 @@ export default function TechBrowser() {
       ).sort((a, b) => a.localeCompare(b, "th"));
       setRsmOptions(uniq2);
 
-      const endTime = performance.now();
-      console.log(`📊 RSM options fetch (fallback) completed in ${(endTime - startTime).toFixed(2)}ms`);
     } catch (e) {
       console.error(e);
       setRsmOptions((prev) => prev); // คงค่าเดิมไว้ถ้าพัง
@@ -639,8 +605,6 @@ export default function TechBrowser() {
 
       if (json.count !== undefined) {
         setDepotCodeCount(json.count);
-        console.log(`📊 Depot codes: ${json.count} unique codes from ${json.total_rows} total rows`);
-        console.log(`📊 Sample codes:`, json.sample_codes);
       } else {
         console.error('❌ Invalid response from depot-codes API:', json);
         setDepotCodeCount(0);
@@ -661,30 +625,18 @@ export default function TechBrowser() {
       const providers = ["WW-Provider", "True Tech", "เถ้าแก่เทค"];
       const results: { [key: string]: number } = {};
 
-      // ดึงข้อมูลแต่ละ provider
-      for (const provider of providers) {
-        console.log(`🔍 Fetching data for provider: "${provider}"`);
+      // ดึงทุก provider พร้อมกัน
+      const counts = await Promise.all(providers.map(async (provider) => {
         const res = await fetch(`/api/depot-codes-by-provider?provider=${encodeURIComponent(provider)}`, { cache: "no-store" });
         const json = await res.json();
-
-        console.log(`📊 Response for ${provider}:`, json);
-
-        if (json.count !== undefined) {
-          results[provider] = json.count;
-          console.log(`✅ ${provider}: ${json.count} unique depot codes`);
-        } else {
-          results[provider] = 0;
+        if (json.count === undefined) {
           console.error(`❌ Invalid response for ${provider}:`, json);
+          return 0;
         }
-      }
+        return json.count as number;
+      }));
+      providers.forEach((provider, idx) => { results[provider] = counts[idx]; });
 
-      // ดึงรายการ provider ทั้งหมดเพื่อ debug
-      console.log('🔍 Fetching all providers for debugging...');
-      const allProvidersRes = await fetch('/api/depot-codes-by-provider?list_all=true', { cache: "no-store" });
-      const allProviders = await allProvidersRes.json();
-      console.log('📋 All providers in database:', allProviders);
-
-      console.log('📊 Final depot by provider results:', results);
       setDepotByProvider(results);
 
     } catch (error) {
@@ -698,7 +650,6 @@ export default function TechBrowser() {
   async function fetchPivotData() {
     setPivotLoading(true);
     try {
-      console.log('📊 Fetching pivot table data with filter q:', q);
 
       // Build URL with current filter
       const params = new URLSearchParams();
@@ -707,14 +658,12 @@ export default function TechBrowser() {
       }
 
       const url = `/api/pivot-data${params.toString() ? '?' + params.toString() : ''}`;
-      console.log('📊 Pivot API URL:', url);
 
       const res = await fetch(url, { cache: "no-store" });
       const json = await res.json();
 
       if (json.data && Array.isArray(json.data)) {
         setPivotData(json.data);
-        console.log(`📊 Pivot data loaded: ${json.data.length} combinations from ${json.total_rows} total rows`);
       } else {
         console.error('❌ Invalid pivot data response:', json);
         setPivotData([]);
@@ -730,14 +679,12 @@ export default function TechBrowser() {
 
   /* Fetch workgroup count data */
   async function fetchWorkgroupData() {
-    const startTime = performance.now();
     setWorkgroupLoading(true);
     try {
       const params = buildFilterParamsOnly();
       // Add cache-busting parameter
       params.set('_t', Date.now().toString());
       const url = `/api/chart/workgroup-count?${params.toString()}`;
-      console.log('👥 Fetching workgroup data from:', url);
 
       const res = await fetch(url, {
         cache: "no-store",
@@ -752,29 +699,8 @@ export default function TechBrowser() {
         throw new Error(json.error || `HTTP ${res.status}: Workgroup fetch error`);
       }
 
-      console.log('👥 Workgroup data response:', json);
-      console.log('👥 Response timestamp:', json.timestamp);
-      console.log('👥 Response message:', json.message);
       setWorkgroupData(json.data || json); // Support both {data: ..., grandTotal: ...} and old format
       setWorkgroupGrandTotal(json.grandTotal || 0); // Get grandTotal from API
-
-      const endTime = performance.now();
-      console.log(`👥 Workgroup data loaded in ${(endTime - startTime).toFixed(2)}ms`);
-      console.log(`👥 Workgroup Grand Total from API: ${json.grandTotal || 0}`);
-
-      // Verify grand total calculation
-      let calculatedTotal = 0;
-      if (json.data) {
-        Object.keys(json.data).forEach(rsm => {
-          Object.keys(json.data[rsm]).forEach(key => {
-            if (key.includes('_Installation') || key.includes('_Repair')) {
-              calculatedTotal += json.data[rsm][key];
-            }
-          });
-        });
-      }
-      console.log(`👥 Workgroup Grand Total (calculated in frontend): ${calculatedTotal}`);
-      console.log(`👥 Difference: ${Math.abs((json.grandTotal || 0) - calculatedTotal)}`);
 
     } catch (error) {
       console.error('Error fetching workgroup data:', error);
@@ -787,14 +713,12 @@ export default function TechBrowser() {
 
   /* Fetch technician count data */
   async function fetchTechnicianData() {
-    const startTime = performance.now();
     setTechnicianLoading(true);
     try {
       const params = buildFilterParamsOnly();
       // Add cache-busting parameter
       params.set('_t', Date.now().toString());
       const url = `/api/chart/technician-count?${params.toString()}`;
-      console.log('👨‍💼 Fetching technician data from:', url);
 
       const res = await fetch(url, {
         cache: "no-store",
@@ -809,11 +733,7 @@ export default function TechBrowser() {
         throw new Error(json.error || `HTTP ${res.status}: Technician fetch error`);
       }
 
-      console.log('👨‍💼 Technician data response:', json);
       setTechnicianData(json);
-
-      const endTime = performance.now();
-      console.log(`👨‍💼 Technician data loaded in ${(endTime - startTime).toFixed(2)}ms`);
 
     } catch (error) {
       console.error('Error fetching technician data:', error);
@@ -825,16 +745,13 @@ export default function TechBrowser() {
 
   // Handle chart bar click for specific power authority status
   function handlePowerAuthorityClick(rsm: string, powerAuthority: "Yes" | "No") {
-    console.log('📊 Power Authority bar clicked:', { rsm, powerAuthority });
 
     // Toggle selection if same RSM and power authority is clicked
     if (selectedRsm === rsm && selectedPowerAuthority === powerAuthority) {
-      console.log('📊 Deselecting RSM and Power Authority');
       setSelectedRsm(null);
       setSelectedPowerAuthority(null);
       setRsm("");
     } else {
-      console.log('📊 Selecting RSM:', rsm, 'Power Authority:', powerAuthority);
       setSelectedRsm(rsm);
       setSelectedPowerAuthority(powerAuthority);
       setRsm(rsm);
@@ -845,15 +762,12 @@ export default function TechBrowser() {
   function handleChartClick(data: any) {
     if (data && data.activePayload && data.activePayload[0]) {
       const clickedRsm = data.activePayload[0].payload.RBM;
-      console.log('📊 General chart clicked:', clickedRsm);
 
       // Only handle RSM selection without power authority filter
       if (selectedRsm === clickedRsm && !selectedPowerAuthority) {
-        console.log('📊 Deselecting RSM');
         setSelectedRsm(null);
         setRsm("");
       } else if (!selectedPowerAuthority) {
-        console.log('📊 Selecting RSM:', clickedRsm);
         setSelectedRsm(clickedRsm);
         setRsm(clickedRsm);
       }
@@ -862,7 +776,6 @@ export default function TechBrowser() {
 
   // Handle CTM chart click
   function handleCtmClick(ctm: string | null) {
-    console.log('📊 CTM Chart clicked:', ctm);
     setSelectedCtm(ctm);
   }
 
@@ -880,7 +793,6 @@ export default function TechBrowser() {
       const XLSX = await import("xlsx");
 
       // ✅ Fetch ALL data using pagination to avoid Supabase 1000 limit
-      console.log('📥 Starting Excel export with pagination...');
 
       let allRecords: any[] = [];
       let currentPage = 1;
@@ -905,8 +817,6 @@ export default function TechBrowser() {
         const rows = json.rows || [];
         allRecords = [...allRecords, ...rows];
 
-        console.log(`📦 Page ${currentPage}: ${rows.length} records (total: ${allRecords.length}/${json.total})`);
-
         hasMore = rows.length === pageSize && allRecords.length < json.total;
         currentPage++;
 
@@ -916,8 +826,6 @@ export default function TechBrowser() {
           break;
         }
       }
-
-      console.log(`✅ Exported ${allRecords.length} records total`);
 
       // ✅ Map ข้อมูลให้ตรงกับคอลัมน์ที่แสดงในตารางหน้าเว็บ (ใช้ชื่อภาษาไทย)
       const maskNationalId = (id: string | null | undefined) => {
@@ -948,10 +856,9 @@ export default function TechBrowser() {
       XLSX.utils.book_append_sheet(wb, ws, "technicians");
       const date = new Date().toISOString().slice(0, 10);
       XLSX.writeFile(wb, `technicians_${date}.xlsx`);
-      console.log(`💾 Saved: technicians_${date}.xlsx`);
     } catch (e) {
       console.error('❌ Export error:', e);
-      alert((e as Error).message);
+      showToast(`Export ไม่สำเร็จ: ${(e as Error).message}`, "error");
     } finally {
       setLoading(false);
     }
@@ -961,20 +868,16 @@ export default function TechBrowser() {
   async function openDetail(fullRowCandidate: Row) {
     // เช็คสิทธิ์ก่อน - Admin และ Manager เท่านั้นที่ดูรายละเอียดได้
     if (!isAdmin() && !isManager()) {
-      alert("ไม่มีสิทธิ์ในการดูรายละเอียดช่างแต่ละคน\nสำหรับผู้ดูแลระบบและผู้จัดการเท่านั้น");
+      showToast("ไม่มีสิทธิ์ในการดูรายละเอียดช่างแต่ละคน\nสำหรับผู้ดูแลระบบและผู้จัดการเท่านั้น", "error");
       return;
     }
-
-    console.log('🔍 Opening detail for:', fullRowCandidate);
 
     const id =
       (fullRowCandidate?.tech_id || "").toString().trim() ||
       (fullRowCandidate?.national_id || "").toString().trim();
 
-    console.log('🔍 Extracted ID:', id);
-
     if (!id) {
-      alert("ไม่พบ tech_id / national_id สำหรับดึงรายละเอียด");
+      showToast("ไม่พบรหัสช่างหรือเลขบัตรประชาชนสำหรับดึงรายละเอียด", "error");
       return;
     }
 
@@ -985,17 +888,12 @@ export default function TechBrowser() {
 
     try {
       const url = `/api/technicians/${encodeURIComponent(id)}`;
-      console.log('🔍 Fetching URL:', url);
 
       const res = await fetch(url, {
         cache: "no-store",
       });
 
-      console.log('🔍 Response status:', res.status);
-      console.log('🔍 Response ok:', res.ok);
-
       const json = await res.json();
-      console.log('🔍 Response JSON:', json);
 
       if (!res.ok) throw new Error(json?.error || "โหลดรายละเอียดไม่สำเร็จ");
       setDetailRow(json.row || json.data || null);
@@ -1008,12 +906,6 @@ export default function TechBrowser() {
   }
 
   React.useEffect(() => {
-    // Debug: ตรวจสอบ environment variables
-    console.log('🔧 Environment check:');
-    console.log('🔧 NEXT_PUBLIC_SUPABASE_URL:', process.env.NEXT_PUBLIC_SUPABASE_URL ? '✅ Set' : '❌ Not set');
-    console.log('🔧 NEXT_PUBLIC_SUPABASE_ANON_KEY:', process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? '✅ Set' : '❌ Not set');
-    console.log('🔧 Current URL:', window.location.href);
-    console.log('🔧 User Agent:', navigator.userAgent);
 
     fetchData(1);
   }, [d_national_id, d_tech_id, d_rsm, d_depot_code, d_q, sort, dir]);
@@ -1033,7 +925,6 @@ export default function TechBrowser() {
 
   // Trigger immediate update when selectedRsm changes
   React.useEffect(() => {
-    console.log('🎯 Selected RSM changed:', selectedRsm);
     // Always fetch when selectedRsm changes (including null)
     fetchData(1);
     fetchKpis();
@@ -1044,7 +935,6 @@ export default function TechBrowser() {
 
   // Trigger immediate update when selectedCtm changes
   React.useEffect(() => {
-    console.log('🎯 Selected CTM changed:', selectedCtm);
     // Always fetch when selectedCtm changes (including null)
     fetchData(1);
     fetchKpis();
@@ -1055,7 +945,6 @@ export default function TechBrowser() {
 
   // Trigger immediate update when selectedExpiryMonth changes
   React.useEffect(() => {
-    console.log('\u{1F3AF} Selected Expiry Month changed:', selectedExpiryMonth);
     fetchData(1);
     fetchKpis();
   }, [selectedExpiryMonth]);
@@ -1086,105 +975,55 @@ export default function TechBrowser() {
     };
   }, []);
 
-  /* Monitor initial load completion */
-  React.useEffect(() => {
-    if (!loading && !kpiLoading && !chartLoading && !initialLoadComplete) {
-      const totalTime = performance.now() - componentStartTime;
-      console.log(`🎯 TechBrowser initial load completed in ${totalTime.toFixed(2)}ms`);
-      setInitialLoadComplete(true);
+  /* Realtime: รีเฟรชข้อมูลเมื่อตาราง technician เปลี่ยน */
+  // ref ชี้ไปที่ฟังก์ชันล่าสุดเสมอ เพื่อให้ subscription สร้างครั้งเดียวแต่ใช้ filter/page ปัจจุบัน
+  const refreshAllRef = React.useRef<() => void>(() => {});
+  refreshAllRef.current = () => {
+    fetchData(page);
+    fetchKpis();
+    fetchChartData();
+    fetchDepotCodeCount();
+    fetchDepotCodesByProvider();
+    fetchPivotData();
+    fetchWorkgroupData();
+    fetchTechnicianData();
+  };
 
-      // Check if we have login timing data
-      const loginStartTime = localStorage.getItem('loginStartTime');
-      if (loginStartTime) {
-        const totalLoginTime = performance.now() - parseFloat(loginStartTime);
-        console.log(`🎯 Total time from login to TechBrowser ready: ${totalLoginTime.toFixed(2)}ms`);
-        localStorage.removeItem('loginStartTime'); // Clean up
-      }
-    }
-  }, [loading, kpiLoading, chartLoading, initialLoadComplete, componentStartTime]);
-
-  /* Setup Realtime subscription for technician table */
   React.useEffect(() => {
-    // สร้าง Supabase client
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     );
+    // การเปลี่ยนแปลงหลายแถวติดกัน (เช่น import ข้อมูล) รวมเป็นการรีเฟรชครั้งเดียว
+    const REFRESH_DEBOUNCE_MS = 1500;
+    let refreshTimer: ReturnType<typeof setTimeout> | undefined;
+    let pendingChanges = 0;
 
-    console.log('🔔 Setting up Realtime subscription for technician table...');
-
-    // Subscribe to changes
     const channel = supabase
       .channel('technician-realtime')
       .on(
         'postgres_changes',
-        {
-          event: '*',              // ฟังทุก event (INSERT, UPDATE, DELETE)
-          schema: 'public',
-          table: 'technician'
-        },
-        (payload) => {
-          console.log('🔔 Technician data changed!', payload);
-          console.log('🔄 Auto-refreshing data...');
-
-          // แสดง notification
-          const eventType = payload.eventType;
-          const message = eventType === 'INSERT' ? '✅ มีข้อมูลช่างใหม่' :
-            eventType === 'UPDATE' ? '🔄 ข้อมูลช่างถูกอัพเดท' :
-              eventType === 'DELETE' ? '🗑️ ข้อมูลช่างถูกลบ' :
-                '🔄 ข้อมูลมีการเปลี่ยนแปลง';
-
-          // แสดง toast notification (ถ้าต้องการ)
-          if (typeof window !== 'undefined') {
-            // สร้าง notification element
-            const notification = document.createElement('div');
-            notification.style.cssText = `
-              position: fixed;
-              top: 80px;
-              right: 20px;
-              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-              color: white;
-              padding: 16px 24px;
-              border-radius: 8px;
-              box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-              z-index: 10000;
-              font-size: 14px;
-              font-weight: 500;
-              animation: slideIn 0.3s ease-out;
-            `;
-            notification.textContent = message;
-            document.body.appendChild(notification);
-
-            // ลบหลัง 3 วินาที
-            setTimeout(() => {
-              notification.style.animation = 'slideOut 0.3s ease-in';
-              setTimeout(() => notification.remove(), 300);
-            }, 3000);
-          }
-
-          // อัพเดทข้อมูลทั้งหมด
-          fetchData(page);
-          fetchKpis();
-          fetchChartData();
-          fetchDepotCodeCount();
-          fetchDepotCodesByProvider();
-          fetchPivotData();
-          fetchWorkgroupData();
-          fetchTechnicianData();
+        { event: '*', schema: 'public', table: 'technician' },
+        () => {
+          pendingChanges += 1;
+          clearTimeout(refreshTimer);
+          refreshTimer = setTimeout(() => {
+            showToast(
+              pendingChanges > 1 ? `ข้อมูลช่างมีการเปลี่ยนแปลง ${pendingChanges} รายการ` : 'ข้อมูลช่างมีการเปลี่ยนแปลง',
+              'info'
+            );
+            pendingChanges = 0;
+            refreshAllRef.current();
+          }, REFRESH_DEBOUNCE_MS);
         }
       )
-      .subscribe((status) => {
-        if (status === 'SUBSCRIBED') {
-          console.log('✅ Realtime subscription active!');
-        }
-      });
+      .subscribe();
 
-    // Cleanup
     return () => {
-      console.log('🔕 Cleaning up Realtime subscription');
+      clearTimeout(refreshTimer);
       supabase.removeChannel(channel);
     };
-  }, [page]);
+  }, [showToast]);
 
   const start = (page - 1) * 10 + 1;
   const end = Math.min(total, page * 10);
@@ -1288,7 +1127,7 @@ export default function TechBrowser() {
                 onMouseOut={(e) => { if (!isSelected) e.currentTarget.style.transform = "translateY(0)"; }}
                 title={`คลิกเพื่อกรองตาม ${name}`}
               >
-                <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 2.5, background: "linear-gradient(90deg, #38bdf8, #67e8f9)" }} />
+                <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 2.5, background: "linear-gradient(90deg, #38bdf8, color-mix(in srgb, #67e8f9 var(--tint), var(--surface)))" }} />
                 <div style={{ fontSize: 10.5, fontWeight: 700, color: "#cbd5e1", textTransform: "uppercase", letterSpacing: "0.4px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                   {name}
                 </div>
@@ -1474,14 +1313,14 @@ export default function TechBrowser() {
         {/* Table 1: จำนวนช่าง (คน) */}
         <div style={{
           flex: 1,
-          background: '#ffffff',
-          border: '1px solid #e5e7eb',
+          background: 'var(--surface)',
+          border: '1px solid var(--border)',
           borderRadius: '8px',
           padding: '12px',
           boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
           overflow: 'hidden',
         }}>
-          <div style={{ fontSize: '13px', fontWeight: 'bold', marginBottom: '8px', color: '#1e3a5f' }}>
+          <div style={{ fontSize: '13px', fontWeight: 'bold', marginBottom: '8px', color: 'var(--accent-text)' }}>
             📊 จำนวนช่าง (คน) แยกตามพื้นที่
           </div>
           {pivotData.length > 0 ? (
@@ -1502,14 +1341,14 @@ export default function TechBrowser() {
         {/* Table 2: จำนวนกองงานช่าง (กองงาน) */}
         <div style={{
           flex: 1,
-          background: '#ffffff',
-          border: '1px solid #e5e7eb',
+          background: 'var(--surface)',
+          border: '1px solid var(--border)',
           borderRadius: '8px',
           padding: '12px',
           boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
           overflow: 'hidden',
         }}>
-          <div style={{ fontSize: '13px', fontWeight: 'bold', marginBottom: '8px', color: '#8b1a1a' }}>
+          <div style={{ fontSize: '13px', fontWeight: 'bold', marginBottom: '8px', color: 'color-mix(in srgb, #8b1a1a var(--ink), #fff)' }}>
             📋 จำนวนกองงานช่าง (กองงาน) แยกตามพื้นที่
           </div>
           {Object.keys(workgroupData).length > 0 ? (
@@ -1631,18 +1470,18 @@ export default function TechBrowser() {
             เปิดใช้อีกครั้งได้โดยเอาคอมเมนต์ออก และเปิด dynamic import ด้านบน
         <div style={{ marginTop: "20px" }}>
           <div style={{
-            background: "white",
+            background: "var(--surface)",
             borderRadius: 12,
             padding: 20,
             boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
-            border: "1px solid #e5e7eb",
+            border: "1px solid var(--border)",
             position: "relative",
           }}>
             <h3 style={{
               margin: "0 0 4px 0",
               fontSize: 18,
               fontWeight: 600,
-              color: "#1f2937"
+              color: "var(--text)"
             }}>
               📋 RBM Status by Power Authority, Course G, Course EC
             </h3>
@@ -1666,7 +1505,7 @@ export default function TechBrowser() {
               margin: "0 0 14px 0",
               fontSize: 16,
               fontWeight: 700,
-              color: "#1f2937",
+              color: "var(--text)",
               display: "flex",
               alignItems: "center",
               gap: 8
@@ -1679,7 +1518,7 @@ export default function TechBrowser() {
                 alignItems: "center",
                 justifyContent: "center",
                 borderRadius: 9,
-                background: "linear-gradient(160deg, #ffedd5 0%, #fed7aa 100%)",
+                background: "linear-gradient(160deg, color-mix(in srgb, #ffedd5 var(--tint), var(--surface)) 0%, color-mix(in srgb, #fed7aa var(--tint), var(--surface)) 100%)",
                 boxShadow: "0 1px 0 rgba(255,255,255,0.9) inset, 0 2px 5px rgba(194,65,12,0.28)"
               }}>🪪</span>
               แนวโน้มบัตรช่างใกล้หมดอายุ ({new Date().getFullYear()})
@@ -1704,18 +1543,26 @@ export default function TechBrowser() {
           borderRadius: "10px"
         }}
       >
-        <input
-          className="filter-input"
-          placeholder="🔍 national_id"
-          value={national_id}
-          onChange={(e) => setNationalId(e.target.value)}
-        />
-        <input
-          className="filter-input"
-          placeholder="🔍 tech_id"
-          value={tech_id}
-          onChange={(e) => setTechId(e.target.value)}
-        />
+        <div className="filter-field">
+          <IdCard className="filter-field-icon" size={16} aria-hidden="true" />
+          <input
+            className="filter-input"
+            placeholder="เลขบัตรประชาชน"
+            aria-label="เลขบัตรประชาชน"
+            value={national_id}
+            onChange={(e) => setNationalId(e.target.value)}
+          />
+        </div>
+        <div className="filter-field">
+          <UserRound className="filter-field-icon" size={16} aria-hidden="true" />
+          <input
+            className="filter-input"
+            placeholder="รหัสช่าง"
+            aria-label="รหัสช่าง"
+            value={tech_id}
+            onChange={(e) => setTechId(e.target.value)}
+          />
+        </div>
 
         {/* RBM → select */}
         <select
@@ -1724,6 +1571,7 @@ export default function TechBrowser() {
           onChange={(e) => setRsm(e.target.value)}
           disabled={rsmLoading}
           title="เลือก RBM"
+          aria-label="เลือก RBM"
         >
           <option value="">{rsmLoading ? "กำลังโหลด..." : "— RBM ทั้งหมด —"}</option>
           {rsmOptions.map((opt) => (
@@ -1733,18 +1581,26 @@ export default function TechBrowser() {
           ))}
         </select>
 
-        <input
-          className="filter-input"
-          placeholder="🔍 depot_code"
-          value={depot_code}
-          onChange={(e) => setDepotCode(e.target.value)}
-        />
-        <input
-          className="filter-input"
-          placeholder="🔍 ค้นหา (พิมพ์อะไรก็ได้)"
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-        />
+        <div className="filter-field">
+          <Warehouse className="filter-field-icon" size={16} aria-hidden="true" />
+          <input
+            className="filter-input"
+            placeholder="รหัส Depot"
+            aria-label="รหัส Depot"
+            value={depot_code}
+            onChange={(e) => setDepotCode(e.target.value)}
+          />
+        </div>
+        <div className="filter-field">
+          <Search className="filter-field-icon" size={16} aria-hidden="true" />
+          <input
+            className="filter-input"
+            placeholder="ค้นหาทุกช่อง"
+            aria-label="ค้นหาทุกช่อง"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+          />
+        </div>
       </div>
 
       <div className="filter-actions">
@@ -1753,21 +1609,21 @@ export default function TechBrowser() {
           onClick={() => fetchData(1)}
           disabled={loading}
         >
-          🔍 ค้นหา
+          <Search size={16} aria-hidden="true" /> ค้นหา
         </button>
         <button
           className="filter-btn filter-btn-secondary"
           onClick={clearFilters}
           disabled={loading}
         >
-          ✕ ล้างตัวกรอง
+          <X size={16} aria-hidden="true" /> ล้างตัวกรอง
         </button>
         <button
           className="filter-btn filter-btn-export"
           onClick={exportExcel}
           disabled={loading}
         >
-          📥 Export Excel
+          <Download size={16} aria-hidden="true" /> Export Excel
         </button>
         <div className="filter-status">
           {loading ? "กำลังโหลด..." : `${start}-${end} จาก ${total} รายการ`}
@@ -1778,11 +1634,11 @@ export default function TechBrowser() {
       {error && (
         <div style={{
           padding: "12px 16px",
-          background: "#fef2f2",
-          border: "1px solid #fecaca",
+          background: "color-mix(in srgb, #fef2f2 var(--tint), var(--surface))",
+          border: "1px solid color-mix(in srgb, #fecaca var(--tint), var(--border))",
           borderRadius: "8px",
           marginBottom: "12px",
-          color: "#dc2626"
+          color: "color-mix(in srgb, #dc2626 var(--ink), #fff)"
         }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <span>❌ เกิดข้อผิดพลาด: {error}</span>
@@ -1878,7 +1734,7 @@ export default function TechBrowser() {
                       isAdmin() ? (
                         <span
                           style={{
-                            color: "#2563eb",
+                            color: "color-mix(in srgb, #2563eb var(--ink), #fff)",
                             cursor: "pointer",
                             textDecoration: "underline",
                             fontWeight: 500,
@@ -1891,7 +1747,7 @@ export default function TechBrowser() {
                       ) : (
                         <span
                           style={{
-                            color: "#374151",
+                            color: "var(--text-2)",
                             fontWeight: 400,
                           }}
                           title="ข้อมูลสำหรับผู้ดูแลระบบเท่านั้น"
@@ -1904,7 +1760,7 @@ export default function TechBrowser() {
                       isAdmin() ? (
                         <span
                           style={{
-                            color: "#2563eb",
+                            color: "color-mix(in srgb, #2563eb var(--ink), #fff)",
                             cursor: "pointer",
                             textDecoration: "underline",
                             fontWeight: 500,
@@ -1917,7 +1773,7 @@ export default function TechBrowser() {
                       ) : (
                         <span
                           style={{
-                            color: "#374151",
+                            color: "var(--text-2)",
                             fontWeight: 400,
                           }}
                           title="ข้อมูลสำหรับผู้ดูแลระบบเท่านั้น"
@@ -1934,7 +1790,7 @@ export default function TechBrowser() {
             ))}
             {!loading && rows.length === 0 && (
               <tr>
-                <td colSpan={COLS.length} style={{ padding: 12, textAlign: "center", color: "#777" }}>
+                <td colSpan={COLS.length} style={{ padding: 12, textAlign: "center", color: "var(--text-muted)" }}>
                   ไม่พบข้อมูล
                 </td>
               </tr>
@@ -1960,7 +1816,7 @@ export default function TechBrowser() {
 
         {/* Jump to page input */}
         <div style={{ display: "flex", gap: 4, alignItems: "center", marginLeft: 12 }}>
-          <span style={{ fontSize: 13, color: "#666" }}>ไปหน้า:</span>
+          <span style={{ fontSize: 13, color: "var(--text-muted)" }}>ไปหน้า:</span>
           <input
             type="number"
             min="1"
@@ -1969,7 +1825,7 @@ export default function TechBrowser() {
             style={{
               width: 60,
               padding: "4px 6px",
-              border: "1px solid #ddd",
+              border: "1px solid var(--border)",
               borderRadius: 4,
               fontSize: 13,
               textAlign: "center"
@@ -2074,7 +1930,7 @@ export default function TechBrowser() {
             aria-modal="true"
             aria-labelledby="technician-detail-title"
             style={{
-              background: "#fff",
+              background: "var(--surface)",
               borderRadius: 12,
               padding: 24,
               overflow: "auto",
@@ -2086,14 +1942,14 @@ export default function TechBrowser() {
             }}
           >
             {/* Header sticky */}
-            <div style={{ position: "sticky", top: 0, background: "#fff", paddingBottom: 12, marginBottom: 12, zIndex: 1 }}>
+            <div style={{ position: "sticky", top: 0, background: "var(--surface)", paddingBottom: 12, marginBottom: 12, zIndex: 1 }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 16 }}>
                 <div style={{ minWidth: 0, overflowWrap: "anywhere" }}>
-                  <h3 id="technician-detail-title" style={{ margin: 0, fontSize: 20, fontWeight: 600, color: "#1f2937" }}>
+                  <h3 id="technician-detail-title" style={{ margin: 0, fontSize: 20, fontWeight: 600, color: "var(--text)" }}>
                     ข้อมูลช่าง: {detailRow?.full_name || detailRow?.tech_id || detailRow?.national_id || "-"}
                   </h3>
                   {(detailLoading || detailError) && (
-                    <p style={{ margin: "4px 0 0 0", fontSize: 14, color: "#6b7280" }}>
+                    <p style={{ margin: "4px 0 0 0", fontSize: 14, color: "var(--text-muted)" }}>
                       {detailLoading ? "กำลังโหลดรายละเอียด..." : "เกิดข้อผิดพลาด"}
                     </p>
                   )}
@@ -2101,13 +1957,13 @@ export default function TechBrowser() {
                 <button
                   onClick={() => setDetailOpen(false)}
                   aria-label="ปิดข้อมูลช่าง"
-                  style={{ background: "transparent", border: "none", fontSize: 24, cursor: "pointer", color: "#6b7280", flexShrink: 0, width: 40, height: 40 }}
+                  style={{ background: "transparent", border: "none", fontSize: 24, cursor: "pointer", color: "var(--text-muted)", flexShrink: 0, width: 40, height: 40 }}
                 >
                   ×
                 </button>
               </div>
               {detailError && (
-                <div style={{ color: "#b91c1c", marginTop: 8 }}>Error: {detailError}</div>
+                <div style={{ color: "color-mix(in srgb, #b91c1c var(--ink), #fff)", marginTop: 8 }}>Error: {detailError}</div>
               )}
             </div>
 
@@ -2217,8 +2073,8 @@ export default function TechBrowser() {
               marginTop: 24,
               paddingTop: 16,
               paddingBottom: 12,
-              borderTop: '2px solid #e5e7eb',
-              background: 'linear-gradient(to bottom, #f9fafb, #f3f4f6)',
+              borderTop: '2px solid var(--border)',
+              background: 'linear-gradient(to bottom, var(--surface-2), var(--surface-2))',
               borderRadius: '0 0 12px 12px',
               marginLeft: -24,
               marginRight: -24,
@@ -2229,7 +2085,7 @@ export default function TechBrowser() {
             }}>
               <div style={{
                 fontSize: 13,
-                color: '#6b7280',
+                color: 'var(--text-muted)',
                 fontWeight: 500,
                 letterSpacing: '0.3px'
               }}>
@@ -2237,7 +2093,7 @@ export default function TechBrowser() {
               </div>
               <div style={{
                 fontSize: 11,
-                color: '#9ca3af',
+                color: 'var(--text-subtle)',
                 marginTop: 4
               }}>
                 ข้อมูลนี้เป็นความลับและใช้เพื่อการทำงานภายในเท่านั้น
@@ -2247,7 +2103,6 @@ export default function TechBrowser() {
         </div>,
         document.body
       )}
-
 
     </div>
   );
@@ -2275,12 +2130,12 @@ function SummaryChip({ label, children }: { label: string; children: React.React
   return (
     <div style={{
       padding: "12px 14px",
-      background: "#f9fafb",
-      border: "1px solid #e5e7eb",
+      background: "var(--surface-2)",
+      border: "1px solid var(--border)",
       borderRadius: 10
     }}>
-      <div style={{ fontSize: 11, color: "#6b7280", letterSpacing: .4, textTransform: "uppercase", marginBottom: 4 }}>{label}</div>
-      <div style={{ fontSize: 15, fontWeight: 600, color: "#111827" }}>{children}</div>
+      <div style={{ fontSize: 11, color: "var(--text-muted)", letterSpacing: .4, textTransform: "uppercase", marginBottom: 4 }}>{label}</div>
+      <div style={{ fontSize: 15, fontWeight: 600, color: "var(--text)" }}>{children}</div>
     </div>
   );
 }
@@ -2289,28 +2144,28 @@ function PhotoCard({ row }: { row: Row }) {
   const url = pick(row, ["doc_tech_card_url", "tech_card_url"]);
   return (
     <div style={{
-      border: "1px solid #dce2e8",
+      border: "1px solid var(--border)",
       borderRadius: 8,
       padding: 16,
-      background: "#f8fafc",
+      background: "var(--surface-2)",
       boxShadow: "0 16px 32px -16px rgba(15,23,42,.28), 0 3px 8px rgba(15,23,42,.06), inset 0 1px 0 #fff",
       width: "100%",
       maxWidth: 320,
       boxSizing: "border-box"
     }}>
-      <div style={{ fontSize: 12, fontWeight: 600, color: "#6b7280", marginBottom: 12 }}>{getFieldLabel("doc_tech_card_url")}</div>
+      <div style={{ fontSize: 12, fontWeight: 600, color: "var(--text-muted)", marginBottom: 12 }}>{getFieldLabel("doc_tech_card_url")}</div>
       {url ? (
         <img
           src={proxyImg(String(url), false)}
           alt="tech card"
-          style={{ display: "block", width: "100%", height: "auto", objectFit: "contain", borderRadius: 6, border: "1px solid #dce2e8", boxSizing: "border-box", background: "#fff", boxShadow: "0 8px 16px -6px rgba(15,23,42,.25), 0 2px 4px rgba(15,23,42,.08)" }}
+          style={{ display: "block", width: "100%", height: "auto", objectFit: "contain", borderRadius: 6, border: "1px solid var(--border)", boxSizing: "border-box", background: "var(--surface)", boxShadow: "0 8px 16px -6px rgba(15,23,42,.25), 0 2px 4px rgba(15,23,42,.08)" }}
         />
       ) : (
         <div style={{
           height: 200,
           borderRadius: 8,
-          border: "1px dashed #e5e7eb",
-          color: "#9ca3af",
+          border: "1px dashed var(--border)",
+          color: "var(--text-subtle)",
           display: "flex",
           alignItems: "center",
           justifyContent: "center"
@@ -2327,8 +2182,8 @@ function Section({ title, children }: { title: string; children: React.ReactNode
         fontWeight: 700,
         fontSize: 14,
         marginBottom: 10,
-        background: "#eef2ff",
-        color: "#1e40af",
+        background: "color-mix(in srgb, #eef2ff var(--tint), var(--surface))",
+        color: "color-mix(in srgb, #1e40af var(--ink), #fff)",
         padding: "6px 10px",
         borderRadius: 8,
         display: "inline-block"
@@ -2359,48 +2214,19 @@ function Field({
   return (
     <div style={{
       padding: 12,
-      background: hasValue ? "#f9fafb" : "#f3f4f6",
+      background: hasValue ? "var(--surface-2)" : "var(--surface-3)",
       borderRadius: 8,
-      border: "1px solid #e5e7eb",
+      border: "1px solid var(--border)",
       opacity: hasValue ? 1 : 0.7
     }}>
-      <div style={{ fontSize: 12, color: hasValue ? "#6b7280" : "#9ca3af", marginBottom: 4, fontWeight: 500 }}>
+      <div style={{ fontSize: 12, color: hasValue ? "var(--text-muted)" : "var(--text-subtle)", marginBottom: 4, fontWeight: 500 }}>
         {label}
       </div>
-      <div style={{ fontSize: 14, color: hasValue ? "#111827" : "#6b7280" }}>
+      <div style={{ fontSize: 14, color: hasValue ? "var(--text)" : "var(--text-muted)" }}>
         {hasValue ? String(v) : "—"}
       </div>
     </div>
   );
-}
-
-// Add CSS animations for notifications
-if (typeof window !== 'undefined' && !document.getElementById('realtime-notification-styles')) {
-  const style = document.createElement('style');
-  style.id = 'realtime-notification-styles';
-  style.textContent = `
-    @keyframes slideIn {
-      from {
-        transform: translateX(400px);
-        opacity: 0;
-      }
-      to {
-        transform: translateX(0);
-        opacity: 1;
-      }
-    }
-    @keyframes slideOut {
-      from {
-        transform: translateX(0);
-        opacity: 1;
-      }
-      to {
-        transform: translateX(400px);
-        opacity: 0;
-      }
-    }
-  `;
-  document.head.appendChild(style);
 }
 
 function WorkExperienceField({ row }: { row: Row }) {
@@ -2411,19 +2237,19 @@ function WorkExperienceField({ row }: { row: Row }) {
   return (
     <div style={{
       padding: 12,
-      background: hasValue ? "#f9fafb" : "#f3f4f6",
+      background: hasValue ? "var(--surface-2)" : "var(--surface-3)",
       borderRadius: 8,
-      border: "1px solid #e5e7eb",
+      border: "1px solid var(--border)",
       opacity: hasValue ? 1 : 0.7
     }}>
-      <div style={{ fontSize: 12, color: hasValue ? "#6b7280" : "#9ca3af", marginBottom: 4, fontWeight: 500 }}>
+      <div style={{ fontSize: 12, color: hasValue ? "var(--text-muted)" : "var(--text-subtle)", marginBottom: 4, fontWeight: 500 }}>
         {getFieldLabel("work_experience")}
       </div>
-      <div style={{ fontSize: 14, color: hasValue ? "#111827" : "#6b7280", fontWeight: hasValue ? 600 : 400 }}>
+      <div style={{ fontSize: 14, color: hasValue ? "var(--text)" : "var(--text-muted)", fontWeight: hasValue ? 600 : 400 }}>
         {workExperience}
       </div>
       {hasValue && (
-        <div style={{ fontSize: 11, color: "#9ca3af", marginTop: 4 }}>
+        <div style={{ fontSize: 11, color: "var(--text-subtle)", marginTop: 4 }}>
           ลงทะเบียนเมื่อ: {new Date(cardRegisterDate).toLocaleDateString('th-TH', {
             year: 'numeric',
             month: 'long',
@@ -2441,17 +2267,17 @@ function DocField({ row, label, keys }: { row: Row; label: string; keys: string[
   return (
     <div style={{
       padding: 12,
-      background: has ? "#f9fafb" : "#f3f4f6",
+      background: has ? "var(--surface-2)" : "var(--surface-3)",
       borderRadius: 8,
-      border: "1px solid #e5e7eb",
+      border: "1px solid var(--border)",
       opacity: has ? 1 : 0.7
     }}>
-      <div style={{ fontSize: 12, color: has ? "#6b7280" : "#9ca3af", marginBottom: 4, fontWeight: 500 }}>
+      <div style={{ fontSize: 12, color: has ? "var(--text-muted)" : "var(--text-subtle)", marginBottom: 4, fontWeight: 500 }}>
         {label}
       </div>
       <div style={{ fontSize: 14 }}>
         {has ? (
-          <a href={proxyImg(String(v), false)} target="_blank" rel="noreferrer" style={{ color: "#2563eb", textDecoration: "underline" }}>
+          <a href={proxyImg(String(v), false)} target="_blank" rel="noreferrer" style={{ color: "color-mix(in srgb, #2563eb var(--ink), #fff)", textDecoration: "underline" }}>
             เปิดไฟล์
           </a>
         ) : "—"}
@@ -2469,20 +2295,18 @@ function pick(row: Row, keys: string[]) {
   return "";
 }
 
-
-
 /* ---------- styles ---------- */
 const cardStyle: React.CSSProperties = {
   border: "1px solid rgba(255,255,255,0.15)",
   borderRadius: 14,
   padding: "11px 14px",
-  background: "#fff",
+  background: "var(--surface)",
   boxShadow: "0 4px 16px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.12)",
   minHeight: 65,
   transition: "all 0.22s cubic-bezier(0.4, 0, 0.2, 1)",
   position: "relative",
   overflow: "hidden",
 };
-const cardTitle: React.CSSProperties = { fontSize: 11, color: "#6b7280", marginBottom: 3, fontWeight: 500 };
+const cardTitle: React.CSSProperties = { fontSize: 11, color: "var(--text-muted)", marginBottom: 3, fontWeight: 500 };
 const cardNumber: React.CSSProperties = { fontSize: 14, fontWeight: 700, letterSpacing: "-0.3px" };
-const cardSub: React.CSSProperties = { fontSize: 12, color: "#6b7280" };
+const cardSub: React.CSSProperties = { fontSize: 12, color: "var(--text-muted)" };

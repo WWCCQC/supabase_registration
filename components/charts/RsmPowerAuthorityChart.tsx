@@ -262,10 +262,10 @@ export default function RsmPowerAuthorityChart({
                 alignItems: "center", justifyContent: "center", gap: 12
             }}>
                 <div style={{
-                    width: 40, height: 40, border: "3px solid #e5e7eb",
+                    width: 40, height: 40, border: "3px solid var(--border)",
                     borderTopColor: "#22c55e", borderRadius: "50%", animation: "spin 0.8s linear infinite"
                 }} />
-                <span style={{ fontSize: 14, color: "#6b7280" }}>กำลังโหลดข้อมูล...</span>
+                <span style={{ fontSize: 14, color: "var(--text-muted)" }}>กำลังโหลดข้อมูล...</span>
                 <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
             </div>
         );
@@ -314,8 +314,8 @@ export default function RsmPowerAuthorityChart({
                             onClick={() => toggleGroup(key)}
                             style={{
                                 display: "flex", alignItems: "center", gap: 7,
-                                background: isActive ? `${border}18` : "#f1f5f9",
-                                border: `1.5px solid ${isActive ? border : "#cbd5e1"}`,
+                                background: isActive ? `${border}18` : "var(--surface-2)",
+                                border: `1.5px solid ${isActive ? border : "var(--border-strong)"}`,
                                 borderRadius: 20, padding: "4px 10px 4px 8px",
                                 cursor: "pointer", outline: "none",
                                 transition: "all 0.15s",
@@ -351,27 +351,27 @@ export default function RsmPowerAuthorityChart({
                             <stop offset="0%" stopColor="#ffb74d" /><stop offset="100%" stopColor="#e65100" />
                         </linearGradient>
                         <linearGradient id="paGradNo" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stopColor="#e2e8f0" /><stop offset="100%" stopColor="#94a3b8" />
+                            <stop offset="0%" stopColor="var(--surface-3)" /><stop offset="100%" stopColor="#94a3b8" />
                         </linearGradient>
                         <linearGradient id="paGradCG" x1="0" y1="0" x2="0" y2="1">
                             <stop offset="0%" stopColor="#34d399" /><stop offset="100%" stopColor="#0d9488" />
                         </linearGradient>
                         <linearGradient id="paGradCGNo" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stopColor="#e2e8f0" /><stop offset="100%" stopColor="#94a3b8" />
+                            <stop offset="0%" stopColor="var(--surface-3)" /><stop offset="100%" stopColor="#94a3b8" />
                         </linearGradient>
                         <linearGradient id="paGradCEC" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stopColor="#fff176" /><stop offset="100%" stopColor="#f9a825" />
+                            <stop offset="0%" stopColor="color-mix(in srgb, #fff176 var(--tint), var(--surface))" /><stop offset="100%" stopColor="#f9a825" />
                         </linearGradient>
                         <linearGradient id="paGradCECNo" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stopColor="#e2e8f0" /><stop offset="100%" stopColor="#94a3b8" />
+                            <stop offset="0%" stopColor="var(--surface-3)" /><stop offset="100%" stopColor="#94a3b8" />
                         </linearGradient>
                     </defs>
 
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
 
                     <XAxis dataKey="RBM" angle={-45} textAnchor="end" height={110} interval={0}
                         tick={{ fontSize: 11, fill: "#64748b", fontWeight: 500 }}
-                        axisLine={{ stroke: "#e2e8f0" }} tickLine={false} />
+                        axisLine={{ stroke: "var(--border)" }} tickLine={false} />
 
                     <YAxis tick={false} axisLine={false} tickLine={false} width={0} />
 
@@ -577,7 +577,7 @@ export default function RsmPowerAuthorityChart({
                 </div>
                 <div
                     onClick={() => openLegendModal("CG_notpass")}
-                    style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, background: "#f1f5f9", border: `1.5px solid ${CG_NO_COLOR.solid}`, borderRadius: 30, padding: "5px 14px 5px 8px", cursor: "pointer", transition: "transform 0.15s, box-shadow 0.15s" }}
+                    style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, background: "var(--surface-2)", border: `1.5px solid ${CG_NO_COLOR.solid}`, borderRadius: 30, padding: "5px 14px 5px 8px", cursor: "pointer", transition: "transform 0.15s, box-shadow 0.15s" }}
                     onMouseEnter={(e) => { e.currentTarget.style.transform = "scale(1.05)"; e.currentTarget.style.boxShadow = `0 4px 16px ${CG_NO_COLOR.solid}50`; }}
                     onMouseLeave={(e) => { e.currentTarget.style.transform = "scale(1)"; e.currentTarget.style.boxShadow = "none"; }}
                 >
@@ -606,7 +606,7 @@ export default function RsmPowerAuthorityChart({
                 </div>
                 <div
                     onClick={() => openLegendModal("CEC_notpass")}
-                    style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, background: "#f1f5f9", border: `1.5px solid ${CEC_NO_COLOR.solid}`, borderRadius: 30, padding: "5px 14px 5px 8px", cursor: "pointer", transition: "transform 0.15s, box-shadow 0.15s" }}
+                    style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, background: "var(--surface-2)", border: `1.5px solid ${CEC_NO_COLOR.solid}`, borderRadius: 30, padding: "5px 14px 5px 8px", cursor: "pointer", transition: "transform 0.15s, box-shadow 0.15s" }}
                     onMouseEnter={(e) => { e.currentTarget.style.transform = "scale(1.05)"; e.currentTarget.style.boxShadow = `0 4px 16px ${CEC_NO_COLOR.solid}50`; }}
                     onMouseLeave={(e) => { e.currentTarget.style.transform = "scale(1)"; e.currentTarget.style.boxShadow = "none"; }}
                 >
@@ -634,7 +634,7 @@ export default function RsmPowerAuthorityChart({
                     <div
                         onClick={(e) => e.stopPropagation()}
                         style={{
-                            background: "white", borderRadius: 16, padding: "24px 28px",
+                            background: "var(--surface)", borderRadius: 16, padding: "24px 28px",
                             boxShadow: "0 20px 60px rgba(0,0,0,0.25)",
                             maxWidth: 1100, width: "96%", maxHeight: "88vh",
                             display: "flex", flexDirection: "column",
@@ -650,7 +650,7 @@ export default function RsmPowerAuthorityChart({
                                     background: `linear-gradient(135deg, ${modalColor.from}, ${modalColor.to})`,
                                     flexShrink: 0,
                                 }} />
-                                <span style={{ fontSize: 16, fontWeight: 700, color: "#1e293b" }}>
+                                <span style={{ fontSize: 16, fontWeight: 700, color: "var(--text)" }}>
                                     {modalLabel}
                                 </span>
                                 <span style={{
@@ -665,13 +665,13 @@ export default function RsmPowerAuthorityChart({
                             <button
                                 onClick={closeLegendModal}
                                 style={{
-                                    background: "#f1f5f9", border: "none", borderRadius: "50%",
+                                    background: "var(--surface-2)", border: "none", borderRadius: "50%",
                                     width: 32, height: 32, cursor: "pointer", fontSize: 16,
                                     display: "flex", alignItems: "center", justifyContent: "center",
-                                    color: "#64748b", transition: "background 0.15s", flexShrink: 0,
+                                    color: "var(--text-muted)", transition: "background 0.15s", flexShrink: 0,
                                 }}
-                                onMouseEnter={(e) => { e.currentTarget.style.background = "#e2e8f0"; }}
-                                onMouseLeave={(e) => { e.currentTarget.style.background = "#f1f5f9"; }}
+                                onMouseEnter={(e) => { e.currentTarget.style.background = "var(--surface-3)"; }}
+                                onMouseLeave={(e) => { e.currentTarget.style.background = "var(--surface-2)"; }}
                             >
                                 ✕
                             </button>
@@ -687,11 +687,11 @@ export default function RsmPowerAuthorityChart({
                                     onChange={(e) => setModalSearch(e.target.value)}
                                     style={{
                                         width: "100%", padding: "7px 12px 7px 32px", fontSize: 13,
-                                        border: "1.5px solid #e2e8f0", borderRadius: 8, outline: "none",
+                                        border: "1.5px solid var(--border)", borderRadius: 8, outline: "none",
                                         transition: "border-color 0.15s",
                                     }}
                                     onFocus={(e) => { e.currentTarget.style.borderColor = "#94a3b8"; }}
-                                    onBlur={(e) => { e.currentTarget.style.borderColor = "#e2e8f0"; }}
+                                    onBlur={(e) => { e.currentTarget.style.borderColor = "var(--border)"; }}
                                 />
                                 <span style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", fontSize: 14, pointerEvents: "none" }}>🔍</span>
                             </div>
@@ -699,7 +699,7 @@ export default function RsmPowerAuthorityChart({
                                 onClick={handleDownloadExcel}
                                 disabled={modalLoading || !filteredModalRows.length}
                                 style={{
-                                    background: filteredModalRows.length ? "linear-gradient(135deg, #10b981, #059669)" : "#e2e8f0",
+                                    background: filteredModalRows.length ? "linear-gradient(135deg, #10b981, #059669)" : "var(--surface-3)",
                                     color: filteredModalRows.length ? "white" : "#94a3b8",
                                     border: "none", borderRadius: 8, padding: "7px 16px",
                                     fontSize: 12, fontWeight: 600, cursor: filteredModalRows.length ? "pointer" : "default",
@@ -717,15 +717,15 @@ export default function RsmPowerAuthorityChart({
                         {modalLoading ? (
                             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 40, gap: 10 }}>
                                 <div style={{
-                                    width: 36, height: 36, border: "3px solid #e5e7eb",
+                                    width: 36, height: 36, border: "3px solid var(--border)",
                                     borderTopColor: modalColor.solid,
                                     borderRadius: "50%", animation: "spin 0.8s linear infinite",
                                 }} />
-                                <span style={{ fontSize: 13, color: "#6b7280" }}>กำลังโหลดข้อมูล...</span>
+                                <span style={{ fontSize: 13, color: "var(--text-muted)" }}>กำลังโหลดข้อมูล...</span>
                                 <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
                             </div>
                         ) : modalError ? (
-                            <div style={{ padding: 30, textAlign: "center", color: "#ef4444", fontSize: 14 }}>
+                            <div style={{ padding: 30, textAlign: "center", color: "color-mix(in srgb, #ef4444 var(--ink), #fff)", fontSize: 14 }}>
                                 ❌ {modalError}
                             </div>
                         ) : (
@@ -733,7 +733,7 @@ export default function RsmPowerAuthorityChart({
                                 <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12, minWidth: 900 }}>
                                     <thead>
                                         <tr style={{
-                                            background: `linear-gradient(135deg, ${(modalColor as any).light ?? "#f1f5f9"}, ${(modalColor as any).light ?? "#e2e8f0"})`,
+                                            background: `linear-gradient(135deg, ${(modalColor as any).light ?? "var(--surface-2)"}, ${(modalColor as any).light ?? "var(--surface-3)"})`,
                                             position: "sticky", top: 0, zIndex: 1,
                                         }}>
                                             {modalHeaderCols.map((h) => (
@@ -755,19 +755,19 @@ export default function RsmPowerAuthorityChart({
                                             </tr>
                                         ) : filteredModalRows.map((row, i) => (
                                             <tr key={`${row.tech_id}-${i}`}
-                                                style={{ borderBottom: "1px solid #f1f5f9", transition: "background 0.1s" }}
-                                                onMouseEnter={(e) => { e.currentTarget.style.background = "#f8fafc"; }}
+                                                style={{ borderBottom: "1px solid var(--border)", transition: "background 0.1s" }}
+                                                onMouseEnter={(e) => { e.currentTarget.style.background = "var(--surface-2)"; }}
                                                 onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
                                             >
                                                 <td style={{ padding: "6px 8px", color: "#94a3b8", fontWeight: 500 }}>{i + 1}</td>
-                                                <td style={{ padding: "6px 8px", color: "#1e293b" }}>{row.HRBM}</td>
-                                                <td style={{ padding: "6px 8px", color: "#1e293b", fontWeight: 600 }}>{row.RBM}</td>
-                                                <td style={{ padding: "6px 8px", color: "#1e293b" }}>{row.CBM}</td>
-                                                <td style={{ padding: "6px 8px", color: "#1e293b" }}>{row.provider}</td>
-                                                <td style={{ padding: "6px 8px", color: "#64748b" }}>{row.depot_code}</td>
-                                                <td style={{ padding: "6px 8px", color: "#1e293b" }}>{row.depot_name}</td>
-                                                <td style={{ padding: "6px 8px", color: "#0369a1", fontWeight: 600 }}>{row.tech_id}</td>
-                                                <td style={{ padding: "6px 8px", color: "#1e293b" }}>{row.full_name}</td>
+                                                <td style={{ padding: "6px 8px", color: "var(--text)" }}>{row.HRBM}</td>
+                                                <td style={{ padding: "6px 8px", color: "var(--text)", fontWeight: 600 }}>{row.RBM}</td>
+                                                <td style={{ padding: "6px 8px", color: "var(--text)" }}>{row.CBM}</td>
+                                                <td style={{ padding: "6px 8px", color: "var(--text)" }}>{row.provider}</td>
+                                                <td style={{ padding: "6px 8px", color: "var(--text-muted)" }}>{row.depot_code}</td>
+                                                <td style={{ padding: "6px 8px", color: "var(--text)" }}>{row.depot_name}</td>
+                                                <td style={{ padding: "6px 8px", color: "color-mix(in srgb, #0369a1 var(--ink), #fff)", fontWeight: 600 }}>{row.tech_id}</td>
+                                                <td style={{ padding: "6px 8px", color: "var(--text)" }}>{row.full_name}</td>
                                                 {modalIsG ? (
                                                     <td style={{ padding: "6px 8px" }}>
                                                         <span style={{
@@ -808,7 +808,7 @@ export default function RsmPowerAuthorityChart({
 
                         {/* Footer */}
                         <div style={{
-                            marginTop: 12, paddingTop: 10, borderTop: "1px solid #e2e8f0",
+                            marginTop: 12, paddingTop: 10, borderTop: "1px solid var(--border)",
                             display: "flex", justifyContent: "space-between", alignItems: "center",
                         }}>
                             <span style={{ fontSize: 12, color: "#94a3b8" }}>

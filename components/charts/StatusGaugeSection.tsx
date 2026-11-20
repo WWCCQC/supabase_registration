@@ -4,6 +4,7 @@ import * as XLSX from "xlsx";
 import { lightBlueSection } from "./sectionStyles";
 import NextDynamic from "next/dynamic";
 import LegendTile3D from "./LegendTile3D";
+import { cssVar, useThemeName } from "@/lib/useThemeName";
 
 // เกจ 3D ใช้ three.js → โหลดฝั่ง client เท่านั้น
 const Gauge3D = NextDynamic(() => import("./Gauge3D"), {
@@ -42,20 +43,20 @@ export type Tone = {
 /** โทนเขียว — ผ่าน/มีบัตร (Power Authority) */
 export const GREEN_TONE: Tone = {
   arc: "#16a34a",
-  tileTop: "#f0fdf4",
-  tileBottom: "#dcfce7",
+  tileTop: "color-mix(in srgb, #f0fdf4 var(--tint), var(--surface))",
+  tileBottom: "color-mix(in srgb, #dcfce7 var(--tint), var(--surface))",
   tileBorder: "#bbf7d0",
   glowRgb: "22,163,74",
   numFrom: "#22c55e",
-  numTo: "#15803d",
-  labelText: "#166534",
-  chipLight: "#dcfce7",
-  chipText: "#166534",
+  numTo: "color-mix(in srgb, #15803d var(--ink), #fff)",
+  labelText: "color-mix(in srgb, #166534 var(--ink), #fff)",
+  chipLight: "color-mix(in srgb, #dcfce7 var(--tint), var(--surface))",
+  chipText: "color-mix(in srgb, #166534 var(--ink), #fff)",
   barFrom: "#4ade80",
   barMid: "#16a34a",
   barTo: "#12813c",
   barInnerRgb: "6,78,36",
-  barText: "#15803d",
+  barText: "color-mix(in srgb, #15803d var(--ink), #fff)",
   modalFrom: "#4ade80",
   modalTo: "#15803d",
   modalSolid: "#16a34a",
@@ -64,20 +65,20 @@ export const GREEN_TONE: Tone = {
 /** โทนแดง — ไม่ผ่าน/ไม่มีบัตร */
 export const RED_TONE: Tone = {
   arc: "#ef4444",
-  tileTop: "#fef2f2",
-  tileBottom: "#fee2e2",
+  tileTop: "color-mix(in srgb, #fef2f2 var(--tint), var(--surface))",
+  tileBottom: "color-mix(in srgb, #fee2e2 var(--tint), var(--surface))",
   tileBorder: "#fecaca",
   glowRgb: "220,38,38",
   numFrom: "#f87171",
-  numTo: "#b91c1c",
-  labelText: "#991b1b",
-  chipLight: "#fee2e2",
-  chipText: "#991b1b",
+  numTo: "color-mix(in srgb, #b91c1c var(--ink), #fff)",
+  labelText: "color-mix(in srgb, #991b1b var(--ink), #fff)",
+  chipLight: "color-mix(in srgb, #fee2e2 var(--tint), var(--surface))",
+  chipText: "color-mix(in srgb, #991b1b var(--ink), #fff)",
   barFrom: "#fca5a5",
   barMid: "#ef4444",
   barTo: "#b91c1c",
   barInnerRgb: "76,5,5",
-  barText: "#b91c1c",
+  barText: "color-mix(in srgb, #b91c1c var(--ink), #fff)",
   modalFrom: "#f87171",
   modalTo: "#b91c1c",
   modalSolid: "#ef4444",
@@ -86,20 +87,20 @@ export const RED_TONE: Tone = {
 /** โทนเขียวมิ้นต์ — ผ่านอบรม (Course G / EC) ให้เข้าชุดกับสีในกราฟด้านล่าง */
 export const TEAL_TONE: Tone = {
   arc: "#0d9488",
-  tileTop: "#f0fdfa",
-  tileBottom: "#ccfbf1",
+  tileTop: "color-mix(in srgb, #f0fdfa var(--tint), var(--surface))",
+  tileBottom: "color-mix(in srgb, #ccfbf1 var(--tint), var(--surface))",
   tileBorder: "#99f6e4",
   glowRgb: "13,148,136",
   numFrom: "#2dd4bf",
-  numTo: "#0f766e",
-  labelText: "#115e59",
-  chipLight: "#ccfbf1",
-  chipText: "#0f766e",
+  numTo: "color-mix(in srgb, #0f766e var(--ink), #fff)",
+  labelText: "color-mix(in srgb, #115e59 var(--ink), #fff)",
+  chipLight: "color-mix(in srgb, #ccfbf1 var(--tint), var(--surface))",
+  chipText: "color-mix(in srgb, #0f766e var(--ink), #fff)",
   barFrom: "#5eead4",
   barMid: "#14b8a6",
   barTo: "#0d9488",
   barInnerRgb: "4,71,66",
-  barText: "#0f766e",
+  barText: "color-mix(in srgb, #0f766e var(--ink), #fff)",
   modalFrom: "#5eead4",
   modalTo: "#0f766e",
   modalSolid: "#14b8a6",
@@ -108,20 +109,20 @@ export const TEAL_TONE: Tone = {
 /** โทนเหลืองอำพัน — ผ่านอบรม (Course EC) ให้เข้าชุดกับสีในกราฟด้านล่าง */
 export const AMBER_TONE: Tone = {
   arc: "#f59e0b",
-  tileTop: "#fffbeb",
-  tileBottom: "#fef3c7",
+  tileTop: "color-mix(in srgb, #fffbeb var(--tint), var(--surface))",
+  tileBottom: "color-mix(in srgb, #fef3c7 var(--tint), var(--surface))",
   tileBorder: "#fde68a",
   glowRgb: "217,119,6",
   numFrom: "#fbbf24",
-  numTo: "#b45309",
-  labelText: "#92400e",
-  chipLight: "#fef3c7",
-  chipText: "#92400e",
+  numTo: "color-mix(in srgb, #b45309 var(--ink), #fff)",
+  labelText: "color-mix(in srgb, #92400e var(--ink), #fff)",
+  chipLight: "color-mix(in srgb, #fef3c7 var(--tint), var(--surface))",
+  chipText: "color-mix(in srgb, #92400e var(--ink), #fff)",
   barFrom: "#fcd34d",
   barMid: "#f59e0b",
   barTo: "#b45309",
   barInnerRgb: "69,39,3",
-  barText: "#b45309",
+  barText: "color-mix(in srgb, #b45309 var(--ink), #fff)",
   modalFrom: "#fcd34d",
   modalTo: "#b45309",
   modalSolid: "#f59e0b",
@@ -277,6 +278,7 @@ function GaugeCanvas({
   failColor: string;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const themeName = useThemeName();
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -302,7 +304,9 @@ function GaugeCanvas({
     const arcWidth = outerR - innerR;
     const DEPTH = 9; // ความหนาของ "ขอบ 3 มิติ"
 
-    const TRACK = "#e2e8f0";
+    const TRACK = cssVar("--border", "#e2e8f0");
+    const TICK = cssVar("--border-strong", "#cbd5e1");
+    const TICK_LABEL = cssVar("--text-muted", "#64748b");
     const targetPassFraction = total > 0 ? pass / total : 0;
 
     // วาดวงแหวนแบบยกนูน: ชั้นล่างเป็นเงา แล้วค่อยวาดหน้าบนทับ
@@ -436,7 +440,7 @@ function GaugeCanvas({
         ctx.beginPath();
         ctx.moveTo(tx1, ty1);
         ctx.lineTo(tx2, ty2);
-        ctx.strokeStyle = "#cbd5e1";
+        ctx.strokeStyle = TICK;
         ctx.lineWidth = 1.5;
         ctx.lineCap = "round";
         ctx.stroke();
@@ -444,7 +448,7 @@ function GaugeCanvas({
         const lx = cx + Math.cos(angle) * (outerR + 16);
         const ly = cy + Math.sin(angle) * (outerR + 16);
         ctx.font = "600 10px Inter, sans-serif";
-        ctx.fillStyle = "#64748b";
+        ctx.fillStyle = TICK_LABEL;
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
         ctx.fillText(label, lx, ly);
@@ -548,7 +552,7 @@ function GaugeCanvas({
     raf = requestAnimationFrame(tick);
 
     return () => cancelAnimationFrame(raf);
-  }, [pass, fail, total, animate, passColor, failColor]);
+  }, [pass, fail, total, animate, passColor, failColor, themeName]);
 
   return (
     <canvas ref={canvasRef} style={{ display: "block", margin: "0 auto" }} />
@@ -619,7 +623,7 @@ function CountLink({
         font: "inherit",
         fontWeight: strong ? 800 : 700,
         color: tone.chipText,
-        background: `linear-gradient(180deg, #ffffff 0%, ${tone.chipLight} 100%)`,
+        background: `linear-gradient(180deg, var(--surface) 0%, ${tone.chipLight} 100%)`,
         border: `1px solid ${tone.chipLight}`,
         borderRadius: 8,
         padding: "3px 9px",
@@ -646,7 +650,7 @@ function CountLink({
 
 // ── Shared 3D card style ──────────────────────────────────────────
 const card3D: React.CSSProperties = {
-  background: "linear-gradient(180deg, #ffffff 0%, #f8fafc 100%)",
+  background: "linear-gradient(180deg, var(--surface) 0%, var(--surface-2) 100%)",
   borderRadius: 16,
   padding: "24px 20px",
   border: "1px solid rgba(226,232,240,0.9)",
@@ -813,7 +817,7 @@ export default function StatusGaugeSection({
               margin: 0,
               fontSize: 15,
               fontWeight: 700,
-              color: "#1f2937",
+              color: "var(--text)",
               display: "flex",
               alignItems: "center",
               gap: 8,
@@ -914,8 +918,8 @@ export default function StatusGaugeSection({
               width: "100%",
               marginTop: 22,
               paddingTop: 14,
-              borderTop: "1px solid #e2e8f0",
-              color: "#475569",
+              borderTop: "1px solid var(--border)",
+              color: "var(--text-2)",
               fontSize: 12,
               lineHeight: 1.8,
               overflowWrap: "anywhere",
@@ -941,7 +945,7 @@ export default function StatusGaugeSection({
               margin: 0,
               fontSize: 15,
               fontWeight: 700,
-              color: "#1f2937",
+              color: "var(--text)",
               display: "flex",
               alignItems: "center",
               gap: 8,
@@ -1030,13 +1034,13 @@ export default function StatusGaugeSection({
                       key: "label",
                       content: "รวมทั้งหมด" as React.ReactNode,
                       align: "left" as const,
-                      color: "#1e293b",
+                      color: "var(--text)",
                     },
                     {
                       key: "total",
                       content: grandTotal.toLocaleString() as React.ReactNode,
                       align: "right" as const,
-                      color: "#1e293b",
+                      color: "var(--text)",
                     },
                     {
                       key: "pass",
@@ -1050,7 +1054,7 @@ export default function StatusGaugeSection({
                         />
                       ) as React.ReactNode,
                       align: "right" as const,
-                      color: "#0f172a",
+                      color: "var(--text)",
                     },
                     {
                       key: "fail",
@@ -1064,7 +1068,7 @@ export default function StatusGaugeSection({
                         />
                       ) as React.ReactNode,
                       align: "right" as const,
-                      color: "#0f172a",
+                      color: "var(--text)",
                     },
                     {
                       key: "pct",
@@ -1082,8 +1086,8 @@ export default function StatusGaugeSection({
                         fontSize: 13,
                         color: cell.color,
                         background:
-                          "linear-gradient(180deg, #ffffff 0%, #eef2f7 100%)",
-                        borderBottom: "1px solid #dbe3ec",
+                          "linear-gradient(180deg, var(--surface) 0%, var(--surface-3) 100%)",
+                        borderBottom: "1px solid var(--border)",
                         boxShadow:
                           "0 1px 0 rgba(255,255,255,0.9) inset, 0 4px 8px -6px rgba(15,23,42,0.35)",
                         paddingRight: cell.key === "pct" ? 14 : 10,
@@ -1104,8 +1108,8 @@ export default function StatusGaugeSection({
                 const pctNum = parseFloat(rowPassPct);
                 const baseBg =
                   idx % 2 === 0
-                    ? "linear-gradient(180deg, #ffffff 0%, #fdfdfe 100%)"
-                    : "linear-gradient(180deg, #f9fafb 0%, #f3f5f9 100%)";
+                    ? "linear-gradient(180deg, var(--surface) 0%, var(--surface) 100%)"
+                    : "linear-gradient(180deg, var(--surface-2) 0%, var(--surface-2) 100%)";
 
                 return (
                   <tr
@@ -1118,7 +1122,7 @@ export default function StatusGaugeSection({
                     onMouseEnter={(e) => {
                       const el = e.currentTarget as HTMLTableRowElement;
                       el.style.background =
-                        "linear-gradient(180deg, #f5f9ff 0%, #e6f0ff 100%)";
+                        "linear-gradient(180deg, color-mix(in srgb, #f5f9ff var(--tint), var(--surface)) 0%, color-mix(in srgb, #e6f0ff var(--tint), var(--surface)) 100%)";
                       el.style.boxShadow =
                         "0 6px 14px -8px rgba(30,58,95,0.45), 0 1px 0 rgba(255,255,255,0.9) inset";
                       el.style.transform = "translateY(-1px)";
@@ -1135,8 +1139,8 @@ export default function StatusGaugeSection({
                       style={{
                         padding: "9px 10px",
                         fontWeight: 700,
-                        color: "#1e3a5f",
-                        borderBottom: "1px solid #eef1f5",
+                        color: "var(--accent-text)",
+                        borderBottom: "1px solid var(--border)",
                         whiteSpace: "nowrap",
                       }}
                     >
@@ -1148,8 +1152,8 @@ export default function StatusGaugeSection({
                         padding: "9px 10px",
                         textAlign: "right",
                         fontWeight: 600,
-                        color: "#374151",
-                        borderBottom: "1px solid #eef1f5",
+                        color: "var(--text-2)",
+                        borderBottom: "1px solid var(--border)",
                         whiteSpace: "nowrap",
                       }}
                     >
@@ -1160,7 +1164,7 @@ export default function StatusGaugeSection({
                       style={{
                         padding: "6px 10px",
                         textAlign: "right",
-                        borderBottom: "1px solid #eef1f5",
+                        borderBottom: "1px solid var(--border)",
                         whiteSpace: "nowrap",
                       }}
                     >
@@ -1176,7 +1180,7 @@ export default function StatusGaugeSection({
                       style={{
                         padding: "6px 10px",
                         textAlign: "right",
-                        borderBottom: "1px solid #eef1f5",
+                        borderBottom: "1px solid var(--border)",
                         whiteSpace: "nowrap",
                       }}
                     >
@@ -1191,7 +1195,7 @@ export default function StatusGaugeSection({
                     <td
                       style={{
                         padding: "9px 10px",
-                        borderBottom: "1px solid #eef1f5",
+                        borderBottom: "1px solid var(--border)",
                         minWidth: 100,
                       }}
                     >
@@ -1208,7 +1212,7 @@ export default function StatusGaugeSection({
                             height: 9,
                             borderRadius: 999,
                             background:
-                              "linear-gradient(180deg, #dfe4ea 0%, #eef1f5 100%)",
+                              "linear-gradient(180deg, var(--surface-3) 0%, var(--surface-3) 100%)",
                             boxShadow:
                               "0 1px 2px rgba(15,23,42,0.18) inset, 0 1px 0 rgba(255,255,255,0.85)",
                             overflow: "hidden",
@@ -1268,7 +1272,7 @@ export default function StatusGaugeSection({
           <div
             onClick={(e) => e.stopPropagation()}
             style={{
-              background: "white",
+              background: "var(--surface)",
               borderRadius: 16,
               padding: "24px 28px",
               boxShadow: "0 20px 60px rgba(0,0,0,0.25)",
@@ -1308,7 +1312,7 @@ export default function StatusGaugeSection({
                   }}
                 />
                 <span
-                  style={{ fontSize: 16, fontWeight: 700, color: "#1e293b" }}
+                  style={{ fontSize: 16, fontWeight: 700, color: "var(--text)" }}
                 >
                   {detailLabel}
                 </span>
@@ -1316,8 +1320,8 @@ export default function StatusGaugeSection({
                   style={{
                     fontSize: 12,
                     fontWeight: 700,
-                    color: "#1e3a5f",
-                    background: "#e2e8f0",
+                    color: "var(--accent-text)",
+                    background: "var(--surface-3)",
                     borderRadius: 10,
                     padding: "2px 10px",
                   }}
@@ -1342,7 +1346,7 @@ export default function StatusGaugeSection({
               <button
                 onClick={closeDetail}
                 style={{
-                  background: "#f1f5f9",
+                  background: "var(--surface-2)",
                   border: "none",
                   borderRadius: "50%",
                   width: 32,
@@ -1352,15 +1356,15 @@ export default function StatusGaugeSection({
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  color: "#64748b",
+                  color: "var(--text-muted)",
                   transition: "background 0.15s",
                   flexShrink: 0,
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.background = "#e2e8f0";
+                  e.currentTarget.style.background = "var(--surface-3)";
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.background = "#f1f5f9";
+                  e.currentTarget.style.background = "var(--surface-2)";
                 }}
               >
                 ✕
@@ -1387,7 +1391,7 @@ export default function StatusGaugeSection({
                     width: "100%",
                     padding: "7px 12px 7px 32px",
                     fontSize: 13,
-                    border: "1.5px solid #e2e8f0",
+                    border: "1.5px solid var(--border)",
                     borderRadius: 8,
                     outline: "none",
                     transition: "border-color 0.15s",
@@ -1396,7 +1400,7 @@ export default function StatusGaugeSection({
                     e.currentTarget.style.borderColor = "#94a3b8";
                   }}
                   onBlur={(e) => {
-                    e.currentTarget.style.borderColor = "#e2e8f0";
+                    e.currentTarget.style.borderColor = "var(--border)";
                   }}
                 />
                 <span
@@ -1418,7 +1422,7 @@ export default function StatusGaugeSection({
                 style={{
                   background: filteredDetailRows.length
                     ? "linear-gradient(135deg, #10b981, #059669)"
-                    : "#e2e8f0",
+                    : "var(--surface-3)",
                   color: filteredDetailRows.length ? "white" : "#94a3b8",
                   border: "none",
                   borderRadius: 8,
@@ -1460,13 +1464,13 @@ export default function StatusGaugeSection({
                   style={{
                     width: 36,
                     height: 36,
-                    border: "3px solid #e5e7eb",
+                    border: "3px solid var(--border)",
                     borderTopColor: detailTone.modalSolid,
                     borderRadius: "50%",
                     animation: "pagSpin 0.8s linear infinite",
                   }}
                 />
-                <span style={{ fontSize: 13, color: "#6b7280" }}>
+                <span style={{ fontSize: 13, color: "var(--text-muted)" }}>
                   กำลังโหลดข้อมูล...
                 </span>
               </div>
@@ -1475,7 +1479,7 @@ export default function StatusGaugeSection({
                 style={{
                   padding: 30,
                   textAlign: "center",
-                  color: "#ef4444",
+                  color: "color-mix(in srgb, #ef4444 var(--ink), #fff)",
                   fontSize: 14,
                 }}
               >
@@ -1541,11 +1545,11 @@ export default function StatusGaugeSection({
                           <tr
                             key={`${r.tech_id}-${i}`}
                             style={{
-                              borderBottom: "1px solid #f1f5f9",
+                              borderBottom: "1px solid var(--border)",
                               transition: "background 0.1s",
                             }}
                             onMouseEnter={(e) => {
-                              e.currentTarget.style.background = "#f8fafc";
+                              e.currentTarget.style.background = "var(--surface-2)";
                             }}
                             onMouseLeave={(e) => {
                               e.currentTarget.style.background = "transparent";
@@ -1561,50 +1565,50 @@ export default function StatusGaugeSection({
                               {i + 1}
                             </td>
                             <td
-                              style={{ padding: "6px 8px", color: "#1e293b" }}
+                              style={{ padding: "6px 8px", color: "var(--text)" }}
                             >
                               {r.HRBM}
                             </td>
                             <td
                               style={{
                                 padding: "6px 8px",
-                                color: "#1e293b",
+                                color: "var(--text)",
                                 fontWeight: 600,
                               }}
                             >
                               {r.RBM}
                             </td>
                             <td
-                              style={{ padding: "6px 8px", color: "#1e293b" }}
+                              style={{ padding: "6px 8px", color: "var(--text)" }}
                             >
                               {r.CBM}
                             </td>
                             <td
-                              style={{ padding: "6px 8px", color: "#1e293b" }}
+                              style={{ padding: "6px 8px", color: "var(--text)" }}
                             >
                               {r.provider}
                             </td>
                             <td
-                              style={{ padding: "6px 8px", color: "#64748b" }}
+                              style={{ padding: "6px 8px", color: "var(--text-muted)" }}
                             >
                               {r.depot_code}
                             </td>
                             <td
-                              style={{ padding: "6px 8px", color: "#1e293b" }}
+                              style={{ padding: "6px 8px", color: "var(--text)" }}
                             >
                               {r.depot_name}
                             </td>
                             <td
                               style={{
                                 padding: "6px 8px",
-                                color: "#0369a1",
+                                color: "color-mix(in srgb, #0369a1 var(--ink), #fff)",
                                 fontWeight: 600,
                               }}
                             >
                               {r.tech_id}
                             </td>
                             <td
-                              style={{ padding: "6px 8px", color: "#1e293b" }}
+                              style={{ padding: "6px 8px", color: "var(--text)" }}
                             >
                               {r.full_name}
                             </td>
@@ -1642,7 +1646,7 @@ export default function StatusGaugeSection({
               style={{
                 marginTop: 12,
                 paddingTop: 10,
-                borderTop: "1px solid #e2e8f0",
+                borderTop: "1px solid var(--border)",
                 display: "flex",
                 justifyContent: "space-between",
                 alignItems: "center",

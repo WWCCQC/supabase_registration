@@ -24,9 +24,9 @@ export default function PivotTable({ data, workgroupData = {}, workgroupGrandTot
       <div style={{ 
         padding: 20, 
         textAlign: 'center',
-        background: '#f9fafb',
+        background: 'var(--surface-2)',
         borderRadius: 8,
-        border: '1px solid #e5e7eb'
+        border: '1px solid var(--border)'
       }}>
         กำลังโหลดตาราง Pivot...
       </div>
@@ -219,7 +219,7 @@ export default function PivotTable({ data, workgroupData = {}, workgroupGrandTot
 
   const cellStyle: React.CSSProperties = {
     padding: '2px 3px',
-    border: '1px solid #d1d5db',
+    border: '1px solid var(--border-strong)',
     textAlign: 'right',
     width: '50px',
     minWidth: '50px',
@@ -231,7 +231,7 @@ export default function PivotTable({ data, workgroupData = {}, workgroupGrandTot
   const rsmCellStyle: React.CSSProperties = {
     ...cellStyle,
     textAlign: 'left',
-    backgroundColor: '#f8f9fa',
+    backgroundColor: 'var(--surface-2)',
     fontWeight: '500',
     width: '80px',
     minWidth: '80px',
@@ -241,7 +241,7 @@ export default function PivotTable({ data, workgroupData = {}, workgroupGrandTot
 
   const totalCellStyle: React.CSSProperties = {
     ...cellStyle,
-    backgroundColor: '#e3f2fd',
+    backgroundColor: 'color-mix(in srgb, #e3f2fd var(--tint), var(--surface))',
     fontWeight: 'bold',
     width: '50px',
     minWidth: '50px',
@@ -289,7 +289,7 @@ export default function PivotTable({ data, workgroupData = {}, workgroupGrandTot
         </thead>
         <tbody>
           {/* Grand Total Row - First row */}
-          <tr style={{ backgroundColor: '#f3f4f6' }}>
+          <tr style={{ backgroundColor: 'var(--surface-2)' }}>
             <td style={{...rsmCellStyle, fontWeight: 'bold'}}>Grand Total</td>
             
             {/* Grand Total */}
@@ -419,14 +419,14 @@ export default function PivotTable({ data, workgroupData = {}, workgroupGrandTot
         marginTop: '12px',
         padding: '8px',
         fontSize: '12px',
-        color: '#6b7280',
-        backgroundColor: '#f9fafb',
+        color: 'var(--text-muted)',
+        backgroundColor: 'var(--surface-2)',
         borderRadius: '6px',
-        border: '1px solid #e5e7eb'
+        border: '1px solid var(--border)'
       }}>
         <div style={{ fontWeight: '500', marginBottom: '4px' }}>หมายเหตุ:</div>
         <div>
-          <span style={{ color: '#000000' }}>จำนวนตัวเลขสีดำ = จำนวนคน</span>
+          <span style={{ color: 'var(--text)' }}>จำนวนตัวเลขสีดำ = จำนวนคน</span>
           <span style={{ margin: '0 8px', color: '#d1d5db' }}>|</span>
           <span style={{ color: 'red' }}>จำนวนตัวเลขสีแดงใน ( ) = จำนวนกองงาน</span>
         </div>

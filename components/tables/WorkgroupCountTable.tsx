@@ -12,7 +12,7 @@ interface WorkgroupCountTableProps {
 export default function WorkgroupCountTable({ workgroupData, workgroupGrandTotal = 0, loading = false }: WorkgroupCountTableProps) {
   if (loading) {
     return (
-      <div style={{ padding: 20, textAlign: 'center', background: '#f9fafb', borderRadius: 8, border: '1px solid #e5e7eb' }}>
+      <div style={{ padding: 20, textAlign: 'center', background: 'var(--surface-2)', borderRadius: 8, border: '1px solid var(--border)' }}>
         กำลังโหลดตาราง...
       </div>
     );
@@ -62,7 +62,7 @@ export default function WorkgroupCountTable({ workgroupData, workgroupGrandTotal
 
   const cellStyle: React.CSSProperties = {
     padding: '2px 3px',
-    border: '1px solid #d1d5db',
+    border: '1px solid var(--border-strong)',
     textAlign: 'right',
     fontSize: '10px',
     lineHeight: '1.2',
@@ -71,13 +71,13 @@ export default function WorkgroupCountTable({ workgroupData, workgroupGrandTotal
   const rsmCellStyle: React.CSSProperties = {
     ...cellStyle,
     textAlign: 'left',
-    backgroundColor: '#f8f9fa',
+    backgroundColor: 'var(--surface-2)',
     fontWeight: '500',
   };
 
   const totalCellStyle: React.CSSProperties = {
     ...cellStyle,
-    backgroundColor: '#e3f2fd',
+    backgroundColor: 'color-mix(in srgb, #e3f2fd var(--tint), var(--surface))',
     fontWeight: 'bold',
   };
 
@@ -108,7 +108,7 @@ export default function WorkgroupCountTable({ workgroupData, workgroupGrandTotal
         </thead>
         <tbody>
           {/* Grand Total Row */}
-          <tr style={{ backgroundColor: '#f3f4f6' }}>
+          <tr style={{ backgroundColor: 'var(--surface-2)' }}>
             <td style={{ ...rsmCellStyle, fontWeight: 'bold' }}>Grand Total</td>
             <td style={totalCellStyle}>{fmt(workgroupGrandTotal || grandTotal)}</td>
             {providers.map(provider => {
