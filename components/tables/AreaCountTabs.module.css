@@ -1,0 +1,10 @@
+.card { padding: 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04); overflow: hidden; }
+
+.header { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+.header h3 { margin: 0; font-size: 13px; font-weight: 700; color: var(--accent-text); }
+
+.tabs { display: inline-flex; gap: 2px; padding: 3px; border-radius: 999px; background: var(--surface-3); border: 1px solid var(--border); }
+.tab, .tabActive { display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border: 0; border-radius: 999px; background: transparent; color: var(--text-muted); font: inherit; font-size: 12px; font-weight: 600; cursor: pointer; transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease; }
+.tab:hover { color: var(--text); }
+.tabActive { background: #1e3a5f; color: #ffffff; box-shadow: 0 2px 6px -2px rgba(15, 23, 42, 0.45); }
+.tab:focus-visible, .tabActive:focus-visible { outline: 2px solid #3b82f6; outline-offset: 1px; }

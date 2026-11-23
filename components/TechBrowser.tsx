@@ -8,7 +8,8 @@ import { getFieldLabel, SECTION_LABELS, KPI_LABELS } from "../lib/fieldLabels";
 import { TECHNICIAN_TABLE_COLUMNS } from "../lib/technicianTableColumns";
 import { useAuth } from "@/lib/useAuth";
 import PivotTableComponent from "./tables/PivotTable";
-import AreaCountTable from "./tables/AreaCountTable";
+import AreaCountTabs from "./tables/AreaCountTabs";
+import SummaryInsight from "./charts/SummaryInsight";
 import RbmThailandMap from "./charts/RbmThailandMap";
 import { WORK_TYPES, WORK_TYPE_LABEL, type AreaCounts } from "@/lib/workTypes";
 import DataUpdatedChip from "./common/DataUpdatedChip";
@@ -1230,47 +1231,19 @@ export default function TechBrowser() {
       </div>
       */}
 
-      {/* ===== RBM map (left) + area tables (right, stacked) ===== */}
+      {/* ===== RBM map (left) + summary insight and tabbed area tables (right) ===== */}
       <div className="split-tables" style={{ marginBottom: '16px' }}>
         {/* RBM map: workgroup heads and depots per RBM, provinces from the province column */}
         <div style={{ flex: 1, minWidth: 0 }}>
           <RbmThailandMap data={areaCounts?.map ?? null} selectedRbm={selectedRsm} onRbmClick={handleRbmSelect} />
         </div>
 
-        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '12px', alignSelf: 'flex-start' }}>
-          {/* Table 1: จำนวนกองงานช่าง (กองงาน) */}
-          <div style={{
-            background: 'var(--surface)',
-            border: '1px solid var(--border)',
-            borderRadius: '8px',
-            padding: '12px',
-            boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
-            overflow: 'hidden',
-          }}>
-            <div style={{ fontSize: '13px', fontWeight: 'bold', marginBottom: '8px', color: 'color-mix(in srgb, #8b1a1a var(--ink), #fff)' }}>
-              📋 จำนวนกองงานช่าง (กองงาน) แยกตามพื้นที่
-            </div>
-            {areaCounts ? (
-              <AreaCountTable data={areaCounts.workgroups} caption="จำนวนกองงานช่าง (กองงาน) แยกตามพื้นที่" />
-            ) : areaSkeleton}
-          </div>
+        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          {/* Summary insight: people, work types and areas, from the same filtered counts */}
+          <SummaryInsight data={areaCounts} scope={selectedCtm || selectedRsm || null} />
 
-          {/* Table 2: จำนวนช่าง (คน) */}
-          <div style={{
-            background: 'var(--surface)',
-            border: '1px solid var(--border)',
-            borderRadius: '8px',
-            padding: '12px',
-            boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
-            overflow: 'hidden',
-          }}>
-            <div style={{ fontSize: '13px', fontWeight: 'bold', marginBottom: '8px', color: 'var(--accent-text)' }}>
-              📊 จำนวนช่าง (คน) แยกตามพื้นที่
-            </div>
-            {areaCounts ? (
-              <AreaCountTable data={areaCounts.technicians} caption="จำนวนช่าง (คน) แยกตามพื้นที่" />
-            ) : areaSkeleton}
-          </div>
+          {/* Area tables in one card, switched by tabs */}
+          <AreaCountTabs data={areaCounts} placeholder={areaSkeleton} />
         </div>
       </div>
       {/* ===== /Two Split Tables ===== */}
