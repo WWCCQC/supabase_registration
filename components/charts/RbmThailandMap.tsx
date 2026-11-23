@@ -139,12 +139,8 @@ export default function RbmThailandMap({ data, selectedRbm, onRbmClick }: Props)
         <span className={styles.headerIcon}><MapPinned size={16} aria-hidden="true" /></span>
         <div>
           <h3>จำนวนกองงานช่างแยกตาม RBM</h3>
-          <p>นับเฉพาะหัวหน้ากองงาน · จังหวัดจากคอลัมน์ province · คลิกการ์ดหรือจังหวัดเพื่อกรอง</p>
+          <p>นับเฉพาะหัวหน้ากองงาน</p>
         </div>
-        <span className={styles.legend} aria-hidden="true">
-          <span><i className={styles.keyInstall} />{WORK_TYPE_LABEL.Installation}</span>
-          <span><i className={styles.keyRepair} />{WORK_TYPE_LABEL.Repair}</span>
-        </span>
       </header>
 
       <div className={styles.mapBox} ref={boxRef}>

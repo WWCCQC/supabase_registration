@@ -4,9 +4,6 @@
 .header h3 { margin: 0; font-size: 13px; font-weight: 700; color: var(--accent-text); }
 .header p { margin: 2px 0 0; font-size: 11px; color: var(--text-muted); }
 .headerIcon { display: grid; place-items: center; flex-shrink: 0; width: 28px; height: 28px; border-radius: 8px; background: var(--accent-soft); color: var(--accent-text); }
-.legend { display: flex; flex-direction: column; gap: 2px; margin-left: auto; font-size: 11px; color: var(--text-2); white-space: nowrap; --rbm: var(--text-2); }
-.legend > span { display: inline-flex; align-items: center; gap: 5px; }
-.legend .keyInstall, .legend .keyRepair { width: 9px; height: 9px; border-radius: 3px; }
 
 /* The map takes the whole card; RBM detail cards live inside the SVG (map units). */
 .mapBox { position: relative; flex: 1; display: flex; align-items: center; justify-content: center; min-height: 0; border-radius: 10px; background: radial-gradient(110% 80% at 45% 35%, color-mix(in srgb, #e0f2fe var(--tint), var(--surface)) 0%, var(--surface-2) 78%); }
