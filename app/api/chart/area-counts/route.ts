@@ -4,7 +4,7 @@ export const fetchCache = "force-no-store";
 
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
-import { AREA_PROVIDERS, WORK_TYPES, type AreaCounts, type AreaPivot } from "@/lib/workTypes";
+import { AREA_PROVIDERS, WORK_TYPES, type AreaCounts, type AreaMapStat, type AreaPivot } from "@/lib/workTypes";
 
 const SERVICE_COLUMNS = [
   "svc_install", "svc_repair", "svc_nonstandard", "svc_corporate", "svc_solar",
@@ -24,7 +24,8 @@ const PAGE_SIZE = 1000;
 /**
  * Both area tables ("จำนวนช่าง" and "จำนวนกองงาน") come from this one scan,
  * so they always share the same rows and filters. A workgroup is counted by
- * its head: technicians whose workgroup_status is "หัวหน้า".
+ * its head: technicians whose workgroup_status is "หัวหน้า". The same scan feeds
+ * the RBM map: heads by work type and distinct depots, per RBM and per province.
  */
 export async function GET(req: Request) {
   try {
@@ -35,7 +36,7 @@ export async function GET(req: Request) {
     const buildQuery = () => {
       let query = supabase
         .from("technicians")
-        .select("national_id, RBM, provider, work_type, workgroup_status")
+        .select("national_id, RBM, provider, work_type, workgroup_status, province, depot_code")
         .not("RBM", "is", null).neq("RBM", "")
         .in("provider", [...AREA_PROVIDERS])
         .in("work_type", [...WORK_TYPES]);
@@ -66,6 +67,11 @@ export async function GET(req: Request) {
       pivot[rbm][key] = (pivot[rbm][key] || 0) + 1;
     };
 
+    type MapAcc = { installation: number; repair: number; depots: Set<string> };
+    const rbmAcc: Record<string, MapAcc> = {};
+    const provinceAcc: Record<string, MapAcc & { technicians: Record<string, number> }> = {};
+    const newAcc = (): MapAcc => ({ installation: 0, repair: 0, depots: new Set() });
+
     for (let from = 0; ; from += PAGE_SIZE) {
       const { data, error } = await buildQuery().range(from, from + PAGE_SIZE - 1);
       if (error) return NextResponse.json({ error: error.message }, { status: 400 });
@@ -73,14 +79,36 @@ export async function GET(req: Request) {
       for (const row of data ?? []) {
         const rbm = String(row.RBM).trim();
         const key = `${row.provider}_${row.work_type}`;
-        bump(technicians, rbm, key);
         // "ห" prefix also matches heads whose status text was saved with broken encoding.
-        if (String(row.workgroup_status || "").trim().startsWith("ห")) bump(workgroups, rbm, key);
+        const isHead = String(row.workgroup_status || "").trim().startsWith("ห");
+        bump(technicians, rbm, key);
+        if (isHead) bump(workgroups, rbm, key);
+
+        const province = String(row.province || "").trim();
+        const depot = String(row.depot_code || "").trim();
+        const targets: MapAcc[] = [(rbmAcc[rbm] ??= newAcc())];
+        if (province) {
+          const p = (provinceAcc[province] ??= { ...newAcc(), technicians: {} });
+          p.technicians[rbm] = (p.technicians[rbm] || 0) + 1;
+          targets.push(p);
+        }
+        for (const t of targets) {
+          if (depot) t.depots.add(depot);
+          if (isHead) row.work_type === "Installation" ? t.installation++ : t.repair++;
+        }
       }
       if (!data || data.length < PAGE_SIZE) break;
     }
 
-    const body: AreaCounts = { technicians, workgroups };
+    const toStat = ({ installation, repair, depots }: MapAcc): AreaMapStat => ({ installation, repair, depots: depots.size });
+    const body: AreaCounts = {
+      technicians,
+      workgroups,
+      map: {
+        rbms: Object.fromEntries(Object.entries(rbmAcc).map(([k, v]) => [k, toStat(v)])),
+        provinces: Object.fromEntries(Object.entries(provinceAcc).map(([k, v]) => [k, { ...toStat(v), technicians: v.technicians }])),
+      },
+    };
     return NextResponse.json(body, { headers: { "Cache-Control": "no-store" } });
   } catch (e: any) {
     console.error("Area counts API error:", e);

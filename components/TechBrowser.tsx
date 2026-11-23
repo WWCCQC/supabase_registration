@@ -9,6 +9,7 @@ import { TECHNICIAN_TABLE_COLUMNS } from "../lib/technicianTableColumns";
 import { useAuth } from "@/lib/useAuth";
 import PivotTableComponent from "./tables/PivotTable";
 import AreaCountTable from "./tables/AreaCountTable";
+import RbmThailandMap from "./charts/RbmThailandMap";
 import { WORK_TYPES, WORK_TYPE_LABEL, type AreaCounts } from "@/lib/workTypes";
 import DataUpdatedChip from "./common/DataUpdatedChip";
 import { useToast } from "./common/Toast";
@@ -648,7 +649,7 @@ export default function TechBrowser() {
       if (requestId === areaRequestRef.current) setAreaCounts(json);
     } catch (error) {
       console.error("Error fetching area counts:", error);
-      if (requestId === areaRequestRef.current) setAreaCounts({ technicians: {}, workgroups: {} });
+      if (requestId === areaRequestRef.current) setAreaCounts({ technicians: {}, workgroups: {}, map: { rbms: {}, provinces: {} } });
     }
   }
 
@@ -680,6 +681,18 @@ export default function TechBrowser() {
         setSelectedRsm(clickedRsm);
         setRsm(clickedRsm);
       }
+    }
+  }
+
+  // Map / list click on an RBM: toggle it as the RBM filter
+  function handleRbmSelect(rbm: string) {
+    setSelectedPowerAuthority(null);
+    if (selectedRsm === rbm) {
+      setSelectedRsm(null);
+      setRsm("");
+    } else {
+      setSelectedRsm(rbm);
+      setRsm(rbm);
     }
   }
 
@@ -1217,42 +1230,49 @@ export default function TechBrowser() {
       </div>
       */}
 
-      {/* ===== Two Split Tables: Technician Count & Workgroup Count ===== */}
+      {/* ===== Area tables (left, stacked) + RBM map (right) ===== */}
       <div className="split-tables" style={{ marginBottom: '16px' }}>
-        {/* Table 1: จำนวนช่าง (คน) */}
-        <div style={{
-          flex: 1,
-          background: 'var(--surface)',
-          border: '1px solid var(--border)',
-          borderRadius: '8px',
-          padding: '12px',
-          boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
-          overflow: 'hidden',
-        }}>
-          <div style={{ fontSize: '13px', fontWeight: 'bold', marginBottom: '8px', color: 'var(--accent-text)' }}>
-            📊 จำนวนช่าง (คน) แยกตามพื้นที่
+        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          {/* Table 1: จำนวนกองงานช่าง (กองงาน) */}
+          <div style={{
+            flex: 1,
+            background: 'var(--surface)',
+            border: '1px solid var(--border)',
+            borderRadius: '8px',
+            padding: '12px',
+            boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
+            overflow: 'hidden',
+          }}>
+            <div style={{ fontSize: '13px', fontWeight: 'bold', marginBottom: '8px', color: 'color-mix(in srgb, #8b1a1a var(--ink), #fff)' }}>
+              📋 จำนวนกองงานช่าง (กองงาน) แยกตามพื้นที่
+            </div>
+            {areaCounts ? (
+              <AreaCountTable data={areaCounts.workgroups} caption="จำนวนกองงานช่าง (กองงาน) แยกตามพื้นที่" />
+            ) : areaSkeleton}
           </div>
-          {areaCounts ? (
-            <AreaCountTable data={areaCounts.technicians} caption="จำนวนช่าง (คน) แยกตามพื้นที่" />
-          ) : areaSkeleton}
+
+          {/* Table 2: จำนวนช่าง (คน) */}
+          <div style={{
+            flex: 1,
+            background: 'var(--surface)',
+            border: '1px solid var(--border)',
+            borderRadius: '8px',
+            padding: '12px',
+            boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
+            overflow: 'hidden',
+          }}>
+            <div style={{ fontSize: '13px', fontWeight: 'bold', marginBottom: '8px', color: 'var(--accent-text)' }}>
+              📊 จำนวนช่าง (คน) แยกตามพื้นที่
+            </div>
+            {areaCounts ? (
+              <AreaCountTable data={areaCounts.technicians} caption="จำนวนช่าง (คน) แยกตามพื้นที่" />
+            ) : areaSkeleton}
+          </div>
         </div>
 
-        {/* Table 2: จำนวนกองงานช่าง (กองงาน) */}
-        <div style={{
-          flex: 1,
-          background: 'var(--surface)',
-          border: '1px solid var(--border)',
-          borderRadius: '8px',
-          padding: '12px',
-          boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
-          overflow: 'hidden',
-        }}>
-          <div style={{ fontSize: '13px', fontWeight: 'bold', marginBottom: '8px', color: 'color-mix(in srgb, #8b1a1a var(--ink), #fff)' }}>
-            📋 จำนวนกองงานช่าง (กองงาน) แยกตามพื้นที่
-          </div>
-          {areaCounts ? (
-            <AreaCountTable data={areaCounts.workgroups} caption="จำนวนกองงานช่าง (กองงาน) แยกตามพื้นที่" />
-          ) : areaSkeleton}
+        {/* RBM map: workgroup heads and depots per RBM, provinces from the province column */}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <RbmThailandMap data={areaCounts?.map ?? null} selectedRbm={selectedRsm} onRbmClick={handleRbmSelect} />
         </div>
       </div>
       {/* ===== /Two Split Tables ===== */}
