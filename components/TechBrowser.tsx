@@ -1230,12 +1230,16 @@ export default function TechBrowser() {
       </div>
       */}
 
-      {/* ===== Area tables (left, stacked) + RBM map (right) ===== */}
+      {/* ===== RBM map (left) + area tables (right, stacked) ===== */}
       <div className="split-tables" style={{ marginBottom: '16px' }}>
-        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        {/* RBM map: workgroup heads and depots per RBM, provinces from the province column */}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <RbmThailandMap data={areaCounts?.map ?? null} selectedRbm={selectedRsm} onRbmClick={handleRbmSelect} />
+        </div>
+
+        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '12px', alignSelf: 'flex-start' }}>
           {/* Table 1: จำนวนกองงานช่าง (กองงาน) */}
           <div style={{
-            flex: 1,
             background: 'var(--surface)',
             border: '1px solid var(--border)',
             borderRadius: '8px',
@@ -1253,7 +1257,6 @@ export default function TechBrowser() {
 
           {/* Table 2: จำนวนช่าง (คน) */}
           <div style={{
-            flex: 1,
             background: 'var(--surface)',
             border: '1px solid var(--border)',
             borderRadius: '8px',
@@ -1268,11 +1271,6 @@ export default function TechBrowser() {
               <AreaCountTable data={areaCounts.technicians} caption="จำนวนช่าง (คน) แยกตามพื้นที่" />
             ) : areaSkeleton}
           </div>
-        </div>
-
-        {/* RBM map: workgroup heads and depots per RBM, provinces from the province column */}
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <RbmThailandMap data={areaCounts?.map ?? null} selectedRbm={selectedRsm} onRbmClick={handleRbmSelect} />
         </div>
       </div>
       {/* ===== /Two Split Tables ===== */}
