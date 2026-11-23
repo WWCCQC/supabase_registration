@@ -11,10 +11,12 @@ export const INSIGHT_THRESHOLDS = {
 } as const;
 
 export type InsightLevel = "warn" | "info";
-export type InsightGroup = "people" | "workType" | "provider";
+export type InsightGroup = "people" | "workType" | "provider" | "area";
 /** Text pieces; `{ strong }` parts are emphasised (numbers, names). */
 export type InsightPart = string | { strong: string };
-export type Insight = { id: string; group: InsightGroup; level: InsightLevel; parts: InsightPart[] };
+/** Optional grouped list shown under the text, e.g. provinces per RBM. */
+export type InsightList = Array<{ label: string; items: string[] }>;
+export type Insight = { id: string; group: InsightGroup; level: InsightLevel; parts: InsightPart[]; list?: InsightList };
 
 export type AreaSummary = {
   technicians: number;
@@ -129,20 +131,20 @@ export function buildAreaSummary(counts: AreaCounts): AreaSummary {
       }
     }
 
-    // C3 areas where one work type has a single provider
-    if (rbms.length > 1) {
-      for (const w of WORK_TYPES) {
-        const single = rbms
-          .map((rbm) => ({ rbm, providers: AREA_PROVIDERS.filter((p) => cell(T, rbm, p, w) > 0) }))
-          .filter((r) => r.providers.length === 1);
-        if (!single.length) continue;
-        const byProvider = new Map<string, string[]>();
-        for (const r of single) byProvider.set(r.providers[0], [...(byProvider.get(r.providers[0]) ?? []), short(r.rbm)]);
-        for (const [provider, list] of byProvider) {
-          add({ id: `C3-${w}-${provider}`, group: "provider", level: "info",
-            parts: [WORK_TYPE_LABEL[w], "ใน ", b(list.join(", ")), " มีแค่ ", b(provider), " เจ้าเดียว"] });
-        }
-      }
+    // C3 provinces served by a single depot: if that depot stops, nobody else covers the province
+    const oneDepot = Object.entries(counts.map.provinces)
+      .filter(([, p]) => p.depots === 1)
+      .map(([name, p]) => ({ name, rbm: Object.entries(p.technicians).sort((x, y) => y[1] - x[1])[0]?.[0] ?? "" }));
+    if (oneDepot.length) {
+      const byRbm = new Map<string, string[]>();
+      for (const { name, rbm } of oneDepot) byRbm.set(rbm, [...(byRbm.get(rbm) ?? []), name]);
+      add({
+        id: "C3", group: "area", level: "warn",
+        parts: [b(fmt(oneDepot.length)), " จาก ", b(fmt(Object.keys(counts.map.provinces).length)), " จังหวัดมี Depot รับงานแค่แห่งเดียว"],
+        list: [...byRbm.entries()]
+          .sort(([x], [y]) => x.localeCompare(y))
+          .map(([rbm, names]) => ({ label: short(rbm), items: names.sort((x, y) => x.localeCompare(y, "th")) })),
+      });
     }
   }
 

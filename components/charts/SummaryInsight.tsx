@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { AlertTriangle, Building2, Info, Sparkles, UsersRound, Wrench } from "lucide-react";
+import { AlertTriangle, Building2, Info, MapPin, Sparkles, UsersRound, Wrench } from "lucide-react";
 import { buildAreaSummary, type Insight, type InsightGroup } from "@/lib/areaInsights";
 import { WORK_TYPE_LABEL, type AreaCounts } from "@/lib/workTypes";
 import styles from "./SummaryInsight.module.css";
@@ -12,6 +12,7 @@ const GROUPS: Record<InsightGroup, { label: string; Icon: typeof UsersRound }> =
   people: { label: "คนและกองงาน", Icon: UsersRound },
   workType: { label: "ประเภทงาน", Icon: Wrench },
   provider: { label: "Provider", Icon: Building2 },
+  area: { label: "พื้นที่", Icon: MapPin },
 };
 const fmt = (n: number) => n.toLocaleString("en-US");
 
@@ -24,6 +25,16 @@ function Line({ insight }: { insight: Insight }) {
       </span>
       <span className={styles.text}>
         {insight.parts.map((part, i) => (typeof part === "string" ? <React.Fragment key={i}>{part}</React.Fragment> : <strong key={i}>{part.strong}</strong>))}
+        {insight.list && (
+          <span className={styles.groups}>
+            {insight.list.map((g) => (
+              <span key={g.label} className={styles.groupRow}>
+                <span className={styles.groupLabel}>{g.label}<small>{g.items.length}</small></span>
+                <span className={styles.chips}>{g.items.map((item) => <span key={item} className={styles.chip}>{item}</span>)}</span>
+              </span>
+            ))}
+          </span>
+        )}
       </span>
       <span className={styles.tag} title={label}><Icon size={11} aria-hidden="true" />{label}</span>
     </li>
