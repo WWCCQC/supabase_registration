@@ -7,7 +7,7 @@ interface ForceRefreshButtonProps {
 
 export default function ForceRefreshButton({ 
   onRefresh, 
-  apiEndpoint = '/api/chart/workgroup-count' 
+  apiEndpoint = '/api/chart/rsm-workgroup' 
 }: ForceRefreshButtonProps) {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [lastRefresh, setLastRefresh] = useState<string | null>(null);

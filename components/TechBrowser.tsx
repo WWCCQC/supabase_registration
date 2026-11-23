@@ -8,11 +8,11 @@ import { getFieldLabel, SECTION_LABELS, KPI_LABELS } from "../lib/fieldLabels";
 import { TECHNICIAN_TABLE_COLUMNS } from "../lib/technicianTableColumns";
 import { useAuth } from "@/lib/useAuth";
 import PivotTableComponent from "./tables/PivotTable";
-import TechnicianCountTable from "./tables/TechnicianCountTable";
+import AreaCountTable from "./tables/AreaCountTable";
+import { WORK_TYPES, WORK_TYPE_LABEL, type AreaCounts } from "@/lib/workTypes";
 import DataUpdatedChip from "./common/DataUpdatedChip";
 import { useToast } from "./common/Toast";
 import { lightBlueSection } from "./charts/sectionStyles";
-import WorkgroupCountTable from "./tables/WorkgroupCountTable";
 import {
   BarChart,
   Bar,
@@ -303,18 +303,9 @@ export default function TechBrowser() {
   const [depotByProvider, setDepotByProvider] = React.useState<{ [key: string]: number }>({});
   const [depotByProviderLoading, setDepotByProviderLoading] = React.useState(false);
 
-  /* pivot table data */
-  const [pivotData, setPivotData] = React.useState<any[]>([]);
-  const [pivotLoading, setPivotLoading] = React.useState(false);
-
-  /* workgroup count data */
-  const [workgroupData, setWorkgroupData] = React.useState<Record<string, Record<string, number>>>({});
-  const [workgroupGrandTotal, setWorkgroupGrandTotal] = React.useState<number>(0);
-  const [workgroupLoading, setWorkgroupLoading] = React.useState(false);
-
-  /* technician count data */
-  const [technicianData, setTechnicianData] = React.useState<Record<string, Record<string, number>>>({});
-  const [technicianLoading, setTechnicianLoading] = React.useState(false);
+  /* area tables (technicians + workgroups), fetched together so they share filters */
+  const [areaCounts, setAreaCounts] = React.useState<AreaCounts | null>(null);
+  const areaRequestRef = React.useRef(0);
 
   /* Chart Data */
   const [chartData, setChartData] = React.useState<any[]>([]);
@@ -647,99 +638,17 @@ export default function TechBrowser() {
     }
   }
 
-  async function fetchPivotData() {
-    setPivotLoading(true);
+  /* Both area tables come from one request with the same filters as the technician list */
+  async function fetchAreaCounts() {
+    const requestId = ++areaRequestRef.current;
     try {
-
-      // Build URL with current filter
-      const params = new URLSearchParams();
-      if (q) {
-        params.append('q', q);
-      }
-
-      const url = `/api/pivot-data${params.toString() ? '?' + params.toString() : ''}`;
-
-      const res = await fetch(url, { cache: "no-store" });
+      const res = await fetch(`/api/chart/area-counts?${buildFilterParamsOnly().toString()}`, { cache: "no-store" });
       const json = await res.json();
-
-      if (json.data && Array.isArray(json.data)) {
-        setPivotData(json.data);
-      } else {
-        console.error('❌ Invalid pivot data response:', json);
-        setPivotData([]);
-      }
-
+      if (!res.ok) throw new Error(json.error || `HTTP ${res.status}`);
+      if (requestId === areaRequestRef.current) setAreaCounts(json);
     } catch (error) {
-      console.error('Error fetching pivot data:', error);
-      setPivotData([]);
-    } finally {
-      setPivotLoading(false);
-    }
-  }
-
-  /* Fetch workgroup count data */
-  async function fetchWorkgroupData() {
-    setWorkgroupLoading(true);
-    try {
-      const params = buildFilterParamsOnly();
-      // Add cache-busting parameter
-      params.set('_t', Date.now().toString());
-      const url = `/api/chart/workgroup-count?${params.toString()}`;
-
-      const res = await fetch(url, {
-        cache: "no-store",
-        headers: {
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'Pragma': 'no-cache'
-        }
-      });
-      const json = await res.json();
-
-      if (!res.ok) {
-        throw new Error(json.error || `HTTP ${res.status}: Workgroup fetch error`);
-      }
-
-      setWorkgroupData(json.data || json); // Support both {data: ..., grandTotal: ...} and old format
-      setWorkgroupGrandTotal(json.grandTotal || 0); // Get grandTotal from API
-
-    } catch (error) {
-      console.error('Error fetching workgroup data:', error);
-      setWorkgroupData({});
-      setWorkgroupGrandTotal(0);
-    } finally {
-      setWorkgroupLoading(false);
-    }
-  }
-
-  /* Fetch technician count data */
-  async function fetchTechnicianData() {
-    setTechnicianLoading(true);
-    try {
-      const params = buildFilterParamsOnly();
-      // Add cache-busting parameter
-      params.set('_t', Date.now().toString());
-      const url = `/api/chart/technician-count?${params.toString()}`;
-
-      const res = await fetch(url, {
-        cache: "no-store",
-        headers: {
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'Pragma': 'no-cache'
-        }
-      });
-      const json = await res.json();
-
-      if (!res.ok) {
-        throw new Error(json.error || `HTTP ${res.status}: Technician fetch error`);
-      }
-
-      setTechnicianData(json);
-
-    } catch (error) {
-      console.error('Error fetching technician data:', error);
-      setTechnicianData({});
-    } finally {
-      setTechnicianLoading(false);
+      console.error("Error fetching area counts:", error);
+      if (requestId === areaRequestRef.current) setAreaCounts({ technicians: {}, workgroups: {} });
     }
   }
 
@@ -919,8 +828,7 @@ export default function TechBrowser() {
     setKpiInitialized(false);
     debouncedFetchKpis();
     fetchDepotCodeCount();
-    fetchWorkgroupData();
-    fetchTechnicianData();
+    fetchAreaCounts();
   }, [d_national_id, d_tech_id, d_rsm, d_depot_code, d_q]);
 
   // Trigger immediate update when selectedRsm changes
@@ -929,8 +837,7 @@ export default function TechBrowser() {
     fetchData(1);
     fetchKpis();
     fetchDepotCodeCount();
-    fetchWorkgroupData();
-    fetchTechnicianData();
+    fetchAreaCounts();
   }, [selectedRsm]);
 
   // Trigger immediate update when selectedCtm changes
@@ -939,8 +846,7 @@ export default function TechBrowser() {
     fetchData(1);
     fetchKpis();
     fetchDepotCodeCount();
-    fetchWorkgroupData();
-    fetchTechnicianData();
+    fetchAreaCounts();
   }, [selectedCtm]);
 
   // Trigger immediate update when selectedExpiryMonth changes
@@ -956,15 +862,8 @@ export default function TechBrowser() {
     fetchKpis(); // เพิ่มการเรียก KPI ทันทีเมื่อ mount
     fetchDepotCodeCount(); // เพิ่มการนับ depot_code
     fetchDepotCodesByProvider(); // เพิ่มการนับ depot_code by provider
-    fetchPivotData(); // เพิ่มการดึงข้อมูล pivot table
-    fetchWorkgroupData(); // เพิ่มการดึงข้อมูล workgroup count
-    fetchTechnicianData(); // เพิ่มการดึงข้อมูล technician count
+    fetchAreaCounts();
   }, []);
-
-  /* Re-fetch pivot data when filter changes */
-  React.useEffect(() => {
-    fetchPivotData();
-  }, [q]);
 
   /* Cleanup timeout on unmount */
   React.useEffect(() => {
@@ -984,9 +883,7 @@ export default function TechBrowser() {
     fetchChartData();
     fetchDepotCodeCount();
     fetchDepotCodesByProvider();
-    fetchPivotData();
-    fetchWorkgroupData();
-    fetchTechnicianData();
+    fetchAreaCounts();
   };
 
   React.useEffect(() => {
@@ -1027,6 +924,18 @@ export default function TechBrowser() {
 
   const start = (page - 1) * 10 + 1;
   const end = Math.min(total, page * 10);
+
+  const areaSkeleton = (
+    <div style={{ padding: '8px 0' }}>
+      {[...Array(5)].map((_, i) => (
+        <div key={i} className="skeleton-row">
+          <span className="skeleton-light" style={{ height: 14 }} />
+          <span className="skeleton-light" style={{ height: 14, width: '40%' }} />
+          <span className="skeleton-light" style={{ height: 14, width: '30%' }} />
+        </div>
+      ))}
+    </div>
+  );
 
   /* ---------- Render ---------- */
   return (
@@ -1093,8 +1002,8 @@ export default function TechBrowser() {
             </div>
           </div>
 
-          {/* 2-3. Installation, Repair (Sky Rim Light) */}
-          {["Installation", "Repair"].map((name) => {
+          {/* 2-3. work_type cards: Installation = รับงานติดตั้ง, Repair = รับงานซ่อม (Sky Rim Light) */}
+          {WORK_TYPES.map((name) => {
             const f = (kpi?.by_work_type || []).find(
               (x) => (x.key || "").trim().toLowerCase() === name.toLowerCase()
             );
@@ -1125,11 +1034,11 @@ export default function TechBrowser() {
                 }}
                 onMouseOver={(e) => { if (!isSelected) e.currentTarget.style.transform = "translateY(-3px)"; }}
                 onMouseOut={(e) => { if (!isSelected) e.currentTarget.style.transform = "translateY(0)"; }}
-                title={`คลิกเพื่อกรองตาม ${name}`}
+                title={`คลิกเพื่อกรองช่าง${WORK_TYPE_LABEL[name]} (work_type = ${name})`}
               >
                 <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 2.5, background: "linear-gradient(90deg, #38bdf8, color-mix(in srgb, #67e8f9 var(--tint), var(--surface)))" }} />
-                <div style={{ fontSize: 10.5, fontWeight: 700, color: "#cbd5e1", textTransform: "uppercase", letterSpacing: "0.4px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                  {name}
+                <div style={{ fontSize: 11, fontWeight: 700, color: "#cbd5e1", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                  {WORK_TYPE_LABEL[name]}
                 </div>
                 <div style={{ fontSize: 17, fontWeight: 800, color: "#ffffff", letterSpacing: "-0.3px", marginTop: 4, fontVariantNumeric: "tabular-nums" }}>
                   {kpiLoading ? <span className="skeleton skeleton-kpi-number" /> : count.toLocaleString()}
@@ -1323,19 +1232,9 @@ export default function TechBrowser() {
           <div style={{ fontSize: '13px', fontWeight: 'bold', marginBottom: '8px', color: 'var(--accent-text)' }}>
             📊 จำนวนช่าง (คน) แยกตามพื้นที่
           </div>
-          {pivotData.length > 0 ? (
-            <TechnicianCountTable data={pivotData} />
-          ) : (
-            <div style={{ padding: '8px 0' }}>
-              {[...Array(5)].map((_, i) => (
-                <div key={i} className="skeleton-row">
-                  <span className="skeleton-light" style={{ height: 14 }} />
-                  <span className="skeleton-light" style={{ height: 14, width: '40%' }} />
-                  <span className="skeleton-light" style={{ height: 14, width: '30%' }} />
-                </div>
-              ))}
-            </div>
-          )}
+          {areaCounts ? (
+            <AreaCountTable data={areaCounts.technicians} caption="จำนวนช่าง (คน) แยกตามพื้นที่" />
+          ) : areaSkeleton}
         </div>
 
         {/* Table 2: จำนวนกองงานช่าง (กองงาน) */}
@@ -1351,19 +1250,9 @@ export default function TechBrowser() {
           <div style={{ fontSize: '13px', fontWeight: 'bold', marginBottom: '8px', color: 'color-mix(in srgb, #8b1a1a var(--ink), #fff)' }}>
             📋 จำนวนกองงานช่าง (กองงาน) แยกตามพื้นที่
           </div>
-          {Object.keys(workgroupData).length > 0 ? (
-            <WorkgroupCountTable workgroupData={workgroupData} workgroupGrandTotal={workgroupGrandTotal} />
-          ) : (
-            <div style={{ padding: '8px 0' }}>
-              {[...Array(5)].map((_, i) => (
-                <div key={i} className="skeleton-row">
-                  <span className="skeleton-light" style={{ height: 14 }} />
-                  <span className="skeleton-light" style={{ height: 14, width: '40%' }} />
-                  <span className="skeleton-light" style={{ height: 14, width: '30%' }} />
-                </div>
-              ))}
-            </div>
-          )}
+          {areaCounts ? (
+            <AreaCountTable data={areaCounts.workgroups} caption="จำนวนกองงานช่าง (กองงาน) แยกตามพื้นที่" />
+          ) : areaSkeleton}
         </div>
       </div>
       {/* ===== /Two Split Tables ===== */}
